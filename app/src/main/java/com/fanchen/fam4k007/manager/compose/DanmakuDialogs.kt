@@ -26,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.fam4k007.videoplayer.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 /**
@@ -139,7 +141,7 @@ fun DanmakuSettingsDrawer(
                     ) {
                     // 标题
                     Text(
-                        text = "弹幕设置",
+                        text = stringResource(R.string.danmaku_settings),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
@@ -163,7 +165,7 @@ fun DanmakuSettingsDrawer(
                             )
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "当前弹幕文件",
+                                    text = stringResource(R.string.danmaku_current_file),
                                     fontSize = 12.sp,
                                     color = Color(0xFF9E9E9E)
                                 )
@@ -189,7 +191,7 @@ fun DanmakuSettingsDrawer(
                                 modifier = Modifier.padding(end = 8.dp)
                             )
                             Text(
-                                text = "未加载弹幕文件",
+                                text = stringResource(R.string.danmaku_no_file_loaded),
                                 fontSize = 13.sp,
                                 color = Color(0xFFFF9800)
                             )
@@ -210,7 +212,7 @@ fun DanmakuSettingsDrawer(
                         // 弹幕样式设置
                         item {
                             ExpandableSection(
-                                title = "弹幕样式",
+                                title = stringResource(R.string.danmaku_style),
                                 isExpanded = expandedSection == "style",
                                 onToggle = { expandedSection = if (expandedSection == "style") null else "style" }
                             ) {
@@ -230,7 +232,7 @@ fun DanmakuSettingsDrawer(
                         // 弹幕配置设置
                         item {
                             ExpandableSection(
-                                title = "弹幕配置",
+                                title = stringResource(R.string.danmaku_config),
                                 isExpanded = expandedSection == "config",
                                 onToggle = { expandedSection = if (expandedSection == "config") null else "config" }
                             ) {
@@ -294,7 +296,7 @@ fun DanmakuStyleContent(
     ) {
         // 弹幕大小
         Text(
-            text = "弹幕大小：${size.toInt()}%",
+            text = stringResource(R.string.danmaku_size, size.toInt()),
             fontSize = 14.sp,
             color = Color.White,
             fontWeight = FontWeight.Medium
@@ -317,14 +319,14 @@ fun DanmakuStyleContent(
 
         // 弹幕速度
         Text(
-            text = "弹幕速度：${speed.toInt()}%",
+            text = stringResource(R.string.danmaku_speed, speed.toInt()),
             fontSize = 14.sp,
             color = Color.White,
             fontWeight = FontWeight.Medium
         )
         
         Text(
-            text = "数值越大，弹幕移动越快",
+            text = stringResource(R.string.danmaku_speed_hint),
             fontSize = 11.sp,
             color = Color(0x99FFFFFF),
             modifier = Modifier.padding(top = 2.dp)
@@ -347,7 +349,7 @@ fun DanmakuStyleContent(
 
         // 弹幕透明度
         Text(
-            text = "弹幕透明度：${alpha.toInt()}%",
+            text = stringResource(R.string.danmaku_alpha, alpha.toInt()),
             fontSize = 14.sp,
             color = Color.White,
             fontWeight = FontWeight.Medium
@@ -370,7 +372,7 @@ fun DanmakuStyleContent(
 
         // 描边粗细
         Text(
-            text = "描边粗细：${stroke.toInt()}%",
+            text = stringResource(R.string.danmaku_stroke, stroke.toInt()),
             fontSize = 14.sp,
             color = Color.White,
             fontWeight = FontWeight.Medium
@@ -402,14 +404,14 @@ fun DanmakuStyleContent(
                 onSpeedChange(50)
                 onAlphaChange(100)
                 onStrokeChange(50)
-                Toast.makeText(context, "已重置为默认值", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.danmaku_reset), Toast.LENGTH_SHORT).show()
             },
             colors = ButtonDefaults.textButtonColors(
                 contentColor = Color(0xFFFF6666)
             ),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("重置所有样式为默认值")
+            Text(stringResource(R.string.danmaku_reset_all))
         }
     }
 }
@@ -459,14 +461,14 @@ fun DanmakuConfigContent(
     ) {
         // 弹幕类型开关
         Text(
-            text = "弹幕类型显示",
+            text = stringResource(R.string.danmaku_type_display),
             fontSize = 16.sp,
             color = Color.White,
             fontWeight = FontWeight.Bold
         )
 
         DanmakuSwitchItem(
-            title = "显示滚动弹幕",
+            title = stringResource(R.string.danmaku_show_scroll),
             checked = showScroll,
             onCheckedChange = { 
                 showScroll = it
@@ -475,7 +477,7 @@ fun DanmakuConfigContent(
         )
 
         DanmakuSwitchItem(
-            title = "显示顶部弹幕",
+            title = stringResource(R.string.danmaku_show_top),
             checked = showTop,
             onCheckedChange = { 
                 showTop = it
@@ -484,7 +486,7 @@ fun DanmakuConfigContent(
         )
 
         DanmakuSwitchItem(
-            title = "显示底部弹幕",
+            title = stringResource(R.string.danmaku_show_bottom),
             checked = showBottom,
             onCheckedChange = { 
                 showBottom = it
@@ -496,14 +498,17 @@ fun DanmakuConfigContent(
 
         // 行数限制
         Text(
-            text = "弹幕密度控制",
+            text = stringResource(R.string.danmaku_density_control),
             fontSize = 16.sp,
             color = Color.White,
             fontWeight = FontWeight.Bold
         )
 
         Text(
-            text = "滚动弹幕最大行数：${if (maxScrollLine.toInt() == 0) "不限制" else maxScrollLine.toInt().toString()}",
+            text = stringResource(
+                R.string.danmaku_max_scroll_line, 
+                if (maxScrollLine.toInt() == 0) stringResource(R.string.common_unlimited) else maxScrollLine.toInt().toString()
+            ),
             fontSize = 14.sp,
             color = Color.White,
             fontWeight = FontWeight.Medium
@@ -525,7 +530,10 @@ fun DanmakuConfigContent(
         )
 
         Text(
-            text = "顶部弹幕最大行数：${if (maxTopLine.toInt() == 0) "不限制" else maxTopLine.toInt().toString()}",
+            text = stringResource(
+                R.string.danmaku_max_top_line,
+                if (maxTopLine.toInt() == 0) stringResource(R.string.common_unlimited) else maxTopLine.toInt().toString()
+            ),
             fontSize = 14.sp,
             color = Color.White,
             fontWeight = FontWeight.Medium
@@ -547,7 +555,10 @@ fun DanmakuConfigContent(
         )
 
         Text(
-            text = "底部弹幕最大行数：${if (maxBottomLine.toInt() == 0) "不限制" else maxBottomLine.toInt().toString()}",
+            text = stringResource(
+                R.string.danmaku_max_bottom_line,
+                if (maxBottomLine.toInt() == 0) stringResource(R.string.common_unlimited) else maxBottomLine.toInt().toString()
+            ),
             fontSize = 14.sp,
             color = Color.White,
             fontWeight = FontWeight.Medium
@@ -569,7 +580,10 @@ fun DanmakuConfigContent(
         )
 
         Text(
-            text = "同屏最大弹幕数：${if (maxScreenNum.toInt() == 0) "不限制" else maxScreenNum.toInt().toString()}",
+            text = stringResource(
+                R.string.danmaku_max_screen_num,
+                if (maxScreenNum.toInt() == 0) stringResource(R.string.common_unlimited) else maxScreenNum.toInt().toString()
+            ),
             fontSize = 14.sp,
             color = Color.White,
             fontWeight = FontWeight.Medium

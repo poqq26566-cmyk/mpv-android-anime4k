@@ -23,7 +23,7 @@ class SettingsComposeActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this).themeName)
+            val themeColors = getThemeColors(this, ThemeManager.getCurrentTheme(this).themeName)
             
             MaterialTheme(
                 colorScheme = lightColorScheme(

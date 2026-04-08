@@ -17,11 +17,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.dandanplay.AnimeSearchInfo
 import com.fam4k007.videoplayer.dandanplay.EpisodeInfo
 import kotlinx.coroutines.delay
@@ -132,6 +134,14 @@ private fun DanDanPlaySearchContent(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var selectedAnime by remember { mutableStateOf<AnimeSearchInfo?>(null) }
     val coroutineScope = rememberCoroutineScope()
+    
+    // 预获取所有需要的字符串资源
+    val noResultsText = stringResource(R.string.dandanplay_no_results)
+    val accessDeniedText = stringResource(R.string.dandanplay_access_denied)
+    val apiNotFoundText = stringResource(R.string.dandanplay_api_not_found)
+    val timeoutText = stringResource(R.string.dandanplay_timeout)
+    val searchFailedFormat = stringResource(R.string.dandanplay_search_failed)
+    val searchExceptionFormat = stringResource(R.string.dandanplay_search_exception)
 
     Column(
         modifier = Modifier
@@ -145,7 +155,7 @@ private fun DanDanPlaySearchContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (selectedAnime == null) "网络弹幕" else "选择剧集",
+                text = if (selectedAnime == null) stringResource(R.string.dandanplay_network_danmaku) else stringResource(R.string.dandanplay_select_episode),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -159,7 +169,7 @@ private fun DanDanPlaySearchContent(
                         contentColor = Color(0xFF64B5F6)
                     )
                 ) {
-                    Text("← 返回", fontSize = 13.sp)
+                    Text(stringResource(R.string.dandanplay_back), fontSize = 13.sp)
                 }
             }
         }
@@ -175,7 +185,7 @@ private fun DanDanPlaySearchContent(
                 OutlinedTextField(
                     value = searchText,
                     onValueChange = { searchText = it },
-                    placeholder = { Text("输入番剧名称", color = Color(0xFF888888)) },
+                    placeholder = { Text(stringResource(R.string.dandanplay_search_placeholder), color = Color(0xFF888888)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -203,18 +213,15 @@ private fun DanDanPlaySearchContent(
                                             android.util.Log.d("DanDanPlayUI", "搜索成功，返回 ${response.animes.size} 个结果")
                                             searchResults = response.animes
                                             if (searchResults.isEmpty()) {
-                                                errorMessage = "未找到相关番剧，请尝试其他关键词"
+                                                errorMessage = noResultsText
                                             }
                                         },
                                         onFailure = { e ->
                                             val errorMsg = when {
-                                                e.message?.contains("403") == true -> 
-                                                    "访问被拒绝(403)，请检查网络连接或稍后重试"
-                                                e.message?.contains("404") == true -> 
-                                                    "API接口不存在(404)，请联系开发者"
-                                                e.message?.contains("timeout") == true -> 
-                                                    "请求超时，请检查网络连接"
-                                                else -> "搜索失败: ${e.message}"
+                                                e.message?.contains("403") == true -> accessDeniedText
+                                                e.message?.contains("404") == true -> apiNotFoundText
+                                                e.message?.contains("timeout") == true -> timeoutText
+                                                else -> searchFailedFormat.format(e.message ?: "")
                                             }
                                             android.util.Log.e("DanDanPlayUI", "搜索失败: ${e.message}", e)
                                             errorMessage = errorMsg
@@ -222,7 +229,7 @@ private fun DanDanPlaySearchContent(
                                     )
                                 } catch (e: Exception) {
                                     android.util.Log.e("DanDanPlayUI", "搜索异常", e)
-                                    errorMessage = "搜索异常: ${e.message}\n请检查网络连接"
+                                    errorMessage = searchExceptionFormat.format(e.message ?: "")
                                 } finally {
                                     isSearching = false
                                 }
@@ -237,7 +244,7 @@ private fun DanDanPlaySearchContent(
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("搜索", fontSize = 15.sp)
+                    Text(stringResource(R.string.common_search), fontSize = 15.sp)
                 }
             }
 
@@ -283,7 +290,7 @@ private fun DanDanPlaySearchContent(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "搜索中...",
+                        text = stringResource(R.string.dandanplay_searching),
                         fontSize = 16.sp,
                         color = Color.White
                     )
@@ -325,7 +332,7 @@ private fun DanDanPlaySearchContent(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "输入番剧名称开始搜索",
+                        text = stringResource(R.string.dandanplay_input_name),
                         fontSize = 16.sp,
                         color = Color(0xFF888888)
                     )
@@ -408,7 +415,7 @@ private fun AnimeCard(
 
             // 剧集数量
             Text(
-                text = "${anime.episodes.size} 集",
+                text = stringResource(R.string.dandanplay_episode_count, anime.episodes.size),
                 fontSize = 13.sp,
                 color = Color(0xFF9E9E9E)
             )
@@ -446,7 +453,7 @@ private fun EpisodeList(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "${anime.typeDescription} · ${anime.episodes.size} 集",
+                    text = "${anime.typeDescription} · ${stringResource(R.string.dandanplay_episode_count, anime.episodes.size)}",
                     fontSize = 13.sp,
                     color = Color(0xFF9E9E9E)
                 )

@@ -28,6 +28,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fam4k007.videoplayer.PlaybackHistoryManager
+import com.fam4k007.videoplayer.R
+import androidx.compose.ui.res.stringResource
 import com.fam4k007.videoplayer.compose.SettingsColors as SettingsPalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -49,16 +51,16 @@ fun PlaybackHistoryScreen(
     Scaffold(
         topBar = {
             ImmersiveTopAppBar(
-                title = { Text("播放历史", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.playback_history_title), fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     if (historyList.isNotEmpty()) {
                         IconButton(onClick = { showClearDialog = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "清空全部")
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.playback_history_clear_all))
                         }
                     }
                 }
@@ -85,7 +87,7 @@ fun PlaybackHistoryScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "暂无播放历史",
+                        text = stringResource(R.string.playback_history_empty),
                         fontSize = 16.sp,
                         color = SettingsPalette.SecondaryText
                     )
@@ -116,8 +118,8 @@ fun PlaybackHistoryScreen(
     if (showClearDialog) {
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
-            title = { Text("清空历史", color = SettingsPalette.PrimaryText) },
-            text = { Text("确定要清空所有播放历史吗？此操作不可恢复。", 
+            title = { Text(stringResource(R.string.playback_history_clear_title), color = SettingsPalette.PrimaryText) },
+            text = { Text(stringResource(R.string.playback_history_clear_confirm), 
                          color = SettingsPalette.SecondaryText) },
             confirmButton = {
                 TextButton(
@@ -127,12 +129,12 @@ fun PlaybackHistoryScreen(
                         showClearDialog = false
                     }
                 ) {
-                    Text("清空", color = SettingsPalette.WarningText)
+                    Text(stringResource(R.string.playback_history_clear_button), color = SettingsPalette.WarningText)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showClearDialog = false }) {
-                    Text("取消", color = SettingsPalette.SecondaryText)
+                    Text(stringResource(R.string.common_cancel), color = SettingsPalette.SecondaryText)
                 }
             },
             containerColor = SettingsPalette.DialogSurface
@@ -143,8 +145,8 @@ fun PlaybackHistoryScreen(
     itemToDelete?.let { item ->
         AlertDialog(
             onDismissRequest = { itemToDelete = null },
-            title = { Text("删除记录", color = SettingsPalette.PrimaryText) },
-            text = { Text("确定要删除《${item.fileName}》的播放记录吗？", 
+            title = { Text(stringResource(R.string.playback_history_delete_title), color = SettingsPalette.PrimaryText) },
+            text = { Text(stringResource(R.string.playback_history_delete_confirm, item.fileName), 
                          color = SettingsPalette.SecondaryText) },
             confirmButton = {
                 TextButton(
@@ -154,12 +156,12 @@ fun PlaybackHistoryScreen(
                         itemToDelete = null
                     }
                 ) {
-                    Text("删除", color = SettingsPalette.WarningText)
+                    Text(stringResource(R.string.playback_history_delete_button), color = SettingsPalette.WarningText)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { itemToDelete = null }) {
-                    Text("取消", color = SettingsPalette.SecondaryText)
+                    Text(stringResource(R.string.common_cancel), color = SettingsPalette.SecondaryText)
                 }
             },
             containerColor = SettingsPalette.DialogSurface
@@ -174,6 +176,7 @@ private fun HistoryCard(
     onDeleteClick: () -> Unit
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
+    val context = LocalContext.current
 
     Card(
         modifier = Modifier
@@ -239,7 +242,7 @@ private fun HistoryCard(
                             .padding(horizontal = 6.dp, vertical = 3.dp)
                     ) {
                         Text(
-                            text = formatDuration(item.position),
+                            text = formatDuration(item.position, context),
                             fontSize = 11.sp,
                             color = primaryColor,
                             fontWeight = FontWeight.Medium
@@ -269,7 +272,7 @@ private fun HistoryCard(
             IconButton(onClick = onDeleteClick) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "删除",
+                    contentDescription = stringResource(R.string.playback_history_delete_button),
                     tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
                 )
             }
@@ -280,16 +283,16 @@ private fun HistoryCard(
 /**
  * 格式化播放时长
  */
-private fun formatDuration(positionMs: Long): String {
+private fun formatDuration(positionMs: Long, context: android.content.Context): String {
     val seconds = positionMs / 1000
     val hours = seconds / 3600
     val minutes = (seconds % 3600) / 60
     val secs = seconds % 60
 
     return if (hours > 0) {
-        String.format("已播放 %02d:%02d:%02d", hours, minutes, secs)
+        context.getString(com.fam4k007.videoplayer.R.string.playback_history_played_hms, hours, minutes, secs)
     } else {
-        String.format("已播放 %02d:%02d", minutes, secs)
+        context.getString(com.fam4k007.videoplayer.R.string.playback_history_played_ms, minutes, secs)
     }
 }
 

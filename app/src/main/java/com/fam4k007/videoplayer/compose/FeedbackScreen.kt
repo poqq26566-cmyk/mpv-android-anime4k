@@ -28,6 +28,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import com.fam4k007.videoplayer.R
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +40,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -60,10 +62,10 @@ fun FeedbackScreen(
     Scaffold(
         topBar = {
             ImmersiveTopAppBar(
-                title = { Text(text = "建议反馈", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+                title = { Text(text = stringResource(R.string.feedback_title), fontSize = 18.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 }
             )
@@ -105,10 +107,10 @@ private fun FeedbackContactCard(
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text("联系方式", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = SettingsPalette.PrimaryText)
+            Text(stringResource(R.string.feedback_contact), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = SettingsPalette.PrimaryText)
             Spacer(Modifier.height(12.dp))
 
-            ContactRow(icon = Icons.Default.Email, label = "作者邮箱", value = email)
+            ContactRow(icon = Icons.Default.Email, label = stringResource(R.string.feedback_email_label), value = email)
             Divider(modifier = Modifier.padding(vertical = 12.dp), color = SettingsPalette.Divider)
             ContactRow(icon = Icons.Default.OpenInNew, label = "GitHub Issue", value = githubUrl)
         }
@@ -151,11 +153,11 @@ private fun FeedbackActionCard(
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text("立即反馈", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = SettingsPalette.PrimaryText)
+            Text(stringResource(R.string.feedback_now), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = SettingsPalette.PrimaryText)
             Spacer(Modifier.height(12.dp))
 
             Text(
-                text = "选择你习惯的方式发声：",
+                text = stringResource(R.string.feedback_choose_method),
                 fontSize = 14.sp,
                 color = SettingsPalette.SecondaryText
             )
@@ -173,7 +175,7 @@ private fun FeedbackActionCard(
             ) {
                 Icon(Icons.Default.Send, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text(text = "写邮件至 $email")
+                Text(text = stringResource(R.string.feedback_email, email))
             }
 
             Spacer(Modifier.height(12.dp))
@@ -189,7 +191,7 @@ private fun FeedbackActionCard(
             ) {
                 Icon(Icons.Default.OpenInNew, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text(text = "前往 GitHub Issue")
+                Text(text = stringResource(R.string.feedback_github_issue))
             }
         }
     }
@@ -204,13 +206,13 @@ private fun FeedbackTipsCard() {
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text("反馈建议", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = SettingsPalette.PrimaryText)
+            Text(stringResource(R.string.feedback_guide), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = SettingsPalette.PrimaryText)
             Spacer(Modifier.height(12.dp))
-            Text("・ 如果有崩溃/异常，请附上复现步骤或截图；", color = SettingsPalette.PrimaryText)
+            Text(stringResource(R.string.feedback_guide_1), color = SettingsPalette.PrimaryText)
             Spacer(Modifier.height(6.dp))
-            Text("・ 功能提案欢迎附上期望交互或参考链接；", color = SettingsPalette.PrimaryText)
+            Text(stringResource(R.string.feedback_guide_2), color = SettingsPalette.PrimaryText)
             Spacer(Modifier.height(6.dp))
-            Text("・ 欢迎加入开发，共同打磨更好的播放体验。", color = SettingsPalette.PrimaryText)
+            Text(stringResource(R.string.feedback_guide_3), color = SettingsPalette.PrimaryText)
         }
     }
 }

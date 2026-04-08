@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fam4k007.videoplayer.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -83,7 +85,7 @@ fun SubtitleFilePickerDialog(
         } catch (e: Exception) {
             android.widget.Toast.makeText(
                 context,
-                "无法访问目录: ${e.message}",
+                context.getString(R.string.dialog_directory_error, e.message),
                 android.widget.Toast.LENGTH_SHORT
             ).show()
         } finally {
@@ -189,7 +191,7 @@ fun SubtitleFilePickerDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "选择字幕文件",
+                                text = stringResource(R.string.dialog_select_subtitle),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -315,7 +317,7 @@ fun SubtitleFilePickerDialog(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = "该目录下没有字幕文件",
+                                        text = stringResource(R.string.subtitle_no_files),
                                         fontSize = 16.sp,
                                         color = Color(0xFF999999),
                                         textAlign = TextAlign.Center

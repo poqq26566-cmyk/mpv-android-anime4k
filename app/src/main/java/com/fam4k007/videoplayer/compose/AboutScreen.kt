@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
@@ -40,10 +41,10 @@ fun AboutScreen(
     Scaffold(
         topBar = {
             ImmersiveTopAppBar(
-                title = { Text("关于", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.about_title), fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 }
             )
@@ -83,7 +84,7 @@ fun AboutScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "小喵Player",
+                        text = stringResource(R.string.about_app_name),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = SettingsPalette.PrimaryText
@@ -92,7 +93,7 @@ fun AboutScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Version $versionName",
+                        text = stringResource(R.string.about_version, versionName),
                         fontSize = 14.sp,
                         color = SettingsPalette.SecondaryText
                     )
@@ -100,7 +101,7 @@ fun AboutScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "基于 MPV 的 Anime4K 视频播放器",
+                        text = stringResource(R.string.about_app_desc),
                         fontSize = 14.sp,
                         color = SettingsPalette.SecondaryText
                     )
@@ -110,8 +111,8 @@ fun AboutScreen(
             // 功能列表
             AboutItem(
                 icon = Icons.Default.Code,
-                title = "开源主页",
-                subtitle = "访问 GitHub 仓库",
+                title = stringResource(R.string.about_github),
+                subtitle = stringResource(R.string.about_github_desc),
                 onClick = {
                     openUrl(context, "https://github.com/azxcvn/mpv-android-anime4k")
                 }
@@ -119,15 +120,15 @@ fun AboutScreen(
 
             AboutItem(
                 icon = Icons.Default.Description,
-                title = "许可证书",
-                subtitle = "查看开源许可",
+                title = stringResource(R.string.about_license),
+                subtitle = stringResource(R.string.about_license_desc),
                 onClick = onNavigateToLicense
             )
 
             AboutItem(
                 icon = Icons.Default.BugReport,
-                title = "意见反馈",
-                subtitle = "报告问题或建议",
+                title = stringResource(R.string.about_feedback),
+                subtitle = stringResource(R.string.about_feedback_desc),
                 onClick = onNavigateToFeedback
             )
         }

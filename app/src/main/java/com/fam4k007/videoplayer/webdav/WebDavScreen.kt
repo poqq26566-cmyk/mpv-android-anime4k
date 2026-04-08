@@ -18,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -27,6 +28,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
+import com.fam4k007.videoplayer.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -60,10 +62,10 @@ fun WebDavAccountListScreen(
     Scaffold(
         topBar = {
             ImmersiveTopAppBar(
-                title = { Text("WebDAV 账户管理", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.webdav_account_management), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 }
             )
@@ -73,7 +75,7 @@ fun WebDavAccountListScreen(
                 onClick = { showAddDialog = true },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "添加账户")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.webdav_add_account))
             }
         }
     ) { paddingValues ->
@@ -129,8 +131,8 @@ fun WebDavAccountListScreen(
     accountToDelete?.let { account ->
         AlertDialog(
             onDismissRequest = { accountToDelete = null },
-            title = { Text("删除账户") },
-            text = { Text("确定要删除账户 \"${account.displayName}\" 吗？") },
+            title = { Text(stringResource(R.string.webdav_delete_account)) },
+            text = { Text(stringResource(R.string.webdav_delete_confirm, account.displayName)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -139,12 +141,12 @@ fun WebDavAccountListScreen(
                         accountToDelete = null
                     }
                 ) {
-                    Text("删除", color = Color(0xFFD32F2F))
+                    Text(stringResource(R.string.webdav_delete), color = Color(0xFFD32F2F))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { accountToDelete = null }) {
-                    Text("取消")
+                    Text(stringResource(R.string.webdav_cancel))
                 }
             }
         )
@@ -173,7 +175,7 @@ private fun EmptyAccountsView(
         Spacer(modifier = Modifier.height(16.dp))
         
         Text(
-            text = "暂无 WebDAV 账户",
+            text = stringResource(R.string.webdav_no_accounts),
             fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
             color = Color.Gray
@@ -182,7 +184,7 @@ private fun EmptyAccountsView(
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "点击右下角添加按钮配置账户",
+            text = stringResource(R.string.webdav_no_accounts_hint),
             fontSize = 14.sp,
             color = Color.Gray
         )
@@ -197,7 +199,7 @@ private fun EmptyAccountsView(
         ) {
             Icon(Icons.Default.Add, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("添加账户")
+            Text(stringResource(R.string.webdav_add_account))
         }
     }
 }
@@ -271,7 +273,7 @@ private fun WebDavAccountCard(
                 if (!account.isAnonymous && account.account.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "账号: ${account.account}",
+                        text = stringResource(R.string.webdav_account_info, account.account),
                         fontSize = 12.sp,
                         color = Color.Gray,
                         maxLines = 1,
@@ -284,7 +286,7 @@ private fun WebDavAccountCard(
             IconButton(onClick = onDeleteClick) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "删除",
+                    contentDescription = stringResource(R.string.webdav_delete),
                     tint = Color(0xFFD32F2F)
                 )
             }

@@ -28,7 +28,7 @@ class FeedbackActivity : BaseActivity() {
         val activity = this
 
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(activity).themeName)
+            val themeColors = getThemeColors(activity, ThemeManager.getCurrentTheme(activity).themeName)
 
             MaterialTheme(
                 colorScheme = lightColorScheme(
@@ -67,7 +67,7 @@ class FeedbackActivity : BaseActivity() {
         } catch (e: Exception) {
             Toast.makeText(
                 this,
-                "无法打开浏览器",
+                getString(R.string.feedback_cannot_open_browser),
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -78,13 +78,13 @@ class FeedbackActivity : BaseActivity() {
             val intent = Intent(Intent.ACTION_SENDTO).apply {
                 data = Uri.parse("mailto:$email")
                 putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
-                putExtra(Intent.EXTRA_SUBJECT, "FAM4K007 播放器反馈")
+                putExtra(Intent.EXTRA_SUBJECT, getString(R.string.feedback_email_subject))
             }
             startActivity(intent)
         } catch (e: Exception) {
             Toast.makeText(
                 this,
-                "未找到可用的邮件应用",
+                getString(R.string.feedback_no_email_app),
                 Toast.LENGTH_SHORT
             ).show()
         }

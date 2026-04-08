@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.fam4k007.videoplayer.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -118,7 +120,7 @@ fun SkipSettingsDrawer(
                     ) {
                         // 标题
                         Text(
-                            text = "片头片尾设置",
+                            text = stringResource(R.string.skip_settings),
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -133,7 +135,7 @@ fun SkipSettingsDrawer(
 
                         // 说明文本
                         Text(
-                            text = "设置视频播放时自动跳过的片头和片尾时长\n注意：设置会应用到当前文件夹的所有视频",
+                            text = stringResource(R.string.skip_notice),
                             fontSize = 13.sp,
                             color = Color(0xAAFFFFFF),
                             modifier = Modifier.padding(bottom = 24.dp)
@@ -199,14 +201,14 @@ private fun AutoSkipChapterContent(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "自动跳过章节",
+                    text = stringResource(R.string.skip_auto_chapter),
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color.White
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "利用视频章节信息自动跳到正片（优先级高于手动时间设置）",
+                    text = stringResource(R.string.skip_auto_chapter_desc),
                     fontSize = 12.sp,
                     color = Color(0x88FFFFFF),
                     lineHeight = 16.sp
@@ -238,7 +240,7 @@ private fun AutoSkipChapterContent(
         ) {
             Column(modifier = Modifier.padding(top = 16.dp)) {
                 Text(
-                    text = "跳到第几个章节",
+                    text = stringResource(R.string.skip_which_chapter),
                     fontSize = 14.sp,
                     color = Color(0xCCFFFFFF),
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -249,7 +251,7 @@ private fun AutoSkipChapterContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "第 ${chapterIndex + 1} 个章节",
+                        text = stringResource(R.string.skip_chapter_n, chapterIndex + 1),
                         fontSize = 15.sp,
                         color = Color.White,
                         modifier = Modifier.weight(1f)
@@ -291,7 +293,7 @@ private fun AutoSkipChapterContent(
                 }
                 
                 Text(
-                    text = "提示：章节0通常是OP前，章节1通常是OP结束后正片开始",
+                    text = stringResource(R.string.skip_chapter_hint),
                     fontSize = 11.sp,
                     color = Color(0x66FFFFFF),
                     modifier = Modifier.padding(top = 4.dp),
@@ -324,7 +326,7 @@ private fun SkipIntroContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "跳过片头",
+                text = stringResource(R.string.skip_intro),
                 fontSize = 16.sp,
                 color = Color.White,
                 fontWeight = FontWeight.Medium
@@ -337,7 +339,7 @@ private fun SkipIntroContent(
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(
-                    text = "${skipIntro.toInt()} 秒",
+                    text = stringResource(R.string.skip_seconds, skipIntro.toInt()),
                     fontSize = 15.sp,
                     color = Color(0xFF64B5F6),
                     fontWeight = FontWeight.Bold
@@ -346,7 +348,7 @@ private fun SkipIntroContent(
         }
 
         Text(
-            text = "视频开始后前 ${skipIntro.toInt()} 秒将被跳过",
+            text = stringResource(R.string.skip_intro_desc, skipIntro.toInt()),
             fontSize = 12.sp,
             color = Color(0x99FFFFFF),
             modifier = Modifier.padding(top = 4.dp)
@@ -370,7 +372,7 @@ private fun SkipIntroContent(
         )
 
         Text(
-            text = "范围: 0 ~ 180 秒",
+            text = stringResource(R.string.skip_intro_range),
             fontSize = 11.sp,
             color = Color(0x66FFFFFF),
             modifier = Modifier.padding(top = 4.dp)
@@ -400,7 +402,7 @@ private fun SkipOutroContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "跳过片尾",
+                text = stringResource(R.string.skip_outro),
                 fontSize = 16.sp,
                 color = Color.White,
                 fontWeight = FontWeight.Medium
@@ -413,7 +415,7 @@ private fun SkipOutroContent(
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(
-                    text = "${skipOutro.toInt()} 秒",
+                    text = stringResource(R.string.skip_outro_seconds, skipOutro.toInt()),
                     fontSize = 15.sp,
                     color = Color(0xFF64B5F6),
                     fontWeight = FontWeight.Bold
@@ -422,7 +424,7 @@ private fun SkipOutroContent(
         }
 
         Text(
-            text = "视频结束前 ${skipOutro.toInt()} 秒将自动跳转下一集",
+            text = stringResource(R.string.skip_outro_desc, skipOutro.toInt()),
             fontSize = 12.sp,
             color = Color(0x99FFFFFF),
             modifier = Modifier.padding(top = 4.dp)
@@ -446,7 +448,7 @@ private fun SkipOutroContent(
         )
 
         Text(
-            text = "范围: 0 ~ 180 秒",
+            text = stringResource(R.string.skip_outro_range),
             fontSize = 11.sp,
             color = Color(0x66FFFFFF),
             modifier = Modifier.padding(top = 4.dp)

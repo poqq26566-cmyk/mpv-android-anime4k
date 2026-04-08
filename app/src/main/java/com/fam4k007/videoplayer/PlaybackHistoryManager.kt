@@ -288,7 +288,7 @@ class PlaybackHistoryManager(private val context: Context) {
                             position = jsonObject.getLong("position"),
                             duration = jsonObject.getLong("duration"),
                             lastPlayed = jsonObject.getLong("lastPlayed"),
-                            folderName = jsonObject.optString("folderName", "未知文件夹"),
+                            folderName = jsonObject.optString("folderName", context.getString(R.string.common_unknown_folder)),
                             danmuPath = jsonObject.optString("danmuPath", null).takeIf { it?.isNotEmpty() == true },
                             danmuVisible = jsonObject.optBoolean("danmuVisible", true),
                             danmuOffsetTime = jsonObject.optLong("danmuOffsetTime", 0L),

@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -135,7 +136,7 @@ fun VideoListScreenPaging(
                         IconButton(onClick = onNavigateBack) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "返回",
+                                contentDescription = stringResource(R.string.common_back),
                                 tint = Color.White
                             )
                         }
@@ -144,14 +145,14 @@ fun VideoListScreenPaging(
                         IconButton(onClick = { showSearch = true }) {
                             Icon(
                                 imageVector = Icons.Default.Search,
-                                contentDescription = "搜索",
+                                contentDescription = stringResource(R.string.common_search),
                                 tint = Color.White
                             )
                         }
                         IconButton(onClick = { showSortDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.Sort,
-                                contentDescription = "排序",
+                                contentDescription = stringResource(R.string.video_sort),
                                 tint = Color.White
                             )
                         }
@@ -178,9 +179,9 @@ fun VideoListScreenPaging(
             }
             
             if (filteredItems == null || (searchQuery.isNotEmpty() && lazyPagingItems.itemCount == 0)) {
-                EmptyState("搜索功能需要在数据库层面实现，请使用排序功能")
+                EmptyState(context.getString(R.string.paging_search_hint))
             } else if (lazyPagingItems.itemCount == 0) {
-                EmptyState("此文件夹中没有视频")
+                EmptyState(context.getString(R.string.video_list_no_videos))
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -253,7 +254,7 @@ fun VideoListScreenPaging(
                         .align(Alignment.BottomEnd)
                         .padding(16.dp)
                 ) {
-                    Icon(Icons.Default.Refresh, "刷新", tint = Color.White)
+                    Icon(Icons.Default.Refresh, stringResource(R.string.common_refresh), tint = Color.White)
                 }
             }
         }
@@ -311,7 +312,7 @@ private fun SearchTopBar(
                 decorationBox = { innerTextField ->
                     if (searchQuery.isEmpty()) {
                         Text(
-                            "搜索视频...",
+                            stringResource(R.string.video_list_search_hint),
                             color = Color.White.copy(alpha = 0.6f),
                             fontSize = 18.sp
                         )
@@ -325,7 +326,7 @@ private fun SearchTopBar(
             IconButton(onClick = onCloseSearch) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "关闭搜索",
+                    contentDescription = stringResource(R.string.content_desc_close_search),
                     tint = Color.White
                 )
             }
@@ -335,7 +336,7 @@ private fun SearchTopBar(
                 IconButton(onClick = { onSearchQueryChange("") }) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "清除",
+                        contentDescription = stringResource(R.string.video_list_clear),
                         tint = Color.White
                     )
                 }
@@ -448,7 +449,7 @@ private fun VideoItem(
             IconButton(onClick = onMoreClick) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
-                    contentDescription = "更多",
+                    contentDescription = stringResource(R.string.content_desc_more),
                     tint = Color(0xFF757575)
                 )
             }
@@ -478,14 +479,14 @@ private fun VideoInfoDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                InfoRow("文件大小", formatFileSize(video.size))
-                InfoRow("时长", formatDuration(video.duration))
-                InfoRow("路径", video.path)
+                InfoRow(stringResource(R.string.video_file_size), formatFileSize(video.size))
+                InfoRow(stringResource(R.string.video_duration), formatDuration(video.duration))
+                InfoRow(stringResource(R.string.video_path), video.path)
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("关闭")
+                Text(stringResource(R.string.common_close))
             }
         }
     )
@@ -571,27 +572,27 @@ private fun VideoSortDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("排序方式", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.video_sort_by), fontWeight = FontWeight.Bold)
         },
         text = {
             Column {
                 SortOption(
-                    text = "名称 (升序)",
+                    text = stringResource(R.string.video_list_name_asc),
                     isSelected = currentSortType == "NAME" && currentSortOrder == "ASCENDING",
                     onClick = { onSortSelected("NAME", "ASCENDING") }
                 )
                 SortOption(
-                    text = "名称 (降序)",
+                    text = stringResource(R.string.video_list_name_desc),
                     isSelected = currentSortType == "NAME" && currentSortOrder == "DESCENDING",
                     onClick = { onSortSelected("NAME", "DESCENDING") }
                 )
                 SortOption(
-                    text = "日期 (升序)",
+                    text = stringResource(R.string.video_list_date_asc),
                     isSelected = currentSortType == "DATE" && currentSortOrder == "ASCENDING",
                     onClick = { onSortSelected("DATE", "ASCENDING") }
                 )
                 SortOption(
-                    text = "日期 (降序)",
+                    text = stringResource(R.string.video_list_date_desc),
                     isSelected = currentSortType == "DATE" && currentSortOrder == "DESCENDING",
                     onClick = { onSortSelected("DATE", "DESCENDING") }
                 )
@@ -599,7 +600,7 @@ private fun VideoSortDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )

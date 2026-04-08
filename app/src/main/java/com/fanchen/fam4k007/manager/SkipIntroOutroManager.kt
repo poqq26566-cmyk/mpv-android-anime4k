@@ -3,6 +3,7 @@ package com.fanchen.fam4k007.manager
 import android.content.Context
 import android.util.Log
 import com.fanchen.fam4k007.manager.compose.ComposeOverlayManager
+import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.manager.PreferencesManager
 import com.fam4k007.videoplayer.utils.DialogUtils
 
@@ -129,7 +130,7 @@ class SkipIntroOutroManager(
                 val (chapterTitle, chapterTime) = chapters[skipToChapterIndex]
                 hasSkippedIntro = true
                 seekTo(chapterTime.toInt())
-                DialogUtils.showToastShort(context, "已自动跳到章节：$chapterTitle")
+                DialogUtils.showToastShort(context, context.getString(R.string.player_auto_skip_chapter, chapterTitle))
                 Log.d(TAG, "Auto-skipped to chapter[$skipToChapterIndex]: $chapterTitle at ${chapterTime}s")
                 return  // 跳过后不再执行手动时间跳过
             } else {
@@ -145,7 +146,7 @@ class SkipIntroOutroManager(
             if (position < skipIntro.toDouble() && position < maxDetectionTime) {
                 hasSkippedIntro = true
                 seekTo(skipIntro)
-                DialogUtils.showToastShort(context, "已跳过片头 $skipIntro 秒")
+                DialogUtils.showToastShort(context, context.getString(R.string.player_skip_intro_seconds, skipIntro))
                 Log.d(TAG, "Auto-skipped intro: $skipIntro seconds, position was: $position")
             }
         }
@@ -161,11 +162,11 @@ class SkipIntroOutroManager(
                 // 返回true表示有下一集并已开始播放，返回false表示没有下一集
                 val playedNext = onOutroReached()
                 if (playedNext) {
-                    DialogUtils.showToastShort(context, "已跳过片尾，播放下一集")
+                    DialogUtils.showToastShort(context, context.getString(R.string.player_skip_outro_next))
                     Log.d(TAG, "Auto-skipped outro and playing next video")
                 } else {
                     // 没有下一集，跳到视频最后
-                    DialogUtils.showToastShort(context, "已是最后一集，跳过片尾")
+                    DialogUtils.showToastShort(context, context.getString(R.string.player_skip_outro_last))
                     Log.d(TAG, "No next video, skipped to end")
                 }
             }

@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.PlaybackHistoryManager
@@ -98,7 +99,7 @@ fun HomeScreen(
             
             // 播放本地视频按钮（给文本留出空间）
             GradientButton(
-                text = "播放本地视频",
+                text = stringResource(R.string.home_play_local),
                 onClick = {
                     context.startActivity(Intent(context, VideoBrowserComposeActivity::class.java))
                     (context as? android.app.Activity)?.overridePendingTransition(
@@ -162,13 +163,13 @@ fun TopBar(
         // 左上角登录按钮
         IconWithBackground(
             icon = Icons.Default.Person,
-            contentDescription = "登录",
+            contentDescription = stringResource(R.string.home_login),
             onClick = onLoginClick
         )
         
         // 中间标题
         Text(
-            text = "小喵Player",
+            text = stringResource(R.string.home_app_name),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF222222)
@@ -177,7 +178,7 @@ fun TopBar(
         // 右上角设置按钮
         IconWithBackground(
             icon = Icons.Default.Settings,
-            contentDescription = "设置",
+            contentDescription = stringResource(R.string.settings),
             onClick = onSettingsClick
         )
     }
@@ -201,7 +202,7 @@ fun LogoSection(
         // Logo 图片（直接显示图标，不带背景框）
         Icon(
             painter = painterResource(id = R.drawable.ic_continue_play),
-            contentDescription = "继续播放",
+            contentDescription = stringResource(R.string.home_continue_play),
             modifier = Modifier
                 .size(120.dp)
                 .shadow(
@@ -215,7 +216,7 @@ fun LogoSection(
                     } else {
                         android.widget.Toast.makeText(
                             context,
-                            "暂无播放记录",
+                            context.getString(R.string.home_no_history),
                             android.widget.Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -231,7 +232,7 @@ fun LogoSection(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "继续播放: ${lastVideo.fileName}",
+                    text = stringResource(R.string.home_continue_video, lastVideo.fileName),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF666666),

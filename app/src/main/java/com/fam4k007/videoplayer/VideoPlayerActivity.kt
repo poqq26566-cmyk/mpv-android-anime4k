@@ -226,14 +226,14 @@ class VideoPlayerActivity : AppCompatActivity(),
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error parsing video URI", e)
-            DialogUtils.showToastShort(this, "解析视频地址失败: ${e.message}")
+            DialogUtils.showToastShort(this, getString(R.string.player_parse_failed, e.message ?: ""))
             finish()
             return
         }
         
         if (videoUri == null) {
             Log.e(TAG, "Video URI is null")
-            DialogUtils.showToastShort(this, "无效的视频路径")
+            DialogUtils.showToastShort(this, getString(R.string.player_invalid_path))
             finish()
             return
         }
@@ -309,7 +309,7 @@ class VideoPlayerActivity : AppCompatActivity(),
             }, 100) // 延迟 100ms 确保 MPV 完全就绪
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize MPV", e)
-            DialogUtils.showToastLong(this, "播放器初始化失败: ${e.message}\n\n如果问题持续存在，请重启应用")
+            DialogUtils.showToastLong(this, getString(R.string.player_init_failed_msg, e.message ?: ""))
             finish()
             return
         }
@@ -499,7 +499,7 @@ class VideoPlayerActivity : AppCompatActivity(),
         )
         
         if (!playbackEngine.initialize()) {
-            DialogUtils.showToastLong(this, "播放器初始化失败")
+            DialogUtils.showToastLong(this, getString(R.string.player_init_failed))
             finish()
             return
         }
@@ -902,7 +902,7 @@ class VideoPlayerActivity : AppCompatActivity(),
         btnDanmakuToggle.setOnClickListener {
             val hasLoadedDanmaku = danmakuManager.getCurrentDanmakuPath() != null
             if (!hasLoadedDanmaku) {
-                DialogUtils.showToastShort(this, "请先加载弹幕文件")
+                DialogUtils.showToastShort(this, getString(R.string.player_load_danmaku_first))
             } else {
                 // 切换trackSelected状态(参考DanDanPlay的selectTrack/deselectTrack)
                 val currentVisible = danmakuManager.isVisible()
@@ -1201,10 +1201,10 @@ class VideoPlayerActivity : AppCompatActivity(),
                 // 设置标志，防止 restoreSubtitlePreferences 重复加载
                 hasAutoLoadedSubtitle = true
                 
-                DialogUtils.showToastShort(this, "已自动加载字幕: ${foundSubtitle.name}")
+                DialogUtils.showToastShort(this, getString(R.string.player_auto_load_subtitle, foundSubtitle.name))
             } catch (e: Exception) {
                 com.fam4k007.videoplayer.utils.Logger.w(TAG, "Failed to auto-load subtitle", e)
-                DialogUtils.showToastShort(this, "字幕加载失败: ${e.message}")
+                DialogUtils.showToastShort(this, getString(R.string.player_subtitle_load_failed, e.message ?: ""))
             }
             
             com.fam4k007.videoplayer.utils.Logger.d(TAG, "===== Auto-load subtitle end =====")
@@ -1316,7 +1316,7 @@ class VideoPlayerActivity : AppCompatActivity(),
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error loading danmaku", e)
-            DialogUtils.showToastShort(this, "弹幕加载失败: ${e.message}")
+            DialogUtils.showToastShort(this, getString(R.string.player_danmaku_load_failed, e.message ?: ""))
         }
     }
     
@@ -1352,7 +1352,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                         val fileName = danmakuPath?.substringAfterLast("/") ?: "弹幕文件"
                         
                         // 显示加载成功提示，提醒用户需要手动显示
-                        DialogUtils.showToastShort(this, "已加载弹幕: $fileName\n点击弹幕按钮显示")
+                        DialogUtils.showToastShort(this, getString(R.string.player_danmaku_loaded, fileName))
                         
                         // 根据实际的 trackSelected 状态更新按钮
                         val btnDanmakuToggle = findViewById<ImageView>(R.id.btnDanmakuToggle)
@@ -1581,7 +1581,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                 updateEpisodeButtons()
             }
         } else {
-            DialogUtils.showToastShort(this, "已经是第一集了")
+            DialogUtils.showToastShort(this, getString(R.string.player_first_episode))
         }
     }
     
@@ -1598,7 +1598,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                 updateEpisodeButtons()
             }
         } else {
-            DialogUtils.showToastShort(this, "已经是最后一集了")
+            DialogUtils.showToastShort(this, getString(R.string.player_last_episode))
         }
     }
     
@@ -1893,7 +1893,7 @@ class VideoPlayerActivity : AppCompatActivity(),
         lifecycleScope.launch {
             try {
                 // 显示加载提示
-                DialogUtils.showToastShort(this@VideoPlayerActivity, "正在加载弹幕...")
+                DialogUtils.showToastShort(this@VideoPlayerActivity, getString(R.string.player_loading_danmaku))
                 
                 // 获取弹幕
                 val api = com.fam4k007.videoplayer.dandanplay.DanDanPlayApi()
@@ -1956,19 +1956,19 @@ class VideoPlayerActivity : AppCompatActivity(),
                                 Logger.d(TAG, "Network danmaku updated in history")
                             }
                         } else {
-                            DialogUtils.showToastLong(this@VideoPlayerActivity, "弹幕加载失败")
+                            DialogUtils.showToastLong(this@VideoPlayerActivity, getString(R.string.player_no_danmaku_loaded))
                         }
                     },
                     onFailure = { e ->
                         DialogUtils.showToastLong(
                             this@VideoPlayerActivity,
-                            "弹幕加载失败: ${e.message}"
+                            getString(R.string.player_no_danmaku_loaded)
                         )
                     }
                 )
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to load network danmaku", e)
-                DialogUtils.showToastLong(this@VideoPlayerActivity, "弹幕加载异常: ${e.message}")
+                DialogUtils.showToastLong(this@VideoPlayerActivity, getString(R.string.player_danmaku_exception, e.message ?: ""))
             }
         }
     }
@@ -1993,7 +1993,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                 // 获取当前视频文件路径
                 val uri = videoUri
                 if (uri == null) {
-                    DialogUtils.showToastShort(this@VideoPlayerActivity, "无法获取视频URI")
+                    DialogUtils.showToastShort(this@VideoPlayerActivity, getString(R.string.player_cannot_get_uri))
                     return@launch
                 }
                 
@@ -2019,18 +2019,18 @@ class VideoPlayerActivity : AppCompatActivity(),
                 }
                 
                 if (videoPath.isNullOrEmpty()) {
-                    DialogUtils.showToastShort(this@VideoPlayerActivity, "无法获取视频文件路径")
+                    DialogUtils.showToastShort(this@VideoPlayerActivity, getString(R.string.player_cannot_get_path))
                     return@launch
                 }
                 
                 val videoFile = File(videoPath)
                 if (!videoFile.exists()) {
-                    DialogUtils.showToastShort(this@VideoPlayerActivity, "视频文件不存在: $videoPath")
+                    DialogUtils.showToastShort(this@VideoPlayerActivity, getString(R.string.player_file_not_exist, videoPath))
                     return@launch
                 }
                 
                 // 显示匹配提示
-                DialogUtils.showToastShort(this@VideoPlayerActivity, "正在匹配弹幕，请稍候...")
+                DialogUtils.showToastShort(this@VideoPlayerActivity, getString(R.string.player_matching_danmaku))
                 
                 val api = com.fam4k007.videoplayer.dandanplay.DanDanPlayApi()
                 
@@ -2053,7 +2053,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                 )
                 
                 if (!matchResponse.isMatched || matchResponse.matches.isNullOrEmpty()) {
-                    DialogUtils.showToastLong(this@VideoPlayerActivity, "未找到匹配的弹幕")
+                    DialogUtils.showToastLong(this@VideoPlayerActivity, getString(R.string.player_no_danmaku_match))
                     return@launch
                 }
                 
@@ -2072,7 +2072,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                 
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to match danmaku", e)
-                DialogUtils.showToastLong(this@VideoPlayerActivity, "匹配失败: ${e.message}")
+                DialogUtils.showToastLong(this@VideoPlayerActivity, getString(R.string.player_match_failed, e.message ?: ""))
             }
         }
     }
@@ -2158,7 +2158,7 @@ class VideoPlayerActivity : AppCompatActivity(),
     private fun showVideoListDrawer() {
         // 如果没有视频列表，提示用户
         if (currentVideoList.isEmpty()) {
-            DialogUtils.showToastShort(this, "当前没有可用的视频列表")
+            DialogUtils.showToastShort(this, getString(R.string.player_no_video_list))
             return
         }
         

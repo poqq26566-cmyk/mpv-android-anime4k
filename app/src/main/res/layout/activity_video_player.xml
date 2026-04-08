@@ -705,7 +705,7 @@
             android:id="@+id/tvResumePromptText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="已为您恢复上次播放进度"
+            android:text="@string/player_resume_prompt"
             android:textColor="#FFFFFF"
             android:textSize="12sp"
             android:layout_marginEnd="10dp" />
@@ -715,7 +715,7 @@
             android:id="@+id/btnResumePromptConfirm"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="重新开始"
+            android:text="@string/player_restart"
             android:textColor="@color/primary"
             android:textSize="12sp"
             android:textStyle="bold"

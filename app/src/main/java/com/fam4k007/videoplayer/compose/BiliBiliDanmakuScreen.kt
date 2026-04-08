@@ -18,10 +18,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.compose.SettingsColors as SettingsPalette
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,10 +60,10 @@ fun BiliBiliDanmakuScreen(
     Scaffold(
         topBar = {
             ImmersiveTopAppBar(
-                title = { Text("B站弹幕下载", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.bilibili_danmaku_title), fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 }
             )
@@ -79,18 +81,18 @@ fun BiliBiliDanmakuScreen(
             // 设置保存文件夹
             SettingCard(
                 icon = Icons.Default.Folder,
-                title = "设置保存文件夹",
-                subtitle = currentFolderUri?.let { 
-                    it.lastPathSegment?.substringAfter(':') ?: "已设置" 
-                } ?: "点击选择文件夹",
+                title = stringResource(R.string.bilibili_danmaku_set_folder),
+                subtitle = currentFolderUri?.let {
+                    it.lastPathSegment?.substringAfter(':') ?: stringResource(R.string.bilibili_danmaku_folder_set) 
+                } ?: stringResource(R.string.bilibili_danmaku_click_select),
                 onClick = { folderPickerLauncher.launch(currentFolderUri) }
             )
 
             // 下载弹幕
             SettingCard(
                 icon = Icons.Default.CloudDownload,
-                title = "下载弹幕",
-                subtitle = if (currentFolderUri != null) "点击输入视频链接" else "请先设置保存文件夹",
+                title = stringResource(R.string.bilibili_danmaku_download),
+                subtitle = if (currentFolderUri != null) stringResource(R.string.bilibili_danmaku_click_input) else stringResource(R.string.bilibili_danmaku_set_folder_first),
                 onClick = {
                     if (currentFolderUri != null) {
                         showDownloadDialog = true
@@ -112,7 +114,7 @@ fun BiliBiliDanmakuScreen(
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        text = "使用说明",
+                        text = stringResource(R.string.bilibili_danmaku_instructions),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = SettingsPalette.PrimaryText
@@ -255,14 +257,14 @@ private fun DownloadDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("下载B站弹幕", color = SettingsPalette.PrimaryText, fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.bilibili_danmaku_download_title), color = SettingsPalette.PrimaryText, fontWeight = FontWeight.Bold) },
         text = {
             Column {
                 OutlinedTextField(
                     value = url,
                     onValueChange = { url = it },
-                    label = { Text("视频链接") },
-                    placeholder = { Text("输入B站视频或番剧链接") },
+                    label = { Text(stringResource(R.string.bilibili_danmaku_link_label)) },
+                    placeholder = { Text(stringResource(R.string.bilibili_danmaku_link_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = false,
                     maxLines = 3,
@@ -283,7 +285,7 @@ private fun DownloadDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text("下载模式", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = SettingsPalette.PrimaryText)
+                Text(stringResource(R.string.bilibili_danmaku_download_mode), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = SettingsPalette.PrimaryText)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
@@ -298,7 +300,7 @@ private fun DownloadDialog(
                         onClick = { downloadWholeSeason = true },
                         colors = RadioButtonDefaults.colors(selectedColor = accentColor)
                     )
-                    Text("整季下载", modifier = Modifier.padding(start = 8.dp), color = SettingsPalette.PrimaryText)
+                    Text(stringResource(R.string.bilibili_danmaku_season_download), modifier = Modifier.padding(start = 8.dp), color = SettingsPalette.PrimaryText)
                 }
 
                 Row(
@@ -313,7 +315,7 @@ private fun DownloadDialog(
                         onClick = { downloadWholeSeason = false },
                         colors = RadioButtonDefaults.colors(selectedColor = accentColor)
                     )
-                    Text("单集下载", modifier = Modifier.padding(start = 8.dp), color = SettingsPalette.PrimaryText)
+                    Text(stringResource(R.string.bilibili_danmaku_single_download), modifier = Modifier.padding(start = 8.dp), color = SettingsPalette.PrimaryText)
                 }
             }
         },
@@ -326,12 +328,12 @@ private fun DownloadDialog(
                 },
                 enabled = url.isNotBlank()
             ) {
-                Text("下载", color = SettingsPalette.AccentText)
+                Text(stringResource(R.string.bilibili_danmaku_download_btn), color = SettingsPalette.AccentText)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消", color = SettingsPalette.SecondaryText)
+                Text(stringResource(R.string.common_cancel), color = SettingsPalette.SecondaryText)
             }
         },
         containerColor = SettingsPalette.DialogSurface
@@ -355,7 +357,7 @@ private fun DownloadProgressDialog(
         }, // 下载过程中不允许手动关闭，完成后可以关闭
         title = { 
             Text(
-                "正在下载弹幕", 
+                stringResource(R.string.bilibili_danmaku_downloading), 
                 fontSize = 16.sp, 
                 fontWeight = FontWeight.Bold,
                 color = SettingsPalette.PrimaryText
@@ -370,7 +372,7 @@ private fun DownloadProgressDialog(
                 // 当前进度
                 if (progress.total > 0) {
                     Text(
-                        text = "进度: ${progress.current} / ${progress.total}",
+                        text = stringResource(R.string.bilibili_danmaku_progress, progress.current, progress.total),
                         fontSize = 14.sp,
                         color = SettingsPalette.SecondaryText,
                         fontWeight = FontWeight.Medium
@@ -391,7 +393,7 @@ private fun DownloadProgressDialog(
                 } else {
                     // 准备中
                     Text(
-                        text = "准备下载中...",
+                        text = stringResource(R.string.bilibili_danmaku_preparing),
                         fontSize = 14.sp,
                         color = SettingsPalette.SecondaryText
                     )
@@ -413,7 +415,7 @@ private fun DownloadProgressDialog(
                 // 当前下载的文件
                 if (progress.currentTitle.isNotEmpty()) {
                     Text(
-                        text = "当前: ${progress.currentTitle}",
+                        text = stringResource(R.string.bilibili_danmaku_current, progress.currentTitle),
                         fontSize = 13.sp,
                         color = SettingsPalette.SecondaryText,
                         maxLines = 2,
@@ -437,7 +439,7 @@ private fun DownloadProgressDialog(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "成功: ${progress.successCount}",
+                            text = stringResource(R.string.bilibili_danmaku_success_count, progress.successCount),
                             fontSize = 13.sp,
                             color = SettingsPalette.SecondaryText
                         )
@@ -452,7 +454,7 @@ private fun DownloadProgressDialog(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "失败: ${progress.failedCount}",
+                            text = stringResource(R.string.bilibili_danmaku_failed_count, progress.failedCount),
                             fontSize = 13.sp,
                             color = SettingsPalette.SecondaryText
                         )
@@ -463,7 +465,7 @@ private fun DownloadProgressDialog(
         confirmButton = {
             if (isCompleted) {
                 TextButton(onClick = onDismiss) {
-                    Text("完成", color = SettingsPalette.AccentText, fontSize = 14.sp)
+                    Text(stringResource(R.string.bilibili_danmaku_done), color = SettingsPalette.AccentText, fontSize = 14.sp)
                 }
             }
         },

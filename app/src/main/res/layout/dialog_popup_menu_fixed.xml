@@ -32,7 +32,7 @@
         android:id="@+id/scrollHint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="可上下滑动"
+        android:text="@string/ui_scroll_hint"
         android:textSize="11sp"
         android:textColor="?attr/colorDialogTextSecondary"
         android:gravity="center"

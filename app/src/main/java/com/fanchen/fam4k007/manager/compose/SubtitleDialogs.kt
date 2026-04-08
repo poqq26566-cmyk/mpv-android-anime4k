@@ -33,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.fam4k007.videoplayer.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -48,8 +50,8 @@ data class SystemFont(
  * 系统预设字体列表
  */
 val SYSTEM_FONTS = listOf(
-    SystemFont("Noto Sans CJK SC", "思源黑体"),
-    SystemFont("Noto Serif CJK SC", "思源宋体")
+    SystemFont("Noto Sans CJK SC", "subtitle_font_noto_sans"),
+    SystemFont("Noto Serif CJK SC", "subtitle_font_noto_serif")
 )
 
 /**
@@ -176,7 +178,7 @@ fun SubtitleSettingsDrawer(
                     ) {
                     // 标题
                     Text(
-                        text = "更多设置",
+                        text = stringResource(R.string.subtitle_more_settings),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
@@ -198,7 +200,7 @@ fun SubtitleSettingsDrawer(
                         // 字幕延迟设置
                         item {
                             ExpandableSection(
-                                title = "字幕延迟设置",
+                                title = stringResource(R.string.subtitle_delay_settings),
                                 isExpanded = expandedSection == "delay",
                                 onToggle = { expandedSection = if (expandedSection == "delay") null else "delay" }
                             ) {
@@ -212,7 +214,7 @@ fun SubtitleSettingsDrawer(
                         // 字幕样式设置
                         item {
                             ExpandableSection(
-                                title = "字幕样式设置",
+                                title = stringResource(R.string.subtitle_style_settings),
                                 isExpanded = expandedSection == "style",
                                 onToggle = { expandedSection = if (expandedSection == "style") null else "style" }
                             ) {
@@ -234,7 +236,7 @@ fun SubtitleSettingsDrawer(
                         // 字幕杂项设置
                         item {
                             ExpandableSection(
-                                title = "字幕杂项设置",
+                                title = stringResource(R.string.subtitle_misc_settings),
                                 isExpanded = expandedSection == "misc",
                                 onToggle = { expandedSection = if (expandedSection == "misc") null else "misc" }
                             ) {
@@ -250,7 +252,7 @@ fun SubtitleSettingsDrawer(
                         // 字幕字体设置
                         item {
                             ExpandableSection(
-                                title = "字幕字体设置",
+                                title = stringResource(R.string.subtitle_font_settings),
                                 isExpanded = expandedSection == "font",
                                 onToggle = { expandedSection = if (expandedSection == "font") null else "font" }
                             ) {
@@ -384,7 +386,7 @@ fun SubtitleDelayContent(
         )
         
         Text(
-            text = "范围: -60.0 ~ +60.0 秒",
+            text = stringResource(R.string.subtitle_delay_range),
             fontSize = 11.sp,
             color = Color(0x99FFFFFF),
             modifier = Modifier.padding(top = 4.dp)
@@ -450,7 +452,7 @@ fun SubtitleDelayContent(
                 contentColor = Color(0xFF64B5F6)
             )
         ) {
-            Text("重置为 0")
+            Text(stringResource(R.string.subtitle_reset_to_zero))
         }
     }
 }
@@ -499,7 +501,7 @@ fun SubtitleStyleContent(
                 modifier = Modifier.padding(end = 6.dp)
             )
             Text(
-                text = "若未生效，请在更多中开启样式覆盖",
+                text = stringResource(R.string.subtitle_style_hint),
                 fontSize = 11.sp,
                 color = Color(0xFFCCCCCC),
                 maxLines = 1,
@@ -509,7 +511,7 @@ fun SubtitleStyleContent(
         
         // 字幕颜色
         ColorPickerSection(
-            title = "字幕颜色",
+            title = stringResource(R.string.subtitle_text_color),
             currentColor = currentTextColor,
             isExpanded = expandedColorSection == "text",
             onToggle = { expandedColorSection = if (expandedColorSection == "text") null else "text" },
@@ -526,7 +528,7 @@ fun SubtitleStyleContent(
         
         // 字幕背景颜色
         ColorPickerSection(
-            title = "背景颜色",
+            title = stringResource(R.string.subtitle_bg_color),
             currentColor = currentBackColor,
             isExpanded = expandedColorSection == "background",
             onToggle = { expandedColorSection = if (expandedColorSection == "background") null else "background" },
@@ -543,7 +545,7 @@ fun SubtitleStyleContent(
         
         // 描边颜色
         ColorPickerSection(
-            title = "描边颜色",
+            title = stringResource(R.string.subtitle_border_color),
             currentColor = currentBorderColor,
             isExpanded = expandedColorSection == "border",
             onToggle = { expandedColorSection = if (expandedColorSection == "border") null else "border" },
@@ -590,7 +592,7 @@ fun SubtitleStyleContent(
             ),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("重置所有样式为默认值")
+            Text(stringResource(R.string.subtitle_reset_all_styles))
         }
     }
 }
@@ -824,7 +826,7 @@ fun BorderSizeSection(
             .padding(12.dp)
     ) {
         Text(
-            text = "描边粗细：${borderSize.toInt()}",
+            text = stringResource(R.string.subtitle_border_size, borderSize.toInt()),
             fontSize = 14.sp,
             color = Color.White,
             fontWeight = FontWeight.Medium
@@ -858,7 +860,7 @@ fun BorderSizeSection(
                 contentColor = Color(0xFF64B5F6)
             )
         ) {
-            Text("重置为 3")
+            Text(stringResource(R.string.subtitle_reset_to_3))
         }
     }
 }
@@ -888,7 +890,7 @@ fun BorderStyleSection(
             .padding(12.dp)
     ) {
         Text(
-            text = "描边模式",
+            text = stringResource(R.string.subtitle_border_mode),
             fontSize = 14.sp,
             color = Color.White,
             fontWeight = FontWeight.Medium
@@ -898,8 +900,8 @@ fun BorderStyleSection(
 
         // 三种模式的单选按钮（添加切换动画）
         BorderStyleOption(
-            title = "模式A",
-            description = "通过描边颜色项修改",
+            title = stringResource(R.string.subtitle_mode_a),
+            description = stringResource(R.string.subtitle_mode_a_desc),
             isSelected = selectedStyle == "outline-and-shadow",
             onClick = {
                 selectedStyle = "outline-and-shadow"
@@ -910,8 +912,8 @@ fun BorderStyleSection(
         Spacer(modifier = Modifier.height(8.dp))
 
         BorderStyleOption(
-            title = "模式B",
-            description = "通过描边颜色项修改",
+            title = stringResource(R.string.subtitle_mode_b),
+            description = stringResource(R.string.subtitle_mode_b_desc),
             isSelected = selectedStyle == "opaque-box",
             onClick = {
                 selectedStyle = "opaque-box"
@@ -922,8 +924,8 @@ fun BorderStyleSection(
         Spacer(modifier = Modifier.height(8.dp))
 
         BorderStyleOption(
-            title = "模式C",
-            description = "通过背景颜色项修改",
+            title = stringResource(R.string.subtitle_mode_c),
+            description = stringResource(R.string.subtitle_mode_c_desc),
             isSelected = selectedStyle == "background-box",
             onClick = {
                 selectedStyle = "background-box"
@@ -1050,15 +1052,13 @@ fun SubtitleMiscContent(
     Column {
         // 字幕大小
         Text(
-            text = "字幕大小：${(animatedScale * 100).toInt()}%",
-            fontSize = 14.sp,
+                text = stringResource(R.string.subtitle_size, (animatedScale * 100).toInt()),
             color = Color.White,
             fontWeight = FontWeight.Medium
         )
         
         Text(
-            text = "范围: 50% ~ 300%",
-            fontSize = 11.sp,
+                text = stringResource(R.string.subtitle_size_range),
             color = Color(0x99FFFFFF),
             modifier = Modifier.padding(top = 2.dp)
         )
@@ -1084,14 +1084,14 @@ fun SubtitleMiscContent(
 
         // 字幕垂直位置
         Text(
-            text = "字幕垂直位置：${position.toInt()}",
+            text = stringResource(R.string.subtitle_position, position.toInt()),
             fontSize = 14.sp,
             color = Color.White,
             fontWeight = FontWeight.Medium
         )
         
         Text(
-            text = "范围: 0 (顶部) ~ 100 (底部)",
+            text = stringResource(R.string.subtitle_position_range),
             fontSize = 11.sp,
             color = Color(0x99FFFFFF),
             modifier = Modifier.padding(top = 2.dp)
@@ -1127,7 +1127,7 @@ fun SubtitleMiscContent(
                 contentColor = Color(0xFF64B5F6)
             )
         ) {
-            Text("重置默认值 (100%, 位置100)")
+            Text(stringResource(R.string.subtitle_reset_default))
         }
     }
 }
@@ -1174,7 +1174,7 @@ fun SubtitleFontContent(composeOverlayManager: com.fanchen.fam4k007.manager.comp
                 .padding(16.dp)
         ) {
             Text(
-                text = "当前字体",
+                text = stringResource(R.string.subtitle_current_font),
                 fontSize = 13.sp,
                 color = Color(0xFF9E9E9E),
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -1209,13 +1209,13 @@ fun SubtitleFontContent(composeOverlayManager: com.fanchen.fam4k007.manager.comp
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "选择字体",
+                            text = stringResource(R.string.subtitle_select_font),
                             fontSize = 15.sp,
                             color = Color.White,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = "适用于所有字幕格式",
+                            text = stringResource(R.string.subtitle_font_all_formats),
                             fontSize = 12.sp,
                             color = Color(0xFF9E9E9E),
                             modifier = Modifier.padding(top = 2.dp)
@@ -1251,8 +1251,13 @@ fun SubtitleFontContent(composeOverlayManager: com.fanchen.fam4k007.manager.comp
                                     systemFontName = font.name
                                     preferencesManager.setSystemFontName(font.name)
                                     expandedSystemFonts = false
+                                    val fontDisplayName = when(font.displayName) {
+                                        "subtitle_font_noto_sans" -> context.getString(R.string.subtitle_font_noto_sans)
+                                        "subtitle_font_noto_serif" -> context.getString(R.string.subtitle_font_noto_serif)
+                                        else -> font.displayName
+                                    }
                                     Toast
-                                        .makeText(context, "已切换到: ${font.displayName}\n重新播放生效", Toast.LENGTH_SHORT)
+                                        .makeText(context, context.getString(R.string.subtitle_font_switched, fontDisplayName), Toast.LENGTH_SHORT)
                                         .show()
                                 },
                             shape = RoundedCornerShape(8.dp),
@@ -1305,7 +1310,7 @@ fun SubtitleFontContent(composeOverlayManager: com.fanchen.fam4k007.manager.comp
         
         // 提示信息
         Text(
-            text = "💡 提示：字体更改需要重新播放视频才能生效",
+            text = stringResource(R.string.subtitle_font_hint),
             fontSize = 12.sp,
             color = Color(0xFF9E9E9E),
             modifier = Modifier

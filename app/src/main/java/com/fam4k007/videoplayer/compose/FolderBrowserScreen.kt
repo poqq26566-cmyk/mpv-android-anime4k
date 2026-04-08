@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fam4k007.videoplayer.R
+import androidx.compose.ui.res.stringResource
 import com.fam4k007.videoplayer.VideoFolder
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,7 +67,7 @@ fun FolderBrowserScreen(
             ImmersiveTopAppBar(
                 title = {
                     Text(
-                        "文件夹",
+                        stringResource(R.string.folder_browser_title),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -76,7 +77,7 @@ fun FolderBrowserScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "返回",
+                            contentDescription = stringResource(R.string.common_back),
                             tint = Color.White
                         )
                     }
@@ -86,7 +87,7 @@ fun FolderBrowserScreen(
                         IconButton(onClick = { showSortDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.Sort,
-                                contentDescription = "排序",
+                                contentDescription = stringResource(R.string.folder_sort),
                                 tint = Color.White
                             )
                         }
@@ -113,7 +114,7 @@ fun FolderBrowserScreen(
                     }
                 }
                 folders.isEmpty() -> {
-                    EmptyState("未找到视频文件夹")
+                    EmptyState(stringResource(R.string.folder_no_videos))
                 }
                 else -> {
                     Box(modifier = Modifier.fillMaxSize()) {
@@ -147,7 +148,7 @@ fun FolderBrowserScreen(
                                 .align(Alignment.BottomEnd)
                                 .padding(16.dp)
                         ) {
-                            Icon(Icons.Default.Refresh, "刷新", tint = Color.White)
+                            Icon(Icons.Default.Refresh, stringResource(R.string.common_refresh), tint = Color.White)
                         }
                     }
                 }
@@ -219,7 +220,7 @@ private fun FolderItem(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "${folder.videoCount} 个视频",
+                    text = stringResource(R.string.folder_videos_count, folder.videoCount),
                     fontSize = 14.sp,
                     color = Color(0xFF757575)
                 )
@@ -254,7 +255,7 @@ private fun PermissionPrompt(onRequestPermission: () -> Unit) {
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "需要存储权限",
+                text = stringResource(R.string.folder_permission_needed),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color(0xFF212121)
@@ -263,7 +264,7 @@ private fun PermissionPrompt(onRequestPermission: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "请授予存储权限以浏览视频文件",
+                text = stringResource(R.string.folder_permission_desc),
                 fontSize = 14.sp,
                 color = Color(0xFF757575)
             )
@@ -276,7 +277,7 @@ private fun PermissionPrompt(onRequestPermission: () -> Unit) {
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-                Text("授予权限")
+                Text(stringResource(R.string.folder_grant_permission))
             }
         }
     }
@@ -319,27 +320,27 @@ private fun SortDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("排序方式", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.folder_sort_dialog_title), fontWeight = FontWeight.Bold)
         },
         text = {
             Column {
                 SortOption(
-                    text = "名称 (升序)",
+                    text = stringResource(R.string.folder_sort_name_asc),
                     isSelected = currentSortType == "NAME" && currentSortOrder == "ASCENDING",
                     onClick = { onSortSelected("NAME", "ASCENDING") }
                 )
                 SortOption(
-                    text = "名称 (降序)",
+                    text = stringResource(R.string.folder_sort_name_desc),
                     isSelected = currentSortType == "NAME" && currentSortOrder == "DESCENDING",
                     onClick = { onSortSelected("NAME", "DESCENDING") }
                 )
                 SortOption(
-                    text = "视频数量 (升序)",
+                    text = stringResource(R.string.folder_sort_video_count_asc),
                     isSelected = currentSortType == "VIDEO_COUNT" && currentSortOrder == "ASCENDING",
                     onClick = { onSortSelected("VIDEO_COUNT", "ASCENDING") }
                 )
                 SortOption(
-                    text = "视频数量 (降序)",
+                    text = stringResource(R.string.folder_sort_video_count_desc),
                     isSelected = currentSortType == "VIDEO_COUNT" && currentSortOrder == "DESCENDING",
                     onClick = { onSortSelected("VIDEO_COUNT", "DESCENDING") }
                 )
@@ -347,7 +348,7 @@ private fun SortDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )

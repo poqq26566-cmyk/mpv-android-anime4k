@@ -71,7 +71,7 @@ class TVBrowserActivity : ComponentActivity() {
         
         setContent {
             val themeColors = com.fam4k007.videoplayer.ui.theme.getThemeColors(
-                ThemeManager.getCurrentTheme(this).themeName
+                this, ThemeManager.getCurrentTheme(this).themeName
             )
             
             MaterialTheme(

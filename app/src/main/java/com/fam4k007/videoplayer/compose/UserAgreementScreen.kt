@@ -28,6 +28,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import com.fam4k007.videoplayer.R
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -36,7 +38,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fam4k007.videoplayer.R
 
 /**
  * Compose 用户协议界面
@@ -131,7 +132,7 @@ fun UserAgreementScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "请向下滚动阅读完整协议",
+                        text = stringResource(R.string.agreement_scroll_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
@@ -157,11 +158,11 @@ fun UserAgreementScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = buildAnnotatedString {
-                        append("我已完整阅读并")
+                        append(stringResource(R.string.agreement_read_fully))
                         withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
-                            append("充分理解")
+                            append(stringResource(R.string.agreement_understand_fully))
                         }
-                        append("以上所有条款，同意遵守本协议的所有内容")
+                        append(stringResource(R.string.agreement_accept_all))
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.alpha(if (hasScrolledToBottom) 1f else 0.5f)
@@ -196,7 +197,7 @@ fun UserAgreementScreen(
                     )
                 ) {
                     Text(
-                        text = "拒绝",
+                        text = stringResource(R.string.agreement_decline),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -223,7 +224,7 @@ fun UserAgreementScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "同意",
+                        text = stringResource(R.string.agreement_accept),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -242,7 +243,7 @@ private fun AgreementHeader() {
         // 应用图标或Logo
         Image(
             painter = painterResource(id = R.drawable.app_icon),
-            contentDescription = "应用图标",
+            contentDescription = stringResource(R.string.agreement_icon_desc),
             modifier = Modifier
                 .size(80.dp)
                 .clip(RoundedCornerShape(16.dp))
@@ -251,7 +252,7 @@ private fun AgreementHeader() {
         Spacer(modifier = Modifier.height(12.dp))
         
         Text(
-            text = "用户服务协议与隐私政策",
+            text = stringResource(R.string.agreement_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -260,7 +261,7 @@ private fun AgreementHeader() {
         Spacer(modifier = Modifier.height(4.dp))
         
         Text(
-            text = "欢迎使用小喵player！",
+            text = stringResource(R.string.agreement_welcome),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -275,12 +276,12 @@ private fun AgreementContent() {
         // 重要声明
         AgreementSection(
             icon = Icons.Default.Warning,
-            title = "一、重要声明",
+            title = stringResource(R.string.agreement_section_1),
             iconTint = MaterialTheme.colorScheme.error
         ) {
-            BulletPoint("本应用完全免费且开源，遵守 GPL-3.0-or-later 开源协议")
-            BulletPoint("本应用旨在学习技术与测试代码，切勿滥用")
-            BulletPoint("我们强烈反对且不纵容任何形式的盗版、非法转载、黑产及其他违法用途或行为")
+            BulletPoint(stringResource(R.string.agreement_1_1))
+            BulletPoint(stringResource(R.string.agreement_1_2))
+            BulletPoint(stringResource(R.string.agreement_1_3))
         }
 
         Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
@@ -288,38 +289,38 @@ private fun AgreementContent() {
         // 隐私政策
         AgreementSection(
             icon = Icons.Default.Security,
-            title = "二、隐私政策",
+            title = stringResource(R.string.agreement_section_2),
             iconTint = MaterialTheme.colorScheme.primary
         ) {
-            SubTitle("【数据收集】")
-            CheckPoint("本应用不收集任何用户个人信息")
-            CheckPoint("本应用不上传任何数据到服务器（我们没有服务器）")
-            CheckPoint("本应用不分享用户数据给任何第三方")
-            CheckPoint("所有功能均在本地设备上运行")
+            SubTitle(stringResource(R.string.agreement_data_collection))
+            CheckPoint(stringResource(R.string.agreement_2_1))
+            CheckPoint(stringResource(R.string.agreement_2_2))
+            CheckPoint(stringResource(R.string.agreement_2_3))
+            CheckPoint(stringResource(R.string.agreement_2_4))
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            SubTitle("【权限说明】")
+            SubTitle(stringResource(R.string.agreement_permissions))
             Text(
-                text = "本应用需要申请以下权限：",
+                text = stringResource(R.string.agreement_permissions_intro),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            PermissionItem("管理所有文件权限", "用于扫描本地视频文件、保存字幕和弹幕文件")
-            PermissionItem("网络权限", "用于在线播放、下载弹幕、WebDAV等功能")
+            PermissionItem(stringResource(R.string.agreement_permission_storage), stringResource(R.string.agreement_permission_storage_desc))
+            PermissionItem(stringResource(R.string.agreement_permission_network), stringResource(R.string.agreement_permission_network_desc))
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            SubTitle("【登录信息安全】")
+            SubTitle(stringResource(R.string.agreement_login_security))
             Text(
-                text = "如您选择使用哔哩哔哩登录功能：",
+                text = stringResource(R.string.agreement_login_intro),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            BulletPoint("登录凭证使用 AES-256 加密存储在本地")
-            BulletPoint("登录密钥由 Android KeyStore 硬件保护，应用无法导出")
-            BulletPoint("登录信息仅用于调用B站API，不会上传到任何其他地方")
-            BulletPoint("您可随时在设置中一键退出登录")
+            BulletPoint(stringResource(R.string.agreement_login_1))
+            BulletPoint(stringResource(R.string.agreement_login_2))
+            BulletPoint(stringResource(R.string.agreement_login_3))
+            BulletPoint(stringResource(R.string.agreement_login_4))
             BulletPoint("应用卸载后，所有登录数据将自动永久销毁")
         }
 

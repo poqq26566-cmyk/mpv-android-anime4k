@@ -1,0 +1,719 @@
+<resources>
+    <!-- Application Name -->
+    <string name="app_name">Meow Player</string>
+    
+    <!-- ==================== Common ==================== -->
+    <string name="common_confirm">Confirm</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_save">Save</string>
+    <string name="common_close">Close</string>
+    <string name="common_back">Back</string>
+    <string name="common_retry">Retry</string>
+    <string name="common_refresh">Refresh</string>
+    <string name="common_search">Search</string>
+    <string name="common_clear">Clear</string>
+    <string name="common_more">More</string>
+    <string name="common_loading">Loading...</string>
+    <string name="common_error">Error: %s</string>
+    <string name="common_success">Success</string>
+    <string name="common_failed">Failed</string>
+    <string name="common_unknown">Unknown</string>
+    <string name="common_unlimited">Unlimited</string>
+    <string name="common_unknown_folder">Unknown Folder</string>
+    <string name="common_download">Download</string>
+    
+    <!-- UI Hints -->
+    <string name="ui_scroll_hint">Swipe to scroll</string>
+    <string name="ui_scroll_hint_top">Top area is scrollable</string>
+    
+    <!-- Themes -->
+    <string name="theme_blue_purple">Blue Purple Theme</string>
+    <string name="theme_green">Green Theme</string>
+    <string name="theme_orange">Orange Theme</string>
+    <string name="theme_pink">Pink Theme</string>
+    <string name="theme_indigo">Indigo Theme</string>
+    
+    <!-- Activity Titles -->
+    <string name="settings">Settings</string>
+    <string name="playback_settings">Playback Settings</string>
+    <string name="playback_history">Playback History</string>
+    <string name="help">Help</string>
+    <string name="license">License</string>
+    <string name="about">About</string>
+    <string name="feedback">Feedback</string>
+    
+    <!-- ==================== Player Module ==================== -->
+    
+    <!-- Player - Basic -->
+    <string name="player_init_failed">Player initialization failed</string>
+    <string name="player_init_failed_msg">Player initialization failed: %s\n\nIf the problem persists, please restart the app</string>
+    <string name="player_parse_failed">Failed to parse video URL: %s</string>
+    <string name="player_invalid_path">Invalid video path</string>
+    <string name="player_cannot_get_uri">Cannot get video URI</string>
+    <string name="player_cannot_get_path">Cannot get video file path</string>
+    <string name="player_file_not_exist">Video file does not exist: %s</string>
+    <string name="player_first_episode">This is the first episode</string>
+    <string name="player_last_episode">This is the last episode</string>
+    <string name="player_no_video_list">No video list available</string>
+    
+    <!-- Player - Skip Intro/Outro -->
+    <string name="player_auto_skip_chapter">Auto skipped to chapter: %s</string>
+    <string name="player_skip_intro_seconds">Skipped intro %d seconds</string>
+    <string name="player_skip_outro_next">Skipped outro, playing next episode</string>
+    <string name="player_skip_outro_last">This is the last episode, outro skipped</string>
+    
+    <!-- Player - Subtitle -->
+    <string name="player_load_danmaku_first">Please load danmaku file first</string>
+    <string name="player_auto_load_subtitle">Auto loaded subtitle: %s</string>
+    <string name="player_subtitle_load_failed">Subtitle loading failed: %s</string>
+    <string name="player_subtitle_import_success">Subtitle imported successfully</string>
+    <string name="player_subtitle_import_failed">Subtitle import failed</string>
+    <string name="player_subtitle_import_error">Subtitle import failed: %s</string>
+    
+    <!-- Player - Danmaku -->
+    <string name="player_danmaku_load_failed">Danmaku loading failed: %s</string>
+    <string name="player_danmaku_exception">Danmaku exception: %s</string>
+    <string name="player_danmaku_loaded">Danmaku loaded: %s\nClick danmaku button to display</string>
+    <string name="player_loading_danmaku">Loading danmaku...</string>
+    <string name="player_matching_danmaku">Matching danmaku, please wait...</string>
+    <string name="player_no_danmaku_match">No matching danmaku found</string>
+    <string name="player_match_failed">Match failed: %s</string>
+    <string name="player_danmaku_import_success">Danmaku imported successfully</string>
+    <string name="player_danmaku_import_failed">Danmaku import failed</string>
+    <string name="player_danmaku_import_error">Danmaku import failed: %s</string>
+    <string name="player_no_danmaku_loaded">No danmaku file loaded</string>
+    <string name="player_danmaku_track_selected">Danmaku track selected</string>
+    <string name="player_danmaku_track_canceled">Danmaku track canceled</string>
+    
+    <!-- Player - Audio Track -->
+    <string name="player_no_audio_track">No audio track available</string>
+    <string name="player_get_audio_failed">Failed to get audio track</string>
+    <string name="player_switched_to">Switched to: %s</string>
+    <string name="player_switched">Switched to %s</string>
+    
+    <!-- Player - Display Settings -->
+    <string name="player_aspect_ratio">Aspect Ratio: %s</string>
+    <string name="player_speed">Playback Speed: %s</string>
+    <string name="player_anime4k_mode">Anime4K Mode: %s</string>
+    
+    <!-- Player - Chapters -->
+    <string name="player_no_chapters">This video has no chapter information</string>
+    <string name="player_jumped_to_chapter">Jumped to: %s</string>
+    <string name="player_chapter_n">Chapter %d</string>
+    
+    <!-- Player - Screenshot -->
+    <string name="screenshot_saved">Saved</string>
+    <string name="screenshot_failed">Screenshot failed: %s</string>
+    
+    <!-- Player - Resume Playback Prompt -->
+    <string name="player_resume_prompt">Playback resumed from last position</string>
+    <string name="player_restart">Restart</string>
+    
+    <!-- Player - Menu Options -->
+    <string name="player_menu_screenshot">Screenshot</string>
+    <string name="player_menu_audio_track">Audio Track</string>
+    <string name="player_menu_decoder">Decoder</string>
+    <string name="player_menu_skip_intro_outro">Skip Intro/Outro</string>
+    <string name="player_menu_style_override_on">Style Override:
+    
+    <!-- Danmaku - Menu Options -->
+    <string name="danmaku_menu_select">Select Danmaku</string>
+    <string name="danmaku_menu_match">Match Danmaku</string>
+    <string name="danmaku_menu_track">Danmaku Track</string>
+    <string name="danmaku_source_local">Local Danmaku</string>
+    <string name="danmaku_source_network">Online Danmaku</string>
+    <string name="danmaku_track_cancel">Remove Danmaku Track</string> ON</string>
+    <string name="player_menu_style_override_off">Style Override: OFF</string>
+    <string name="player_menu_chapter">Chapters</string>
+    
+    <!-- Player - Aspect Ratio Options -->
+    <string name="player_aspect_fit">Fit Screen</string>
+    <string name="player_aspect_stretch">Stretch</string>
+    <string name="player_aspect_crop">Crop</string>
+    
+    <!-- Player - Decoder -->
+    <string name="decoder_hardware">Hardware Decode</string>
+    <string name="decoder_software">Software Decode</string>
+    
+    <!-- ==================== Danmaku Module ==================== -->
+    <string name="danmaku_settings">Danmaku Settings</string>
+    <string name="danmaku_current_file">Current Danmaku File</string>
+    <string name="danmaku_no_file_loaded">No danmaku file loaded</string>
+    <string name="danmaku_style">Danmaku Style</string>
+    <string name="danmaku_config">Danmaku Configuration</string>
+    <string name="danmaku_size">Danmaku Size: %d%%</string>
+    <string name="danmaku_speed">Danmaku Speed: %d%%</string>
+    <string name="danmaku_speed_hint">Higher value means faster movement</string>
+    <string name="danmaku_alpha">Danmaku Opacity: %d%%</string>
+    <string name="danmaku_stroke">Stroke Width: %d%%</string>
+    <string name="danmaku_reset">Reset to default</string>
+    <string name="danmaku_reset_all">Reset all styles to default</string>
+    <string name="danmaku_type_display">Danmaku Type Display</string>
+    <string name="danmaku_show_scroll">Show Scrolling Danmaku</string>
+    <string name="danmaku_show_top">Show Top Danmaku</string>
+    <string name="danmaku_show_bottom">Show Bottom Danmaku</string>
+    <string name="danmaku_density_control">Danmaku Density Control</string>
+    <string name="danmaku_max_scroll_line">Max Scrolling Lines: %s</string>
+    <string name="danmaku_max_top_line">Max Top Lines: %s</string>
+    <string name="danmaku_max_bottom_line">Max Bottom Lines: %s</string>
+    <string name="danmaku_max_screen_num">Max On-Screen Danmaku: %s</string>
+    <string name="danmaku_select_file">Select Danmaku File</string>
+    <string name="danmaku_no_files">No danmaku files in this directory</string>
+    <string name="danmaku_directory_access_error">Cannot access directory: %s</string>
+    <string name="danmaku_file_not_exist">Danmaku file does not exist</string>
+    <string name="danmaku_load_failed">Danmaku loading failed</string>
+    <string name="danmaku_load_exception">Danmaku exception: %s</string>
+    
+    <!-- ==================== Subtitle Module ==================== -->
+    
+    <!-- Subtitle - Basic -->
+    <string name="subtitle_style_hint">Enable style override in \"More\" setting
+    
+    <!-- Subtitle - Menu Options -->
+    <string name="subtitle_menu_track">Subtitle Track</string>
+    <string name="subtitle_menu_external">External Subtitle</string>
+    <string name="subtitle_file_generic">Subtitle File</string>
+    <string name="subtitle_track_off">Disable Subtitles</string>
+    <string name="subtitle_track_generic">Subtitle Track</string>s</string>
+    <string name="subtitle_more_settings">More Settings</string>
+    <string name="subtitle_delay_settings">Subtitle Delay Settings</string>
+    <string name="subtitle_style_settings">Subtitle Style Settings</string>
+    <string name="subtitle_misc_settings">Subtitle Misc Settings</string>
+    <string name="subtitle_font_settings">Subtitle Font Settings</string>
+    <string name="subtitle_select_file">Select Subtitle File</string>
+    <string name="subtitle_no_files">No subtitle files in this directory</string>
+    <string name="subtitle_directory_error">Cannot access directory: %s</string>
+    
+    <!-- Subtitle - Delay -->
+    <string name="subtitle_delay_range">Range: -60.0 ~ +60.0 seconds</string>
+    <string name="subtitle_reset_to_zero">Reset to 0</string>
+    
+    <!-- Subtitle - Style -->
+    <string name="subtitle_text_color">Subtitle Color</string>
+    <string name="subtitle_bg_color">Background Color</string>
+    <string name="subtitle_border_color">Border Color</string>
+    <string name="subtitle_reset_all_styles">Reset all styles to default</string>
+    <string name="subtitle_border_size">Border Width: %d</string>
+    <string name="subtitle_reset_to_3">Reset to 3</string>
+    <string name="subtitle_border_mode">Border Mode</string>
+    <string name="subtitle_mode_a">Mode A</string>
+    <string name="subtitle_mode_a_desc">Modify via border color</string>
+    <string name="subtitle_mode_b">Mode B</string>
+    <string name="subtitle_mode_b_desc">Modify via border color</string>
+    <string name="subtitle_mode_c">Mode C</string>
+    <string name="subtitle_mode_c_desc">Modify via background color</string>
+    <string name="subtitle_size">Subtitle Size: %d%%</string>
+    <string name="subtitle_size_range">Range: 50%% ~ 300%%</string>
+    <string name="subtitle_position">Subtitle Vertical Position: %d</string>
+    <string name="subtitle_position_range">Range: 0 (Top) ~ 100 (Bottom)</string>
+    <string name="subtitle_reset_default">Reset to default (100%%, Position 100)</string>
+    
+    <!-- Subtitle - Font -->
+    <string name="subtitle_font_noto_sans">Noto Sans CJK SC</string>
+    <string name="subtitle_font_noto_serif">Noto Serif CJK SC</string>
+    <string name="subtitle_current_font">Current Font</string>
+    <string name="subtitle_select_font">Select Font</string>
+    <string name="subtitle_font_all_formats">Applies to all subtitle formats</string>
+    <string name="subtitle_font_switched">Switched to: %s\nReplay video to take effect</string>
+    <string name="subtitle_font_hint">💡 Tip: Font changes require replaying the video to take effect</string>
+    
+    <!-- Subtitle - Search Download -->
+    <string name="subtitle_folder_saved">Folder settings saved successfully</string>
+    <string name="subtitle_setting_failed">Settings failed: %s</string>
+    <string name="subtitle_search_updated">Search options updated</string>
+    <string name="subtitle_input_keyword">Please enter search keyword</string>
+    <string name="subtitle_set_folder_first">Please set save folder first</string>
+    <string name="subtitle_start_download">Start downloading...</string>
+    
+    <!-- ==================== Skip Intro/Outro Module ==================== -->
+    <string name="skip_settings">Skip Intro/Outro Settings</string>
+    <string name="skip_notice">Set intro/outro duration to auto skip during playback\nNote: Settings apply to all videos in current folder</string>
+    <string name="skip_auto_chapter">Auto Skip Chapter</string>
+    <string name="skip_auto_chapter_desc">Use video chapter info to auto jump to main content (higher priority than manual time settings)</string>
+    <string name="skip_which_chapter">Jump to Chapter</string>
+    <string name="skip_chapter_n">Chapter %d</string>
+    <string name="skip_chapter_hint">Tip: Chapter 0 is usually before OP, Chapter 1 is usually after OP when main content starts</string>
+    <string name="skip_intro">Skip Intro</string>
+    <string name="skip_seconds">%d seconds</string>
+    <string name="skip_intro_desc">First %d seconds will be skipped after video starts</string>
+    <string name="skip_intro_range">Range: 0 ~ 180 seconds</string>
+    <string name="skip_outro">Skip Outro</string>
+    <string name="skip_outro_seconds">%d seconds</string>
+    <string name="skip_outro_desc">Auto jump to next episode %d seconds before video ends</string>
+    <string name="skip_outro_range">Range: 0 ~ 180 seconds</string>
+    
+    <!-- ==================== Video List Module ==================== -->
+    <string name="video_list">Video List</string>
+    <string name="video_sort">Sort</string>
+    <string name="video_count">Total %d videos</string>
+    <string name="video_playing">Playing</string>
+    <string name="video_sort_name">Filename</string>
+    <string name="video_sort_size">Size</string>
+    <string name="video_sort_duration">Duration</string>
+    <string name="video_sort_date">Date Added</string>
+    <string name="video_sort_by">Sort By</string>
+    <string name="video_name">Filename</string>
+    <string name="video_size">Size</string>
+    <string name="video_duration">Duration</string>
+    <string name="video_date">Date Added</string>
+    <string name="video_sort_order">Sort Order</string>
+    <string name="video_sort_asc">Ascending ↑</string>
+    <string name="video_sort_desc">Descending ↓</string>
+    <string name="video_list_back">Back</string>
+    <string name="video_list_search">Search</string>
+    <string name="video_list_no_videos">No videos in this folder</string>
+    <string name="video_list_no_match">No matching videos found</string>
+    <string name="video_list_refresh">Refresh</string>
+    <string name="video_list_more_info">More Info</string>
+    <string name="video_list_search_hint">Search videos...</string>
+    <string name="video_list_clear">Clear</string>
+    <string name="video_list_name_asc">Name (Ascending)</string>
+    <string name="video_list_name_desc">Name (Descending)</string>
+    <string name="video_list_date_asc">Date (Ascending)</string>
+    <string name="video_list_date_desc">Date (Descending)</string>
+    <string name="video_list_cancel">Cancel</string>
+    <string name="video_list_resolution">Resolution</string>
+    <string name="video_list_cannot_get">Cannot get</string>
+    <string name="video_list_video_codec">Video Codec</string>
+    <string name="video_list_audio_codec">Audio Codec</string>
+    <string name="video_list_bitrate">Bitrate</string>
+    <string name="video_list_framerate">Framerate</string>
+    <string name="video_list_close">Close</string>
+    <string name="video_path">Path</string>
+    <string name="video_file_size">File Size</string>
+    
+    <!-- ==================== Bilibili Module ==================== -->
+    
+    <!-- Bilibili Login -->
+    <string name="bilibili_login_title">Login to Bilibili</string>
+    <string name="bilibili_generating_qr">Generating QR code...</string>
+    <string name="bilibili_waiting_scan">Waiting for scan...</string>
+    <string name="bilibili_scanned_waiting">Scanned, waiting for confirmation...</string>
+    <string name="bilibili_qr_expired">QR code expired</string>
+    <string name="bilibili_login_notice">1. Don\'t confirm immediately after scanning!\n2. Wait until \"Waiting for scan\" changes to \"Scanned\", then confirm!\n3. Don\'t rush after confirming! This page will return automatically, please wait.</string>
+    <string name="bilibili_refresh_qr">Refresh QR Code</string>
+    <string name="bilibili_login_success">✓ Login Successful</string>
+    <string name="bilibili_username">Username: %s</string>
+    <string name="bilibili_vip">VIP ✨</string>
+    <string name="bilibili_logout">Logout</string>
+    <string name="bilibili_retry">Retry</string>
+    <string name="bilibili_qr_gen_failed">QR code generation failed</string>
+    <string name="bilibili_user">Bilibili User</string>
+    
+    <!-- Bilibili Play -->
+    <string name="bilibili_login_required">Please login first</string>
+    <string name="bilibili_getting_url">Getting playback URL...</string>
+    <string name="bilibili_get_url_failed">Failed to get playback URL</string>
+    <string name="bilibili_play_failed">Playback failed: %s</string>
+    <string name="bilibili_get_url_error">Failed to get playback URL: %s</string>
+    <string name="bilibili_quality">Quality: %s</string>
+    <string name="bilibili_dash_hint">Tip: DASH format may require separate audio download</string>
+    <string name="bilibili_url_exception">Playback URL exception: %s</string>
+    <string name="bilibili_exit_login">Logout</string>
+    <string name="bilibili_exit_confirm">Are you sure you want to logout?</string>
+    <string name="bilibili_logged_out">Logged out</string>
+    <string name="bilibili_bangumi_play">Bilibili Bangumi Playback</string>
+    <string name="bilibili_login_btn">Login</string>
+    <string name="bilibili_paste_link">Paste Bangumi Link</string>
+    <string name="bilibili_input_link">Enter Bilibili Bangumi link</string>
+    <string name="bilibili_parse">Parse</string>
+    <string name="bilibili_episode_count">Total %d episodes</string>
+    <string name="bilibili_quality_8k">8K Ultra HD</string>
+    <string name="bilibili_quality_dolby">Dolby Vision</string>
+    <string name="bilibili_quality_hdr">HDR</string>
+    <string name="bilibili_quality_4k">4K Ultra HD</string>
+    <string name="bilibili_quality_1080p60">1080P 60fps</string>
+    <string name="bilibili_quality_1080p_plus">1080P High Bitrate</string>
+    <string name="bilibili_quality_1080p">1080P HD</string>
+    <string name="bilibili_quality_720p">720P HD</string>
+    <string name="bilibili_quality_480p">480P</string>
+    <string name="bilibili_quality_360p">360P</string>
+    
+    <!-- Bilibili Danmaku Download -->
+    <string name="bilibili_folder_set_success">Folder set successfully</string>
+    <string name="bilibili_folder_set_failed">Settings failed: %s</string>
+    <string name="bilibili_invalid_link">Please enter a valid Bilibili video/bangumi link</string>
+    <string name="bilibili_download_success">Download successful</string>
+    <string name="bilibili_download_failed">Download failed: %s</string>
+    
+    <!-- ==================== Home &amp; Settings Module ==================== -->
+    
+    <!-- Home -->
+    <string name="home_play_local">Play Local Video</string>
+    <string name="home_login">Login</string>
+    <string name="home_app_name">Meow Player</string>
+    <string name="home_settings">Settings</string>
+    <string name="home_continue_play">Continue Watching</string>
+    <string name="home_no_history">No playback history</string>
+    <string name="home_continue_video">Continue: %s</string>
+    <string name="home_bilibili_bangumi">Bilibili Bangumi</string>
+    <string name="home_webdav">WebDAV</string>
+    <string name="home_tv">TV Live</string>
+    <string name="home_collapse">Collapse</string>
+    <string name="home_expand">Expand</string>
+    <string name="home_cannot_play">Cannot play video: %s</string>
+    
+    <!-- Settings -->
+    <string name="settings_history_header">History</string>
+    <string name="settings_playback_history">Playback History</string>
+    <string name="settings_history_desc">View recently played videos</string>
+    <string name="settings_appearance_header">Appearance</string>
+    <string name="settings_theme">Theme Settings</string>
+    <string name="settings_current_theme">Current: %s</string>
+    <string name="settings_playback_header">Playback</string>
+    <string name="settings_playback_config">Playback Settings</string>
+    <string name="settings_playback_desc">Adjust playback parameters</string>
+    <string name="settings_danmaku_header">Danmaku</string>
+    <string name="settings_bilibili_danmaku">Bilibili Danmaku Download</string>
+    <string name="settings_bilibili_danmaku_desc">Download Bilibili video danmaku</string>
+    <string name="settings_bilibili_login_required">Please login to Bilibili first (top-left corner on home page)</string>
+    <string name="settings_subtitle_header">Subtitle</string>
+    <string name="settings_subtitle_search">Subtitle Search &amp; Download</string>
+    <string name="settings_subtitle_search_desc">Search and download online subtitles</string>
+    <string name="settings_download_header">Download</string>
+    <string name="settings_bilibili_download">Bilibili Video Download</string>
+    <string name="settings_bilibili_download_desc">Download Bilibili videos/bangumi</string>
+    <string name="settings_login_hint">Please login to Bilibili first (top-left corner on home page)</string>
+    <string name="settings_other_header">Other</string>
+    <string name="settings_help">Help</string>
+    <string name="settings_help_desc">View online documentation</string>
+    <string name="settings_check_update">Check for Updates</string>
+    <string name="settings_current_version">Current version: %s</string>
+    <string name="settings_latest_version">You have the latest version</string>
+    <string name="settings_check_update_failed">Update check failed: %s</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_desc">App info and licenses</string>
+    
+    <!-- About -->
+    <string name="about_title">About</string>
+    <string name="about_app_name">Meow Player</string>
+    <string name="about_app_desc">MPV-based Anime4K Video Player</string>
+    <string name="about_version">Version %s</string>
+    <string name="about_github">GitHub</string>
+    <string name="about_github_desc">Visit GitHub repository</string>
+    <string name="about_license">License</string>
+    <string name="about_license_desc">View open source licenses</string>
+    <string name="about_feedback">Feedback</string>
+    <string name="about_feedback_desc">Report issues or suggestions</string>
+    
+    <!-- Feedback -->
+    <string name="feedback_title">Feedback</string>
+    <string name="feedback_contact">Contact</string>
+    <string name="feedback_email_label">Author Email</string>
+    <string name="feedback_choose_method">Choose your preferred method:</string>
+    <string name="feedback_now">Send Feedback</string>
+    <string name="feedback_email">Email to %s</string>
+    <string name="feedback_github_issue">Go to GitHub Issues</string>
+    <string name="feedback_guide">Feedback Guidelines</string>
+    <string name="feedback_guide_1">・ For crashes/errors, please include reproduction steps or screenshots;</string>
+    <string name="feedback_guide_2">・ For feature requests, please attach expected interaction or reference links;</string>
+    <string name="feedback_guide_3">・ Contributions are welcome to build a better playback experience together.</string>
+    
+    <!-- ==================== Playback Settings Module ==================== -->
+    <string name="playback_settings_title">Playback Settings</string>
+    <string name="playback_settings_back">Back</string>
+    <string name="playback_progress_control">Progress Control</string>
+    <string name="playback_precise_seeking">Precise Seeking</string>
+    <string name="playback_precise_seeking_slow">More accurate but may be slower</string>
+    <string name="playback_precise_seeking_fast">Faster but uses keyframes</string>
+    <string name="playback_seek_time">Fast Forward/Rewind Duration</string>
+    <string name="playback_seconds">%d seconds</string>
+    <string name="playback_seconds_format">%d seconds</string>
+    <string name="playback_gesture_control">Gesture Control</string>
+    <string name="playback_double_tap_seek">Double Tap Seek Duration</string>
+    <string name="playback_volume_control">Volume Control</string>
+    <string name="playback_volume_boost">Volume Boost</string>
+    <string name="playback_volume_boost_on">Volume can exceed 100%, up to 300%</string>
+    <string name="playback_volume_boost_off">Volume limited to 1-100%</string>
+    <string name="playback_speed_control">Playback Speed Control</string>
+    <string name="playback_long_press_speed">Long Press Speed</string>
+    <string name="playback_speed_format">%.1fx</string>
+    <string name="playback_quality_enhancement">Quality Enhancement</string>
+    <string name="playback_anime4k_memory">Remember Anime4K Mode</string>
+    <string name="playback_anime4k_memory_on">Remember last used Anime4K mode</string>
+    <string name="playback_anime4k_memory_off">Start with Anime4K off each time</string>
+    <string name="playback_double_tap_mode_pause">Double Tap to Pause/Play</string>
+    <string name="playback_double_tap_mode_seek">Double Tap to Seek Forward/Back</string>
+    
+    <!-- ==================== Anime4K Module ==================== -->
+    <string name="anime4k_off">Disable Anime4K</string>
+    <string name="anime4k_mode_a">Mode A - Optimized for 1080p\nHigh blur, resampling artifacts</string>
+    <string name="anime4k_mode_b">Mode B - Optimized for 720p\nLow blur, downsampling ringing</string>
+    <string name="anime4k_mode_c">Mode C - Optimized for 480p\nHighest PSNR, lower perceptual quality</string>
+    <string name="anime4k_mode_a_plus">Mode A+A - Highest perceptual quality\nStronger line reconstruction (slower)</string>
+    <string name="anime4k_mode_b_plus">Mode B+B - High perceptual quality\nBetter 720p results (slower)</string>
+    <string name="anime4k_mode_c_plus">Mode C+A - Slightly higher perceptual quality\nImproved 480p results (slower)</string>
+    <string name="anime4k_quality_fast">Fast (S) - Low GPU usage</string>
+    <string name="anime4k_quality_balanced">Balanced (M) - Recommended</string>
+    <string name="anime4k_quality_high">High Quality (L) - High GPU usage</string>
+    <string name="anime4k_mode_off_name">Off</string>
+    <string name="anime4k_mode_off_desc">Original quality</string>
+    <string name="anime4k_mode_a_name">A</string>
+    <string name="anime4k_mode_a_desc_short">Strong reconstruction</string>
+    <string name="anime4k_mode_a_hint">High blur, resampling artifacts</string>
+    <string name="anime4k_mode_b_name">B</string>
+    <string name="anime4k_mode_b_desc_short">Soft reconstruction</string>
+    <string name="anime4k_mode_b_hint">Low blur, downsampling ringing</string>
+    <string name="anime4k_mode_c_name">C</string>
+    <string name="anime4k_mode_c_desc_short">Denoise</string>
+    <string name="anime4k_mode_c_hint">Remove noise, enhance clarity</string>
+    <string name="anime4k_mode_a_plus_name">A+</string>
+    <string name="anime4k_mode_a_plus_desc">Double enhancement</string>
+    <string name="anime4k_mode_a_plus_hint">Strongest line restoration (slow)</string>
+    <string name="anime4k_mode_b_plus_name">B+</string>
+    <string name="anime4k_mode_b_plus_desc">Double soft</string>
+    <string name="anime4k_mode_b_plus_hint">More natural result (slow)</string>
+    <string name="anime4k_mode_c_plus_name">C+</string>
+    <string name="anime4k_mode_c_plus_desc">Denoise enhanced</string>
+    <string name="anime4k_mode_c_plus_hint">Denoise + line reconstruction (slow)</string>
+    
+    <!-- ==================== Download Module ==================== -->
+    <string name="download_bilibili_link">Bilibili Video/Bangumi Link</string>
+    <string name="download_start">Start Download</string>
+    <string name="download_change_path">Change Path</string>
+    <string name="download_clear_completed">Clear Completed</string>
+    <string name="download_pause">Pause</string>
+    <string name="download_resume">Resume</string>
+    <string name="download_cancel">Cancel</string>
+    <string name="download_title">Bilibili Video Download</string>
+    <string name="download_add_task">Add Download Task</string>
+    <string name="download_disclaimer">Disclaimer</string>
+    <string name="download_disclaimer_text">Downloads are for personal study only, do not distribute.\nUsers are responsible for any legal consequences.</string>
+    <string name="download_episode_n">Episode %d</string>
+    <string name="download_status_pending">Pending</string>
+    <string name="download_status_downloading">Downloading</string>
+    <string name="download_status_paused">Paused</string>
+    <string name="download_status_completed">Completed</string>
+    <string name="download_status_failed">Failed</string>
+    
+    <!-- ==================== WebDAV Module ==================== -->
+    <string name="webdav_account_management">WebDAV Account Management</string>
+    <string name="webdav_delete_account">Delete Account</string>
+    <string name="webdav_delete_confirm">Are you sure you want to delete account \"%s\"?</string>
+    <string name="webdav_delete">Delete</string>
+    <string name="webdav_cancel">Cancel</string>
+    <string name="webdav_add_account">Add Account</string>
+    <string name="webdav_display_name">Display Name</string>
+    <string name="webdav_display_name_hint">e.g., My Cloud Drive</string>
+    <string name="webdav_server_url">Server URL</string>
+    <string name="webdav_account_login">Account Login</string>
+    <string name="webdav_anonymous">Anonymous Access</string>
+    <string name="webdav_account">Account</string>
+    <string name="webdav_username">Username</string>
+    <string name="webdav_password">Password</string>
+    <string name="webdav_testing">Testing...</string>
+    <string name="webdav_test_connection">Test Connection</string>
+    <string name="webdav_save">Save</string>
+    <string name="webdav_retry">Retry</string>
+    <string name="webdav_sort_method">Sort Method</string>
+    <string name="webdav_close">Close</string>
+    <string name="webdav_account_error">Account info error</string>
+    <string name="webdav_account_not_exist">Account does not exist</string>
+    <string name="webdav_play_failed">Playback failed: %s</string>
+    
+    <!-- ==================== Video Thumbnail ==================== -->
+    <string name="video_thumbnail">Video Thumbnail</string>
+    
+    <!-- ==================== Dialog Strings ==================== -->
+    <string name="dialog_select_file">Select File</string>
+    <string name="dialog_select_danmaku">Select Danmaku File</string>
+    <string name="dialog_select_subtitle">Select Subtitle File</string>
+    <string name="dialog_directory_error">Cannot access directory: %s</string>
+    
+    <!-- ==================== WebDAV Additional ==================== -->
+    <string name="webdav_no_accounts">No WebDAV accounts</string>
+    <string name="webdav_no_accounts_hint">Click the add button to configure an account</string>
+    <string name="webdav_account_info">Account: %s</string>
+    
+    <!-- ==================== Download Additional ==================== -->
+    <string name="download_parse_link">Parse Link</string>
+    <string name="download_reparse">Reparse</string>
+    <string name="download_parsing">Parsing...</string>
+    
+    <!-- ==================== Subtitle Search Additional ==================== -->
+    <string name="subtitle_no_media_found">No media found</string>
+    <string name="subtitle_search_failed">Search failed: %s</string>
+    <string name="subtitle_found_count">Found %d subtitles</string>
+    <string name="subtitle_not_found">No subtitles found</string>
+    <string name="subtitle_search_error">Search error: %s</string>
+    <string name="subtitle_downloading">Starting download...</string>
+    
+    <!-- ==================== Paging ==================== -->
+    <string name="paging_search_hint">Search requires database-level implementation, please use sort feature</string>
+    
+    <!-- ==================== DanDanPlay Related ==================== -->
+    <string name="dandanplay_network_danmaku">Network Danmaku</string>
+    <string name="dandanplay_select_episode">Select Episode</string>
+    <string name="dandanplay_back">← Back</string>
+    <string name="dandanplay_search_placeholder">Enter anime title</string>
+    <string name="dandanplay_searching">Searching...</string>
+    <string name="dandanplay_input_name">Enter anime title to start search</string>
+    <string name="dandanplay_no_results">No matching anime found, try other keywords</string>
+    <string name="dandanplay_access_denied">Access denied(403), check network or try later</string>
+    <string name="dandanplay_api_not_found">API not found(404), contact developer</string>
+    <string name="dandanplay_timeout">Request timeout, check network connection</string>
+    <string name="dandanplay_search_failed">Search failed: %s</string>
+    <string name="dandanplay_search_exception">Search exception: %s\nPlease check network connection</string>
+    <string name="dandanplay_episode_count">%d episodes</string>
+    
+    <!-- ==================== Feedback &amp; Help ==================== -->
+    <string name="feedback_cannot_open_browser">Cannot open browser</string>
+    <string name="feedback_email_subject">FAM4K007 Player Feedback</string>
+    <string name="feedback_no_email_app">No email app found</string>
+    
+    <!-- ==================== Download Function Detailed ==================== -->
+    <string name="download_custom_path">Custom path</string>
+    <string name="download_storage_path">Storage path: %s</string>
+    <string name="download_episode_selection">Select episodes (Total %d episodes)</string>
+    <string name="download_expand">Expand</string>
+    <string name="download_collapse">Collapse</string>
+    <string name="download_episode_format">Episode %1$d %2$s</string>
+    <string name="download_history">Download History</string>
+    <string name="download_status_merging">Merging</string>
+    <string name="download_parse_failed">Failed to parse bangumi ID</string>
+    <string name="download_get_episode_failed">Failed to get episodes: %s</string>
+    <string name="download_episode_parse_error">Parse failed</string>
+    <string name="download_error_prefix">Error: %s</string>
+    
+    <!-- ==================== Bilibili Play Detailed ==================== -->
+    <string name="bilibili_play_invalid_link">Invalid bangumi link</string>
+    <string name="bilibili_play_get_failed">Failed to get</string>
+    <string name="bilibili_play_network_error">Network error</string>
+    <string name="bilibili_play_api_error">API error: %s</string>
+    <string name="bilibili_play_data_empty">Data is empty</string>
+    <string name="bilibili_play_unknown_episode">Unknown episode</string>
+    <string name="bilibili_play_input_link_prompt">Please enter bangumi link</string>
+    <string name="bilibili_play_logged_in">Logged in</string>
+    
+    <!-- ==================== Bilibili Danmaku Download Detailed ==================== -->
+    <string name="bilibili_danmaku_title">Bilibili Danmaku Download</string>
+    <string name="bilibili_danmaku_set_folder">Set save folder</string>
+    <string name="bilibili_danmaku_folder_set">Folder set</string>
+    <string name="bilibili_danmaku_click_select">Click to select folder</string>
+    <string name="bilibili_danmaku_download">Download Danmaku</string>
+    <string name="bilibili_danmaku_click_input">Click to enter video link</string>
+    <string name="bilibili_danmaku_set_folder_first">Please set save folder first</string>
+    <string name="bilibili_danmaku_instructions">Instructions</string>
+    <string name="bilibili_danmaku_download_title">Download Bilibili Danmaku</string>
+    <string name="bilibili_danmaku_link_label">Video Link</string>
+    <string name="bilibili_danmaku_link_placeholder">Enter Bilibili video or bangumi link</string>
+    <string name="bilibili_danmaku_download_mode">Download Mode</string>
+    <string name="bilibili_danmaku_season_download">Season Download</string>
+    <string name="bilibili_danmaku_single_download">Single Episode Download</string>
+    <string name="bilibili_danmaku_download_btn">Download</string>
+    <string name="bilibili_danmaku_downloading">Downloading danmaku</string>
+    <string name="bilibili_danmaku_progress">Progress: %1$d / %2$d</string>
+    <string name="bilibili_danmaku_preparing">Preparing...</string>
+    <string name="bilibili_danmaku_current">Current: %s</string>
+    <string name="bilibili_danmaku_success_count">Success: %d</string>
+    <string name="bilibili_danmaku_failed_count">Failed: %d</string>
+    <string name="bilibili_danmaku_done">Done</string>
+    
+    <!-- ==================== User Agreement ==================== -->
+    <string name="agreement_scroll_hint">Please scroll down to read the complete agreement</string>
+    <string name="agreement_read_understand">I have read and fully understand all the terms above, and agree to comply with all contents of this agreement</string>
+    <string name="agreement_read_fully">I have fully read and</string>
+    <string name="agreement_understand_fully">fully understand</string>
+    <string name="agreement_accept_all">all the terms above, and agree to comply with all contents of this agreement</string>
+    <string name="agreement_decline">Decline</string>
+    <string name="agreement_accept">Accept</string>
+    <string name="agreement_icon_desc">App icon</string>
+    <string name="agreement_title">User Service Agreement and Privacy Policy</string>
+    <string name="agreement_welcome">Welcome to Meow Player!</string>
+    <string name="agreement_section_1">I. Important Notice</string>
+    <string name="agreement_1_1">This application is completely free and open source, following GPL-3.0-or-later license</string>
+    <string name="agreement_1_2">This application is for technical learning and code testing, do not abuse</string>
+    <string name="agreement_1_3">We strongly oppose and do not condone piracy, illegal reproduction, or any other illegal purposes</string>
+    <string name="agreement_section_2">II. Privacy Policy</string>
+    <string name="agreement_data_collection">【Data Collection】</string>
+    <string name="agreement_2_1">This app does not collect any user personal information</string>
+    <string name="agreement_2_2">This app does not upload any data to servers (we have no servers)</string>
+    <string name="agreement_2_3">This app does not share user data with any third party</string>
+    <string name="agreement_2_4">All functions run on local device</string>
+    <string name="agreement_permissions">【Permission Description】</string>
+    <string name="agreement_permissions_intro">This app requires the following permissions:</string>
+    <string name="agreement_permission_storage">Manage All Files Permission</string>
+    <string name="agreement_permission_storage_desc">For scanning local video files, saving subtitles and danmaku files</string>
+    <string name="agreement_permission_network">Network Permission</string>
+    <string name="agreement_permission_network_desc">For online playback, downloading danmaku, WebDAV features</string>
+    <string name="agreement_login_security">【Login Information Security】</string>
+    <string name="agreement_login_intro">If you choose to use Bilibili login:</string>
+    <string name="agreement_login_1">Login credentials are encrypted with AES-256 and stored locally</string>
+    <string name="agreement_login_2">Login keys are protected by Android KeyStore hardware, not exportable</string>
+    <string name="agreement_login_3">Login info is only used to call Bilibili API, not uploaded elsewhere</string>
+    <string name="agreement_login_4">You can logout anytime in settings</string>
+    
+    <!-- ==================== Content Description ==================== -->
+    <string name="content_desc_sort">Sort</string>
+    <string name="content_desc_close_search">Close search</string>
+    <string name="content_desc_more">More</string>
+    <string name="content_desc_more_info">More info</string>
+    
+    <!-- ==================== Subtitle Search Module ==================== -->
+    <string name="subtitle_search_title">Subtitle Search</string>
+    <string name="subtitle_search_button">Search Subtitles</string>
+    <string name="subtitle_search_input_hint">Tap to enter movie name</string>
+    <string name="subtitle_search_set_folder">Set Folder</string>
+    <string name="subtitle_search_options">Search Options</string>
+    <string name="subtitle_search_searching_media">Searching for media...</string>
+    <string name="subtitle_select_media">Selected</string>
+    <string name="subtitle_cancel_selection">Cancel Selection</string>
+    <string name="subtitle_searching">Searching subtitles...</string>
+    <string name="subtitle_start_search">Start searching</string>
+    <string name="subtitle_select_media_title">Select Media (%d)</string>
+    <string name="subtitle_results_title">Subtitle Results (%d)</string>
+    <string name="subtitle_download_button">Download</string>
+    <string name="subtitle_search_dialog_title">Search Subtitles</string>
+    <string name="subtitle_search_input_prompt">Please enter movie name</string>
+    <string name="subtitle_search_movie_name">Movie Name</string>
+    <string name="subtitle_search_example">e.g., John Wick</string>
+    <string name="subtitle_search_confirm">Search</string>
+    <string name="subtitle_search_language">Language</string>
+    <string name="subtitle_search_source">Source</string>
+    <string name="subtitle_search_format">Format</string>
+    <string name="subtitle_search_options_dialog_title">Search Options</string>
+    <string name="subtitle_search_options_confirm">Confirm</string>
+    
+    <!-- ==================== Folder Browser Module ==================== -->
+    <string name="folder_browser_title">Folders</string>
+    <string name="folder_sort">Sort</string>
+    <string name="folder_sort_dialog_title">Sort By</string>
+    <string name="folder_sort_name_asc">Name (Ascending)</string>
+    <string name="folder_sort_name_desc">Name (Descending)</string>
+    <string name="folder_sort_video_count_asc">Video Count (Ascending)</string>
+    <string name="folder_sort_video_count_desc">Video Count (Descending)</string>
+    <string name="folder_no_videos">No video folders found</string>
+    <string name="folder_videos_count">%d videos</string>
+    <string name="folder_permission_needed">Storage Permission Required</string>
+    <string name="folder_permission_desc">Grant storage permission to browse video files</string>
+    <string name="folder_grant_permission">Grant Permission</string>
+    
+    <!-- ==================== Playback History Module ==================== -->
+    <string name="playback_history_title">Playback History</string>
+    <string name="playback_history_clear_all">Clear All</string>
+    <string name="playback_history_empty">No playback history</string>
+    <string name="playback_history_clear_title">Clear History</string>
+    <string name="playback_history_clear_confirm">Are you sure you want to clear all playback history? This action cannot be undone.</string>
+    <string name="playback_history_clear_button">Clear</string>
+    <string name="playback_history_delete_title">Delete Record</string>
+    <string name="playback_history_delete_confirm">Are you sure you want to delete the playback record for "%s"?</string>
+    <string name="playback_history_delete_button">Delete</string>
+    <string name="playback_history_played_hms">Played %02d:%02d:%02d</string>
+    <string name="playback_history_played_ms">Played %02d:%02d</string>
+    
+    <!-- ==================== Download Example Activity ==================== -->
+    <string name="download_example_title">Bilibili Video Download</string>
+    <string name="download_input_link">Enter Video/Bangumi Link</string>
+    <string name="download_link_placeholder">https://www.bilibili.com/video/BV... or ss12345</string>
+    <string name="download_parsing_status">Parsing...</string>
+    <string name="download_parse_link_button">Parse Link</string>
+    <string name="download_error_format">Error: %s</string>
+    <string name="download_episode_selection_title">Select Episodes (Total %d)</string>
+    <string name="download_list_title">Download List</string>
+    <string name="download_no_tasks">No download tasks</string>
+    <string name="download_added_to_queue">Added to download queue: %s</string>
+    <string name="download_found_episodes">Found %d episodes, please select episodes to download</string>
+    <string name="download_parse_failed_msg">Parse failed</string>
+    
+</resources>

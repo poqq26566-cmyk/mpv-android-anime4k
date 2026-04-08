@@ -59,7 +59,7 @@ class SubtitleSearchActivity : BaseActivity() {
         loadSavedPreferences()
 
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this).themeName)
+            val themeColors = getThemeColors(this@SubtitleSearchActivity, ThemeManager.getCurrentTheme(this@SubtitleSearchActivity).themeName)
             
             MaterialTheme(
                 colorScheme = lightColorScheme(
@@ -145,9 +145,9 @@ class SubtitleSearchActivity : BaseActivity() {
             savedFolderUri = uri
             savePreferences()
             
-            Toast.makeText(this, "保存文件夹设置成功", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.subtitle_folder_saved), Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Toast.makeText(this, "设置失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.subtitle_setting_failed, e.message), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -157,7 +157,7 @@ class SubtitleSearchActivity : BaseActivity() {
     private fun handleSearchOptionsChanged(options: SearchOptions) {
         searchOptions = options
         savePreferences()
-        Toast.makeText(this, "搜索选项已更新", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, getString(R.string.subtitle_search_updated), Toast.LENGTH_SHORT).show()
         
         // 如果已选择媒体，使用新选项重新搜索
         selectedMedia?.let { media ->
@@ -170,7 +170,7 @@ class SubtitleSearchActivity : BaseActivity() {
      */
     private fun startMediaSearch(query: String) {
         if (query.isBlank()) {
-            Toast.makeText(this, "请输入搜索关键词", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.subtitle_input_keyword), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -193,7 +193,7 @@ class SubtitleSearchActivity : BaseActivity() {
                         if (result.media.isEmpty()) {
                             Toast.makeText(
                                 this@SubtitleSearchActivity,
-                                "未找到相关影片",
+                                getString(R.string.subtitle_no_media_found),
                                 Toast.LENGTH_SHORT
                             ).show()
                         } else if (result.media.size == 1) {
@@ -204,7 +204,7 @@ class SubtitleSearchActivity : BaseActivity() {
                     is SubtitleDownloadManager.MediaSearchResult.Error -> {
                         Toast.makeText(
                             this@SubtitleSearchActivity,
-                            "搜索失败: ${result.message}",
+                            getString(R.string.subtitle_search_failed, result.message),
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -252,13 +252,13 @@ class SubtitleSearchActivity : BaseActivity() {
                         if (result.subtitles.isEmpty()) {
                             Toast.makeText(
                                 this@SubtitleSearchActivity,
-                                "未找到字幕",
+                                getString(R.string.subtitle_not_found),
                                 Toast.LENGTH_SHORT
                             ).show()
                         } else {
                             Toast.makeText(
                                 this@SubtitleSearchActivity,
-                                "找到 ${result.subtitles.size} 个字幕",
+                                getString(R.string.subtitle_found_count, result.subtitles.size),
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -295,7 +295,7 @@ class SubtitleSearchActivity : BaseActivity() {
      */
     private fun startDownload(subtitle: SubtitleInfo) {
         if (savedFolderUri == null) {
-            Toast.makeText(this, "请先设置保存文件夹", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.subtitle_set_folder_first), Toast.LENGTH_SHORT).show()
             return
         }
 

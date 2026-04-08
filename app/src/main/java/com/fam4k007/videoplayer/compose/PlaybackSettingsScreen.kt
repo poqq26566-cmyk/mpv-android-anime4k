@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -49,10 +50,10 @@ fun PlaybackSettingsScreen(
     Scaffold(
         topBar = {
             ImmersiveTopAppBar(
-                title = { Text("播放设置", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.playback_settings_title), fontSize = 18.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "返回")
+                        Icon(Icons.Default.ArrowBack, stringResource(R.string.common_back))
                     }
                 }
             )
@@ -67,13 +68,13 @@ fun PlaybackSettingsScreen(
         ) {
             // 进度控制
             item {
-                SectionHeader("进度控制")
+                SectionHeader(stringResource(R.string.playback_progress_control))
             }
             
             item {
                 SwitchSettingCard(
-                    title = "精确进度定位",
-                    description = if (preciseSeeking) "定位更准确但可能较慢" else "定位更快但使用关键帧",
+                    title = stringResource(R.string.playback_precise_seeking),
+                    description = if (preciseSeeking) stringResource(R.string.playback_precise_seeking_slow) else stringResource(R.string.playback_precise_seeking_fast),
                     checked = preciseSeeking,
                     onCheckedChange = {
                         preciseSeeking = it
@@ -84,15 +85,15 @@ fun PlaybackSettingsScreen(
             
             item {
                 ClickableSettingCard(
-                    title = "快进/快退时长",
-                    value = "${seekTime}秒",
+                    title = stringResource(R.string.playback_seek_time),
+                    value = stringResource(R.string.playback_seconds_format, seekTime),
                     onClick = { showSeekTimeDialog = true }
                 )
             }
             
             // 手势控制
             item {
-                SectionHeader("手势控制")
+                SectionHeader(stringResource(R.string.playback_gesture_control))
             }
             
             item {
@@ -109,8 +110,8 @@ fun PlaybackSettingsScreen(
             if (doubleTapMode == 1) {
                 item {
                     ClickableSettingCard(
-                        title = "双击跳转时长",
-                        value = "${doubleTapSeekSeconds}秒",
+                        title = stringResource(R.string.playback_double_tap_seek),
+                        value = stringResource(R.string.playback_seconds_format, doubleTapSeekSeconds),
                         onClick = { showDoubleTapSeekDialog = true }
                     )
                 }
@@ -118,13 +119,13 @@ fun PlaybackSettingsScreen(
             
             // 音量控制
             item {
-                SectionHeader("音量控制")
+                SectionHeader(stringResource(R.string.playback_volume_control))
             }
             
             item {
                 SwitchSettingCard(
-                    title = "音量增强",
-                    description = if (volumeBoost) "音量可超过100%,最高300%" else "音量范围限制在1-100%",
+                    title = stringResource(R.string.playback_volume_boost),
+                    description = if (volumeBoost) stringResource(R.string.playback_volume_boost_on) else stringResource(R.string.playback_volume_boost_off),
                     checked = volumeBoost,
                     onCheckedChange = {
                         volumeBoost = it
@@ -135,26 +136,26 @@ fun PlaybackSettingsScreen(
             
             // 倍速控制
             item {
-                SectionHeader("倍速控制")
+                SectionHeader(stringResource(R.string.playback_speed_control))
             }
             
             item {
                 ClickableSettingCard(
-                    title = "长按倍速",
-                    value = String.format("%.1fx", longPressSpeed),
+                    title = stringResource(R.string.playback_long_press_speed),
+                    value = stringResource(R.string.playback_speed_format, longPressSpeed),
                     onClick = { showSpeedDialog = true }
                 )
             }
             
             // 画质增强
             item {
-                SectionHeader("画质增强")
+                SectionHeader(stringResource(R.string.playback_quality_enhancement))
             }
             
             item {
                 SwitchSettingCard(
-                    title = "记忆超分模式",
-                    description = if (anime4KMemory) "记住上次使用的Anime4K模式" else "每次播放都从关闭状态开始",
+                    title = stringResource(R.string.playback_anime4k_memory),
+                    description = if (anime4KMemory) stringResource(R.string.playback_anime4k_memory_on) else stringResource(R.string.playback_anime4k_memory_off),
                     checked = anime4KMemory,
                     onCheckedChange = {
                         anime4KMemory = it
@@ -375,7 +376,7 @@ fun SeekTimeDialog(
         onDismissRequest = onDismiss,
         title = { 
             Text(
-                "快进/快退时长", 
+                stringResource(R.string.playback_double_tap_seek), 
                 fontSize = 16.sp, 
                 fontWeight = FontWeight.Bold, 
                 color = SettingsPalette.PrimaryText
@@ -453,7 +454,7 @@ fun DoubleTapModeCard(
                 .padding(20.dp)
         ) {
             Text(
-                "双击手势",
+                stringResource(R.string.playback_gesture_control),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 color = SettingsPalette.PrimaryText
@@ -485,14 +486,14 @@ fun DoubleTapModeCard(
                 Spacer(Modifier.width(12.dp))
                 Column {
                     Text(
-                        "暂停/播放",
+                        stringResource(R.string.playback_double_tap_mode_pause),
                         fontSize = 15.sp,
                         color = if (currentMode == 0) MaterialTheme.colorScheme.primary 
                                 else SettingsPalette.PrimaryText,
                         fontWeight = if (currentMode == 0) FontWeight.SemiBold else FontWeight.Normal
                     )
                     Text(
-                        "双击任意位置暂停或播放",
+                        stringResource(R.string.playback_double_tap_mode_pause),
                         fontSize = 12.sp,
                         color = SettingsPalette.SecondaryText
                     )
@@ -526,14 +527,14 @@ fun DoubleTapModeCard(
                 Spacer(Modifier.width(12.dp))
                 Column {
                     Text(
-                        "快进/快退",
+                        stringResource(R.string.playback_double_tap_mode_seek),
                         fontSize = 15.sp,
                         color = if (currentMode == 1) MaterialTheme.colorScheme.primary 
                                 else SettingsPalette.PrimaryText,
                         fontWeight = if (currentMode == 1) FontWeight.SemiBold else FontWeight.Normal
                     )
                     Text(
-                        "双击左半屏快退，右半屏快进",
+                        stringResource(R.string.playback_double_tap_mode_seek),
                         fontSize = 12.sp,
                         color = SettingsPalette.SecondaryText
                     )
@@ -557,7 +558,7 @@ fun DoubleTapSeekDialog(
         onDismissRequest = onDismiss,
         title = { 
             Text(
-                "双击跳转时长", 
+                stringResource(R.string.playback_double_tap_seek), 
                 fontSize = 16.sp, 
                 fontWeight = FontWeight.Bold, 
                 color = SettingsPalette.PrimaryText
@@ -602,12 +603,12 @@ fun DoubleTapSeekDialog(
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(selected) }) {
-                Text("确定", color = SettingsPalette.AccentText, fontSize = 14.sp)
+                Text(stringResource(R.string.common_confirm), color = SettingsPalette.AccentText, fontSize = 14.sp)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消", color = SettingsPalette.SecondaryText, fontSize = 14.sp)
+                Text(stringResource(R.string.common_cancel), color = SettingsPalette.SecondaryText, fontSize = 14.sp)
             }
         },
         shape = RoundedCornerShape(12.dp),
@@ -630,7 +631,7 @@ fun SpeedDialog(
         onDismissRequest = onDismiss,
         title = { 
             Text(
-                "长按倍速", 
+                stringResource(R.string.playback_long_press_speed), 
                 fontSize = 16.sp, 
                 fontWeight = FontWeight.Bold, 
                 color = SettingsPalette.PrimaryText

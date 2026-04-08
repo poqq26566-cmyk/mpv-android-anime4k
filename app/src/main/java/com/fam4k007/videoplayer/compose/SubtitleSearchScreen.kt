@@ -26,6 +26,8 @@ import androidx.compose.ui.window.Dialog
 import com.fam4k007.videoplayer.compose.SettingsColors as SettingsPalette
 import com.fam4k007.videoplayer.subtitle.SubtitleInfo
 import com.fam4k007.videoplayer.subtitle.SubtitleLanguages
+import com.fam4k007.videoplayer.R
+import androidx.compose.ui.res.stringResource
 import com.fam4k007.videoplayer.subtitle.SubtitleSources
 import com.fam4k007.videoplayer.subtitle.SubtitleFormats
 import com.fam4k007.videoplayer.subtitle.SearchOptions
@@ -66,10 +68,10 @@ fun SubtitleSearchScreen(
     Scaffold(
         topBar = {
             ImmersiveTopAppBar(
-                title = { Text("字幕搜索下载", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.subtitle_search_title), fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 }
             )
@@ -117,16 +119,16 @@ fun SubtitleSearchScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "搜索字幕",
+                                    text = stringResource(R.string.subtitle_search_button),
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimary
                                 )
                                 Text(
                                     text = if (currentFolderUri != null) 
-                                        "点击输入影片名称" 
+                                        stringResource(R.string.subtitle_search_input_hint) 
                                     else 
-                                        "请先设置保存文件夹",
+                                        stringResource(R.string.bilibili_danmaku_set_folder_first),
                                     fontSize = 13.sp,
                                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                                 )
@@ -161,7 +163,7 @@ fun SubtitleSearchScreen(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = if (currentFolderUri != null) "已设置" else "设置文件夹",
+                                    text = if (currentFolderUri != null) stringResource(R.string.bilibili_danmaku_folder_set) else stringResource(R.string.subtitle_search_set_folder),
                                     fontSize = 13.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
@@ -185,7 +187,7 @@ fun SubtitleSearchScreen(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "搜索选项",
+                                    text = stringResource(R.string.subtitle_search_options),
                                     fontSize = 13.sp
                                 )
                             }
@@ -212,7 +214,7 @@ fun SubtitleSearchScreen(
                         ) {
                             CircularProgressIndicator(color = primaryColor)
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("搜索影片中...", color = SettingsPalette.SecondaryText)
+                            Text(stringResource(R.string.subtitle_search_searching_media), color = SettingsPalette.SecondaryText)
                         }
                     }
                     // 显示媒体选择列表
@@ -243,7 +245,7 @@ fun SubtitleSearchScreen(
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = "已选择",
+                                            text = stringResource(R.string.subtitle_select_media),
                                             fontSize = 12.sp,
                                             color = SettingsPalette.SecondaryText
                                         )
@@ -257,7 +259,7 @@ fun SubtitleSearchScreen(
                                     IconButton(onClick = onClearSelection) {
                                         Icon(
                                             Icons.Default.Close,
-                                            contentDescription = "取消选择",
+                                            contentDescription = stringResource(R.string.subtitle_cancel_selection),
                                             tint = primaryColor
                                         )
                                     }
@@ -273,7 +275,7 @@ fun SubtitleSearchScreen(
                                 ) {
                                     CircularProgressIndicator(color = primaryColor)
                                     Spacer(modifier = Modifier.height(16.dp))
-                                    Text("搜索字幕中...", color = SettingsPalette.SecondaryText)
+                                    Text(stringResource(R.string.subtitle_searching), color = SettingsPalette.SecondaryText)
                                 }
                             } else if (searchResults.isEmpty()) {
                                 Column(
@@ -289,7 +291,7 @@ fun SubtitleSearchScreen(
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Text(
-                                        "未找到字幕",
+                                        stringResource(R.string.subtitle_not_found),
                                         color = SettingsPalette.SecondaryText,
                                         fontSize = 16.sp
                                     )
@@ -317,7 +319,7 @@ fun SubtitleSearchScreen(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                "请开始搜索",
+                                stringResource(R.string.subtitle_start_search),
                                 color = SettingsPalette.SecondaryText,
                                 fontSize = 16.sp
                             )
@@ -363,7 +365,7 @@ private fun MediaResultList(
     ) {
         item {
             Text(
-                text = "选择影片 (${mediaList.size})",
+                text = stringResource(R.string.subtitle_select_media_title, mediaList.size),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = SettingsPalette.PrimaryText,
@@ -446,7 +448,7 @@ private fun SubtitleResultList(
     ) {
         item {
             Text(
-                text = "字幕结果 (${subtitles.size})",
+                text = stringResource(R.string.subtitle_results_title, subtitles.size),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = SettingsPalette.PrimaryText,
@@ -552,7 +554,7 @@ private fun SubtitleItem(
             Spacer(modifier = Modifier.width(8.dp))
             Icon(
                 imageVector = Icons.Default.Download,
-                contentDescription = "下载",
+                contentDescription = stringResource(R.string.subtitle_download_button),
                 tint = MaterialTheme.colorScheme.primary
             )
         }
@@ -572,7 +574,7 @@ private fun SubtitleSearchDialog(
         containerColor = SettingsPalette.CardBackground,
         title = {
             Text(
-                "搜索字幕",
+                stringResource(R.string.subtitle_search_dialog_title),
                 color = primaryColor,
                 fontWeight = FontWeight.Bold
             )
@@ -580,7 +582,7 @@ private fun SubtitleSearchDialog(
         text = {
             Column {
                 Text(
-                    "请输入影片名称",
+                    stringResource(R.string.subtitle_search_input_prompt),
                     fontSize = 14.sp,
                     color = SettingsPalette.SecondaryText
                 )
@@ -588,8 +590,8 @@ private fun SubtitleSearchDialog(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    label = { Text("影片名称") },
-                    placeholder =  { Text("例如：疾速追杀") },
+                    label = { Text(stringResource(R.string.subtitle_search_movie_name)) },
+                    placeholder =  { Text(stringResource(R.string.subtitle_search_example)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -613,7 +615,7 @@ private fun SubtitleSearchDialog(
                     containerColor = primaryColor
                 )
             ) {
-                Text("搜索")
+                Text(stringResource(R.string.subtitle_search_confirm))
             }
         },
         dismissButton = {
@@ -623,7 +625,7 @@ private fun SubtitleSearchDialog(
                     contentColor = primaryColor
                 )
             ) {
-                Text("取消")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )
@@ -654,7 +656,7 @@ private fun SearchOptionsDialog(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    "搜索选项",
+                    stringResource(R.string.subtitle_search_options_dialog_title),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = primaryColor
@@ -801,7 +803,7 @@ private fun SearchOptionsDialog(
                             contentColor = primaryColor
                         )
                     ) {
-                        Text("取消")
+                        Text(stringResource(R.string.common_cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -818,7 +820,7 @@ private fun SearchOptionsDialog(
                             containerColor = primaryColor
                         )
                     ) {
-                        Text("确定")
+                        Text(stringResource(R.string.subtitle_search_options_confirm))
                     }
                 }
             }

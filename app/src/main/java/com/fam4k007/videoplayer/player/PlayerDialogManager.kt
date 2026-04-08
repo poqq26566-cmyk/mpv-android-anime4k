@@ -65,7 +65,7 @@ class PlayerDialogManager(
             val audioTracks = playbackEngine.getAudioTracks()
 
             if (audioTracks.isEmpty()) {
-                DialogUtils.showToastShort(activity, "没有可用的音频轨道")
+                DialogUtils.showToastShort(activity, activity.getString(R.string.player_no_audio_track))
                 return
             }
 
@@ -85,12 +85,12 @@ class PlayerDialogManager(
             ) { position ->
                 val trackId = audioTracks[position].first
                 playbackEngine.selectAudioTrack(trackId)
-                DialogUtils.showToastShort(activity, "已切换到: ${items[position]}")
+                DialogUtils.showToastShort(activity, activity.getString(R.string.player_switched_to, items[position]))
                 Log.d(TAG, "Audio track changed to: $trackId")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show audio track dialog", e)
-            DialogUtils.showToastShort(activity, "获取音频轨道失败")
+            DialogUtils.showToastShort(activity, activity.getString(R.string.player_get_audio_failed))
         }
     }
 
@@ -100,7 +100,10 @@ class PlayerDialogManager(
     fun showDecoderDialog() {
         val activity = activityRef.get() ?: return
 
-        val items = listOf("硬件解码", "软件解码")
+        val items = listOf(
+            activity.getString(R.string.decoder_hardware),
+            activity.getString(R.string.decoder_software)
+        )
         val currentDecoder = preferencesManager.getHardwareDecoder()
         val currentSelection = if (currentDecoder) 0 else 1
 
@@ -116,7 +119,7 @@ class PlayerDialogManager(
             val newDecoder = (position == 0)
             preferencesManager.setHardwareDecoder(newDecoder)
             playbackEngine.setHardwareDecoding(newDecoder)
-            DialogUtils.showToastShort(activity, "已切换到${items[position]}")
+            DialogUtils.showToastShort(activity, activity.getString(R.string.player_switched, items[position]))
             Log.d(TAG, "Decoder changed to: ${if (newDecoder) "hardware" else "software"}")
         }
     }
@@ -127,7 +130,11 @@ class PlayerDialogManager(
     fun showAspectRatioDialog(currentAspect: VideoAspect) {
         val activity = activityRef.get() ?: return
 
-        val items = listOf("适应屏幕", "拉伸", "裁剪")
+        val items = listOf(
+            activity.getString(R.string.player_aspect_fit),
+            activity.getString(R.string.player_aspect_stretch),
+            activity.getString(R.string.player_aspect_crop)
+        )
         val currentSelection = when (currentAspect) {
             VideoAspect.FIT -> 0
             VideoAspect.STRETCH -> 1
@@ -151,7 +158,7 @@ class PlayerDialogManager(
             }
             playbackEngine.changeVideoAspect(newAspect)
             (activity as? VideoAspectCallback)?.onVideoAspectChanged(newAspect)
-            DialogUtils.showToastShort(activity, "画面比例：${items[position]}")
+            DialogUtils.showToastShort(activity, activity.getString(R.string.player_aspect_ratio, items[position]))
             Log.d(TAG, "Video aspect changed to: ${newAspect.displayName}")
         }
     }
@@ -271,7 +278,11 @@ class PlayerDialogManager(
         val activity = activityRef.get() ?: return
 
         val btnSubtitle = activity.findViewById<ImageView>(R.id.btnSubtitle)
-        val menuItems = listOf("字幕轨道", "外挂字幕", "更多设置")
+        val menuItems = listOf(
+            activity.getString(R.string.subtitle_menu_track),
+            activity.getString(R.string.subtitle_menu_external),
+            activity.getString(R.string.subtitle_more_settings)
+        )
 
         showPopupDialog(
             btnSubtitle,
@@ -480,7 +491,7 @@ class PlayerDialogManager(
         ) { position ->
             val newSpeed = speedValues[position]
             dialogCallback?.onSpeedChanged(newSpeed)
-            DialogUtils.showToastShort(activity, "播放速度：${speeds[position]}")
+            DialogUtils.showToastShort(activity, activity.getString(R.string.player_speed, speeds[position]))
         }
     }
 
@@ -501,13 +512,13 @@ class PlayerDialogManager(
         )
         
         val modeNames = listOf(
-            "关 - 原始画质",
-            "A - 强力重建",
-            "B - 柔和重建",
-            "C - 降噪处理",
-            "A+ - 双重强化",
-            "B+ - 双重柔和",
-            "C+ - 降噪强化"
+            activity.getString(R.string.anime4k_mode_off_name) + " - " + activity.getString(R.string.anime4k_mode_off_desc),
+            activity.getString(R.string.anime4k_mode_a_name) + " - " + activity.getString(R.string.anime4k_mode_a_desc_short),
+            activity.getString(R.string.anime4k_mode_b_name) + " - " + activity.getString(R.string.anime4k_mode_b_desc_short),
+            activity.getString(R.string.anime4k_mode_c_name) + " - " + activity.getString(R.string.anime4k_mode_c_desc_short),
+            activity.getString(R.string.anime4k_mode_a_plus_name) + " - " + activity.getString(R.string.anime4k_mode_a_plus_desc),
+            activity.getString(R.string.anime4k_mode_b_plus_name) + " - " + activity.getString(R.string.anime4k_mode_b_plus_desc),
+            activity.getString(R.string.anime4k_mode_c_plus_name) + " - " + activity.getString(R.string.anime4k_mode_c_plus_desc)
         )
         
         val currentSelection = modes.indexOf(currentMode)
@@ -524,7 +535,7 @@ class PlayerDialogManager(
             val selectedMode = modes[position]
             val enabled = selectedMode != Anime4KManager.Mode.OFF
             dialogCallback?.onAnime4KChanged(enabled, selectedMode, Anime4KManager.Quality.BALANCED)
-            DialogUtils.showToastShort(activity, "超分模式：${modeNames[position]}")
+            DialogUtils.showToastShort(activity, activity.getString(R.string.player_anime4k_mode, modeNames[position]))
         }
     }
 
@@ -545,14 +556,24 @@ class PlayerDialogManager(
         val hasChapters = chapterCount > 0
         
         // 动态显示样式覆盖状态
-        val assOverrideText = if (assOverrideEnabled) "样式覆盖：开" else "样式覆盖：关"
+        val assOverrideText = if (assOverrideEnabled) {
+            activity.getString(R.string.player_menu_style_override_on)
+        } else {
+            activity.getString(R.string.player_menu_style_override_off)
+        }
         
         // 根据是否有章节动态构建菜单项
         val items = mutableListOf<String>()
         if (hasChapters) {
-            items.add("章节")
+            items.add(activity.getString(R.string.player_menu_chapter))
         }
-        items.addAll(listOf("截图", "音轨", "解码", "片头片尾", assOverrideText))
+        items.addAll(listOf(
+            activity.getString(R.string.player_menu_screenshot),
+            activity.getString(R.string.player_menu_audio_track),
+            activity.getString(R.string.player_menu_decoder),
+            activity.getString(R.string.player_menu_skip_intro_outro),
+            assOverrideText
+        ))
         
         val btnMore = activity.findViewById<ImageView>(R.id.btnMore)
 
@@ -616,13 +637,14 @@ class PlayerDialogManager(
         try {
             val chapterCount = MPVLib.getPropertyInt("chapters") ?: 0
             if (chapterCount <= 0) {
-                DialogUtils.showToastShort(activity, "此视频没有章节信息")
+                DialogUtils.showToastShort(activity, activity.getString(R.string.player_no_chapters))
                 return
             }
 
             val chapters = mutableListOf<String>()
             for (i in 0 until chapterCount) {
-                val title = MPVLib.getPropertyString("chapter-list/$i/title") ?: "章节 ${i + 1}"
+                val title = MPVLib.getPropertyString("chapter-list/$i/title") 
+                    ?: activity.getString(R.string.player_chapter_n, i + 1)
                 chapters.add(title)
             }
 
@@ -648,7 +670,7 @@ class PlayerDialogManager(
                     Log.e(TAG, "Failed to sync danmaku on chapter jump", e)
                 }
                 
-                DialogUtils.showToastShort(activity, "已跳转到: ${chapters[position]}")
+                DialogUtils.showToastShort(activity, activity.getString(R.string.player_jumped_to_chapter, chapters[position]))
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show chapter dialog", e)
@@ -665,10 +687,10 @@ class PlayerDialogManager(
         
         // 简化的菜单项：移除了显示/隐藏选项，合并弹幕来源
         val menuItems = listOf(
-            "选择弹幕",
-            "匹配弹幕",
-            "弹幕轨道",
-            "弹幕设置"
+            activity.getString(R.string.danmaku_menu_select),
+            activity.getString(R.string.danmaku_menu_match),
+            activity.getString(R.string.danmaku_menu_track),
+            activity.getString(R.string.danmaku_settings)
         )
 
         showPopupDialog(
@@ -697,8 +719,8 @@ class PlayerDialogManager(
         val btnDanmaku = activity.findViewById<ImageView>(R.id.btnDanmaku)
         
         val sourceItems = listOf(
-            "本地弹幕",
-            "网络弹幕"
+            activity.getString(R.string.danmaku_source_local),
+            activity.getString(R.string.danmaku_source_network)
         )
 
         showPopupDialog(
@@ -724,7 +746,7 @@ class PlayerDialogManager(
         
         val currentPath = danmakuManager.getCurrentDanmakuPath()
         if (currentPath == null) {
-            DialogUtils.showToastShort(activity, "未加载弹幕文件")
+            DialogUtils.showToastShort(activity, activity.getString(R.string.player_no_danmaku_loaded))
             return
         }
         
@@ -735,7 +757,7 @@ class PlayerDialogManager(
         
         val menuItems = listOf(
             "✓ $fileName",
-            "取消弹幕轨道"
+            activity.getString(R.string.danmaku_track_cancel)
         )
         
         // 根据trackSelected状态确定选中项：true=0（弹幕轨道），false=1（取消弹幕轨道）
@@ -752,7 +774,7 @@ class PlayerDialogManager(
             when (position) {
                 0 -> {
                     // 保持当前轨道,不做任何操作
-                    DialogUtils.showToastShort(activity, "弹幕轨道已选中")
+                    DialogUtils.showToastShort(activity, activity.getString(R.string.player_danmaku_track_selected))
                 }
                 1 -> {
                     // 取消弹幕轨道(类似 DanDanPlay 的 removeTrack)
@@ -760,7 +782,7 @@ class PlayerDialogManager(
                     danmakuManager.setVisibility(false)
                     com.fam4k007.videoplayer.danmaku.DanmakuConfig.setEnabled(false)
                     (activity as? DanmakuDialogCallback)?.onDanmakuVisibilityChanged(false)
-                    DialogUtils.showToastShort(activity, "已取消弹幕轨道")
+                    DialogUtils.showToastShort(activity, activity.getString(R.string.player_danmaku_track_canceled))
                 }
             }
         }

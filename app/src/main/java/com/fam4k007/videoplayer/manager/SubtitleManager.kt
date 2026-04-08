@@ -218,10 +218,10 @@ class SubtitleManager {
                 } catch (e: Exception) {
                     Log.w(TAG, "Failed to get display name from content URI", e)
                 }
-                "外挂字幕"
+                context.getString(com.fam4k007.videoplayer.R.string.subtitle_menu_external)
             }
             else -> {
-                "字幕文件"
+                context.getString(com.fam4k007.videoplayer.R.string.subtitle_file_generic)
             }
         }
     }

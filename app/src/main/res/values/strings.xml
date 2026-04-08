@@ -1,5 +1,38 @@
 <resources>
+    <!-- 应用名称 -->
     <string name="app_name">小喵Player</string>
+    
+    <!-- ==================== 通用 ==================== -->
+    <string name="common_confirm">确定</string>
+    <string name="common_cancel">取消</string>
+    <string name="common_delete">删除</string>
+    <string name="common_save">保存</string>
+    <string name="common_close">关闭</string>
+    <string name="common_back">返回</string>
+    <string name="common_retry">重试</string>
+    <string name="common_refresh">刷新</string>
+    <string name="common_search">搜索</string>
+    <string name="common_clear">清除</string>
+    <string name="common_more">更多</string>
+    <string name="common_loading">加载中...</string>
+    <string name="common_error">错误: %s</string>
+    <string name="common_success">成功</string>
+    <string name="common_failed">失败</string>
+    <string name="common_unknown">未知</string>
+    <string name="common_unlimited">不限制</string>
+    <string name="common_unknown_folder">未知文件夹</string>
+    <string name="common_download">下载</string>
+    
+    <!-- UI提示 -->
+    <string name="ui_scroll_hint">可上下滑动</string>
+    <string name="ui_scroll_hint_top">上方区域可上下滑动</string>
+    
+    <!-- 主题 -->
+    <string name="theme_blue_purple">蓝紫主题</string>
+    <string name="theme_green">绿色主题</string>
+    <string name="theme_orange">橙色主题</string>
+    <string name="theme_pink">粉色主题</string>
+    <string name="theme_indigo">靛蓝主题</string>
     
     <!-- Activity 标题 -->
     <string name="settings">设置</string>
@@ -10,9 +43,687 @@
     <string name="about">关于</string>
     <string name="feedback">意见反馈</string>
     
-    <!-- 字幕样式设置 -->
-    <string name="subtitle_style_hint">需在"更多"中启用样式覆盖</string>
+    <!-- ==================== 播放器模块 ==================== -->
     
-    <!-- 视频播放器 -->
+    <!-- 播放器 - 基础 -->
+    <string name="player_init_failed">播放器初始化失败</string>
+    <string name="player_init_failed_msg">播放器初始化失败: %s\n\n如果问题持续存在，请重启应用</string>
+    <string name="player_parse_failed">解析视频地址失败: %s</string>
+    <string name="player_invalid_path">无效的视频路径</string>
+    <string name="player_cannot_get_uri">无法获取视频URI</string>
+    <string name="player_cannot_get_path">无法获取视频文件路径</string>
+    <string name="player_file_not_exist">视频文件不存在: %s</string>
+    <string name="player_first_episode">已经是第一集了</string>
+    <string name="player_last_episode">已经是最后一集了</string>
+    <string name="player_no_video_list">当前没有可用的视频列表</string>
+    
+    <!-- 播放器 - 片头片尾跳过 -->
+    <string name="player_auto_skip_chapter">已自动跳到章节：%s</string>
+    <string name="player_skip_intro_seconds">已跳过片头 %d 秒</string>
+    <string name="player_skip_outro_next">已跳过片尾，播放下一集</string>
+    <string name="player_skip_outro_last">已是最后一集，跳过片尾</string>
+    
+    <!-- 播放器 - 字幕 -->
+    <string name="player_load_danmaku_first">请先加载弹幕文件</string>
+    <string name="player_auto_load_subtitle">已自动加载字幕: %s</string>
+    <string name="player_subtitle_load_failed">字幕加载失败: %s</string>
+    <string name="player_subtitle_import_success">字幕导入成功</string>
+    <string name="player_subtitle_import_failed">字幕导入失败</string>
+    <string name="player_subtitle_import_error">字幕导入失败: %s</string>
+    
+    <!-- 播放器 - 弹幕 -->
+    <string name="player_danmaku_load_failed">弹幕加载失败: %s</string>
+    <string name="player_danmaku_exception">弹幕加载异常: %s</string>
+    <string name="player_danmaku_loaded">已加载弹幕: %s\n点击弹幕按钮显示</string>
+    <string name="player_loading_danmaku">正在加载弹幕...</string>
+    <string name="player_matching_danmaku">正在匹配弹幕，请稍候...</string>
+    <string name="player_no_danmaku_match">未找到匹配的弹幕</string>
+    <string name="player_match_failed">匹配失败: %s</string>
+    <string name="player_danmaku_import_success">弹幕导入成功</string>
+    <string name="player_danmaku_import_failed">弹幕导入失败</string>
+    <string name="player_danmaku_import_error">弹幕导入失败: %s</string>
+    <string name="player_no_danmaku_loaded">未加载弹幕文件</string>
+    <string name="player_danmaku_track_selected">弹幕轨道已选中</string>
+    <string name="player_danmaku_track_canceled">已取消弹幕轨道</string>
+    
+    <!-- 播放器 - 音轨选择 -->
+    <string name="player_no_audio_track">没有可用的音频轨道</string>
+    <string name="player_get_audio_failed">获取音频轨道失败</string>
+    <string name="player_switched_to">已切换到: %s</string>
+    <string name="player_switched">已切换到%s</string>
+    
+    <!-- 播放器 - 画面设置 -->
+    <string name="player_aspect_ratio">画面比例：%s</string>
+    <string name="player_speed">播放速度：%s</string>
+    <string name="player_anime4k_mode">超分模式：%s</string>
+    
+    <!-- 播放器 - 章节 -->
+    <string name="player_no_chapters">此视频没有章节信息</string>
+    <string name="player_jumped_to_chapter">已跳转到: %s</string>
+    <string name="player_chapter_n">章节 %d</string>
+    
+    <!-- 播放器 - 截图 -->
+    <string name="screenshot_saved">已保存</string>
+    <string name="screenshot_failed">截图失败: %s</string>
+    
+    <!-- 播放器 - 恢复播放提示 -->
+    <string name="player_resume_prompt">已为您恢复上次播放进度</string>
+    <string name="player_restart">重新开始</string>
+    
+    <!-- 播放器 - 菜单选项 -->
+    <string name="player_menu_screenshot">截图</string>
+    <string name="player_menu_audio_track">音轨</string>
+    <string name="player_menu_decoder">解码</string>
+    <string name="player_menu_skip_intro_outro">片头片尾</string>
+    <string name="player_menu_style_override_on">样式覆盖：开</string>
+    <string name="player_menu_style_override_off">样式覆盖：关</string>
+    <string name="player_menu_chapter">章节</string>
+    
+    <!-- 播放器 - 画面比例选项 -->
+    <string name="player_aspect_fit">适应屏幕</string>
+    <string name="player_aspect_stretch">拉伸</string>
+    <string name="player_aspect_crop">裁剪</string>
+    
+    <!-- 播放器 - 解码器 -->
+    <string name="decoder_hardware">硬件解码</string>
+    <string name="decoder_software">软件解码</string>
+    
+    <!-- ==================== 弹幕模块 ==================== -->
+    <string name="danmaku_settings">弹幕设置</string>
+    <string name="danmaku_current_file">当前弹幕文件</string>
+    <string name="danmaku_no_file_loaded">未加载弹幕文件</string>
+    <string name="danmaku_style">弹幕样式</string>
+    <string name="danmaku_config">弹幕配置</string>
+    
+    <!-- 弹幕 - 菜单选项 -->
+    <string name="danmaku_menu_select">选择弹幕</string>
+    <string name="danmaku_menu_match">匹配弹幕</string>
+    <string name="danmaku_menu_track">弹幕轨道</string>
+    <string name="danmaku_source_local">本地弹幕</string>
+    <string name="danmaku_source_network">网络弹幕</string>
+    <string name="danmaku_track_cancel">取消弹幕轨道</string>
+    <string name="danmaku_size">弹幕大小：%d%%</string>
+    <string name="danmaku_speed">弹幕速度：%d%%</string>
+    <string name="danmaku_speed_hint">数值越大，弹幕移动越快</string>
+    <string name="danmaku_alpha">弹幕透明度：%d%%</string>
+    <string name="danmaku_stroke">描边粗细：%d%%</string>
+    <string name="danmaku_reset">已重置为默认值</string>
+    <string name="danmaku_reset_all">重置所有样式为默认值</string>
+    <string name="danmaku_type_display">弹幕类型显示</string>
+    <string name="danmaku_show_scroll">显示滚动弹幕</string>
+    <string name="danmaku_show_top">显示顶部弹幕</string>
+    <string name="danmaku_show_bottom">显示底部弹幕</string>
+    <string name="danmaku_density_control">弹幕密度控制</string>
+    <string name="danmaku_max_scroll_line">滚动弹幕最大行数：%s</string>
+    <string name="danmaku_max_top_line">顶部弹幕最大行数：%s</string>
+    <string name="danmaku_max_bottom_line">底部弹幕最大行数：%s</string>
+    <string name="danmaku_max_screen_num">同屏最大弹幕数：%s</string>
+    <string name="danmaku_select_file">选择弹幕文件</string>
+    <string name="danmaku_no_files">该目录下没有弹幕文件</string>
+    <string name="danmaku_directory_access_error">无法访问目录: %s</string>
+    <string name="danmaku_file_not_exist">弹幕文件不存在</string>
+    <string name="danmaku_load_failed">弹幕加载失败</string>
+    <string name="danmaku_load_exception">弹幕加载异常: %s</string>
+    
+    <!-- ==================== 字幕模块 ==================== -->
+    
+    <!-- 字幕 - 基础 -->
+    <string name="subtitle_style_hint">需在"更多"中启用样式覆盖</string>
+    <string name="subtitle_more_settings">更多设置</string>
+    <string name="subtitle_delay_settings">字幕延迟设置</string>
+    <string name="subtitle_style_settings">字幕样式设置</string>
+    <string name="subtitle_misc_settings">字幕杂项设置</string>
+    <string name="subtitle_font_settings">字幕字体设置</string>
+    <string name="subtitle_select_file">选择字幕文件</string>
+    <string name="subtitle_no_files">该目录下没有字幕文件</string>
+    <string name="subtitle_directory_error">无法访问目录: %s</string>
+    
+    <!-- 字幕 - 菜单选项 -->
+    <string name="subtitle_menu_track">字幕轨道</string>
+    <string name="subtitle_menu_external">外挂字幕</string>
+    <string name="subtitle_file_generic">字幕文件</string>
+    <string name="subtitle_track_off">关闭字幕</string>
+    <string name="subtitle_track_generic">字幕轨道</string>
+    
+    <!-- 字幕 - 延迟 -->
+    <string name="subtitle_delay_range">范围: -60.0 ~ +60.0 秒</string>
+    <string name="subtitle_reset_to_zero">重置为 0</string>
+    
+    <!-- 字幕 - 样式 -->
+    <string name="subtitle_text_color">字幕颜色</string>
+    <string name="subtitle_bg_color">背景颜色</string>
+    <string name="subtitle_border_color">描边颜色</string>
+    <string name="subtitle_reset_all_styles">重置所有样式为默认值</string>
+    <string name="subtitle_border_size">描边粗细：%d</string>
+    <string name="subtitle_reset_to_3">重置为 3</string>
+    <string name="subtitle_border_mode">描边模式</string>
+    <string name="subtitle_mode_a">模式A</string>
+    <string name="subtitle_mode_a_desc">通过描边颜色项修改</string>
+    <string name="subtitle_mode_b">模式B</string>
+    <string name="subtitle_mode_b_desc">通过描边颜色项修改</string>
+    <string name="subtitle_mode_c">模式C</string>
+    <string name="subtitle_mode_c_desc">通过背景颜色项修改</string>
+    <string name="subtitle_size">字幕大小：%d%%</string>
+    <string name="subtitle_size_range">范围: 50%% ~ 300%%</string>
+    <string name="subtitle_position">字幕垂直位置：%d</string>
+    <string name="subtitle_position_range">范围: 0 (顶部) ~ 100 (底部)</string>
+    <string name="subtitle_reset_default">重置默认值 (100%%, 位置100)</string>
+    
+    <!-- 字幕 - 字体 -->
+    <string name="subtitle_font_noto_sans">思源黑体</string>
+    <string name="subtitle_font_noto_serif">思源宋体</string>
+    <string name="subtitle_current_font">当前字体</string>
+    <string name="subtitle_select_font">选择字体</string>
+    <string name="subtitle_font_all_formats">适用于所有字幕格式</string>
+    <string name="subtitle_font_switched">已切换到: %s\n重新播放生效</string>
+    <string name="subtitle_font_hint">💡 提示：字体更改需要重新播放视频才能生效</string>
+    
+    <!-- 字幕 - 搜索下载 -->
+    <string name="subtitle_folder_saved">保存文件夹设置成功</string>
+    <string name="subtitle_setting_failed">设置失败: %s</string>
+    <string name="subtitle_search_updated">搜索选项已更新</string>
+    <string name="subtitle_input_keyword">请输入搜索关键词</string>
+    <string name="subtitle_set_folder_first">请先设置保存文件夹</string>
+    <string name="subtitle_start_download">开始下载...</string>
+    
+    <!-- ==================== 片头片尾设置模块 ==================== -->
+    <string name="skip_settings">片头片尾设置</string>
+    <string name="skip_notice">设置视频播放时自动跳过的片头和片尾时长\n注意：设置会应用到当前文件夹的所有视频</string>
+    <string name="skip_auto_chapter">自动跳过章节</string>
+    <string name="skip_auto_chapter_desc">利用视频章节信息自动跳到正片（优先级高于手动时间设置）</string>
+    <string name="skip_which_chapter">跳到第几个章节</string>
+    <string name="skip_chapter_n">第 %d 个章节</string>
+    <string name="skip_chapter_hint">提示：章节0通常是OP前，章节1通常是OP结束后正片开始</string>
+    <string name="skip_intro">跳过片头</string>
+    <string name="skip_seconds">%d 秒</string>
+    <string name="skip_intro_desc">视频开始后前 %d 秒将被跳过</string>
+    <string name="skip_intro_range">范围: 0 ~ 180 秒</string>
+    <string name="skip_outro">跳过片尾</string>
+    <string name="skip_outro_seconds">%d 秒</string>
+    <string name="skip_outro_desc">视频结束前 %d 秒将自动跳转下一集</string>
+    <string name="skip_outro_range">范围: 0 ~ 180 秒</string>
+    
+    <!-- ==================== 视频列表模块 ==================== -->
+    <string name="video_list">视频列表</string>
+    <string name="video_sort">排序</string>
+    <string name="video_count">共 %d 个视频</string>
+    <string name="video_playing">播放中</string>
+    <string name="video_sort_name">文件名</string>
+    <string name="video_sort_size">大小</string>
+    <string name="video_sort_duration">时长</string>
+    <string name="video_sort_date">添加时间</string>
+    <string name="video_sort_by">排序方式</string>
+    <string name="video_name">文件名</string>
+    <string name="video_size">大小</string>
+    <string name="video_duration">时长</string>
+    <string name="video_date">添加时间</string>
+    <string name="video_sort_order">排序顺序</string>
+    <string name="video_sort_asc">升序 ↑</string>
+    <string name="video_sort_desc">降序 ↓</string>
+    <string name="video_list_back">返回</string>
+    <string name="video_list_search">搜索</string>
+    <string name="video_list_no_videos">此文件夹中没有视频</string>
+    <string name="video_list_no_match">未找到匹配的视频</string>
+    <string name="video_list_refresh">刷新</string>
+    <string name="video_list_more_info">更多信息</string>
+    <string name="video_list_search_hint">搜索视频...</string>
+    <string name="video_list_clear">清除</string>
+    <string name="video_list_name_asc">名称 (升序)</string>
+    <string name="video_list_name_desc">名称 (降序)</string>
+    <string name="video_list_date_asc">日期 (升序)</string>
+    <string name="video_list_date_desc">日期 (降序)</string>
+    <string name="video_list_cancel">取消</string>
+    <string name="video_list_resolution">分辨率</string>
+    <string name="video_list_cannot_get">无法获取</string>
+    <string name="video_list_video_codec">视频编码</string>
+    <string name="video_list_audio_codec">音频编码</string>
+    <string name="video_list_bitrate">比特率</string>
+    <string name="video_list_framerate">帧率</string>
+    <string name="video_list_close">关闭</string>
+    <string name="video_path">路径</string>
+    <string name="video_file_size">文件大小</string>
+    
+    <!-- ==================== B站相关模块 ==================== -->
+    
+    <!-- B站登录 -->
+    <string name="bilibili_login_title">登录 Bilibili</string>
+    <string name="bilibili_generating_qr">正在生成二维码...</string>
+    <string name="bilibili_waiting_scan">等待扫码...</string>
+    <string name="bilibili_scanned_waiting">已扫码，等待确认...</string>
+    <string name="bilibili_qr_expired">二维码已过期</string>
+    <string name="bilibili_login_notice">1.扫描以后不要马上点确认！\n2.等二维码下方等待扫码变为已扫码以后，再点确定！\n3.点确定以后不要急！本页面会自动返回到上一级，在此期间请不要进行任何操作！</string>
+    <string name="bilibili_refresh_qr">刷新二维码</string>
+    <string name="bilibili_login_success">✓ 登录成功</string>
+    <string name="bilibili_username">用户名: %s</string>
+    <string name="bilibili_vip">大会员 ✨</string>
+    <string name="bilibili_logout">退出登录</string>
+    <string name="bilibili_retry">重试</string>
+    <string name="bilibili_qr_gen_failed">生成二维码失败</string>
+    <string name="bilibili_user">B站用户</string>
+    
+    <!-- B站播放 -->
+    <string name="bilibili_login_required">请先登录</string>
+    <string name="bilibili_getting_url">正在获取播放地址...</string>
+    <string name="bilibili_get_url_failed">获取播放地址失败</string>
+    <string name="bilibili_play_failed">播放失败: %s</string>
+    <string name="bilibili_get_url_error">获取播放地址失败: %s</string>
+    <string name="bilibili_quality">画质: %s</string>
+    <string name="bilibili_dash_hint">提示：DASH格式可能需要单独下载音频</string>
+    <string name="bilibili_url_exception">获取播放地址异常: %s</string>
+    <string name="bilibili_exit_login">退出登录</string>
+    <string name="bilibili_exit_confirm">确定要退出当前账号吗？</string>
+    <string name="bilibili_logged_out">已退出登录</string>
+    <string name="bilibili_bangumi_play">B站番剧播放</string>
+    <string name="bilibili_login_btn">登录</string>
+    <string name="bilibili_paste_link">粘贴番剧链接</string>
+    <string name="bilibili_input_link">输入B站番剧链接</string>
+    <string name="bilibili_parse">解析</string>
+    <string name="bilibili_episode_count">共 %d 集</string>
+    <string name="bilibili_quality_8k">8K超高清</string>
+    <string name="bilibili_quality_dolby">杜比视界</string>
+    <string name="bilibili_quality_hdr">HDR真彩</string>
+    <string name="bilibili_quality_4k">4K超清</string>
+    <string name="bilibili_quality_1080p60">1080P60帧</string>
+    <string name="bilibili_quality_1080p_plus">1080P高码率</string>
+    <string name="bilibili_quality_1080p">1080P高清</string>
+    <string name="bilibili_quality_720p">720P高清</string>
+    <string name="bilibili_quality_480p">480P清晰</string>
+    <string name="bilibili_quality_360p">360P流畅</string>
+    
+    <!-- B站弹幕下载 -->
+    <string name="bilibili_folder_set_success">文件夹设置成功</string>
+    <string name="bilibili_folder_set_failed">设置失败: %s</string>
+    <string name="bilibili_invalid_link">请输入有效的B站视频/番剧链接</string>
+    <string name="bilibili_download_success">下载成功</string>
+    <string name="bilibili_download_failed">下载失败: %s</string>
+    
+    <!-- ==================== 主页与设置模块 ==================== -->
+    
+    <!-- 主页 -->
+    <string name="home_play_local">播放本地视频</string>
+    <string name="home_login">登录</string>
+    <string name="home_app_name">小喵Player</string>
+    <string name="home_settings">设置</string>
+    <string name="home_continue_play">继续播放</string>
+    <string name="home_no_history">暂无播放记录</string>
+    <string name="home_continue_video">继续播放: %s</string>
+    <string name="home_bilibili_bangumi">哔哩哔哩番剧</string>
+    <string name="home_collapse">收起</string>
+    <string name="home_expand">展开</string>
+    <string name="home_cannot_play">无法播放该视频: %s</string>
+    
+    <!-- 设置 -->
+    <string name="settings_history_header">历史记录</string>
+    <string name="settings_playback_history">播放历史记录</string>
+    <string name="settings_history_desc">查看最近播放的视频</string>
+    <string name="settings_appearance_header">外观</string>
+    <string name="settings_theme">主题设置</string>
+    <string name="settings_current_theme">当前: %s</string>
+    <string name="settings_playback_header">播放</string>
+    <string name="settings_playback_config">播放设置</string>
+    <string name="settings_playback_desc">调整播放相关参数</string>
+    <string name="settings_danmaku_header">弹幕</string>
+    <string name="settings_bilibili_danmaku">哔哩哔哩弹幕下载</string>
+    <string name="settings_bilibili_danmaku_desc">下载B站视频弹幕</string>
+    <string name="settings_bilibili_login_required">请先在主页左上角登录哔哩哔哩账号</string>
+    <string name="settings_subtitle_header">字幕</string>
+    <string name="settings_subtitle_search">字幕搜索下载</string>
+    <string name="settings_subtitle_search_desc">搜索并下载在线字幕</string>
+    <string name="settings_download_header">下载</string>
+    <string name="settings_bilibili_download">哔哩哔哩视频下载</string>
+    <string name="settings_bilibili_download_desc">下载B站视频/番剧</string>
+    <string name="settings_login_hint">请先在主页左上角登录哔哩哔哩账号</string>
+    <string name="settings_other_header">其他</string>
+    <string name="settings_help">使用说明</string>
+    <string name="settings_help_desc">点击跳转外部在线文档查看</string>
+    <string name="settings_check_update">检查更新</string>
+    <string name="settings_current_version">当前版本: %s</string>
+    <string name="settings_latest_version">已是最新版本</string>
+    <string name="settings_check_update_failed">检查更新失败: %s</string>
+    <string name="settings_about">关于</string>
+    <string name="settings_about_desc">应用信息与许可</string>
+    
+    <!-- 关于 -->
+    <string name="about_title">关于</string>
+    <string name="about_app_name">小喵Player</string>
+    <string name="about_app_desc">基于 MPV 的 Anime4K 视频播放器</string>
+    <string name="about_github">开源主页</string>
+    <string name="about_github_desc">访问 GitHub 仓库</string>
+    <string name="about_license">许可证书</string>
+    <string name="about_license_desc">查看开源许可</string>
+    <string name="about_feedback">意见反馈</string>
+    <string name="about_feedback_desc">报告问题或建议</string>
+    
+    <!-- 反馈 -->
+    <string name="feedback_title">建议反馈</string>
+    <string name="feedback_contact">联系方式</string>
+    <string name="feedback_now">立即反馈</string>
+    <string name="feedback_email">写邮件至 %s</string>
+    <string name="feedback_github_issue">前往 GitHub Issue</string>
+    <string name="feedback_guide">反馈建议</string>
+    <string name="feedback_guide_1">・ 如果有崩溃/异常，请附上复现步骤或截图；</string>
+    <string name="feedback_guide_2">・ 功能提案欢迎附上期望交互或参考链接；</string>
+    <string name="feedback_guide_3">・ 欢迎加入开发，共同打磨更好的播放体验。</string>
+    
+    <!-- ==================== 播放设置模块 ==================== -->
+    <string name="playback_settings_title">播放设置</string>
+    <string name="playback_settings_back">返回</string>
+    <string name="playback_progress_control">进度控制</string>
+    <string name="playback_precise_seeking">精确进度定位</string>
+    <string name="playback_precise_seeking_slow">定位更准确但可能较慢</string>
+    <string name="playback_precise_seeking_fast">定位更快但使用关键帧</string>
+    <string name="playback_seek_time">快进/快退时长</string>
+    
+    <!-- ==================== Anime4K模块 ==================== -->
+    <string name="anime4k_off">禁用 Anime4K</string>
+    <string name="anime4k_mode_a">模式 A - 优化1080p动画\n高模糊度、重采样伪影</string>
+    <string name="anime4k_mode_b">模式 B - 优化720p动画\n低模糊度、下采样振铃</string>
+    <string name="anime4k_mode_c">模式 C - 优化480p动画\n最高PSNR、低感知质量</string>
+    <string name="anime4k_mode_a_plus">模式 A+A - 最高感知质量\n更强的线条重建（较慢）</string>
+    <string name="anime4k_mode_b_plus">模式 B+B - 高感知质量\n更好的720p效果（较慢）</string>
+    <string name="anime4k_mode_c_plus">模式 C+A - 略高感知质量\n改进的480p效果（较慢）</string>
+    <string name="anime4k_quality_fast">快速(S) - 低GPU占用</string>
+    <string name="anime4k_quality_balanced">平衡 (M) - 推荐</string>
+    <string name="anime4k_quality_high">高质量(L) - 高GPU占用</string>
+    <string name="anime4k_mode_off_name">关</string>
+    <string name="anime4k_mode_off_desc">原始画质</string>
+    <string name="anime4k_mode_a_name">A</string>
+    <string name="anime4k_mode_a_desc_short">强力重建</string>
+    <string name="anime4k_mode_a_hint">高模糊、重采样伪影</string>
+    <string name="anime4k_mode_b_name">B</string>
+    <string name="anime4k_mode_b_desc_short">柔和重建</string>
+    <string name="anime4k_mode_b_hint">低模糊、下采样振铃</string>
+    <string name="anime4k_mode_c_name">C</string>
+    <string name="anime4k_mode_c_desc_short">降噪处理</string>
+    <string name="anime4k_mode_c_hint">去噪点、提升清晰度</string>
+    <string name="anime4k_mode_a_plus_name">A+</string>
+    <string name="anime4k_mode_a_plus_desc">双重强化</string>
+    <string name="anime4k_mode_a_plus_hint">最强线条还原（慢）</string>
+    <string name="anime4k_mode_b_plus_name">B+</string>
+    <string name="anime4k_mode_b_plus_desc">双重柔和</string>
+    <string name="anime4k_mode_b_plus_hint">更自然效果（慢）</string>
+    <string name="anime4k_mode_c_plus_name">C+</string>
+    <string name="anime4k_mode_c_plus_desc">降噪强化</string>
+    <string name="anime4k_mode_c_plus_hint">去噪+线条重建（慢）</string>
+    
+    <!-- ==================== 下载模块 ==================== -->
+    <string name="download_bilibili_link">B站视频/番剧链接</string>
+    <string name="download_start">开始下载</string>
+    <string name="download_change_path">更改路径</string>
+    <string name="download_clear_completed">清除已完成</string>
+    <string name="download_pause">暂停</string>
+    <string name="download_resume">恢复</string>
+    <string name="download_cancel">取消</string>
+    <string name="download_title">哔哩哔哩视频下载</string>
+    <string name="download_add_task">添加下载任务</string>
+    <string name="download_disclaimer">免责声明</string>
+    <string name="download_disclaimer_text">下载内容仅供个人学习使用，请勿传播。\n使用本功能产生的法律责任由用户自行承担。</string>
+    <string name="download_episode_n">第 %d 集</string>
+    <string name="download_status_pending">等待中</string>
+    <string name="download_status_downloading">下载中</string>
+    <string name="download_status_paused">已暂停</string>
+    <string name="download_status_completed">已完成</string>
+    <string name="download_status_failed">失败</string>
+    
+    <!-- ==================== WebDAV模块 ==================== -->
+    <string name="webdav_account_management">WebDAV 账户管理</string>
+    <string name="webdav_delete_account">删除账户</string>
+    <string name="webdav_delete_confirm">确定要删除账户 \"%s\" 吗？</string>
+    <string name="webdav_delete">删除</string>
+    <string name="webdav_cancel">取消</string>
+    <string name="webdav_add_account">添加账户</string>
+    <string name="webdav_display_name">显示名称</string>
+    <string name="webdav_display_name_hint">如: 我的网盘</string>
+    <string name="webdav_server_url">服务器地址</string>
+    <string name="webdav_account_login">账号登录</string>
+    <string name="webdav_anonymous">匿名访问</string>
+    <string name="webdav_account">账号</string>
+    <string name="webdav_username">用户名</string>
+    <string name="webdav_password">密码</string>
+    <string name="webdav_testing">测试中...</string>
+    <string name="webdav_test_connection">测试连接</string>
+    <string name="webdav_save">保存</string>
+    <string name="webdav_retry">重试</string>
+    <string name="webdav_sort_method">排序方式</string>
+    <string name="webdav_close">关闭</string>
+    <string name="webdav_account_error">账户信息错误</string>
+    <string name="webdav_account_not_exist">账户不存在</string>
+    <string name="webdav_play_failed">播放失败: %s</string>
+    
+    <!-- ==================== 视频缩略图 ==================== -->
     <string name="video_thumbnail">视频缩略图</string>
+    
+    <!-- ==================== 新增字符串资源 ==================== -->
+    
+    <!-- 主页 - 补充 -->
+    <string name="home_webdav">WebDAV</string>
+    <string name="home_tv">电视直播</string>
+    
+    <!-- 关于 - 补充 -->
+    <string name="about_version">Version %s</string>
+    
+    <!-- 反馈 - 补充 -->
+    <string name="feedback_email_label">作者邮箱</string>
+    <string name="feedback_choose_method">选择你习惯的方式发声：</string>
+    
+    <!-- 播放设置 - 补充 -->
+    <string name="playback_seconds">%d秒</string>
+    <string name="playback_seconds_format">%d 秒</string>
+    <string name="playback_gesture_control">手势控制</string>
+    <string name="playback_double_tap_seek">双击跳转时长</string>
+    <string name="playback_volume_control">音量控制</string>
+    <string name="playback_volume_boost">音量增强</string>
+    <string name="playback_volume_boost_on">音量可超过100%,最高300%</string>
+    <string name="playback_volume_boost_off">音量范围限制在1-100%</string>
+    <string name="playback_speed_control">倍速控制</string>
+    <string name="playback_long_press_speed">长按倍速</string>
+    <string name="playback_speed_format">%.1fx</string>
+    <string name="playback_quality_enhancement">画质增强</string>
+    <string name="playback_anime4k_memory">记忆超分模式</string>
+    <string name="playback_anime4k_memory_on">记住上次使用的Anime4K模式</string>
+    <string name="playback_anime4k_memory_off">每次播放都从关闭状态开始</string>
+    <string name="playback_double_tap_mode_pause">双击暂停/播放</string>
+    <string name="playback_double_tap_mode_seek">双击快进/快退</string>
+    
+    <!-- 对话框 - 通用 -->
+    <string name="dialog_select_file">选择文件</string>
+    <string name="dialog_select_danmaku">选择弹幕文件</string>
+    <string name="dialog_select_subtitle">选择字幕文件</string>
+    <string name="dialog_directory_error">无法访问目录: %s</string>
+    
+    <!-- WebDAV - 补充 -->
+    <string name="webdav_no_accounts">暂无 WebDAV 账户</string>
+    <string name="webdav_no_accounts_hint">点击右下角添加按钮配置账户</string>
+    <string name="webdav_account_info">账号: %s</string>
+    
+    <!-- 下载 - 补充 -->
+    <string name="download_parse_link">解析链接</string>
+    <string name="download_reparse">重新解析</string>
+    <string name="download_parsing">解析中...</string>
+    
+    <!-- 字幕搜索 - 补充 -->
+    <string name="subtitle_no_media_found">未找到相关影片</string>
+    <string name="subtitle_search_failed">搜索失败: %s</string>
+    <string name="subtitle_found_count">找到 %d 个字幕</string>
+    <string name="subtitle_not_found">未找到字幕</string>
+    <string name="subtitle_search_error">搜索异常: %s</string>
+    <string name="subtitle_downloading">开始下载...</string>
+    
+    <!-- Paging功能 -->
+    <string name="paging_search_hint">搜索功能需要在数据库层面实现，请使用排序功能</string>
+    
+    <!-- ==================== DanDanPlay相关 ==================== -->
+    <string name="dandanplay_network_danmaku">网络弹幕</string>
+    <string name="dandanplay_select_episode">选择剧集</string>
+    <string name="dandanplay_back">← 返回</string>
+    <string name="dandanplay_search_placeholder">输入番剧名称</string>
+    <string name="dandanplay_searching">搜索中...</string>
+    <string name="dandanplay_input_name">输入番剧名称开始搜索</string>
+    <string name="dandanplay_no_results">未找到相关番剧，请尝试其他关键词</string>
+    <string name="dandanplay_access_denied">访问被拒绝(403)，请检查网络连接或稍后重试</string>
+    <string name="dandanplay_api_not_found">API接口不存在(404)，请联系开发者</string>
+    <string name="dandanplay_timeout">请求超时，请检查网络连接</string>
+    <string name="dandanplay_search_failed">搜索失败: %s</string>
+    <string name="dandanplay_search_exception">搜索异常: %s\n请检查网络连接</string>
+    <string name="dandanplay_episode_count">%d 集</string>
+    
+    <!-- ==================== 反馈与帮助 ==================== -->
+    <string name="feedback_cannot_open_browser">无法打开浏览器</string>
+    <string name="feedback_email_subject">FAM4K007 播放器反馈</string>
+    <string name="feedback_no_email_app">未找到可用的邮件应用</string>
+    
+    <!-- ==================== 下载功能详细 ==================== -->
+    <string name="download_custom_path">自定义路径</string>
+    <string name="download_storage_path">存储路径: %s</string>
+    <string name="download_episode_selection">选择集数（共%d集）</string>
+    <string name="download_expand">展开</string>
+    <string name="download_collapse">收起</string>
+    <string name="download_episode_format">第%d集 %s</string>
+    <string name="download_history">下载历史</string>
+    <string name="download_status_merging">合并中</string>
+    <string name="download_parse_failed">番剧ID解析失败</string>
+    <string name="download_get_episode_failed">获取集数失败: %s</string>
+    <string name="download_episode_parse_error">解析失败</string>
+    <string name="download_error_prefix">错误: %s</string>
+    
+    <!-- ==================== B站播放详细 ==================== -->
+    <string name="bilibili_play_invalid_link">无效的番剧链接</string>
+    <string name="bilibili_play_get_failed">获取失败</string>
+    <string name="bilibili_play_network_error">网络错误</string>
+    <string name="bilibili_play_api_error">API错误: %s</string>
+    <string name="bilibili_play_data_empty">数据为空</string>
+    <string name="bilibili_play_unknown_episode">未知集数</string>
+    <string name="bilibili_play_input_link_prompt">请输入番剧链接</string>
+    <string name="bilibili_play_logged_in">已登录</string>
+    
+    <!-- ==================== B站弹幕下载详细 ==================== -->
+    <string name="bilibili_danmaku_title">B站弹幕下载</string>
+    <string name="bilibili_danmaku_set_folder">设置保存文件夹</string>
+    <string name="bilibili_danmaku_folder_set">已设置</string>
+    <string name="bilibili_danmaku_click_select">点击选择文件夹</string>
+    <string name="bilibili_danmaku_download">下载弹幕</string>
+    <string name="bilibili_danmaku_click_input">点击输入视频链接</string>
+    <string name="bilibili_danmaku_set_folder_first">请先设置保存文件夹</string>
+    <string name="bilibili_danmaku_instructions">使用说明</string>
+    <string name="bilibili_danmaku_download_title">下载B站弹幕</string>
+    <string name="bilibili_danmaku_link_label">视频链接</string>
+    <string name="bilibili_danmaku_link_placeholder">输入B站视频或番剧链接</string>
+    <string name="bilibili_danmaku_download_mode">下载模式</string>
+    <string name="bilibili_danmaku_season_download">整季下载</string>
+    <string name="bilibili_danmaku_single_download">单集下载</string>
+    <string name="bilibili_danmaku_download_btn">下载</string>
+    <string name="bilibili_danmaku_downloading">正在下载弹幕</string>
+    <string name="bilibili_danmaku_progress">进度: %1$d / %2$d</string>
+    <string name="bilibili_danmaku_preparing">准备下载中...</string>
+    <string name="bilibili_danmaku_current">当前: %s</string>
+    <string name="bilibili_danmaku_success_count">成功: %d</string>
+    <string name="bilibili_danmaku_failed_count">失败: %d</string>
+    <string name="bilibili_danmaku_done">完成</string>
+    
+    <!-- ==================== 用户协议 ==================== -->
+    <string name="agreement_scroll_hint">请向下滚动阅读完整协议</string>
+    <string name="agreement_read_understand">我已完整阅读并充分理解以上所有条款，同意遵守本协议的所有内容</string>
+    <string name="agreement_read_fully">我已完整阅读并</string>
+    <string name="agreement_understand_fully">充分理解</string>
+    <string name="agreement_accept_all">以上所有条款，同意遵守本协议的所有内容</string>
+    <string name="agreement_decline">拒绝</string>
+    <string name="agreement_accept">同意</string>
+    <string name="agreement_icon_desc">应用图标</string>
+    <string name="agreement_title">用户服务协议与隐私政策</string>
+    <string name="agreement_welcome">欢迎使用小喵player！</string>
+    <string name="agreement_section_1">一、重要声明</string>
+    <string name="agreement_1_1">本应用完全免费且开源，遵守 GPL-3.0-or-later 开源协议</string>
+    <string name="agreement_1_2">本应用旨在学习技术与测试代码，切勿滥用</string>
+    <string name="agreement_1_3">我们强烈反对且不纵容任何形式的盗版、非法转载、黑产及其他违法用途或行为</string>
+    <string name="agreement_section_2">二、隐私政策</string>
+    <string name="agreement_data_collection">【数据收集】</string>
+    <string name="agreement_2_1">本应用不收集任何用户个人信息</string>
+    <string name="agreement_2_2">本应用不上传任何数据到服务器（我们没有服务器）</string>
+    <string name="agreement_2_3">本应用不分享用户数据给任何第三方</string>
+    <string name="agreement_2_4">所有功能均在本地设备上运行</string>
+    <string name="agreement_permissions">【权限说明】</string>
+    <string name="agreement_permissions_intro">本应用需要申请以下权限：</string>
+    <string name="agreement_permission_storage">管理所有文件权限</string>
+    <string name="agreement_permission_storage_desc">用于扫描本地视频文件、保存字幕和弹幕文件</string>
+    <string name="agreement_permission_network">网络权限</string>
+    <string name="agreement_permission_network_desc">用于在线播放、下载弹幕、WebDAV等功能</string>
+    <string name="agreement_login_security">【登录信息安全】</string>
+    <string name="agreement_login_intro">如您选择使用哔哩哔哩登录功能：</string>
+    <string name="agreement_login_1">登录凭证使用 AES-256 加密存储在本地</string>
+    <string name="agreement_login_2">登录密钥由 Android KeyStore 硬件保护，应用无法导出</string>
+    <string name="agreement_login_3">登录信息仅用于调用B站API，不会上传到任何其他地方</string>
+    <string name="agreement_login_4">您可随时在设置中一键退出登录</string>
+    
+    <!-- ==================== 内容描述 (ContentDescription) ==================== -->
+    <string name="content_desc_sort">排序</string>
+    <string name="content_desc_close_search">关闭搜索</string>
+    <string name="content_desc_more">更多</string>
+    <string name="content_desc_more_info">更多信息</string>
+    
+    <!-- ==================== 字幕搜索模块补充 ==================== -->
+    <string name="subtitle_search_title">字幕搜索下载</string>
+    <string name="subtitle_search_button">搜索字幕</string>
+    <string name="subtitle_search_input_hint">点击输入影片名称</string>
+    <string name="subtitle_search_set_folder">设置文件夹</string>
+    <string name="subtitle_search_options">搜索选项</string>
+    <string name="subtitle_search_searching_media">搜索影片中...</string>
+    <string name="subtitle_select_media">已选择</string>
+    <string name="subtitle_cancel_selection">取消选择</string>
+    <string name="subtitle_searching">搜索字幕中...</string>
+    <string name="subtitle_start_search">请开始搜索</string>
+    <string name="subtitle_select_media_title">选择影片 (%d)</string>
+    <string name="subtitle_results_title">字幕结果 (%d)</string>
+    <string name="subtitle_download_button">下载</string>
+    <string name="subtitle_search_dialog_title">搜索字幕</string>
+    <string name="subtitle_search_input_prompt">请输入影片名称</string>
+    <string name="subtitle_search_movie_name">影片名称</string>
+    <string name="subtitle_search_example">例如：疾速追杀</string>
+    <string name="subtitle_search_confirm">搜索</string>
+    <string name="subtitle_search_language">语言</string>
+    <string name="subtitle_search_source">来源</string>
+    <string name="subtitle_search_format">格式</string>
+    <string name="subtitle_search_options_dialog_title">搜索选项</string>
+    <string name="subtitle_search_options_confirm">确定</string>
+    
+    <!-- ==================== 文件夹浏览器模块 ==================== -->
+    <string name="folder_browser_title">文件夹</string>
+    <string name="folder_sort">排序</string>
+    <string name="folder_sort_dialog_title">排序方式</string>
+    <string name="folder_sort_name_asc">名称 (升序)</string>
+    <string name="folder_sort_name_desc">名称 (降序)</string>
+    <string name="folder_sort_video_count_asc">视频数量 (升序)</string>
+    <string name="folder_sort_video_count_desc">视频数量 (降序)</string>
+    <string name="folder_no_videos">未找到视频文件夹</string>
+    <string name="folder_videos_count">%d 个视频</string>
+    <string name="folder_permission_needed">需要存储权限</string>
+    <string name="folder_permission_desc">请授予存储权限以浏览视频文件</string>
+    <string name="folder_grant_permission">授予权限</string>
+    
+    <!-- ==================== 播放历史模块补充 ==================== -->
+    <string name="playback_history_title">播放历史</string>
+    <string name="playback_history_clear_all">清空全部</string>
+    <string name="playback_history_empty">暂无播放历史</string>
+    <string name="playback_history_clear_title">清空历史</string>
+    <string name="playback_history_clear_confirm">确定要清空所有播放历史吗？此操作不可恢复。</string>
+    <string name="playback_history_clear_button">清空</string>
+    <string name="playback_history_delete_title">删除记录</string>
+    <string name="playback_history_delete_confirm">确定要删除《%s》的播放记录吗？</string>
+    <string name="playback_history_delete_button">删除</string>
+    <string name="playback_history_played_hms">已播放 %02d:%02d:%02d</string>
+    <string name="playback_history_played_ms">已播放 %02d:%02d</string>
+    
+    <!-- ==================== 下载示例Activity ==================== -->
+    <string name="download_example_title">B站视频下载</string>
+    <string name="download_input_link">输入视频/番剧链接</string>
+    <string name="download_link_placeholder">https://www.bilibili.com/video/BV... 或 ss12345</string>
+    <string name="download_parsing_status">解析中...</string>
+    <string name="download_parse_link_button">解析链接</string>
+    <string name="download_error_format">错误: %s</string>
+    <string name="download_episode_selection_title">选择集数 (共 %d 集)</string>
+    <string name="download_list_title">下载列表</string>
+    <string name="download_no_tasks">暂无下载任务</string>
+    <string name="download_added_to_queue">已添加到下载队列: %s</string>
+    <string name="download_found_episodes">找到 %d 集，请选择要下载的集数</string>
+    <string name="download_parse_failed_msg">解析失败</string>
+    
 </resources>

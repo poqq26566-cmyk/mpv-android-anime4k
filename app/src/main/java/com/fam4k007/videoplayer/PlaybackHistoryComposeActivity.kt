@@ -22,7 +22,7 @@ class PlaybackHistoryComposeActivity : BaseActivity() {
         val historyManager = PlaybackHistoryManager(this)
 
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this).themeName)
+            val themeColors = getThemeColors(this, ThemeManager.getCurrentTheme(this).themeName)
             
             MaterialTheme(
                 colorScheme = lightColorScheme(

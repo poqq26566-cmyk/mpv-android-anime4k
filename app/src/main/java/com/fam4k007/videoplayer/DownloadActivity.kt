@@ -25,12 +25,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.download.BilibiliDownloadViewModel
 import com.fam4k007.videoplayer.download.DownloadItem
 import com.fam4k007.videoplayer.download.MediaParseResult
@@ -50,7 +52,7 @@ class DownloadActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this).themeName)
+            val themeColors = getThemeColors(this@DownloadActivity, ThemeManager.getCurrentTheme(this@DownloadActivity).themeName)
 
             MaterialTheme(
                 colorScheme = lightColorScheme(
@@ -104,7 +106,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                 
                 // 使用DocumentFile API处理
                 val docFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, it)
-                val displayPath = docFile?.name ?: "自定义路径"
+                val displayPath = docFile?.name ?: context.getString(R.string.download_custom_path)
                 
                 viewModel.setDownloadPath(it.toString(), displayPath)
                 Log.d("DownloadActivity", "选择的文件夹: $it, 显示名称: $displayPath")
@@ -119,7 +121,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
             ImmersiveTopAppBar(
                 title = { 
                     Text(
-                        "哔哩哔哩视频下载",
+                        stringResource(R.string.download_title),
                         color = androidx.compose.ui.graphics.Color.White
                     )
                 },
@@ -130,7 +132,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                     }) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "返回",
+                            contentDescription = stringResource(R.string.common_back),
                             tint = androidx.compose.ui.graphics.Color.White
                         )
                     }
@@ -154,7 +156,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        "添加下载任务",
+                        stringResource(R.string.download_add_task),
                         style = MaterialTheme.typography.titleMedium,
                         color = androidx.compose.ui.graphics.Color.Black
                     )
@@ -179,13 +181,13 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                             )
                             Column {
                                 Text(
-                                    "免责声明",
+                                    stringResource(R.string.download_disclaimer),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = androidx.compose.ui.graphics.Color(0xFFFF6F00),
                                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                                 )
                                 Text(
-                                    "下载内容仅供个人学习使用，请勿传播。\n使用本功能产生的法律责任由用户自行承担。",
+                                    stringResource(R.string.download_disclaimer_text),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = androidx.compose.ui.graphics.Color(0xFFE65100),
                                     fontSize = 11.sp
@@ -199,7 +201,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                     OutlinedTextField(
                         value = videoUrl,
                         onValueChange = { videoUrl = it },
-                        label = { Text("B站视频/番剧链接") },
+                        label = { Text(stringResource(R.string.download_bilibili_link)) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = androidx.compose.ui.graphics.Color.Black,
@@ -258,15 +260,15 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                                                         episodeList = episodesResult.getOrNull() ?: emptyList()
                                                         Log.d("DownloadActivity", "获取到${episodeList.size}集")
                                                     } else {
-                                                        parseError = "获取集数失败: ${episodesResult.exceptionOrNull()?.message}"
+                                                        parseError = context.getString(R.string.download_get_episode_failed, episodesResult.exceptionOrNull()?.message ?: "")
                                                         Log.e("DownloadActivity", "获取集数失败", episodesResult.exceptionOrNull())
                                                     }
                                                 } else {
-                                                    parseError = "番剧ID解析失败"
+                                                    parseError = context.getString(R.string.download_parse_failed)
                                                 }
                                             }
                                         } catch (e: Exception) {
-                                            parseError = e.message ?: "解析失败"
+                                            parseError = e.message ?: context.getString(R.string.download_episode_parse_error)
                                             Log.e("DownloadActivity", "解析失败", e)
                                         } finally {
                                             isParsing = false
@@ -283,7 +285,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                                     color = androidx.compose.ui.graphics.Color.White
                                 )
                             } else {
-                                Text(if (parseResult == null) "解析链接" else "重新解析")
+                                Text(if (parseResult == null) stringResource(R.string.download_parse_link) else stringResource(R.string.download_reparse))
                             }
                         }
 
@@ -309,14 +311,14 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                             enabled = parseResult != null && (episodeList.isEmpty() || selectedEpisodes.isNotEmpty()),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("开始下载")
+                            Text(stringResource(R.string.download_start))
                         }
                     }
 
                     // 显示错误信息
                     parseError?.let { error ->
                         Text(
-                            text = "错误: $error",
+                            text = stringResource(R.string.download_error_prefix, error),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(top = 8.dp)
@@ -330,7 +332,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "存储路径: $downloadPathDisplay",
+                            text = stringResource(R.string.download_storage_path, downloadPathDisplay),
                             style = MaterialTheme.typography.bodySmall,
                             color = androidx.compose.ui.graphics.Color.Gray,
                             modifier = Modifier.weight(1f),
@@ -339,7 +341,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                         TextButton(onClick = { 
                             folderPickerLauncher.launch(null)
                         }) {
-                            Text("更改路径")
+                            Text(stringResource(R.string.download_change_path))
                         }
                     }
 
@@ -368,7 +370,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                "选择集数（共${episodeList.size}集）",
+                                stringResource(R.string.download_episode_selection, episodeList.size),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = androidx.compose.ui.graphics.Color(0xFF1976D2),
                                 fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
@@ -376,7 +378,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                             )
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    if (isEpisodeListExpanded) "收起" else "展开",
+                                    if (isEpisodeListExpanded) stringResource(R.string.download_collapse) else stringResource(R.string.download_expand),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = androidx.compose.ui.graphics.Color(0xFF1976D2),
                                     modifier = Modifier.padding(end = 4.dp)
@@ -431,7 +433,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Column {
                                                 Text(
-                                                    text = "第${episode.index}集 ${episode.longTitle}",
+                                                    text = stringResource(R.string.download_episode_format, episode.index, episode.longTitle),
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     color = androidx.compose.ui.graphics.Color.Black
                                                 )
@@ -471,12 +473,12 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "下载历史",
+                            stringResource(R.string.download_history),
                             style = MaterialTheme.typography.titleMedium,
                             color = androidx.compose.ui.graphics.Color.Black
                         )
                         TextButton(onClick = { viewModel.clearCompletedDownloads() }) {
-                            Text("清除已完成")
+                            Text(stringResource(R.string.download_clear_completed))
                         }
                     }
                 }
@@ -527,12 +529,12 @@ fun DownloadItemCard(item: DownloadItem, viewModel: BilibiliDownloadViewModel) {
             
             Text(
                 text = when (item.status) {
-                    "pending" -> "等待中"
-                    "downloading" -> "下载中"
-                    "paused" -> "已暂停"
-                    "completed" -> "已完成"
-                    "failed" -> "失败"
-                    "merging" -> "合并中"
+                    "pending" -> stringResource(R.string.download_status_pending)
+                    "downloading" -> stringResource(R.string.download_status_downloading)
+                    "paused" -> stringResource(R.string.download_status_paused)
+                    "completed" -> stringResource(R.string.download_status_completed)
+                    "failed" -> stringResource(R.string.download_status_failed)
+                    "merging" -> stringResource(R.string.download_status_merging)
                     else -> item.status
                 },
                 style = MaterialTheme.typography.bodyMedium,
@@ -547,7 +549,7 @@ fun DownloadItemCard(item: DownloadItem, viewModel: BilibiliDownloadViewModel) {
             
             item.errorMessage?.let {
                 Text(
-                    text = "错误: $it",
+                    text = stringResource(R.string.download_error_prefix, it),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -579,7 +581,7 @@ fun DownloadItemCard(item: DownloadItem, viewModel: BilibiliDownloadViewModel) {
                                 containerColor = androidx.compose.ui.graphics.Color(0xFFFF9800)
                             )
                         ) {
-                            Text("暂停")
+                            Text(stringResource(R.string.download_pause))
                         }
                     } else if (item.status == "paused") {
                         Button(
@@ -588,7 +590,7 @@ fun DownloadItemCard(item: DownloadItem, viewModel: BilibiliDownloadViewModel) {
                                 containerColor = androidx.compose.ui.graphics.Color(0xFF4CAF50)
                             )
                         ) {
-                            Text("恢复")
+                            Text(stringResource(R.string.download_resume))
                         }
                     }
                     
@@ -600,7 +602,7 @@ fun DownloadItemCard(item: DownloadItem, viewModel: BilibiliDownloadViewModel) {
                             containerColor = androidx.compose.ui.graphics.Color(0xFFF44336)
                         )
                     ) {
-                        Text("取消")
+                        Text(stringResource(R.string.download_cancel))
                     }
                 }
             }

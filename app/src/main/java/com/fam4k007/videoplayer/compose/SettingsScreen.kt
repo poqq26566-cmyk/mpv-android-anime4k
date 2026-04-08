@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -62,14 +63,14 @@ fun SettingsScreen(
         ) {
             // 历史记录分组
             item {
-                SettingsSectionHeader(title = "历史记录")
+                SettingsSectionHeader(title = stringResource(R.string.settings_history_header))
             }
             
             item {
                 SettingsCard(
                     icon = Icons.Default.History,
-                    title = "播放历史记录",
-                    subtitle = "查看最近播放的视频",
+                    title = stringResource(R.string.settings_playback_history),
+                    subtitle = stringResource(R.string.settings_history_desc),
                     onClick = {
                         context.startActivity(Intent(context, PlaybackHistoryComposeActivity::class.java))
                         (context as? android.app.Activity)?.overridePendingTransition(
@@ -82,28 +83,28 @@ fun SettingsScreen(
             
             // 外观设置分组
             item {
-                SettingsSectionHeader(title = "外观")
+                SettingsSectionHeader(title = stringResource(R.string.settings_appearance_header))
             }
             
             item {
                 SettingsCard(
                     icon = Icons.Default.Palette,
-                    title = "主题设置",
-                    subtitle = "当前: ${currentTheme.value.themeName}",
+                    title = stringResource(R.string.settings_theme),
+                    subtitle = stringResource(R.string.settings_current_theme, currentTheme.value.themeName),
                     onClick = { showThemeDialog = true }
                 )
             }
             
             // 播放设置分组
             item {
-                SettingsSectionHeader(title = "播放")
+                SettingsSectionHeader(title = stringResource(R.string.settings_playback_header))
             }
             
             item {
                 SettingsCard(
                     icon = Icons.Default.Settings,
-                    title = "播放设置",
-                    subtitle = "调整播放相关参数",
+                    title = stringResource(R.string.playback_settings),
+                    subtitle = stringResource(R.string.settings_playback_desc),
                     onClick = {
                         context.startActivity(Intent(context, PlaybackSettingsComposeActivity::class.java))
                         (context as? android.app.Activity)?.overridePendingTransition(
@@ -116,14 +117,14 @@ fun SettingsScreen(
             
             // 弹幕设置分组
             item {
-                SettingsSectionHeader(title = "弹幕")
+                SettingsSectionHeader(title = stringResource(R.string.settings_danmaku_header))
             }
             
             item {
                 SettingsCard(
                     icon = Icons.Default.Comment,
-                    title = "哔哩哔哩弹幕下载",
-                    subtitle = "下载B站视频弹幕",
+                    title = stringResource(R.string.settings_bilibili_danmaku),
+                    subtitle = stringResource(R.string.settings_bilibili_danmaku_desc),
                     onClick = {
                         if (authManager.isLoggedIn()) {
                             context.startActivity(Intent(context, BiliBiliDanmakuComposeActivity::class.java))
@@ -134,7 +135,7 @@ fun SettingsScreen(
                         } else {
                             android.widget.Toast.makeText(
                                 context,
-                                "请先在主页左上角登录哔哩哔哩账号",
+                                context.getString(R.string.settings_bilibili_login_required),
                                 android.widget.Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -144,14 +145,14 @@ fun SettingsScreen(
             
             // 字幕设置分组
             item {
-                SettingsSectionHeader(title = "字幕")
+                SettingsSectionHeader(title = stringResource(R.string.settings_subtitle_header))
             }
             
             item {
                 SettingsCard(
                     icon = Icons.Default.Subtitles,
-                    title = "字幕搜索下载",
-                    subtitle = "搜索并下载在线字幕",
+                    title = stringResource(R.string.settings_subtitle_search),
+                    subtitle = stringResource(R.string.settings_subtitle_search_desc),
                     onClick = {
                         context.startActivity(Intent(context, SubtitleSearchActivity::class.java))
                         (context as? android.app.Activity)?.overridePendingTransition(
@@ -164,14 +165,14 @@ fun SettingsScreen(
             
             // 下载分组
             item {
-                SettingsSectionHeader(title = "下载")
+                SettingsSectionHeader(title = stringResource(R.string.settings_download_header))
             }
             
             item {
                 SettingsCard(
                     icon = Icons.Default.Download,
-                    title = "哔哩哔哩视频下载",
-                    subtitle = "下载B站视频/番剧",
+                    title = stringResource(R.string.settings_bilibili_download),
+                    subtitle = stringResource(R.string.settings_bilibili_download_desc),
                     onClick = {
                         if (authManager.isLoggedIn()) {
                             context.startActivity(Intent(context, DownloadActivity::class.java))
@@ -182,7 +183,7 @@ fun SettingsScreen(
                         } else {
                             android.widget.Toast.makeText(
                                 context,
-                                "请先在主页左上角登录哔哩哔哩账号",
+                                context.getString(R.string.settings_bilibili_login_required),
                                 android.widget.Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -192,14 +193,14 @@ fun SettingsScreen(
             
             // 其他设置分组
             item {
-                SettingsSectionHeader(title = "其他")
+                SettingsSectionHeader(title = stringResource(R.string.settings_other_header))
             }
             
             item {
                 SettingsCard(
                     icon = Icons.Default.Help,
-                    title = "使用说明",
-                    subtitle = "点击跳转外部在线文档查看",
+                    title = stringResource(R.string.settings_help),
+                    subtitle = stringResource(R.string.settings_help_desc),
                     onClick = {
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.kdocs.cn/l/cjEzoxiyxaHT"))
                         context.startActivity(intent)
@@ -210,8 +211,8 @@ fun SettingsScreen(
             item {
                 SettingsCard(
                     icon = Icons.Default.Update,
-                    title = "检查更新",
-                    subtitle = "当前版本: ${UpdateManager.getAppVersionName(context)}",
+                    title = stringResource(R.string.settings_check_update),
+                    subtitle = stringResource(R.string.settings_current_version, UpdateManager.getAppVersionName(context)),
                     onClick = {
                         if (!isCheckingUpdate) {
                             isCheckingUpdate = true
@@ -225,7 +226,7 @@ fun SettingsScreen(
                                     } else {
                                         android.widget.Toast.makeText(
                                             context,
-                                            "已是最新版本",
+                                            context.getString(R.string.settings_latest_version),
                                             android.widget.Toast.LENGTH_SHORT
                                         ).show()
                                     }
@@ -233,7 +234,7 @@ fun SettingsScreen(
                                     isCheckingUpdate = false
                                     android.widget.Toast.makeText(
                                         context,
-                                        "检查更新失败: ${e.message}",
+                                        context.getString(R.string.settings_check_update_failed, e.message),
                                         android.widget.Toast.LENGTH_LONG
                                     ).show()
                                 }
@@ -246,8 +247,8 @@ fun SettingsScreen(
             item {
                 SettingsCard(
                     icon = Icons.Default.Info,
-                    title = "关于",
-                    subtitle = "应用信息与许可",
+                    title = stringResource(R.string.about),
+                    subtitle = stringResource(R.string.settings_about_desc),
                     onClick = {
                         context.startActivity(Intent(context, AboutComposeActivity::class.java))
                         (context as? android.app.Activity)?.overridePendingTransition(

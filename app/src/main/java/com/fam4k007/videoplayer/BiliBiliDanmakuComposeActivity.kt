@@ -42,7 +42,7 @@ class BiliBiliDanmakuComposeActivity : BaseActivity() {
         savedFolderUri = savedUriString?.let { Uri.parse(it) }
 
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this).themeName)
+            val themeColors = getThemeColors(this@BiliBiliDanmakuComposeActivity, ThemeManager.getCurrentTheme(this@BiliBiliDanmakuComposeActivity).themeName)
             
             MaterialTheme(
                 colorScheme = lightColorScheme(
@@ -86,15 +86,15 @@ class BiliBiliDanmakuComposeActivity : BaseActivity() {
                 .apply()
 
             savedFolderUri = uri
-            Toast.makeText(this, "文件夹设置成功", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.bilibili_folder_set_success), Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Toast.makeText(this, "设置失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.bilibili_folder_set_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun startDownload(url: String, downloadWholeSeason: Boolean) {
         if (!downloadManager.isValidBilibiliUrl(url)) {
-            Toast.makeText(this, "请输入有效的B站视频/番剧链接", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.bilibili_invalid_link), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -123,14 +123,14 @@ class BiliBiliDanmakuComposeActivity : BaseActivity() {
                     is BiliBiliDanmakuDownloadManager.DownloadResult.Success -> {
                         Toast.makeText(
                             this@BiliBiliDanmakuComposeActivity,
-                            "下载成功",
+                            getString(R.string.bilibili_download_success),
                             Toast.LENGTH_SHORT
                         ).show()
                     }
                     is BiliBiliDanmakuDownloadManager.DownloadResult.Error -> {
                         Toast.makeText(
                             this@BiliBiliDanmakuComposeActivity,
-                            "下载失败: ${result.message}",
+                            getString(R.string.bilibili_download_failed, result.message),
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -139,7 +139,7 @@ class BiliBiliDanmakuComposeActivity : BaseActivity() {
                 isDownloading = false
                 Toast.makeText(
                     this@BiliBiliDanmakuComposeActivity,
-                    "下载失败: ${e.message}",
+                    getString(R.string.bilibili_download_failed, e.message ?: ""),
                     Toast.LENGTH_LONG
                 ).show()
             }

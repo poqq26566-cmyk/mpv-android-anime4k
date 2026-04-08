@@ -56,7 +56,7 @@ class VideoBrowserComposeActivity : ComponentActivity() {
         val activity = this
         
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(activity).themeName)
+            val themeColors = getThemeColors(activity, ThemeManager.getCurrentTheme(activity).themeName)
 
             MaterialTheme(
                 colorScheme = lightColorScheme(

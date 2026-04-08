@@ -1,5 +1,6 @@
 package com.fanchen.fam4k007.manager.compose
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -16,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -23,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.bilibili.auth.BiliBiliAuthManager
 import com.fam4k007.videoplayer.bilibili.model.LoginResult
 import com.fam4k007.videoplayer.bilibili.model.QRCodeInfo
@@ -64,9 +68,10 @@ class BiliBiliLoginActivity : ComponentActivity() {
 @Composable
 fun BiliBiliLoginScreen(
     authManager: BiliBiliAuthManager,
-    onClose: () -> Unit,
-    viewModel: LoginViewModel = viewModel { LoginViewModel(authManager) }
+    onClose: () -> Unit
 ) {
+    val context = LocalContext.current
+    val viewModel: LoginViewModel = viewModel { LoginViewModel(authManager, context.applicationContext) }
     val uiState by viewModel.uiState.collectAsState()
     
     LaunchedEffect(Unit) {
@@ -86,7 +91,7 @@ fun BiliBiliLoginScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("登录 Bilibili") },
+                title = { Text(stringResource(R.string.bilibili_login_title)) },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
                         Text("✕", fontSize = 24.sp)
@@ -154,7 +159,7 @@ private fun LoadingContent() {
             color = Color(0xFFFF6699)
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Text("正在生成二维码...", fontSize = 16.sp, color = Color.Gray)
+        Text(stringResource(R.string.bilibili_generating_qr), fontSize = 16.sp, color = Color.Gray)
     }
 }
 
@@ -206,8 +211,16 @@ private fun QRCodeContent(
             },
             label = "status"
         ) { currentStatus ->
+            // 将状态文本本地化
+            val displayText = when (currentStatus) {
+                "等待扫码..." -> stringResource(R.string.bilibili_waiting_scan)
+                "已扫码，等待确认..." -> stringResource(R.string.bilibili_scanned_waiting)
+                "二维码已过期" -> stringResource(R.string.bilibili_qr_expired)
+                else -> currentStatus
+            }
+            
             Text(
-                text = currentStatus,
+                text = displayText,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
                 color = when (currentStatus) {
@@ -223,14 +236,14 @@ private fun QRCodeContent(
         Spacer(modifier = Modifier.height(16.dp))
         
         Text(
-            text = "1.扫描以后不要马上点确认！\n2.等二维码下方等待扫码变为已扫码以后，再点确定！\n3.点确定以后不要急！本页面会自动返回到上一级，在此期间请不要进行任何操作！",
+            text = stringResource(R.string.bilibili_login_notice),
             fontSize = 14.sp,
             color = Color.Gray,
             textAlign = TextAlign.Center,
             lineHeight = 20.sp
         )
         
-        if (status == "二维码已过期") {
+        if (status == stringResource(R.string.bilibili_qr_expired)) {
             Spacer(modifier = Modifier.height(24.dp))
             Button(
                 onClick = onRefresh,
@@ -238,7 +251,7 @@ private fun QRCodeContent(
                     containerColor = Color(0xFFFF6699)
                 )
             ) {
-                Text("刷新二维码")
+                Text(stringResource(R.string.bilibili_refresh_qr))
             }
         }
     }
@@ -256,7 +269,7 @@ private fun LoggedInContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "✓ 登录成功",
+            text = stringResource(R.string.bilibili_login_success),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF00C853)
@@ -273,14 +286,14 @@ private fun LoggedInContent(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                Text("用户名: ${userInfo.uname}", fontSize = 16.sp)
+                Text(stringResource(R.string.bilibili_username, userInfo.uname), fontSize = 16.sp)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text("UID: ${userInfo.mid}", fontSize = 14.sp, color = Color.Gray)
                 
                 if (userInfo.vipStatus == 1) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "大会员 ✨",
+                        stringResource(R.string.bilibili_vip),
                         fontSize = 14.sp,
                         color = Color(0xFFFF6699),
                         fontWeight = FontWeight.Bold
@@ -297,7 +310,7 @@ private fun LoggedInContent(
                 containerColor = Color.Gray
             )
         ) {
-            Text("退出登录")
+            Text(stringResource(R.string.bilibili_logout))
         }
     }
 }
@@ -336,7 +349,7 @@ private fun ErrorContent(
                 containerColor = Color(0xFFFF6699)
             )
         ) {
-            Text("重试")
+            Text(stringResource(R.string.common_retry))
         }
     }
 }
@@ -374,7 +387,7 @@ sealed class LoginUiState {
 /**
  * 登录ViewModel
  */
-class LoginViewModel(private val authManager: BiliBiliAuthManager) : ViewModel() {
+class LoginViewModel(private val authManager: BiliBiliAuthManager, private val context: Context) : ViewModel() {
     
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Loading)
     val uiState: StateFlow<LoginUiState> = _uiState
@@ -394,9 +407,9 @@ class LoginViewModel(private val authManager: BiliBiliAuthManager) : ViewModel()
             
             val result = authManager.generateQRCode()
             result.onSuccess { qrCodeInfo ->
-                _uiState.value = LoginUiState.ShowQRCode(qrCodeInfo, "等待扫码...")
+                _uiState.value = LoginUiState.ShowQRCode(qrCodeInfo, context.getString(R.string.bilibili_waiting_scan))
             }.onFailure { error ->
-                _uiState.value = LoginUiState.Error(error.message ?: "生成二维码失败")
+                _uiState.value = LoginUiState.Error(error.message ?: context.getString(R.string.bilibili_qr_gen_failed))
             }
         }
     }
@@ -424,7 +437,7 @@ class LoginViewModel(private val authManager: BiliBiliAuthManager) : ViewModel()
                             // 即使用户信息为空，也创建一个占位符让登录成功
                             userInfo = UserInfo(
                                 mid = 0,
-                                uname = "B站用户",
+                                uname = context.getString(R.string.bilibili_user),
                                 face = "",
                                 vipStatus = 0,
                                 vipType = 0
@@ -436,13 +449,13 @@ class LoginViewModel(private val authManager: BiliBiliAuthManager) : ViewModel()
                         return@launch // 退出轮询
                     }
                     is LoginResult.WaitingScan -> {
-                        updateStatus("等待扫码...")
+                        updateStatus(context.getString(R.string.bilibili_waiting_scan))
                     }
                     is LoginResult.WaitingConfirm -> {
-                        updateStatus("已扫码，等待确认...")
+                        updateStatus(context.getString(R.string.bilibili_scanned_waiting))
                     }
                     is LoginResult.Expired -> {
-                        updateStatus("二维码已过期")
+                        updateStatus(context.getString(R.string.bilibili_qr_expired))
                         return@launch
                     }
                     is LoginResult.Failed -> {
@@ -453,7 +466,7 @@ class LoginViewModel(private val authManager: BiliBiliAuthManager) : ViewModel()
             }
             
             // 超时
-            updateStatus("二维码已过期")
+            updateStatus(context.getString(R.string.bilibili_qr_expired))
         }
     }
     

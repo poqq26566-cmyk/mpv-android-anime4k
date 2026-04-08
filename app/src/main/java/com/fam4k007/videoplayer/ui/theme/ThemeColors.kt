@@ -1,6 +1,8 @@
 package com.fam4k007.videoplayer.ui.theme
 
+import android.content.Context
 import androidx.compose.ui.graphics.Color
+import com.fam4k007.videoplayer.R
 
 /**
  * 主题色彩系统
@@ -96,13 +98,13 @@ val IndigoThemeColors = ThemeColors(
 /**
  * 根据主题名称获取对应的ThemeColors
  */
-fun getThemeColors(themeName: String): ThemeColors {
+fun getThemeColors(context: Context, themeName: String): ThemeColors {
     return when (themeName) {
-        "蓝紫主题" -> BluePurpleThemeColors
-        "绿色主题" -> GreenThemeColors
-        "橙色主题" -> OrangeThemeColors
-        "粉色主题" -> PinkThemeColors
-        "靛蓝主题" -> IndigoThemeColors
+        context.getString(R.string.theme_blue_purple) -> BluePurpleThemeColors
+        context.getString(R.string.theme_green) -> GreenThemeColors
+        context.getString(R.string.theme_orange) -> OrangeThemeColors
+        context.getString(R.string.theme_pink) -> PinkThemeColors
+        context.getString(R.string.theme_indigo) -> IndigoThemeColors
         else -> BluePurpleThemeColors  // 默认蓝紫主题
     }
 }

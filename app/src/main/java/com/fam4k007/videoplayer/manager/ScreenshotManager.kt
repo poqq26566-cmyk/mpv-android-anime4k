@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
+import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.utils.DialogUtils
 import com.fam4k007.videoplayer.utils.FormatUtils
 import `is`.xyz.mpv.MPVLib
@@ -31,7 +32,7 @@ class ScreenshotManager(private val activity: Activity) {
     fun takeScreenshot() {
         try {
             // 立即提示用户
-            DialogUtils.showToastShort(activity, "已保存")
+            DialogUtils.showToastShort(activity, activity.getString(R.string.screenshot_saved))
             
             // 后台静默保存
             CoroutineScope(Dispatchers.IO).launch {
@@ -54,7 +55,7 @@ class ScreenshotManager(private val activity: Activity) {
             
         } catch (e: Exception) {
             Log.e(TAG, "Screenshot failed", e)
-            DialogUtils.showToastShort(activity, "截图失败: ${e.message}")
+            DialogUtils.showToastShort(activity, activity.getString(R.string.screenshot_failed, e.message ?: ""))
         }
     }
     

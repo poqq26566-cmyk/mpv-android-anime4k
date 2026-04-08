@@ -6,6 +6,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.fam4k007.videoplayer.PlaybackHistoryManager
+import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.danmaku.DanmakuManager
 import com.fam4k007.videoplayer.manager.PreferencesManager
 import com.fam4k007.videoplayer.manager.SubtitleManager
@@ -133,7 +134,7 @@ class FilePickerManager(
                 val success = subtitleManager.addExternalSubtitleFromPath(filePath)
                 
                 if (success) {
-                    DialogUtils.showToastShort(activity, "字幕导入成功")
+                    DialogUtils.showToastShort(activity, activity.getString(R.string.player_subtitle_import_success))
                     
                     // 保存外挂字幕路径到历史记录
                     currentVideoUri?.let { videoUri ->
@@ -141,11 +142,11 @@ class FilePickerManager(
                         Log.d(TAG, "Saved external subtitle path: $filePath")
                     }
                 } else {
-                    DialogUtils.showToastLong(activity, "字幕导入失败")
+                    DialogUtils.showToastLong(activity, activity.getString(R.string.player_subtitle_import_failed))
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to import subtitle", e)
-                DialogUtils.showToastLong(activity, "字幕导入失败: ${e.message}")
+                DialogUtils.showToastLong(activity, activity.getString(R.string.player_subtitle_import_error, e.message ?: ""))
             }
         }
     }
@@ -161,7 +162,7 @@ class FilePickerManager(
             Log.d(TAG, "Subtitle file selected: $uri")
             val success = subtitleManager.addExternalSubtitle(activity, uri)
             if (success) {
-                DialogUtils.showToastShort(activity, "字幕导入成功")
+                DialogUtils.showToastShort(activity, activity.getString(R.string.player_subtitle_import_success))
                 
                 // 保存外挂字幕路径
                 currentVideoUri?.let { videoUri ->
@@ -172,7 +173,7 @@ class FilePickerManager(
                     }
                 }
             } else {
-                DialogUtils.showToastLong(activity, "字幕导入失败")
+                DialogUtils.showToastLong(activity, activity.getString(R.string.player_subtitle_import_failed))
             }
         } else {
             Log.d(TAG, "Subtitle picker cancelled")
@@ -198,7 +199,7 @@ class FilePickerManager(
             try {
                 // 直接加载弹幕文件
                 withContext(Dispatchers.Main) {
-                    DialogUtils.showToastShort(activity, "弹幕导入成功")
+                    DialogUtils.showToastShort(activity, activity.getString(R.string.player_danmaku_import_success))
                     
                     // 加载弹幕文件
                     val loaded = danmakuManager.loadDanmakuFile(filePath, autoShow = true)
@@ -226,7 +227,7 @@ class FilePickerManager(
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to import danmaku", e)
                 withContext(Dispatchers.Main) {
-                    DialogUtils.showToastLong(activity, "弹幕导入失败: ${e.message}")
+                    DialogUtils.showToastLong(activity, activity.getString(R.string.player_danmaku_import_error, e.message ?: ""))
                 }
             }
         }
@@ -278,7 +279,7 @@ class FilePickerManager(
                                 Log.d(TAG, "Danmu info updated in history, visible=${danmakuManager.isVisible()}")
                             }
                         } else {
-                            DialogUtils.showToastLong(activity, "弹幕导入失败")
+                            DialogUtils.showToastLong(activity, activity.getString(R.string.player_danmaku_import_failed))
                         }
                         
                         // 恢复播放状态（必须在主线程）
@@ -289,7 +290,7 @@ class FilePickerManager(
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to import danmaku", e)
                     withContext(Dispatchers.Main) {
-                        DialogUtils.showToastLong(activity, "弹幕导入失败: ${e.message}")
+                        DialogUtils.showToastLong(activity, activity.getString(R.string.player_danmaku_import_error, e.message ?: ""))
                         
                         // 发生异常也要恢复播放状态
                         if (wasPlayingBeforeDanmakuPicker) {

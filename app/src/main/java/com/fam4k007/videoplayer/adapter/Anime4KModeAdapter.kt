@@ -33,16 +33,17 @@ class Anime4KModeAdapter(
     override fun onBindViewHolder(holder: ModeViewHolder, position: Int) {
         val mode = modes[position]
         val isSelected = mode == selectedMode
+        val context = holder.itemView.context
         
         // 使用真实的模式描述
         val (icon, name, description) = when (mode) {
-            Anime4KManager.Mode.OFF -> ModeInfo("关", "原始画质", "禁用 Anime4K")
-            Anime4KManager.Mode.A -> ModeInfo("A", "强力重建", "高模糊、重采样伪影")
-            Anime4KManager.Mode.B -> ModeInfo("B", "柔和重建", "低模糊、下采样振铃")
-            Anime4KManager.Mode.C -> ModeInfo("C", "降噪处理", "去噪点、提升清晰度")
-            Anime4KManager.Mode.A_PLUS -> ModeInfo("A+", "双重强化", "最强线条还原（慢）")
-            Anime4KManager.Mode.B_PLUS -> ModeInfo("B+", "双重柔和", "更自然效果（慢）")
-            Anime4KManager.Mode.C_PLUS -> ModeInfo("C+", "降噪强化", "去噪+线条重建（慢）")
+            Anime4KManager.Mode.OFF -> ModeInfo(context.getString(R.string.anime4k_mode_off_name), context.getString(R.string.anime4k_mode_off_desc), context.getString(R.string.anime4k_off))
+            Anime4KManager.Mode.A -> ModeInfo(context.getString(R.string.anime4k_mode_a_name), context.getString(R.string.anime4k_mode_a_desc_short), context.getString(R.string.anime4k_mode_a_hint))
+            Anime4KManager.Mode.B -> ModeInfo(context.getString(R.string.anime4k_mode_b_name), context.getString(R.string.anime4k_mode_b_desc_short), context.getString(R.string.anime4k_mode_b_hint))
+            Anime4KManager.Mode.C -> ModeInfo(context.getString(R.string.anime4k_mode_c_name), context.getString(R.string.anime4k_mode_c_desc_short), context.getString(R.string.anime4k_mode_c_hint))
+            Anime4KManager.Mode.A_PLUS -> ModeInfo(context.getString(R.string.anime4k_mode_a_plus_name), context.getString(R.string.anime4k_mode_a_plus_desc), context.getString(R.string.anime4k_mode_a_plus_hint))
+            Anime4KManager.Mode.B_PLUS -> ModeInfo(context.getString(R.string.anime4k_mode_b_plus_name), context.getString(R.string.anime4k_mode_b_plus_desc), context.getString(R.string.anime4k_mode_b_plus_hint))
+            Anime4KManager.Mode.C_PLUS -> ModeInfo(context.getString(R.string.anime4k_mode_c_plus_name), context.getString(R.string.anime4k_mode_c_plus_desc), context.getString(R.string.anime4k_mode_c_plus_hint))
         }
         
         holder.tvModeIcon.text = icon

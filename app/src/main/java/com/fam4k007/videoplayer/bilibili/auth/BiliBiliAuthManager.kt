@@ -2,6 +2,7 @@ package com.fam4k007.videoplayer.bilibili.auth
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.bilibili.model.*
 import com.fam4k007.videoplayer.utils.SecureStorage
 import com.google.gson.Gson
@@ -62,13 +63,13 @@ class BiliBiliAuthManager(private val context: Context) {
             val body = response.body?.string()
             
             if (!response.isSuccessful || body == null) {
-                return@withContext Result.failure(Exception("请求失败: ${response.code}"))
+                return@withContext Result.failure(Exception(context.getString(R.string.bilibili_play_network_error)))
             }
             
             val apiResponse = gson.fromJson(body, object : com.google.gson.reflect.TypeToken<BiliApiResponse<QRCodeResponse>>() {}.type) as BiliApiResponse<QRCodeResponse>
             
             if (apiResponse.code != 0 || apiResponse.data == null) {
-                return@withContext Result.failure(Exception(apiResponse.message ?: "生成二维码失败"))
+                return@withContext Result.failure(Exception(apiResponse.message ?: context.getString(R.string.bilibili_qr_gen_failed)))
             }
             
             val qrData = apiResponse.data
@@ -100,7 +101,7 @@ class BiliBiliAuthManager(private val context: Context) {
             com.fam4k007.videoplayer.utils.Logger.d("BiliAuth", "Poll response body: $body")
             
             if (!response.isSuccessful || body == null) {
-                return@withContext LoginResult.Failed("网络请求失败")
+                return@withContext LoginResult.Failed(context.getString(R.string.bilibili_play_network_error))
             }
             
             val apiResponse = gson.fromJson(body, object : com.google.gson.reflect.TypeToken<BiliApiResponse<QRLoginPollResponse>>() {}.type) as BiliApiResponse<QRLoginPollResponse>
@@ -167,13 +168,13 @@ class BiliBiliAuthManager(private val context: Context) {
                 }
                 else -> {
                     android.util.Log.e("BiliAuth", "Unknown code: ${apiResponse.data?.code}")
-                    LoginResult.Failed(apiResponse.data?.message ?: "登录失败")
+                    LoginResult.Failed(apiResponse.data?.message ?: context.getString(R.string.bilibili_play_get_failed))
                 }
             }
             
         } catch (e: Exception) {
             android.util.Log.e("BiliAuth", "Poll error: ${e.message}", e)
-            LoginResult.Failed(e.message ?: "未知错误")
+            LoginResult.Failed(e.message ?: context.getString(R.string.common_unknown))
         }
     }
     

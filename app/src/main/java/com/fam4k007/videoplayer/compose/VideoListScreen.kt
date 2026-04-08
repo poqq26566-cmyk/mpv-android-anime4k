@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -106,7 +107,7 @@ fun VideoListScreen(
                         IconButton(onClick = onNavigateBack) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "返回",
+                                contentDescription = stringResource(R.string.common_back),
                                 tint = Color.White
                             )
                         }
@@ -115,14 +116,14 @@ fun VideoListScreen(
                         IconButton(onClick = { showSearch = true }) {
                             Icon(
                                 imageVector = Icons.Default.Search,
-                                contentDescription = "搜索",
+                                contentDescription = stringResource(R.string.common_search),
                                 tint = Color.White
                             )
                         }
                         IconButton(onClick = { showSortDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.Sort,
-                                contentDescription = "排序",
+                                contentDescription = stringResource(R.string.video_sort),
                                 tint = Color.White
                             )
                         }
@@ -138,7 +139,7 @@ fun VideoListScreen(
                 .background(Color(0xFFF5F5F5))
         ) {
             if (filteredVideos.isEmpty()) {
-                EmptyState(if (searchQuery.isEmpty()) "此文件夹中没有视频" else "未找到匹配的视频")
+                EmptyState(if (searchQuery.isEmpty()) stringResource(R.string.video_list_no_videos) else stringResource(R.string.video_list_no_match))
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -170,7 +171,7 @@ fun VideoListScreen(
                         .align(Alignment.BottomEnd)
                         .padding(16.dp)
                 ) {
-                    Icon(Icons.Default.Refresh, "刷新", tint = Color.White)
+                    Icon(Icons.Default.Refresh, stringResource(R.string.common_refresh), tint = Color.White)
                 }
             }
         }
@@ -311,7 +312,7 @@ private fun VideoItem(
             ) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
-                    contentDescription = "更多信息",
+                    contentDescription = stringResource(R.string.content_desc_more_info),
                     tint = Color(0xFF757575)
                 )
             }
@@ -340,7 +341,7 @@ private fun SearchTopBar(
                 decorationBox = { innerTextField ->
                     if (searchQuery.isEmpty()) {
                         Text(
-                            text = "搜索视频...",
+                            text = stringResource(R.string.video_list_search_hint),
                             fontSize = 18.sp,
                             color = Color.White.copy(alpha = 0.6f)
                         )
@@ -354,7 +355,7 @@ private fun SearchTopBar(
             IconButton(onClick = onCloseSearch) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "返回",
+                    contentDescription = stringResource(R.string.common_back),
                     tint = Color.White
                 )
             }
@@ -364,7 +365,7 @@ private fun SearchTopBar(
                 IconButton(onClick = { onSearchQueryChange("") }) {
                     Icon(
                         imageVector = Icons.Default.Clear,
-                        contentDescription = "清除",
+                        contentDescription = stringResource(R.string.video_list_clear),
                         tint = Color.White
                     )
                 }
@@ -383,27 +384,27 @@ private fun VideoSortDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("排序方式", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.video_sort_by), fontWeight = FontWeight.Bold)
         },
         text = {
             Column {
                 SortOption(
-                    text = "名称 (升序)",
+                    text = stringResource(R.string.video_list_name_asc),
                     isSelected = currentSortType == "NAME" && currentSortOrder == "ASCENDING",
                     onClick = { onSortSelected("NAME", "ASCENDING") }
                 )
                 SortOption(
-                    text = "名称 (降序)",
+                    text = stringResource(R.string.video_list_name_desc),
                     isSelected = currentSortType == "NAME" && currentSortOrder == "DESCENDING",
                     onClick = { onSortSelected("NAME", "DESCENDING") }
                 )
                 SortOption(
-                    text = "日期 (升序)",
+                    text = stringResource(R.string.video_list_date_asc),
                     isSelected = currentSortType == "DATE" && currentSortOrder == "ASCENDING",
                     onClick = { onSortSelected("DATE", "ASCENDING") }
                 )
                 SortOption(
-                    text = "日期 (降序)",
+                    text = stringResource(R.string.video_list_date_desc),
                     isSelected = currentSortType == "DATE" && currentSortOrder == "DESCENDING",
                     onClick = { onSortSelected("DATE", "DESCENDING") }
                 )
@@ -411,7 +412,7 @@ private fun VideoSortDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )
@@ -462,17 +463,17 @@ private fun VideoInfoDialog(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    InfoRow("分辨率", metadata?.getResolution() ?: "无法获取")
-                    InfoRow("视频编码", metadata?.videoCodec ?: "无法获取")
-                    InfoRow("音频编码", metadata?.audioCodec ?: "无法获取")
-                    InfoRow("比特率", metadata?.getFormattedBitrate() ?: "无法获取")
-                    InfoRow("帧率", metadata?.getFormattedFrameRate() ?: "无法获取")
+                    InfoRow(stringResource(R.string.video_list_resolution), metadata?.getResolution() ?: stringResource(R.string.video_list_cannot_get))
+                    InfoRow(stringResource(R.string.video_list_video_codec), metadata?.videoCodec ?: stringResource(R.string.video_list_cannot_get))
+                    InfoRow(stringResource(R.string.video_list_audio_codec), metadata?.audioCodec ?: stringResource(R.string.video_list_cannot_get))
+                    InfoRow(stringResource(R.string.video_list_bitrate), metadata?.getFormattedBitrate() ?: stringResource(R.string.video_list_cannot_get))
+                    InfoRow(stringResource(R.string.video_list_framerate), metadata?.getFormattedFrameRate() ?: stringResource(R.string.video_list_cannot_get))
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("关闭")
+                Text(stringResource(R.string.common_close))
             }
         }
     )

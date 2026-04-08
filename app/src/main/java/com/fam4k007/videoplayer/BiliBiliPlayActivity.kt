@@ -1,5 +1,6 @@
 package com.fam4k007.videoplayer
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -24,6 +25,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,6 +33,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.bilibili.auth.BiliBiliAuthManager
 import com.fam4k007.videoplayer.bilibili.model.BiliApiResponse
 import com.fam4k007.videoplayer.compose.ImmersiveTopAppBar
@@ -109,16 +112,16 @@ class BiliBiliPlayActivity : ComponentActivity() {
             try {
                 // 检查登录
                 if (!authManager.isLoggedIn()) {
-                    Toast.makeText(this@BiliBiliPlayActivity, "请先登录", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@BiliBiliPlayActivity, getString(R.string.bilibili_login_required), Toast.LENGTH_SHORT).show()
                     return@launch
                 }
                 
-                Toast.makeText(this@BiliBiliPlayActivity, "正在获取播放地址...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@BiliBiliPlayActivity, getString(R.string.bilibili_getting_url), Toast.LENGTH_SHORT).show()
                 
                 // 获取播放地址
                 val playUrl = getPlayUrl(epId, cid)
                 if (playUrl.isNullOrEmpty()) {
-                    Toast.makeText(this@BiliBiliPlayActivity, "获取播放地址失败", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@BiliBiliPlayActivity, getString(R.string.bilibili_get_url_failed), Toast.LENGTH_SHORT).show()
                     return@launch
                 }
                 
@@ -136,7 +139,7 @@ class BiliBiliPlayActivity : ComponentActivity() {
                 
             } catch (e: Exception) {
                 android.util.Log.e("BiliPlay", "Play error", e)
-                Toast.makeText(this@BiliBiliPlayActivity, "播放失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@BiliBiliPlayActivity, getString(R.string.bilibili_play_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -191,7 +194,7 @@ class BiliBiliPlayActivity : ComponentActivity() {
                 val message = jsonResponse.get("message")?.asString
                 android.util.Log.e("BiliPlay", "API error code: $code, message: $message")
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@BiliBiliPlayActivity, "获取播放地址失败: $message", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@BiliBiliPlayActivity, getString(R.string.bilibili_get_url_error, message ?: ""), Toast.LENGTH_LONG).show()
                 }
                 return@withContext null
             }
@@ -212,22 +215,22 @@ class BiliBiliPlayActivity : ComponentActivity() {
             
             // 画质映射表
             val qualityName = when(quality) {
-                127 -> "8K超高清"
-                126 -> "杜比视界"
-                125 -> "HDR真彩"
-                120 -> "4K超清"
-                116 -> "1080P60帧"
-                112 -> "1080P高码率"
-                80 -> "1080P高清"
-                64 -> "720P高清"
-                32 -> "480P清晰"
-                16 -> "360P流畅"
+                127 -> getString(R.string.bilibili_quality_8k)
+                126 -> getString(R.string.bilibili_quality_dolby)
+                125 -> getString(R.string.bilibili_quality_hdr)
+                120 -> getString(R.string.bilibili_quality_4k)
+                116 -> getString(R.string.bilibili_quality_1080p60)
+                112 -> getString(R.string.bilibili_quality_1080p_plus)
+                80 -> getString(R.string.bilibili_quality_1080p)
+                64 -> getString(R.string.bilibili_quality_720p)
+                32 -> getString(R.string.bilibili_quality_480p)
+                16 -> getString(R.string.bilibili_quality_360p)
                 else -> "${quality}P"
             }
             
             // 给用户提示实际画质
             withContext(Dispatchers.Main) {
-                Toast.makeText(this@BiliBiliPlayActivity, "画质: $qualityName", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@BiliBiliPlayActivity, getString(R.string.bilibili_quality, qualityName), Toast.LENGTH_SHORT).show()
             }
             
             // 尝试durl（mp4格式）
@@ -245,7 +248,7 @@ class BiliBiliPlayActivity : ComponentActivity() {
                 val playUrl = video?.get("base_url")?.asString
                 android.util.Log.d("BiliPlay", "Got dash play URL: ${playUrl?.take(100)}")
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@BiliBiliPlayActivity, "提示：DASH格式可能需要单独下载音频", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@BiliBiliPlayActivity, getString(R.string.bilibili_dash_hint), Toast.LENGTH_LONG).show()
                 }
                 return@withContext playUrl
             }
@@ -256,7 +259,7 @@ class BiliBiliPlayActivity : ComponentActivity() {
         } catch (e: Exception) {
             android.util.Log.e("BiliPlay", "GetPlayUrl error", e)
             withContext(Dispatchers.Main) {
-                Toast.makeText(this@BiliBiliPlayActivity, "获取播放地址异常: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@BiliBiliPlayActivity, getString(R.string.bilibili_url_exception, e.message ?: ""), Toast.LENGTH_LONG).show()
             }
             null
         }
@@ -269,12 +272,12 @@ fun BiliBiliPlayScreen(
     authManager: BiliBiliAuthManager,
     onBack: () -> Unit,
     onPlayEpisode: (Long, Long, String) -> Unit,  // (epId, cid, title)
-    viewModel: BiliBiliPlayViewModel = viewModel { BiliBiliPlayViewModel(authManager) }
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val viewModel: BiliBiliPlayViewModel = viewModel { BiliBiliPlayViewModel(authManager, context) }
     val uiState by viewModel.uiState.collectAsState()
     var inputUrl by remember { mutableStateOf("") }
     val isLoggedIn = remember { mutableStateOf(authManager.isLoggedIn()) }
-    val context = androidx.compose.ui.platform.LocalContext.current
     val focusManager = LocalFocusManager.current  // 获取焦点管理器用于隐藏键盘
     var showLogoutDialog by remember { mutableStateOf(false) }  // 退出登录对话框状态
     
@@ -287,23 +290,23 @@ fun BiliBiliPlayScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text("退出登录") },
-            text = { Text("确定要退出当前账号吗？") },
+            title = { Text(stringResource(R.string.bilibili_exit_login)) },
+            text = { Text(stringResource(R.string.bilibili_exit_confirm)) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         authManager.logout()
                         isLoggedIn.value = false
                         showLogoutDialog = false
-                        Toast.makeText(context, "已退出登录", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.bilibili_logged_out), Toast.LENGTH_SHORT).show()
                     }
                 ) {
-                    Text("确定", color = Color(0xFFFF6699))
+                    Text(stringResource(R.string.common_confirm), color = Color(0xFFFF6699))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("取消", color = Color.Gray)
+                    Text(stringResource(R.string.common_cancel), color = Color.Gray)
                 }
             }
         )
@@ -312,12 +315,12 @@ fun BiliBiliPlayScreen(
     Scaffold(
         topBar = {
             ImmersiveTopAppBar(
-                title = { Text("B站番剧播放") },
+                title = { Text(stringResource(R.string.bilibili_bangumi_play)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_back_arrow),
-                            contentDescription = "返回",
+                            contentDescription = stringResource(R.string.common_back),
                             tint = Color.White,
                             modifier = Modifier.size(24.dp)
                         )
@@ -328,7 +331,7 @@ fun BiliBiliPlayScreen(
                         TextButton(onClick = {
                             context.startActivity(Intent(context, BiliBiliLoginActivity::class.java))
                         }) {
-                            Text("登录", color = Color.White)
+                            Text(stringResource(R.string.bilibili_login_btn), color = Color.White)
                         }
                     } else {
                         val userInfo = authManager.getUserInfo()
@@ -341,7 +344,7 @@ fun BiliBiliPlayScreen(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Text(
-                                    text = userInfo?.uname ?: "已登录",
+                                    text = userInfo?.uname ?: stringResource(R.string.bilibili_play_logged_in),
                                     color = Color.White,
                                     fontSize = 14.sp
                                 )
@@ -368,14 +371,14 @@ fun BiliBiliPlayScreen(
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("粘贴番剧链接", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(stringResource(R.string.bilibili_paste_link), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     OutlinedTextField(
                         value = inputUrl,
                         onValueChange = { inputUrl = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("输入B站番剧链接") },
+                        placeholder = { Text(stringResource(R.string.bilibili_input_link)) },
                         singleLine = true
                     )
                     
@@ -389,7 +392,7 @@ fun BiliBiliPlayScreen(
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF6699))
                     ) {
-                        Text("解析")
+                        Text(stringResource(R.string.bilibili_parse))
                     }
                 }
             }
@@ -399,7 +402,7 @@ fun BiliBiliPlayScreen(
                 when (val state = uiState) {
                     is PlayUiState.Idle -> {
                         Text(
-                            text = "请输入番剧链接",
+                            text = stringResource(R.string.bilibili_play_input_link_prompt),
                             modifier = Modifier
                                 .align(Alignment.Center)
                                 .padding(32.dp),
@@ -422,7 +425,7 @@ fun BiliBiliPlayScreen(
                             Text(state.message, color = Color.Red)
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(onClick = { viewModel.parseUrl(inputUrl) }) {
-                                Text("重试")
+                                Text(stringResource(R.string.common_retry))
                             }
                         }
                     }
@@ -462,7 +465,7 @@ fun BangumiDetailView(
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(bangumi.title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("共 ${bangumi.episodes.size} 集", color = Color.Gray)
+                    Text(stringResource(R.string.bilibili_episode_count, bangumi.episodes.size), color = Color.Gray)
                 }
             }
         }
@@ -502,7 +505,7 @@ fun BangumiDetailView(
 
 // ========== ViewModel ==========
 
-class BiliBiliPlayViewModel(private val authManager: BiliBiliAuthManager) : ViewModel() {
+class BiliBiliPlayViewModel(private val authManager: BiliBiliAuthManager, private val context: Context) : ViewModel() {
     
     private val _uiState = MutableStateFlow<PlayUiState>(PlayUiState.Idle)
     val uiState: StateFlow<PlayUiState> = _uiState
@@ -547,75 +550,79 @@ class BiliBiliPlayViewModel(private val authManager: BiliBiliAuthManager) : View
         return regex.find(url)?.groupValues?.get(1)?.toLongOrNull()
     }
     
-    private suspend fun getBangumiDetail(seasonId: Long): Result<SimpleBangumiInfo> = withContext(Dispatchers.IO) {
-        try {
-            val request = Request.Builder()
-                .url("https://api.bilibili.com/pgc/view/web/season?season_id=$seasonId")
-                .get()
-                .build()
-            
-            val response = client.newCall(request).execute()
-            val body = response.body?.string() ?: return@withContext Result.failure(Exception("网络错误"))
-            
-            val apiResponse = gson.fromJson(body, BangumiDetailResponse::class.java)
-            
-            if (apiResponse.code != 0) {
-                return@withContext Result.failure(Exception("API错误: ${apiResponse.message}"))
+    private suspend fun getBangumiDetail(seasonId: Long): Result<SimpleBangumiInfo> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val request = Request.Builder()
+                    .url("https://api.bilibili.com/pgc/view/web/season?season_id=$seasonId")
+                    .get()
+                    .build()
+                
+                val response = client.newCall(request).execute()
+                val body = response.body?.string() ?: return@withContext Result.failure(Exception(context.getString(R.string.bilibili_play_network_error)))
+                
+                val apiResponse = gson.fromJson(body, BangumiDetailResponse::class.java)
+                
+                if (apiResponse.code != 0) {
+                    return@withContext Result.failure(Exception(context.getString(R.string.bilibili_play_api_error, apiResponse.message)))
+                }
+                
+                val data = apiResponse.result ?: return@withContext Result.failure(Exception(context.getString(R.string.bilibili_play_data_empty)))
+                
+                val bangumi = SimpleBangumiInfo(
+                    title = data.title ?: context.getString(R.string.common_unknown),
+                    episodes = data.episodes?.map {
+                        SimpleEpisode(
+                            title = it.long_title ?: it.title ?: context.getString(R.string.bilibili_play_unknown_episode),
+                            cid = it.cid ?: 0,
+                            epId = it.id ?: 0
+                        )
+                    } ?: emptyList()
+                )
+                
+                Result.success(bangumi)
+                
+            } catch (e: Exception) {
+                Result.failure(e)
             }
-            
-            val data = apiResponse.result ?: return@withContext Result.failure(Exception("数据为空"))
-            
-            val bangumi = SimpleBangumiInfo(
-                title = data.title ?: "未知",
-                episodes = data.episodes?.map {
-                    SimpleEpisode(
-                        title = it.long_title ?: it.title ?: "未知集数",
-                        cid = it.cid ?: 0,
-                        epId = it.id ?: 0
-                    )
-                } ?: emptyList()
-            )
-            
-            Result.success(bangumi)
-            
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
     
-    private suspend fun getBangumiDetailByEp(epId: Long): Result<SimpleBangumiInfo> = withContext(Dispatchers.IO) {
-        try {
-            val request = Request.Builder()
-                .url("https://api.bilibili.com/pgc/view/web/season?ep_id=$epId")
-                .get()
-                .build()
-            
-            val response = client.newCall(request).execute()
-            val body = response.body?.string() ?: return@withContext Result.failure(Exception("网络错误"))
-            
-            val apiResponse = gson.fromJson(body, BangumiDetailResponse::class.java)
-            
-            if (apiResponse.code != 0) {
-                return@withContext Result.failure(Exception("API错误: ${apiResponse.message}"))
+    private suspend fun getBangumiDetailByEp(epId: Long): Result<SimpleBangumiInfo> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val request = Request.Builder()
+                    .url("https://api.bilibili.com/pgc/view/web/season?ep_id=$epId")
+                    .get()
+                    .build()
+                
+                val response = client.newCall(request).execute()
+                val body = response.body?.string() ?: return@withContext Result.failure(Exception(context.getString(R.string.bilibili_play_network_error)))
+                
+                val apiResponse = gson.fromJson(body, BangumiDetailResponse::class.java)
+                
+                if (apiResponse.code != 0) {
+                    return@withContext Result.failure(Exception(context.getString(R.string.bilibili_play_api_error, apiResponse.message)))
+                }
+                
+                val data = apiResponse.result ?: return@withContext Result.failure(Exception(context.getString(R.string.bilibili_play_data_empty)))
+                
+                val bangumi = SimpleBangumiInfo(
+                    title = data.title ?: context.getString(R.string.common_unknown),
+                    episodes = data.episodes?.map {
+                        SimpleEpisode(
+                            title = it.long_title ?: it.title ?: context.getString(R.string.bilibili_play_unknown_episode),
+                            cid = it.cid ?: 0,
+                            epId = it.id ?: 0
+                        )
+                    } ?: emptyList()
+                )
+                
+                Result.success(bangumi)
+                
+            } catch (e: Exception) {
+                Result.failure(e)
             }
-            
-            val data = apiResponse.result ?: return@withContext Result.failure(Exception("数据为空"))
-            
-            val bangumi = SimpleBangumiInfo(
-                title = data.title ?: "未知",
-                episodes = data.episodes?.map {
-                    SimpleEpisode(
-                        title = it.long_title ?: it.title ?: "未知集数",
-                        cid = it.cid ?: 0,
-                        epId = it.id ?: 0
-                    )
-                } ?: emptyList()
-            )
-            
-            Result.success(bangumi)
-            
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 }

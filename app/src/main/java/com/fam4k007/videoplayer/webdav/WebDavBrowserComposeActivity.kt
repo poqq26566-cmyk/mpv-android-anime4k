@@ -30,7 +30,7 @@ class WebDavBrowserComposeActivity : ComponentActivity() {
         accountId = intent.getStringExtra("account_id")
         
         if (accountId == null) {
-            Toast.makeText(this, "账户信息错误", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.webdav_account_error), Toast.LENGTH_SHORT).show()
             finish()
             return
         }
@@ -39,13 +39,13 @@ class WebDavBrowserComposeActivity : ComponentActivity() {
         val account = accountManager.getAccountById(accountId!!)
         
         if (account == null) {
-            Toast.makeText(this, "账户不存在", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.webdav_account_not_exist), Toast.LENGTH_SHORT).show()
             finish()
             return
         }
         
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this).themeName)
+            val themeColors = getThemeColors(this@WebDavBrowserComposeActivity, ThemeManager.getCurrentTheme(this@WebDavBrowserComposeActivity).themeName)
             
             MaterialTheme(
                 colorScheme = lightColorScheme(
@@ -112,7 +112,7 @@ class WebDavBrowserComposeActivity : ComponentActivity() {
             startActivity(intent)
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(this, "播放失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.webdav_play_failed, e.message), Toast.LENGTH_SHORT).show()
         }
     }
     

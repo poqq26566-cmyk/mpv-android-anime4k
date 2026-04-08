@@ -792,7 +792,9 @@ class PlaybackEngine(
             }
             
             val tracks = mutableListOf<Triple<Int, String, Boolean>>()
-            tracks.add(Triple(-1, "关闭字幕", currentTrackId == -1))
+            val context = contextRef.get()
+            val offText = context?.getString(com.fam4k007.videoplayer.R.string.subtitle_track_off) ?: "Disable Subtitles"
+            tracks.add(Triple(-1, offText, currentTrackId == -1))
 
             for (i in 0 until trackCount) {
                 val type = MPVLib.getPropertyString("track-list/$i/type")
@@ -802,11 +804,13 @@ class PlaybackEngine(
                 val lang = MPVLib.getPropertyString("track-list/$i/lang") ?: ""
                 val title = MPVLib.getPropertyString("track-list/$i/title") ?: ""
                 
+                val context = contextRef.get()
+                val trackText = context?.getString(com.fam4k007.videoplayer.R.string.subtitle_track_generic) ?: "Subtitle Track"
                 val name = when {
                     title.isNotEmpty() && lang.isNotEmpty() -> "#$id: $title ($lang)"
                     title.isNotEmpty() -> "#$id: $title"
                     lang.isNotEmpty() -> "#$id: $lang"
-                    else -> "#$id: 字幕轨道"
+                    else -> "#$id: $trackText"
                 }
                 
                 tracks.add(Triple(id, name, id == currentTrackId))

@@ -24,6 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.VideoFileParcelable
 import com.fam4k007.videoplayer.manager.PreferencesManager
 import kotlinx.coroutines.delay
@@ -220,7 +222,7 @@ fun VideoListDrawer(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "视频列表",
+                                text = stringResource(R.string.video_list),
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -234,7 +236,7 @@ fun VideoListDrawer(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Sort,
-                                        contentDescription = "排序",
+                                        contentDescription = stringResource(R.string.content_desc_sort),
                                         tint = Color(0xFF64B5F6),
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -261,7 +263,7 @@ fun VideoListDrawer(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "共 ${sortedVideoList.size} 个视频",
+                                text = stringResource(R.string.video_count, sortedVideoList.size),
                                 fontSize = 13.sp,
                                 color = Color(0xB3FFFFFF)
                             )
@@ -384,7 +386,7 @@ fun VideoListItem(
                 // 当前播放标记
                 if (isCurrentPlaying) {
                     Text(
-                        text = "播放中",
+                        text = stringResource(R.string.video_playing),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF64B5F6),
@@ -460,12 +462,13 @@ private fun formatFileSize(sizeBytes: Long): String {
 /**
  * 获取排序文本描述
  */
+@Composable
 private fun getSortText(sortBy: SortBy, sortOrder: SortOrder): String {
     val sortByText = when (sortBy) {
-        SortBy.NAME -> "文件名"
-        SortBy.SIZE -> "大小"
-        SortBy.DURATION -> "时长"
-        SortBy.DATE -> "添加时间"
+        SortBy.NAME -> stringResource(R.string.video_sort_name)
+        SortBy.SIZE -> stringResource(R.string.video_sort_size)
+        SortBy.DURATION -> stringResource(R.string.video_sort_duration)
+        SortBy.DATE -> stringResource(R.string.video_sort_date)
     }
     val orderText = when (sortOrder) {
         SortOrder.ASCENDING -> "↑"
@@ -498,14 +501,14 @@ fun DropdownMenuWithStyle(
         ) {
             // 排序方式分组
             Text(
-                text = "排序方式",
+                text = stringResource(R.string.video_sort_by),
                 fontSize = 11.sp,
                 color = Color(0x99FFFFFF),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
             
             SortMenuItem(
-                text = "文件名",
+                text = stringResource(R.string.video_name),
                 isSelected = sortBy == SortBy.NAME,
                 onClick = {
                     onSortByChange(SortBy.NAME)
@@ -514,7 +517,7 @@ fun DropdownMenuWithStyle(
             )
             
             SortMenuItem(
-                text = "大小",
+                text = stringResource(R.string.video_size),
                 isSelected = sortBy == SortBy.SIZE,
                 onClick = {
                     onSortByChange(SortBy.SIZE)
@@ -523,7 +526,7 @@ fun DropdownMenuWithStyle(
             )
             
             SortMenuItem(
-                text = "时长",
+                text = stringResource(R.string.video_duration),
                 isSelected = sortBy == SortBy.DURATION,
                 onClick = {
                     onSortByChange(SortBy.DURATION)
@@ -532,7 +535,7 @@ fun DropdownMenuWithStyle(
             )
             
             SortMenuItem(
-                text = "添加时间",
+                text = stringResource(R.string.video_date),
                 isSelected = sortBy == SortBy.DATE,
                 onClick = {
                     onSortByChange(SortBy.DATE)
@@ -548,14 +551,14 @@ fun DropdownMenuWithStyle(
             
             // 排序顺序分组
             Text(
-                text = "排序顺序",
+                text = stringResource(R.string.video_sort_order),
                 fontSize = 11.sp,
                 color = Color(0x99FFFFFF),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
             
             SortMenuItem(
-                text = "升序 ↑",
+                text = stringResource(R.string.video_sort_asc),
                 isSelected = sortOrder == SortOrder.ASCENDING,
                 onClick = {
                     onSortOrderChange(SortOrder.ASCENDING)
@@ -564,7 +567,7 @@ fun DropdownMenuWithStyle(
             )
             
             SortMenuItem(
-                text = "降序 ↓",
+                text = stringResource(R.string.video_sort_desc),
                 isSelected = sortOrder == SortOrder.DESCENDING,
                 onClick = {
                     onSortOrderChange(SortOrder.DESCENDING)
