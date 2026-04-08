@@ -20,8 +20,8 @@ object UpdateManager {
     // GitHub Releases API 地址
     private const val GITHUB_API_URL = "https://api.github.com/repos/azxcvn/mpv-android-anime4k/releases/latest"
     
-    // 自定义下载地址（金山文档）- 优先使用此地址，对国内用户友好
-    private const val CUSTOM_DOWNLOAD_URL = "https://www.kdocs.cn/l/cqqJw4RUp3Rt"
+    // 自定义下载地址（英文版分支）- 优先使用此地址
+    private const val CUSTOM_DOWNLOAD_URL = "https://github.com/azxcvn/mpv-android-anime4k/tree/meow-player-en/APP-EN"
     
     data class UpdateInfo(
         val versionName: String,
@@ -77,9 +77,9 @@ object UpdateManager {
                 Log.d(TAG, "当前版本: ${getAppVersionName(context)} (code: $currentVersionCode)")
                 Log.d(TAG, "比较结果: $latestVersionCode > $currentVersionCode = ${latestVersionCode > currentVersionCode}")
                 
-                // 获取下载链接 - 优先使用自定义网盘地址
+                // 获取下载链接 - 优先使用自定义地址（英文版分支）
                 var downloadUrl = CUSTOM_DOWNLOAD_URL
-                Log.d(TAG, "使用自定义下载地址（夸克网盘）: $downloadUrl")
+                Log.d(TAG, "使用自定义下载地址（英文版分支）: $downloadUrl")
                 
                 // 备用：从 GitHub Assets 获取（如果需要的话可以注释掉上面两行）
                 /*
