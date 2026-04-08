@@ -1,6 +1,28 @@
 ﻿# Meow Player - English Version Branch
 
-**[中文版本](#中文说明) | English Version**
+---
+
+## Important Notice
+
+Due to limited personal resources, the English version was not considered at the project's inception. After starting the translation work, it turned out to be a massive undertaking, and some parts still cannot be fully translated to English. You may refer to the text below to understand the corresponding English meanings.
+
+**Please do not download from the main releases page** - those builds do not include the English version. Instead, scroll down in this README file to find the download link for the English version.
+
+Note: There is no language switch button within the app. If your phone's system language is set to English, the app will automatically display in English.
+
+### Chinese-English Translation Reference
+
+Some terms in the app may still appear in Chinese. Here's a reference table:
+
+| Chinese (中文) | English |
+|---------------|---------|
+| 字幕轨道 | Subtitle Track |
+| 外挂字幕 | External Subtitle |
+| 选择弹幕 | Select Danmaku |
+| 匹配弹幕 | Match Danmaku |
+| 弹幕轨道 | Danmaku Track |
+| 本地弹幕 | Local Danmaku |
+| 网络弹幕 | Network Danmaku |
 
 ---
 
@@ -20,13 +42,5 @@ For detailed information about Meow Player, including features, installation, an
 
 ---
 
-## 中文说明
-
-这是小喵player的**英文版分支**。您可以在此处下载英文版的小喵player。
-
-有关本应用的详细介绍，请查看：**[README_EN.md](README_EN.md)**
-
----
-
-**Branch**: meow-player-en
+**Branch**: meow-player-en  
 **Last Updated**: 2026-04-08

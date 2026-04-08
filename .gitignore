@@ -7,6 +7,9 @@
 # Exception: Keep library files in app/libs
 !app/libs/*.aar
 
+# Exception: Keep English version APK in APP-EN folder
+!APP-EN/*.apk
+
 # Files for the ART/Dalvik VM
 *.dex
 
