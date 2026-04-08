@@ -1,16 +1,16 @@
-# 哔哩哔哩番剧解析播放
+# Bilibili Bangumi Parsing and Playback
 
-## 解析流程
+## Parsing Flow
 
-### 1. 提取 ID
+### 1. Extract ID
 
-从输入链接中提取 Season ID 或 Episode ID
+Extract Season ID or Episode ID from the input link
 
 ```
-支持格式:
+Supported formats:
 https://www.bilibili.com/bangumi/play/ss12345  -> season_id: 12345
 https://www.bilibili.com/bangumi/play/ep67890  -> ep_id: 67890
-https://b23.tv/xxxxx                           -> 需先重定向获取完整链接
+https://b23.tv/xxxxx                           -> Requires redirect to get full link
 ```
 
 ```kotlin
@@ -20,88 +20,88 @@ val seasonId = ssPattern.find(url)?.groupValues?.get(1)
 val episodeId = epPattern.find(url)?.groupValues?.get(1)
 ```
 
-### 2. 获取番剧信息
+### 2. Get Bangumi Information
 
 ```
 API: https://api.bilibili.com/pgc/view/web/season
-参数: season_id 或 ep_id
-请求头:
-  User-Agent: 浏览器标识
+Parameters: season_id or ep_id
+Request Headers:
+  User-Agent: Browser identifier
   Referer: https://www.bilibili.com
-  Cookie: 登录凭证（可选）
+  Cookie: Login credentials (optional)
 ```
 
-返回关键字段:
+Key response fields:
 
 ```json
 {
   "result": {
     "season_id": 12345,
-    "title": "番剧名称",
+    "title": "Bangumi Title",
     "episodes": [
       {
         "id": 67890,
-        "aid": 11111,  // AV号
-        "cid": 22222,  // CID号
-        "title": "第1话"
+        "aid": 11111,  // AV number
+        "cid": 22222,  // CID number
+        "title": "Episode 1"
       }
     ]
   }
 }
 ```
 
-### 3. 获取播放地址
+### 3. Get Playback URL
 
 ```
 API: https://api.bilibili.com/pgc/player/web/playurl
-参数:
-  avid: 视频AV号
-  cid: 视频CID号
-  qn: 画质码（64=720P, 80=1080P, 112=1080P+, 116=1080P60）
-  fnval: 格式（1=MP4, 16=DASH）
-请求头:
-  Cookie: 登录凭证（会员内容需要）
-  User-Agent: 浏览器标识
+Parameters:
+  avid: Video AV number
+  cid: Video CID number
+  qn: Quality code (64=720P, 80=1080P, 112=1080P+, 116=1080P60)
+  fnval: Format (1=MP4, 16=DASH)
+Request Headers:
+  Cookie: Login credentials (required for premium content)
+  User-Agent: Browser identifier
   Referer: https://www.bilibili.com
 ```
 
-**MP4 格式返回:**
+**MP4 format response:**
 
 ```json
 {
   "data": {
     "durl": [
-      {"url": "https://..."}  // 直接播放地址
+      {"url": "https://..."}  // Direct playback URL
     ]
   }
 }
 ```
 
-**DASH 格式返回:**
+**DASH format response:**
 
 ```json
 {
   "data": {
     "dash": {
-      "video": [{"base_url": "https://..."}],  // 视频流
-      "audio": [{"base_url": "https://..."}]   // 音频流
+      "video": [{"base_url": "https://..."}],  // Video stream
+      "audio": [{"base_url": "https://..."}]   // Audio stream
     }
   }
 }
 ```
 
-### 4. 播放视频
+### 4. Play Video
 
-使用 libmpv 播放器
+Using libmpv player
 
 ```kotlin
-// DASH 格式（视频音频分离）
+// DASH format (separate video and audio)
 mpv.command(arrayOf("loadfile", videoUrl))
 mpv.command(arrayOf("audio-add", audioUrl))
 mpv.setOptionString("http-header-fields", 
     "Referer: https://www.bilibili.com,User-Agent: ...")
 
-// MP4 格式（单文件）
+// MP4 format (single file)
 mpv.command(arrayOf("loadfile", videoUrl))
 mpv.setOptionString("http-header-fields", 
     "Referer: https://www.bilibili.com,User-Agent: ...")
@@ -109,19 +109,19 @@ mpv.setOptionString("http-header-fields",
 
 ---
 
-## 技术要点
+## Technical Details
 
-### 请求头要求
+### Request Header Requirements
 
-必须设置以下请求头，否则返回 403:
+Following headers are required, otherwise returns 403:
 
 - `Referer: https://www.bilibili.com`
 - `User-Agent: Mozilla/5.0 ...`
 
-### 画质与会员
+### Quality & Membership
 
 ```
-画质码对应关系:
+Quality code mapping:
 16  = 360P
 32  = 480P
 64  = 720P
@@ -130,34 +130,34 @@ mpv.setOptionString("http-header-fields",
 116 = 1080P60
 120 = 4K
 
-权限要求:
-未登录    -> 最高 480P
-普通用户  -> 最高 720P
-大会员    -> 1080P, 1080P+, 1080P60
-年度大会员 -> 4K（视频支持时）
+Permission requirements:
+Not logged in     -> Max 480P
+Regular user      -> Max 720P
+Premium member    -> 1080P, 1080P+, 1080P60
+Annual premium    -> 4K (when video supports)
 ```
 
 ### DASH vs MP4
 
 **DASH:**
-- 视频音频分离
-- 支持高画质（1080P+）
-- 需要播放器合并流
+- Separate video and audio
+- Supports high quality (1080P+)
+- Requires player to merge streams
 
 **MP4:**
-- 单文件直链
-- 最高 720P
-- 兼容性好
+- Single file direct link
+- Max 720P
+- Better compatibility
 
 ---
 
-## 常见问题
+## Common Issues
 
-**Q: 播放失败？**  
-检查：会员权限、地区限制、Cookie 有效性
+**Q: Playback failed?**  
+Check: Membership permissions, regional restrictions, Cookie validity
 
-**Q: 画质不高？**  
-原因：未登录、非会员、视频源限制
+**Q: Low quality?**  
+Reason: Not logged in, non-member, video source limitation
 
-**Q: 播放卡顿？**  
-降低画质或检查网络连接
+**Q: Playback lag?**  
+Lower quality or check network connection

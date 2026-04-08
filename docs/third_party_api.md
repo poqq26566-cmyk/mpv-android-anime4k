@@ -1,68 +1,68 @@
-# 第三方 API 使用说明
+# Third-Party API Usage Documentation
 
-本应用使用以下第三方API服务。
-
----
-
-## 哔哩哔哩 (Bilibili)
-
-用于登录、番剧播放、弹幕下载、视频下载等功能。
-
-### API 列表
-
-- **登录API**: `https://passport.bilibili.com/x/passport-login/web/qrcode/*`
-- **番剧信息API**: `https://api.bilibili.com/pgc/view/web/season`
-- **番剧播放API**: `https://api.bilibili.com/pgc/player/web/playurl`
-- **弹幕下载API**: `https://api.bilibili.com/x/v1/dm/list.so`
-- **视频信息API**: `https://api.bilibili.com/x/web-interface/view`
-- **视频下载API**: `https://api.bilibili.com/x/player/playurl`
-- **番剧下载API**: `https://api.bilibili.com/pgc/player/web/playurl`
-
-### 声明
-
-本应用与哔哩哔哩无任何官方关联，仅使用其公开API。
+This application uses the following third-party API services.
 
 ---
 
-## 弹弹play (DanDanPlay)
+## Bilibili
 
-用于本地视频弹幕匹配和下载功能。
+Used for login, bangumi playback, danmaku download, video download and other features.
 
-### API 列表
+### API List
 
-- **弹幕匹配API**: `https://api.dandanplay.net/api/v2/match`
-- **弹幕搜索API**: `https://api.dandanplay.net/api/v2/search/episodes`
-- **弹幕下载API**: `https://api.dandanplay.net/api/v2/comment/*`
+- **Login API**: `https://passport.bilibili.com/x/passport-login/web/qrcode/*`
+- **Bangumi Info API**: `https://api.bilibili.com/pgc/view/web/season`
+- **Bangumi Playback API**: `https://api.bilibili.com/pgc/player/web/playurl`
+- **Danmaku Download API**: `https://api.bilibili.com/x/v1/dm/list.so`
+- **Video Info API**: `https://api.bilibili.com/x/web-interface/view`
+- **Video Download API**: `https://api.bilibili.com/x/player/playurl`
+- **Bangumi Download API**: `https://api.bilibili.com/pgc/player/web/playurl`
 
-### 配置说明
+### Disclaimer
 
-使用弹弹play API需要在 `local.properties` 中配置AppId和AppSecret。
-
-获取凭证步骤：
-1. 前往 [DanDanPlay 开放平台](https://www.dandanplay.com/)
-2. 注册并申请获取 AppId 和 AppSecret
-3. 将凭证填入项目根目录的 `local.properties` 文件
+This application has no official affiliation with Bilibili, only uses its public APIs.
 
 ---
 
-## Wyzie 字幕 (Wyzie Subs)
+## DanDanPlay
 
-用于在线搜索和下载影视作品的字幕文件。
+Used for local video danmaku matching and download features.
 
-### API 列表
+### API List
 
-- **媒体搜索API**: `https://sub.wyzie.io/api/tmdb/search`
-- **字幕搜索API**: `https://sub.wyzie.io/search`
+- **Danmaku Matching API**: `https://api.dandanplay.net/api/v2/match`
+- **Danmaku Search API**: `https://api.dandanplay.net/api/v2/search/episodes`
+- **Danmaku Download API**: `https://api.dandanplay.net/api/v2/comment/*`
 
-### 配置说明
+### Configuration Instructions
 
-使用 Wyzie API 需要在 `local.properties` 中配置 API Key。
+Using DanDanPlay API requires configuring AppId and AppSecret in `local.properties`.
 
-获取 API Key 步骤：
-1. 前往 [Wyzie 密钥申请页](https://sub.wyzie.io/redeem)
-2. 免费申请获取 API Key
-3. 将密钥填入项目根目录的 `local.properties` 文件
+Steps to get credentials:
+1. Go to [DanDanPlay Open Platform](https://www.dandanplay.com/)
+2. Register and apply for AppId and AppSecret
+3. Fill credentials into `local.properties` file in project root directory
 
-### 声明
+---
 
-本应用与 Wyzie 无任何官方关联，仅使用其公开API服务。
+## Wyzie Subs
+
+Used for online search and download of subtitle files for movies and TV shows.
+
+### API List
+
+- **Media Search API**: `https://sub.wyzie.io/api/tmdb/search`
+- **Subtitle Search API**: `https://sub.wyzie.io/search`
+
+### Configuration Instructions
+
+Using Wyzie API requires configuring API Key in `local.properties`.
+
+Steps to get API Key:
+1. Go to [Wyzie Key Application Page](https://sub.wyzie.io/redeem)
+2. Apply for API Key for free
+3. Fill key into `local.properties` file in project root directory
+
+### Disclaimer
+
+This application has no official affiliation with Wyzie, only uses its public API services.

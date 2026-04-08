@@ -1,266 +1,266 @@
-# 功能特性详细说明
+# Detailed Feature Specifications
 
-本文档详细介绍小喵player的所有功能特性。
-
----
-
-## 🎬 视频播放
-
-### 支持格式
-
-支持所有主流视频格式，包括但不限于：
-- MP4、MKV、AVI、FLV
-- WEBM、MOV、WMV
-- TS、M2TS、RMVB
-- 以及其他 libmpv 支持的格式
-
-### 播放控制
-
-- 快进/快退
-- 倍速播放（0.25x - 4.0x）
-- 帧步进/帧步退
-- AB 循环播放
-- 播放进度保存与恢复
+This document provides detailed descriptions of all features in Meow Player.
 
 ---
 
-## 🌐 网页视频嗅探
+## 🎬 Video Playback
 
-### 功能说明
+### Supported Formats
 
-软件内置 WebView 浏览器，可以嗅探网页中的视频资源。
+Supports all mainstream video formats, including but not limited to:
+- MP4, MKV, AVI, FLV
+- WEBM, MOV, WMV
+- TS, M2TS, RMVB
+- And other formats supported by libmpv
 
-### 特性
+### Playback Controls
 
-- 自动检测网页中的视频流
-- 智能选择最佳清晰度
-- 一键播放嗅探到的视频
-- 支持多种网页视频协议
-
----
-
-## 📺 哔哩哔哩功能
-
-### 番剧支持
-
-支持登录 B站账号，在线播放番剧。
-
-**功能特性：**
-- 番剧搜索与浏览
-- 番剧分集列表
-- 在线流畅播放
-- 会员番剧支持（需登录会员账号）
-
-**技术文档：**
-- [登录实现说明](bilibili_login.md)
-- [番剧解析原理](bilibili_bangumi.md)
-
-### 视频/番剧下载
-
-支持下载 B站视频和番剧到本地存储。
-
-**功能特性：**
-- 支持完整 URL、短链（b23.tv）、带文本的分享链接
-- 自动解析视频信息，显示标题、封面等
-- 番剧支持多集批量选择下载
-- 音视频自动合并为 MP4 格式
-- 支持暂停、恢复、取消下载
-- 下载进度实时显示
-- 下载历史记录管理
-
-**技术文档：**
-- [下载实现原理](bilibili_download_principle.md)
-
-⚠️ **重要提示**：视频下载功能仅供个人学习使用，严禁商业用途。下载内容版权归原作者所有。
+- Fast forward/rewind
+- Playback speed (0.25x - 4.0x)
+- Frame step forward/backward
+- AB loop playback
+- Playback progress save and resume
 
 ---
 
-## ☁️ WebDAV 网络存储
+## 🌐 Web Video Sniffing
 
-### 功能说明
+### Feature Description
 
-支持连接 WebDAV 服务器，直接在线播放云端视频文件，无需下载到本地。
+Built-in WebView browser for sniffing video resources from web pages.
 
-### 特性
+### Features
 
-- 支持多个 WebDAV 服务器配置
-- 文件夹浏览
-- 在线流式播放
-- 支持基本认证和摘要认证
-- HTTPS 加密传输支持
-
-**使用文档：**
-- [WebDAV 使用说明](webdav使用说明.md)
+- Auto-detect video streams in web pages
+- Intelligently select best quality
+- One-click playback of sniffed videos
+- Support for multiple web video protocols
 
 ---
 
-## 📂 播放列表
+## 📺 Bilibili Features
 
-### 功能特性
+### Bangumi Support
 
-- 自动扫描本地文件夹中的视频文件
-- 支持多种排序方式：
-  - 文件名排序
-  - 修改时间排序
-  - 文件大小排序
-- 视频分类管理
-- 最近播放列表
-- 播放历史记录
+Login to Bilibili account for online bangumi playback.
 
----
+**Feature Highlights:**
+- Bangumi search and browse
+- Bangumi episode list
+- Smooth online playback
+- Premium bangumi support (requires premium account login)
 
-## 📝 字幕功能
+**Technical Documentation:**
+- [Login Implementation](bilibili_login.md)
+- [Bangumi Parsing Principle](bilibili_bangumi.md)
 
-### 字幕支持
+### Video/Bangumi Download
 
-**内嵌字幕：**
-- 自动识别视频内嵌字幕轨道
-- 支持多字幕轨道切换
-- 支持 ASS、SSA、SRT 等格式
+Download Bilibili videos and bangumi to local storage.
 
-**外部字幕：**
-- 手动导入外部字幕文件
-- 同文件夹同名字幕自动加载
-- 支持字幕搜索和选择
+**Feature Highlights:**
+- Support full URL, short links (b23.tv), text-embedded share links
+- Auto-parse video information, display title, cover, etc.
+- Bangumi supports multi-episode batch download
+- Automatic audio-video merge to MP4 format
+- Support pause, resume, cancel downloads
+- Real-time download progress display
+- Download history management
 
-### 字幕调整
+**Technical Documentation:**
+- [Download Implementation Principle](bilibili_download_principle.md)
 
-- 字幕位置调整（上下移动）
-- 字幕大小调整
-- 字幕延迟调整（与视频同步）
-- 字幕颜色和样式自定义
+⚠️ **Important**: Video download feature for personal learning only, commercial use strictly prohibited. Downloaded content copyright belongs to original authors.
 
 ---
 
-## 🔊 音频功能
+## ☁️ WebDAV Network Storage
 
-### 音频轨道
+### Feature Description
 
-- 多音轨视频支持
-- 音轨切换
-- 音轨信息显示（语言、编码等）
+Connect to WebDAV server, directly stream cloud video files online without downloading to local.
 
-### 音量控制
+### Features
 
-- 音量增强功能（突破系统音量限制）
-- 精细音量调节（0.1% 精度）
-- 音量增强开关
-- 音量记忆功能
+- Support multiple WebDAV server configurations
+- Folder browsing
+- Online streaming playback
+- Support basic authentication and digest authentication
+- HTTPS encrypted transmission support
 
----
-
-## 💬 弹幕功能
-
-### 本地弹幕
-
-- 支持导入本地 XML 格式弹幕文件
-- 与视频自动关联
-- 弹幕文件管理
-
-### 弹弹play 弹幕匹配
-
-**功能特性：**
-- 自动匹配本地视频文件到弹弹play弹幕库
-- 智能文件名识别，支持动漫番剧匹配
-- 一键下载匹配到的弹幕
-- 支持手动搜索和选择匹配结果
-- 批量匹配下载
-
-### 哔哩哔哩弹幕下载
-
-**功能特性：**
-- 使用 B站分段弹幕 API，获取完整弹幕数据
-- 支持普通视频和番剧弹幕下载
-- 番剧支持整季批量下载弹幕
-- 并发下载技术，速度提升 10-20 倍
-- 自动携带登录 Cookie，获取会员专属弹幕
-
-**技术文档：**
-- [弹幕下载原理说明](bilibili_danmaku_download.md)
-
-### 弹幕样式与显示
-
-**样式自定义：**
-- 弹幕大小调整
-- 弹幕速度调整
-- 弹幕透明度
-- 弹幕描边粗细
-- 弹幕字体设置
-
-**显示控制：**
-- 弹幕轨道管理
-- 显示/隐藏不同类型弹幕（滚动、顶部、底部）
-- 弹幕密度控制
-- 弹幕屏蔽规则
-
-**高级特性：**
-- 自动记忆弹幕文件和显示状态
-- 高刷新率屏幕适配（支持 90Hz/120Hz/144Hz）
-- 弹幕与视频进度精确同步
-- 支持章节跳转时弹幕同步
+**Usage Documentation:**
+- [WebDAV Usage Guide](webdav使用说明.md)
 
 ---
 
-## 👆 手势控制
+## 📂 Playlists
 
-### 手势操作
+### Feature Highlights
 
-- **左侧滑动**：调节屏幕亮度
-- **右侧滑动**：调节音量
-- **水平滑动**：快进/快退（显示缩略图预览）
-- **双击**：暂停/播放（可在设置中改为快进/快退）
-- **长按**：倍速播放（长按期间生效）
-- **进度条拖动**：精确定位播放位置
-
-### 自定义
-
-- 手势灵敏度调整
-- 双击行为自定义
-- 手势功能开关
+- Auto-scan videos in local folders
+- Support multiple sorting methods:
+  - Sort by filename
+  - Sort by modification time
+  - Sort by file size
+- Video categorization management
+- Recently played list
+- Playback history
 
 ---
 
-## 🎨 视频超分辨率
+## 📝 Subtitle Features
 
-### Anime4K 超分
+### Subtitle Support
 
-集成 Anime4K 实时超分辨率算法，专为二次元动漫视频优化。
+**Embedded Subtitles:**
+- Auto-recognize embedded subtitle tracks
+- Multi-subtitle track switching
+- Support ASS, SSA, SRT formats, etc.
 
-**功能特性：**
-- 实时视频超分处理
-- 多种超分算法可选
-- 超分强度调节
-- 性能模式切换（平衡质量与性能）
+**External Subtitles:**
+- Manual import external subtitle files
+- Auto-load same-name subtitles in same folder
+- Support subtitle search and selection
 
-**适用场景：**
-- 低分辨率动漫视频增强
-- 老番剧画质优化
-- 提升观看体验
+### Subtitle Adjustment
 
-⚠️ **注意**：超分功能需要较高的设备性能，建议在中高端设备上使用。
-
----
-
-## 🖼️ 其他功能
-
-### 截图功能
-
-- 视频截图保存
-- 自动保存到相册
-- 截图文件命名规则
-- 截图质量设置
-
-### 播放记忆
-
-- 自动保存播放进度
-- 下次打开自动续播
-- 播放位置精确记录
-- 可选择是否启用记忆功能
+- Subtitle position adjustment (move up/down)
+- Subtitle size adjustment
+- Subtitle delay adjustment (sync with video)
+- Subtitle color and style customization
 
 ---
 
-## 🔍 更多功能
+## 🔊 Audio Features
 
-本项目持续更新中，更多功能敬请期待！
+### Audio Tracks
 
-如果你有功能建议或需求，欢迎[提交 Issue](https://github.com/azxcvn/mpv-android-anime4k/issues)。
+- Multi-audio track video support
+- Track switching
+- Track information display (language, codec, etc.)
+
+### Volume Control
+
+- Volume boost (exceed system volume limit)
+- Fine volume adjustment (0.1% precision)
+- Volume boost toggle
+- Volume memory function
+
+---
+
+## 💬 Danmaku Features
+
+### Local Danmaku
+
+- Import local XML format danmaku files
+- Auto-associate with videos
+- Danmaku file management
+
+### DanDanPlay Danmaku Matching
+
+**Feature Highlights:**
+- Auto-match local video files to DanDanPlay danmaku library
+- Smart filename recognition, support anime bangumi matching
+- One-click download matched danmaku
+- Support manual search and selection of match results
+- Batch matching and download
+
+### Bilibili Danmaku Download
+
+**Feature Highlights:**
+- Use Bilibili segmented danmaku API to get complete danmaku data
+- Support regular video and bangumi danmaku download
+- Bangumi supports entire season batch danmaku download
+- Concurrent download technology, 10-20x speed improvement
+- Auto-include login Cookie to get premium member exclusive danmaku
+
+**Technical Documentation:**
+- [Danmaku Download Principle](bilibili_danmaku_download.md)
+
+### Danmaku Style & Display
+
+**Style Customization:**
+- Danmaku size adjustment
+- Danmaku speed adjustment
+- Danmaku transparency
+- Danmaku outline thickness
+- Danmaku font settings
+
+**Display Control:**
+- Danmaku track management
+- Show/hide different types of danmaku (scrolling, top, bottom)
+- Danmaku density control
+- Danmaku blocking rules
+
+**Advanced Features:**
+- Auto-remember danmaku file and display state
+- High refresh rate screen adaptation (90Hz/120Hz/144Hz support)
+- Precise danmaku-video progress sync
+- Danmaku sync on chapter jump
+
+---
+
+## 👆 Gesture Controls
+
+### Gesture Operations
+
+- **Left swipe**: Adjust screen brightness
+- **Right swipe**: Adjust volume
+- **Horizontal swipe**: Fast forward/rewind (thumbnail preview display)
+- **Double tap**: Pause/play (changeable to fast forward/rewind in settings)
+- **Long press**: Speed playback (effective during press)
+- **Progress bar drag**: Precise playback position
+
+### Customization
+
+- Gesture sensitivity adjustment
+- Double tap behavior customization
+- Gesture function toggle
+
+---
+
+## 🎨 Video Super-Resolution
+
+### Anime4K Upscaling
+
+Integrated Anime4K real-time super-resolution algorithm, optimized for anime videos.
+
+**Feature Highlights:**
+- Real-time video upscaling
+- Multiple upscaling algorithms selectable
+- Upscaling strength adjustment
+- Performance mode switching (balance quality vs performance)
+
+**Use Cases:**
+- Low-resolution anime video enhancement
+- Older bangumi quality optimization
+- Enhanced viewing experience
+
+⚠️ **Note**: Upscaling requires high device performance, recommended for mid-to-high-end devices.
+
+---
+
+## 🖼️ Other Features
+
+### Screenshot Function
+
+- Video screenshot save
+- Auto-save to gallery
+- Screenshot file naming rules
+- Screenshot quality settings
+
+### Playback Memory
+
+- Auto-save playback progress
+- Auto-resume on next open
+- Precise playback position recording
+- Optional memory function toggle
+
+---
+
+## 🔍 More Features
+
+This project is continuously updated, more features coming soon!
+
+If you have feature suggestions or requests, welcome to [submit an Issue](https://github.com/azxcvn/mpv-android-anime4k/issues).

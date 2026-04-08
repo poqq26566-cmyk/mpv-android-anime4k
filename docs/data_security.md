@@ -1,86 +1,86 @@
-# 数据安全说明
+# Data Security Documentation
 
-## B站登录数据加密
+## Bilibili Login Data Encryption
 
-### 加密方式
-- AES-256 加密存储
-- 密钥由 Android KeyStore 管理
-- 硬件安全模块保护，应用无法导出
+### Encryption Method
+- AES-256 encrypted storage
+- Key managed by Android KeyStore
+- Hardware security module protection, app cannot export
 
-### 数据用途
-- 仅用于调用 B站 API
-- 不上传至第三方服务器
-- 完全保存在本地设备
+### Data Usage
+- Used only for calling Bilibili API
+- Not uploaded to third-party servers
+- Completely saved on local device
 
-### 用户控制
-- 可随时退出登录
-- 退出后本地数据将被清除
-- 应用卸载后数据自动销毁
+### User Control
+- Can log out at any time
+- Local data cleared after logout
+- Data automatically destroyed upon app uninstallation
 
-详细技术实现：[B站登录安全分析](bilibili_security_analysis.md)
-
----
-
-## 本地数据存储
-
-### 存储内容
-- 视频、字幕、弹幕文件：用户指定文件夹
-- 播放进度：本地数据库
-- 登录凭证：加密存储
-
-### 存储特性
-- 不同步或备份到云端
-- 用户完全控制存储位置
-- 可随时查看、管理或删除
+Detailed technical implementation: [Bilibili Login Security Analysis](bilibili_security_analysis.md)
 
 ---
 
-## 应用权限
+## Local Data Storage
 
-### 存储权限（管理所有文件）
-用于读取本地视频、保存字幕弹幕、视频截图、下载文件
+### Stored Content
+- Video, subtitle, danmaku files: User-specified folder
+- Playback progress: Local database
+- Login credentials: Encrypted storage
 
-### 网络权限
-用于在线播放、弹幕匹配下载、视频下载、WebDAV 访问
+### Storage Characteristics
+- Not synced or backed up to cloud
+- User has complete control over storage location
+- Can view, manage, or delete at any time
 
 ---
 
-## 数据流向
+## App Permissions
 
-### 本地数据
-```
-用户设备
-├─ 视频/字幕/弹幕文件（本地存储）
-├─ 播放进度（本地数据库）
-└─ 登录凭证（加密存储）
-```
+### Storage Permission (Manage All Files)
+Used to read local videos, save subtitles/danmaku, video screenshots, download files
 
-### 网络请求
+### Network Permission
+Used for online playback, danmaku matching/download, video download, WebDAV access
+
+---
+
+## Data Flow
+
+### Local Data
 ```
-应用 → B站 API（番剧功能）
-应用 → 弹弹play API（弹幕匹配）
-应用 → WebDAV 服务器（用户配置）
+User Device
+├─ Video/Subtitle/Danmaku files (local storage)
+├─ Playback progress (local database)
+└─ Login credentials (encrypted storage)
 ```
 
-所有网络请求仅在使用对应功能时发起，不包含数据收集或上传。
+### Network Requests
+```
+App → Bilibili API (bangumi features)
+App → DanDanPlay API (danmaku matching)
+App → WebDAV server (user configured)
+```
+
+All network requests initiated only when using corresponding features, no data collection or upload.
 
 ---
 
-## 隐私声明
+## Privacy Statement
 
-- 不收集个人信息
-- 不上传用户数据
-- 不分享数据给第三方
-- 不追踪用户行为
-- 不包含广告或分析 SDK
-- 完全开源，代码可审查
-
----
-
-## 法律责任
-
-下载功能仅供个人学习使用。内容版权归原作者所有，使用者需遵守相关法律法规，法律责任由用户自行承担。
+- Does not collect personal information
+- Does not upload user data
+- Does not share data with third parties
+- Does not track user behavior
+- Does not include ads or analytics SDK
+- Completely open source, code is auditable
 
 ---
 
-**安全反馈**：[GitHub Issues](https://github.com/azxcvn/mpv-android-anime4k/issues)
+## Legal Liability
+
+Download feature for personal learning only. Content copyright belongs to original authors, users must comply with relevant laws and regulations, legal liability borne by users.
+
+---
+
+**Security Feedback**: [GitHub Issues](https://github.com/azxcvn/mpv-android-anime4k/issues)

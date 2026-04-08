@@ -1,53 +1,53 @@
-# WebDAV 使用说明
+# WebDAV Usage Guide
 
-## 快速开始
+## Quick Start
 
-### 1. 进入 WebDAV 管理
+### 1. Enter WebDAV Management
 
-主页点击**云朵图标** → 进入 WebDAV 管理界面
+Click **cloud icon** on homepage → Enter WebDAV management interface
 
-### 2. 添加账户
+### 2. Add Account
 
-点击**添加账户**，填写以下信息：
-- **服务器地址**：如 `https://dav.jianguoyun.com/dav/`
-- **显示名称**：自定义名称
-- **登录模式**：选择账号登录或匿名访问
-- **账号/密码**：WebDAV 凭证（坚果云需使用应用密码）
+Click **Add Account**, fill in the following information:
+- **Server Address**: e.g. `https://dav.jianguoyun.com/dav/`
+- **Display Name**: Custom name
+- **Login Mode**: Select account login or anonymous access
+- **Account/Password**: WebDAV credentials (Jianguoyun requires app password)
 
-点击**测试连接** → 成功后**保存**
+Click **Test Connection** → After success **Save**
 
-### 3. 浏览与播放
+### 3. Browse and Play
 
-点击已保存的账户 → 浏览文件 → 点击视频即可播放
+Click saved account → Browse files → Click on video to play
 
 ---
 
-## 技术实现
+## Technical Implementation
 
-### 核心组件
+### Core Components
 
-- **Sardine (OkHttpSardine)**：WebDAV 客户端库
-- **EncryptedSharedPreferences**：凭证加密存储
-- **Jetpack Compose**：现代化 UI 实现
-- **OkHttp**：HTTP 请求处理
+- **Sardine (OkHttpSardine)**: WebDAV client library
+- **EncryptedSharedPreferences**: Encrypted credential storage
+- **Jetpack Compose**: Modern UI implementation
+- **OkHttp**: HTTP request handling
 
-### 代码架构
+### Code Architecture
 
 ```
 webdav/
-├── WebDavAccountManager.kt    # 多账户管理
-├── WebDavClient.kt             # 客户端封装
-├── WebDavComposeActivity.kt    # 账户管理页面
-├── WebDavBrowserComposeActivity.kt  # 文件浏览
-└── WebDavScreen.kt             # UI 组件
+├── WebDavAccountManager.kt    # Multi-account management
+├── WebDavClient.kt             # Client wrapper
+├── WebDavComposeActivity.kt    # Account management page
+├── WebDavBrowserComposeActivity.kt  # File browser
+└── WebDavScreen.kt             # UI components
 ```
 
 ---
 
-## 常见问题
+## Common Issues
 
-**Q：连接失败？**  
-检查：服务器地址格式、账号密码、网络连接
+**Q: Connection failed?**  
+Check: Server address format, account password, network connection
 
-**Q：坚果云密码？**  
-使用第三方应用密码，非登录密码
+**Q: Jianguoyun password?**  
+Use third-party app password, not login password

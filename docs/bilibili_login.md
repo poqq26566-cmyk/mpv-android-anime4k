@@ -1,19 +1,19 @@
-# 哔哩哔哩登录实现
+# Bilibili Login Implementation
 
-## 登录流程
+## Login Flow
 
-### 1. 获取二维码
+### 1. Get QR Code
 
 ```
-请求: https://passport.bilibili.com/x/passport-login/web/qrcode/generate
-返回:
-  - url: 二维码链接
-  - qrcode_key: 用于轮询登录状态
+Request: https://passport.bilibili.com/x/passport-login/web/qrcode/generate
+Returns:
+  - url: QR code link
+  - qrcode_key: For polling login status
 ```
 
-### 2. 显示二维码
+### 2. Display QR Code
 
-使用 ZXing 库将 url 转换为二维码图片并显示
+Use ZXing library to convert url to QR code image and display
 
 ```kotlin
 val qrCodeWriter = QRCodeWriter()
@@ -25,58 +25,58 @@ val bitMatrix = qrCodeWriter.encode(
 )
 ```
 
-### 3. 轮询登录状态
+### 3. Poll Login Status
 
-每3秒查询一次登录状态
+Query login status every 3 seconds
 
 ```
-请求: https://passport.bilibili.com/x/passport-login/web/qrcode/poll
-参数: qrcode_key
+Request: https://passport.bilibili.com/x/passport-login/web/qrcode/poll
+Parameters: qrcode_key
 
-状态码:
-  86101 - 未扫码
-  86090 - 已扫码，等待确认
-  0 - 登录成功
-  86038 - 二维码过期
+Status codes:
+  86101 - Not scanned
+  86090 - Scanned, awaiting confirmation
+  0 - Login successful
+  86038 - QR code expired
 ```
 
 ```kotlin
 while (isActive) {
     val result = authManager.pollQRCodeStatus(qrcodeKey)
     when (result.code) {
-        0 -> break // 登录成功
-        86101 -> {} // 继续等待
-        86090 -> {} // 提示用户确认
-        86038 -> break // 二维码过期
+        0 -> break // Login successful
+        86101 -> {} // Continue waiting
+        86090 -> {} // Prompt user to confirm
+        86038 -> break // QR code expired
     }
     delay(3000)
 }
 ```
 
-### 4. 保存登录凭证
+### 4. Save Login Credentials
 
-登录成功后提取关键 Cookie 字段并加密存储
+Extract key Cookie fields after successful login and encrypt for storage
 
 ```
-关键字段:
+Key fields:
   - SESSDATA
   - bili_jct
   - DedeUserID
   - DedeUserID__ckMd5
   - buvid3
 
-加密方式: AES-256
-存储位置: EncryptedSharedPreferences
+Encryption: AES-256
+Storage: EncryptedSharedPreferences
 ```
 
 ---
 
-## 技术实现
+## Technical Implementation
 
-### 加密存储
+### Encrypted Storage
 
 ```kotlin
-// 使用 Android Jetpack Security 库
+// Using Android Jetpack Security library
 val masterKey = MasterKey.Builder(context)
     .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
     .build()
@@ -90,9 +90,9 @@ val encryptedPrefs = EncryptedSharedPreferences.create(
 )
 ```
 
-### 凭证使用
+### Using Credentials
 
-在调用 B站 API 时，将保存的 Cookie 添加到请求头
+Add saved Cookie to request header when calling Bilibili API
 
 ```kotlin
 val cookies = "SESSDATA=$sessdata; bili_jct=$biliJct; ..."
@@ -106,10 +106,10 @@ httpClient.newCall(
 
 ---
 
-## 常见问题
+## Common Issues
 
-**Q: 凭证有效期？**  
-约一个月，过期后需重新登录
+**Q: Credential expiration?**  
+Approximately one month, requires re-login after expiration
 
-**Q: 扫码后需要等待确认？**  
-应用通过轮询获取状态，建议等待界面显示"已扫码"后再确认
+**Q: Waiting for confirmation after scanning?**  
+App obtains status via polling, recommended to wait for "Scanned" display before confirming

@@ -1,72 +1,72 @@
-# .nomedia 支持功能说明
+# .nomedia Support Functionality
 
-## 功能概述
+## Feature Overview
 
-已为播放器项目添加了对 `.nomedia` 文件的完整支持。当文件夹中存在 `.nomedia` 文件时，该文件夹及其子文件夹中的视频将不会被扫描和显示。
+Complete support for `.nomedia` files has been added to the player project. When a `.nomedia` file exists in a folder, videos in that folder and its subfolders will not be scanned and displayed.
 
-## 实现详情
+## Implementation Details
 
-### 1. 新增工具类：`NoMediaChecker.kt`
+### 1. New Utility Class: `NoMediaChecker.kt`
 
-位置：`app/src/main/java/com/fam4k007/videoplayer/utils/NoMediaChecker.kt`
+Location: `app/src/main/java/com/fam4k007/videoplayer/utils/NoMediaChecker.kt`
 
-提供三个主要方法：
-- `containsNoMedia(path: String?)`: 检查路径或其任何父目录是否包含 .nomedia 文件
-- `folderHasNoMedia(folderPath: String?)`: 检查指定文件夹是否直接包含 .nomedia 文件
-- `fileInNoMediaFolder(filePath: String?)`: 检查文件所在文件夹或其父目录是否包含 .nomedia 文件
+Provides three main methods:
+- `containsNoMedia(path: String?)`: Check if path or any of its parent directories contains .nomedia file
+- `folderHasNoMedia(folderPath: String?)`: Check if specified folder directly contains .nomedia file
+- `fileInNoMediaFolder(filePath: String?)`: Check if file's folder or its parent directories contain .nomedia file
 
-### 2. 修改的文件
+### 2. Modified Files
 
 #### VideoBrowserActivity.kt
-- 在 `scanVideoFiles()` 方法中添加 .nomedia 检测
-- 扫描视频时会自动跳过包含 .nomedia 的文件夹
+- Added .nomedia detection in `scanVideoFiles()` method
+- Automatically skips folders containing .nomedia during video scan
 
 #### VideoListActivity.kt
-- 在 `refreshVideoList()` 方法中添加 .nomedia 检测
-- 在 `scanFolderVideos()` 方法中添加 .nomedia 检测
-- 刷新视频列表时会跳过包含 .nomedia 的文件夹
+- Added .nomedia detection in `refreshVideoList()` method
+- Added .nomedia detection in `scanFolderVideos()` method
+- Skips folders containing .nomedia when refreshing video list
 
 #### VideoScanner.kt
-- 在 `getAllVideos()` 异步方法中添加 .nomedia 过滤
-- 在 `getAllVideosSync()` 同步方法中添加 .nomedia 过滤
+- Added .nomedia filtering in `getAllVideos()` async method
+- Added .nomedia filtering in `getAllVideosSync()` sync method
 
 #### SeriesManager.kt
-- 在 `getVideosFromMediaStore()` 方法中添加 .nomedia 检测
-- 在 `getVideosFromFile()` 方法中添加 .nomedia 检测
-- 连播功能会自动跳过包含 .nomedia 的文件夹
+- Added .nomedia detection in `getVideosFromMediaStore()` method
+- Added .nomedia detection in `getVideosFromFile()` method
+- Continuous playback automatically skips folders containing .nomedia
 
-## 使用方法
+## Usage Instructions
 
-### 如何标记文件夹不被扫描
+### How to Mark Folders as Non-Scannable
 
-1. 在任何文件夹中创建一个名为 `.nomedia` 的空文件（注意：文件名以点开头）
-2. 该文件夹及其所有子文件夹中的视频将不会被播放器扫描和显示
-3. 重新扫描视频列表后生效
+1. Create an empty file named `.nomedia` in any folder (note: filename starts with a dot)
+2. Videos in that folder and all its subfolders will not be scanned and displayed by the player
+3. Takes effect after rescanning the video list
 
-### 测试步骤
+### Testing Steps
 
-1. 在某个包含视频的文件夹中创建 `.nomedia` 文件：
+1. Create `.nomedia` file in a folder containing videos:
    ```bash
-   # 使用文件管理器或命令行
+   # Using file manager or command line
    touch /sdcard/Videos/TestFolder/.nomedia
    ```
 
-2. 在播放器中下拉刷新视频列表
+2. Pull down to refresh video list in the player
 
-3. 验证该文件夹中的视频不再显示
+3. Verify that videos in that folder no longer appear
 
-4. 删除 `.nomedia` 文件后，再次刷新，视频应重新出现
+4. After deleting the `.nomedia` file, refresh again - videos should reappear
 
-## 技术特点
+## Technical Features
 
-- **高效检测**：只在扫描视频时进行检测，不影响正常播放性能
-- **递归检查**：支持检查父目录层次结构，符合 Android 系统行为
-- **日志记录**：跳过的视频会在 Logcat 中记录，便于调试
-- **兼容性好**：兼容不同的文件访问方式（MediaStore、DocumentFile、File）
+- **Efficient Detection**: Detection only during video scan, no impact on normal playback performance
+- **Recursive Check**: Supports checking parent directory hierarchy, complies with Android system behavior
+- **Logging**: Skipped videos logged in Logcat for easy debugging
+- **Good Compatibility**: Compatible with different file access methods (MediaStore, DocumentFile, File)
 
-## 注意事项
+## Important Notes
 
-1. `.nomedia` 文件是 Android 系统的标准约定，系统媒体扫描器也会遵守此规则
-2. 该功能主要用于排除不希望在媒体库中显示的私密文件或临时文件
-3. 已被 MediaStore 索引的文件可能需要重启应用或重新扫描才能完全生效
-4. 删除 `.nomedia` 文件后，需要手动刷新视频列表
+1. `.nomedia` file is an Android system standard convention, system media scanner also follows this rule
+2. This feature is mainly used to exclude private files or temporary files from media library display
+3. Files already indexed by MediaStore may require app restart or rescan to fully take effect
+4. After deleting `.nomedia` file, need to manually refresh video list

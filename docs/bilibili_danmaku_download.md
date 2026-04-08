@@ -1,113 +1,113 @@
-# B站弹幕下载原理
+# Bilibili Danmaku Download Principle
 
-## 简介
+## Introduction
 
-实现从B站视频/番剧下载弹幕的功能，支持XML格式的弹幕文件导出。
+Implementing the feature to download danmaku (bullet comments) from Bilibili videos/bangumi, supporting XML format export.
 
-## 核心原理
+## Core Principles
 
-### 1. 弹幕API
+### 1. Danmaku API
 
-B站提供了两套弹幕API：
+Bilibili provides two sets of danmaku APIs:
 
-#### 分段弹幕API（主要）
+#### Segmented Danmaku API (Primary)
 ```
 https://api.bilibili.com/x/v2/dm/web/view?type=1&oid={cid}
 https://api.bilibili.com/x/v2/dm/web/seg.so?type=1&oid={cid}&segment_index={index}
 ```
 
-- 格式：Protobuf 二进制格式
-- 分段：长视频会分成多个段（每段约6分钟）
-- 可获取完整弹幕数据
+- Format: Protobuf binary format
+- Segmentation: Long videos are divided into segments (approximately 6 minutes each)
+- Can retrieve complete danmaku data
 
-#### 普通弹幕API（降级）
+#### Regular Danmaku API (Fallback)
 ```
 https://comment.bilibili.com/{cid}.xml
 ```
 
-- 用途：分段API失败时的备用方案
-- 格式：Deflate 压缩的 XML
-- 限制：可能不完整
+- Purpose: Backup when segmented API fails
+- Format: Deflate compressed XML
+- Limitation: May be incomplete
 
-### 2. 下载流程
+### 2. Download Flow
 
 ```
-用户输入视频链接
+User inputs video link
     ↓
-提取 CID (视频ID)
+Extract CID (Video ID)
     ↓
-获取弹幕元数据（总分段数）
+Get danmaku metadata (total segments)
     ↓
-并发下载所有分段
+Concurrent download all segments
     ↓
-解析 Protobuf 数据
+Parse Protobuf data
     ↓
-合并、去重、排序
+Merge, deduplicate, sort
     ↓
-转换为 XML 格式
+Convert to XML format
     ↓
-保存到本地
+Save to local storage
 ```
 
-### 3. 性能优化
+### 3. Performance Optimization
 
-采用并发下载策略：
+Using concurrent download strategy:
 
 ```kotlin
-// 并发下载所有分段
+// Concurrent download of all segments
 (1..totalSegments).map { segmentIndex ->
     async { downloadSegment(segmentIndex) }
 }.awaitAll()
 ```
 
-### 4. Cookie 支持
+### 4. Cookie Support
 
-Cookie 的作用：
-- 获取会员专属弹幕
-- 提高 API 调用频率限制
-- 访问需要登录的内容
+Cookie functions:
+- Get premium member exclusive danmaku
+- Increase API call rate limit
+- Access content requiring login
 
-实现方式：
+Implementation:
 ```kotlin
-// 自动携带用户登录 Cookie
+// Automatically include user login Cookie
 builder.addHeader("Cookie", authManager.getCookieString())
 ```
 
-## 支持功能
+## Supported Features
 
-- 普通视频弹幕
-- 番剧单集弹幕
-- 番剧整季批量下载
-- 短链接解析
-- 登录状态（Cookie）
-- 并发下载
+- Regular video danmaku
+- Bangumi episode danmaku
+- Batch download for entire bangumi seasons
+- Short link parsing
+- Login state (Cookie)
+- Concurrent download
 
-## 关键参数
+## Key Parameters
 
-- CID：视频的唯一标识，用于获取弹幕
-- 分段索引：从 1 开始的分段编号
-- Protobuf：Google 的二进制序列化格式，需要手动解析
+- CID: Unique identifier for video, used to retrieve danmaku
+- Segment index: Segment number starting from 1
+- Protobuf: Google's binary serialization format, requires manual parsing
 
-## XML 格式
+## XML Format
 
-生成的弹幕 XML 格式：
+Generated danmaku XML format:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <i>
   <chatserver>chat.bilibili.com</chatserver>
   <chatid>0</chatid>
-  <d p="时间,类型,字号,颜色,时间戳,池,用户hash,弹幕ID">弹幕内容</d>
-  <d p="5.234,1,25,16777215,1699999999,0,abc123,12345">这是一条弹幕</d>
+  <d p="time,type,size,color,timestamp,pool,user_hash,danmaku_id">Danmaku content</d>
+  <d p="5.234,1,25,16777215,1699999999,0,abc123,12345">This is a danmaku</d>
 </i>
 ```
 
-p 属性说明：
-1. 时间（秒）
-2. 类型（1-3滚动 4底部 5顶部）
-3. 字号（18/25等）
-4. 颜色（十进制RGB）
-5. 发送时间戳
-6. 弹幕池（0普通）
-7. 用户ID的hash
-8. 弹幕ID
+p attribute explanation:
+1. Time (seconds)
+2. Type (1-3 scrolling, 4 bottom, 5 top)
+3. Font size (18/25 etc.)
+4. Color (decimal RGB)
+5. Sent timestamp
+6. Danmaku pool (0 regular)
+7. User ID hash
+8. Danmaku ID

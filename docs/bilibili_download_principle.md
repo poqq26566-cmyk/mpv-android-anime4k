@@ -1,107 +1,107 @@
-# 哔哩哔哩视频/番剧下载实现原理
+# Bilibili Video/Bangumi Download Implementation Principle
 
-## 一、核心流程
+## I. Core Flow
 
 ```
-用户输入链接 → 解析链接 → 获取视频信息 → 下载音视频流 → 合并文件 → 完成
+User Input Link → Parse Link → Get Video Info → Download Audio/Video Streams → Merge Files → Complete
 ```
 
-## 二、关键步骤详解
+## II. Key Steps Explained
 
-### 1. 链接解析
-- **短链处理**：`b23.tv` 短链通过HTTP重定向获取真实URL
-- **ID提取**：从URL中提取BV号（如`BV1eRYfzxEJj`）或AV号（如`av123456`）
-- **类型判断**：区分普通视频(`/video/`)和番剧(`/bangumi/play/`)
+### 1. Link Parsing
+- **Short Link**Handle**: `b23.tv` short links get real URL via HTTP redirect
+- **ID Extraction**: Extract BV number (e.g., `BV1eRYfzxEJj`) or AV number (e.g., `av123456`) from URL
+- **Type Detection**: Distinguish between regular videos (`/video/`) and bangumi (`/bangumi/play/`)
 
-### 2. 获取视频详情
-使用B站API获取视频基本信息：
+### 2. Get Video Details
+Use Bilibili API to get basic video information:
 ```
 API: https://api.bilibili.com/x/web-interface/view
-参数: bvid=BV号 或 aid=AV号
-返回: 标题、cid（内容ID）、时长等
+Parameters: bvid=BV number or aid=AV number
+Returns: Title, cid (content ID), duration, etc.
 ```
 
-### 3. 获取下载地址
-通过cid获取实际的音视频流地址：
+### 3. Get Download URLs
+Get actual audio/video stream URLs using cid:
 ```
 API: https://api.bilibili.com/x/player/playurl
-参数: bvid/aid + cid + qn(清晰度) + fnval=4048(DASH格式)
-返回: 音频流URL + 视频流URL
+Parameters: bvid/aid + cid + qn(quality) + fnval=4048(DASH format)
+Returns: Audio stream URL + Video stream URL
 ```
 
-**关键点**：
-- B站使用DASH格式，音频和视频是分离的
-- 需要携带Cookie（SESSDATA）才能获取高清视频
-- fnval=4048 表示请求DASH格式的流媒体
+**Key Points**:
+- Bilibili uses DASH format, audio and video are separate
+- Requires Cookie (SESSDATA) to access HD videos
+- fnval=4048 indicates requesting DASH format streaming media
 
-### 4. 分段下载
-音频和视频分别下载，使用多线程提高速度：
-- 通过`Range`请求头实现断点续传
-- 每个片段独立下载，失败可重试
-- 实时更新下载进度
+### 4. Segmented Download
+Audio and video downloaded separately, using multi-threading for speed:
+- Use `Range` header for resumable downloads
+- Each segment downloaded independently, can retry on failure
+- Real-time download progress updates
 
-### 5. 文件合并
-使用Android的`MediaMuxer`合并音视频：
+### 5. File Merging
+Use Android's `MediaMuxer` to merge audio and video:
 ```kotlin
-1. 创建MediaExtractor分别读取音频和视频
-2. 创建MediaMuxer作为输出
-3. 添加音频和视频轨道
-4. 逐帧写入数据
-5. 生成最终的MP4文件
+1. Create MediaExtractor to read audio and video separately
+2. Create MediaMuxer as output
+3. Add audio and video tracks
+4. Write data frame by frame
+5. Generate final MP4 file
 ```
 
-## 三、技术要点
+## III. Technical Details
 
-### BV号与AV号转换
-- **BV号**：Base58编码，如`BV1eRYfzxEJj`（12位）
-- **AV号**：纯数字，如`av123456`
-- 算法基于B站官方公式，使用位置映射和异或运算
+### BV/AV Number Conversion
+- **BV Number**: Base58 encoded, e.g., `BV1eRYfzxEJj` (12 characters)
+- **AV Number**: Pure digits, e.g., `av123456`
+- Algorithm based on Bilibili's official formula, using position mapping and XOR operations
 
-### Cookie管理
-- 存储在`SharedPreferences`
-- 关键字段：`SESSDATA`（登录凭证）
-- 每次API请求需携带完整Cookie
+### Cookie Management
+- Stored in `SharedPreferences`
+- Key field: `SESSDATA` (login credentials)
+- Must include complete Cookie in every API request
 
-### 番剧特殊处理
-- 需要获取完整剧集列表
-- 使用`season_id`或`ep_id`查询
-- API：`https://api.bilibili.com/pgc/view/web/season`
+### Special Bangumi Handling
+- Need to get complete episode list
+- Query using `season_id` or `ep_id`
+- API: `https://api.bilibili.com/pgc/view/web/season`
 
-### 存储路径选择
-- 使用`DocumentFile` API访问外部存储
-- 支持SAF（Storage Access Framework）
-- 持久化URI权限，避免重复授权
+### Storage Path Selection
+- Use `DocumentFile` API to access external storage
+- Support SAF (Storage Access Framework)
+- Persist URI permissions to avoid repeated authorization
 
-## 四、代码结构
+## IV. Code Structure
 
 ```
 download/
-├── BilibiliDownloadManager.kt    # 核心下载逻辑
-├── BilibiliDownloadViewModel.kt  # UI状态管理
-├── DownloadItem.kt               # 下载项数据类
-└── MediaParseResult.kt           # 解析结果
+├── BilibiliDownloadManager.kt    # Core download logic
+├── BilibiliDownloadViewModel.kt  # UI state management
+├── DownloadItem.kt               # Download item data class
+└── MediaParseResult.kt           # Parse result
 
-DownloadActivity.kt                # 下载界面（Compose）
-utils/CookieManager.kt             # Cookie存储管理
+DownloadActivity.kt                # Download interface (Compose)
+utils/CookieManager.kt             # Cookie storage management
 ```
 
-## 五、用户使用流程
+## V. User Workflow
 
-1. **输入链接**：支持完整URL、短链、带文本的分享链接
-2. **解析链接**：自动识别视频/番剧类型
-3. **选择集数**：番剧可多选集数下载
-4. **选择路径**：首次使用需选择下载目录
-5. **开始下载**：后台下载，支持暂停/恢复/取消
-6. **自动合并**：下载完成后自动合并音视频
+1. **Input Link**: Supports full URL, short link, text-embedded share link
+2. **Parse Link**: Auto-detect video/bangumi type
+3. **Select Episodes**: Multi-select episodes for bangumi download
+4. **Select Path**: First-time use requires selecting download directory
+5. **Start Download**: Background download, supports pause/resume/cancel
+6. **Auto Merge**: Automatically merge audio/video after download completes
 
-## 六、注意事项
+## VI. Important Notes
 
-- **混淆保护**：Release版本需在ProGuard中添加keep规则
-- **权限要求**：需要网络权限和存储权限
-- **API限制**：下载速度可能受B站服务器限制
-- **版权声明**：下载内容仅供个人学习使用
+- **Obfuscation Protection**: Release builds need keep rules in ProGuard
+- **Permission Requirements**: Requires network and storage permissions
+- **API Limitations**: Download speed may be limited by Bilibili servers
+- **Copyright Notice**: Downloaded content for personal learning use only
 
 ---
 
-**实现语言**：Kotlin + Jetpack Compose  
-**主要依赖**：OkHttp、Coroutines、MediaMuxer
+**Implementation Language**: Kotlin + Jetpack Compose  
+**Main Dependencies**: OkHttp, Coroutines, MediaMuxer
