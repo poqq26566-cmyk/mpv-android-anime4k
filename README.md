@@ -30,7 +30,7 @@ Some terms in the app may still appear in Chinese. Here's a reference table:
 
 This is the **English version branch** of Meow Player. You can download the English version of the application from this branch.
 
-**Download**: [GitHub Releases](https://github.com/azxcvn/mpv-android-anime4k/releases) (English builds available)
+**Download**: [https://github.com/azxcvn/mpv-android-anime4k/tree/meow-player-en/APP-EN](https://github.com/azxcvn/mpv-android-anime4k/tree/meow-player-en/APP-EN)
 
 ---
 
