@@ -14,6 +14,8 @@ import java.util.concurrent.TimeUnit
 object RemotePlaybackResolver {
 
     private const val TAG = "RemotePlaybackResolver"
+    private val httpSchemes = setOf("http", "https")
+    private val directStreamingSchemes = setOf("rtsp", "rtmp", "rtmps")
     private val streamingExtensions = setOf("m3u", "m3u8", "mpd")
     private val directMediaExtensions = setOf(
         "mp4", "m4v", "mkv", "webm", "flv", "avi", "mov", "ts", "m2ts", "mpg", "mpeg",
@@ -103,6 +105,22 @@ object RemotePlaybackResolver {
             TAG,
             "Resolve request: source=${normalizedRequest.source}, url=${normalizedRequest.url}, headers=${RemotePlaybackHeaders.describeForLog(normalizedRequest.headers)}"
         )
+
+        if (!supportsHttpProbe(normalizedRequest.url)) {
+            val passthroughRequest = normalizedRequest.copy(
+                isStream = inferIsStream(normalizedRequest.url, normalizedRequest.detectedContentType)
+            )
+            Logger.d(
+                TAG,
+                "Skipping HTTP probe for non-HTTP remote url: ${normalizedRequest.url}"
+            )
+            return@withContext ResolveResult.Success(
+                request = passthroughRequest,
+                originalUrl = request.url,
+                probeMethod = "SKIP_NON_HTTP",
+                finalUrlChanged = false
+            )
+        }
 
         try {
             val headProbe = probe(normalizedRequest, client, method = "HEAD")
@@ -260,13 +278,11 @@ object RemotePlaybackResolver {
         if (probe == null) {
             return true
         }
-        if (probe.responseCode !in 200..299) {
-            return true
-        }
-        return probe.contentType.isNullOrBlank() && !looksLikePlayableMedia(
-            probe.finalUrl,
-            probe.contentType,
-            probe.contentDisposition
+        return shouldFallbackToGetAfterHead(
+            responseCode = probe.responseCode,
+            finalUrl = probe.finalUrl,
+            contentType = probe.contentType,
+            contentDisposition = probe.contentDisposition
         )
     }
 
@@ -306,6 +322,28 @@ object RemotePlaybackResolver {
         }
 
         return responseCode in setOf(400, 403, 405, 416)
+    }
+
+    internal fun shouldFallbackToGetAfterHead(
+        responseCode: Int,
+        finalUrl: String,
+        contentType: String?,
+        contentDisposition: String?
+    ): Boolean {
+        if (responseCode !in 200..299) {
+            return true
+        }
+
+        return !looksLikePlayableMedia(
+            url = finalUrl,
+            contentType = contentType,
+            contentDisposition = contentDisposition
+        )
+    }
+
+    internal fun supportsHttpProbe(url: String): Boolean {
+        val scheme = url.substringBefore(':', "").trim().lowercase()
+        return scheme in httpSchemes
     }
 
     internal fun classifyThrowable(throwable: Throwable): FailureReason {
@@ -386,8 +424,11 @@ object RemotePlaybackResolver {
     }
 
     internal fun inferIsStream(url: String, contentType: String?): Boolean {
+        val scheme = url.substringBefore(':', "").trim().lowercase()
         val lowerType = contentType.orEmpty().lowercase()
-        return lowerType in streamingContentTypes || inferExtension(url) in streamingExtensions
+        return scheme in directStreamingSchemes ||
+            lowerType in streamingContentTypes ||
+            inferExtension(url) in streamingExtensions
     }
 
     internal fun looksLikePlayableMedia(

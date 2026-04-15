@@ -7,7 +7,7 @@ object RemoteUrlParser {
         val headers: LinkedHashMap<String, String> = linkedMapOf()
     )
 
-    private val urlPattern = Regex("""(?i)\b(?:https?|rtmp|rtsp|ftp)://[^\s"'<>]+""")
+    private val urlPattern = Regex("""(?i)\b(?:https?|rtmps?|rtsp|ftp)://[^\s"'<>]+""")
     private val schemePattern = Regex("""^[a-zA-Z][a-zA-Z0-9+.-]*://""")
     private val requestUrlLabelPattern =
         Regex("""(?im)^\s*(?:request\s*url|requesturl|url|请求网址|请求url)\s*[:=]?\s*$""")

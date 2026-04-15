@@ -53,6 +53,7 @@ data class DetectedVideo(
             url.contains(".avi", ignoreCase = true) -> "AVI"
             url.contains(".mkv", ignoreCase = true) -> "MKV"
             url.contains("rtmp://", ignoreCase = true) -> "RTMP"
+            url.contains("rtmps://", ignoreCase = true) -> "RTMPS"
             url.contains("rtsp://", ignoreCase = true) -> "RTSP"
             else -> "VIDEO"
         }

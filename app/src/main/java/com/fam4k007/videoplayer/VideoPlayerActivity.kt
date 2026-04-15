@@ -79,6 +79,7 @@ class VideoPlayerActivity : AppCompatActivity(),
     companion object {
         private const val TAG = "VideoPlayerActivity"
         private const val SEEK_DEBUG = "SEEK_DEBUG"  // 快进调试专用日志标签
+        private val REMOTE_URI_SCHEMES = setOf("http", "https", "rtsp", "rtmp", "rtmps")
     }
 
     private lateinit var playbackEngine: PlaybackEngine
@@ -279,7 +280,7 @@ class VideoPlayerActivity : AppCompatActivity(),
         isOnlineVideo = remotePlaybackRequest != null ||
             intent.getBooleanExtra("is_online", false) ||
             intent.getBooleanExtra("is_online_video", false) ||
-            videoUri?.scheme?.let { it == "http" || it == "https" } == true
+            isRemotePlaybackUri(videoUri)
 
         if (isOnlineVideo && remotePlaybackRequest == null) {
             remotePlaybackRequest = buildLegacyRemotePlaybackRequest(videoUri!!)
@@ -1642,7 +1643,7 @@ class VideoPlayerActivity : AppCompatActivity(),
         hasAutoLoadedSubtitle = false
         
         // 更新在线视频标志
-        isOnlineVideo = uri.scheme?.startsWith("http") == true
+        isOnlineVideo = isRemotePlaybackUri(uri)
         remotePlaybackRequest = if (isOnlineVideo) {
             RemotePlaybackRequest(
                 url = uri.toString(),
@@ -1957,6 +1958,11 @@ class VideoPlayerActivity : AppCompatActivity(),
         )
     }
 
+    private fun isRemotePlaybackUri(uri: Uri?): Boolean {
+        val scheme = uri?.scheme?.lowercase().orEmpty()
+        return scheme in REMOTE_URI_SCHEMES
+    }
+
     private fun resolveVideoTitle(uri: Uri): String {
         remotePlaybackRequest?.title
             ?.takeIf { it.isNotBlank() }
@@ -1970,7 +1976,7 @@ class VideoPlayerActivity : AppCompatActivity(),
             return intentTitle
         }
 
-        if (uri.scheme == "http" || uri.scheme == "https") {
+        if (isRemotePlaybackUri(uri)) {
             val remoteName = uri.lastPathSegment
                 ?.substringBefore("?")
                 ?.takeIf { it.isNotBlank() }

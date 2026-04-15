@@ -47,6 +47,28 @@ class RemotePlaybackResolverTest {
     }
 
     @Test
+    fun inferIsStream_detectsStreamingSchemes() {
+        assertTrue(
+            RemotePlaybackResolver.inferIsStream(
+                url = "rtsp://camera.example.com/live",
+                contentType = null
+            )
+        )
+        assertTrue(
+            RemotePlaybackResolver.inferIsStream(
+                url = "rtmp://stream.example.com/app/live",
+                contentType = null
+            )
+        )
+        assertTrue(
+            RemotePlaybackResolver.inferIsStream(
+                url = "rtmps://stream.example.com/app/live",
+                contentType = null
+            )
+        )
+    }
+
+    @Test
     fun looksLikePlayableMedia_acceptsVideoContentType() {
         assertTrue(
             RemotePlaybackResolver.looksLikePlayableMedia(
@@ -285,6 +307,38 @@ class RemotePlaybackResolverTest {
                 headers = mapOf("Range" to "bytes=100-200")
             )
         )
+    }
+
+    @Test
+    fun shouldFallbackToGetAfterHead_retriesWhenHeadLooksLikeHtmlPage() {
+        assertTrue(
+            RemotePlaybackResolver.shouldFallbackToGetAfterHead(
+                responseCode = 200,
+                finalUrl = "https://example.com/download/123",
+                contentType = "text/html",
+                contentDisposition = null
+            )
+        )
+    }
+
+    @Test
+    fun shouldFallbackToGetAfterHead_doesNotRetryWhenHeadAlreadyLooksPlayable() {
+        assertFalse(
+            RemotePlaybackResolver.shouldFallbackToGetAfterHead(
+                responseCode = 200,
+                finalUrl = "https://example.com/video.mp4",
+                contentType = "video/mp4",
+                contentDisposition = null
+            )
+        )
+    }
+
+    @Test
+    fun supportsHttpProbe_onlyAllowsHttpAndHttps() {
+        assertTrue(RemotePlaybackResolver.supportsHttpProbe("https://example.com/video.mp4"))
+        assertTrue(RemotePlaybackResolver.supportsHttpProbe("http://example.com/video.mp4"))
+        assertFalse(RemotePlaybackResolver.supportsHttpProbe("rtsp://camera.example.com/live"))
+        assertFalse(RemotePlaybackResolver.supportsHttpProbe("rtmp://stream.example.com/app/live"))
     }
 
     @Test

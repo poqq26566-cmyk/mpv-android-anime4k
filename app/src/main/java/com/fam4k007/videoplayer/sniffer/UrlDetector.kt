@@ -61,7 +61,7 @@ object UrlDetector {
         }
         
         // 协议检测（rtmp/rtsp直接判定为视频）
-        if (url.startsWith("rtmp://") || url.startsWith("rtsp://")) {
+        if (url.startsWith("rtmp://") || url.startsWith("rtmps://") || url.startsWith("rtsp://")) {
             return true
         }
         
