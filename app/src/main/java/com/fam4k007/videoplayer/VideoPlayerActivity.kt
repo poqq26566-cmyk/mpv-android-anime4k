@@ -1052,6 +1052,9 @@ class VideoPlayerActivity : AppCompatActivity(),
             savedPosition
         }
 
+        // VideoPlayerActivity is configured as singleTop. Starting itself and then finishing
+        // would close the current activity (because no new instance is created). Instead,
+        // update the intent and force a recreation.
         val nextIntent = Intent(this, VideoPlayerActivity::class.java).apply {
             data = videoUri
             replaceExtras(intent)
@@ -1059,8 +1062,8 @@ class VideoPlayerActivity : AppCompatActivity(),
             putExtra(EXTRA_START_POSITION_SEC, resumePosition)
             remotePlaybackRequest?.let { putExtra(RemotePlaybackLauncher.EXTRA_REMOTE_REQUEST, it) }
         }
-        startActivity(nextIntent)
-        finish()
+        setIntent(nextIntent)
+        recreate()
     }
     
     /**
