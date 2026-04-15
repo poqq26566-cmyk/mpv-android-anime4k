@@ -157,6 +157,7 @@
 
             <!-- 右侧区域:状态+按钮(占1/2宽度,预留导航栏空间) -->
             <LinearLayout
+                android:id="@+id/topRightPanel"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -351,6 +352,7 @@
 
                 <!-- 主控制按钮组 - 相对于整个屏幕居中 -->
                 <LinearLayout
+                    android:id="@+id/mainControlsRow"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"

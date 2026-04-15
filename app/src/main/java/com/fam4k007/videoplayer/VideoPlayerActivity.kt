@@ -1088,6 +1088,77 @@ class VideoPlayerActivity : AppCompatActivity(),
             }
             v.layoutParams = lp
         }
+
+        applyPortraitSizing(enabled)
+    }
+
+    private fun applyPortraitSizing(enabled: Boolean) {
+        // 1) Top-right icon group: reduce end margin so buttons sit closer to the right edge in portrait.
+        findViewById<View>(R.id.topRightPanel)?.let { v ->
+            val lp = v.layoutParams as? LinearLayout.LayoutParams ?: return@let
+            lp.marginEnd = (if (enabled) 12 else 60).dpToPx()
+            v.layoutParams = lp
+        }
+
+        // 2) Top-right icons: slightly smaller in portrait to avoid crowding.
+        val topIconSize = if (enabled) 30 else 32
+        val topIconPadding = if (enabled) 5 else 6
+        listOf(
+            R.id.btnSubtitle,
+            R.id.btnDanmaku,
+            R.id.btnAspectRatio,
+            R.id.btnLock,
+            R.id.btnMore
+        ).forEach { id ->
+            findViewById<ImageView>(id)?.let { icon ->
+                val lp = icon.layoutParams as? ViewGroup.MarginLayoutParams ?: return@let
+                lp.width = topIconSize.dpToPx()
+                lp.height = topIconSize.dpToPx()
+                icon.setPadding(
+                    topIconPadding.dpToPx(),
+                    topIconPadding.dpToPx(),
+                    topIconPadding.dpToPx(),
+                    topIconPadding.dpToPx()
+                )
+                icon.layoutParams = lp
+            }
+        }
+
+        // 3) Bottom main controls: reduce icon size/margins in portrait so they don't feel cramped.
+        val normalIconSize = if (enabled) 40 else 44
+        val playIconSize = if (enabled) 44 else 48
+        val normalPadding = if (enabled) 6 else 8
+        val compactMargin = if (enabled) 8 else 12
+
+        fun adjustBottomIcon(
+            id: Int,
+            sizeDp: Int,
+            paddingDp: Int,
+            marginStartDp: Int? = null,
+            marginEndDp: Int? = null
+        ) {
+            val icon = findViewById<ImageView>(id) ?: return
+            val lp = icon.layoutParams as? LinearLayout.LayoutParams ?: return
+            lp.width = sizeDp.dpToPx()
+            lp.height = sizeDp.dpToPx()
+            marginStartDp?.let { lp.marginStart = it.dpToPx() }
+            marginEndDp?.let { lp.marginEnd = it.dpToPx() }
+            icon.setPadding(
+                paddingDp.dpToPx(),
+                paddingDp.dpToPx(),
+                paddingDp.dpToPx(),
+                paddingDp.dpToPx()
+            )
+            icon.layoutParams = lp
+        }
+
+        adjustBottomIcon(R.id.btnDanmakuToggle, normalIconSize, 6)
+        adjustBottomIcon(R.id.btnPrevious, normalIconSize, normalPadding, marginStartDp = compactMargin, marginEndDp = 0)
+        adjustBottomIcon(R.id.btnRewind, normalIconSize, normalPadding, marginStartDp = compactMargin, marginEndDp = 0)
+        adjustBottomIcon(R.id.btnPlayPause, playIconSize, 6, marginStartDp = compactMargin, marginEndDp = compactMargin)
+        adjustBottomIcon(R.id.btnForward, normalIconSize, normalPadding, marginStartDp = 0, marginEndDp = compactMargin)
+        adjustBottomIcon(R.id.btnNext, normalIconSize, normalPadding, marginStartDp = 0, marginEndDp = compactMargin)
+        adjustBottomIcon(R.id.btnSpeed, normalIconSize, normalPadding)
     }
     
     /**
