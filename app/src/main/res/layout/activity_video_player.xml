@@ -110,6 +110,7 @@
 
         <!-- 实际内容区域 -->
         <LinearLayout
+            android:id="@+id/topInfoContentRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -167,6 +168,7 @@
 
                 <!-- 电量和时间显示（向左移动，给字幕按钮留空间） -->
                 <LinearLayout
+                    android:id="@+id/topStatusContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="32dp"
                     android:orientation="vertical"

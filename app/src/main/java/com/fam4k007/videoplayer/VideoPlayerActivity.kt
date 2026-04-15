@@ -12,6 +12,7 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.text.TextUtils
 import android.util.Log
 import android.content.pm.ActivityInfo
 import android.view.MotionEvent
@@ -1142,16 +1143,42 @@ class VideoPlayerActivity : AppCompatActivity(),
         // Anime4K: use a floating button in portrait to avoid overlapping the bottom control row.
         findViewById<View>(R.id.btnAnime4K)?.visibility = if (enabled) View.GONE else View.VISIBLE
 
-        // 1) Top-right icon group: reduce end margin so buttons sit closer to the right edge in portrait.
-        findViewById<View>(R.id.topRightPanel)?.let { v ->
+        findViewById<View>(R.id.topStatusContainer)?.visibility = View.VISIBLE
+
+        // In portrait, prioritize the right-side status and five-button cluster. The title only
+        // gets a small fixed slot and must ellipsize instead of competing for more width.
+        findViewById<View>(R.id.titleClickArea)?.let { v ->
             val lp = v.layoutParams as? LinearLayout.LayoutParams ?: return@let
-            lp.marginEnd = (if (enabled) 12 else 60).dpToPx()
+            if (enabled) {
+                lp.width = 84.dpToPx()
+                lp.weight = 0f
+            } else {
+                lp.width = 0
+                lp.weight = 1f
+            }
             v.layoutParams = lp
         }
+        findViewById<View>(R.id.topRightPanel)?.let { v ->
+            val lp = v.layoutParams as? LinearLayout.LayoutParams ?: return@let
+            lp.width = 0
+            lp.weight = if (enabled) 2f else 1f
+            lp.marginEnd = (if (enabled) 8 else 60).dpToPx()
+            v.layoutParams = lp
+        }
+        findViewById<TextView>(R.id.tvFileName)?.let { tv ->
+            tv.maxLines = if (enabled) 1 else 2
+            tv.ellipsize = TextUtils.TruncateAt.END
+            tv.setSingleLine(enabled)
+            tv.textSize = if (enabled) 12f else 13f
+        }
 
-        // 2) Top-right icons: slightly smaller in portrait to avoid crowding.
-        val topIconSize = if (enabled) 30 else 32
-        val topIconPadding = if (enabled) 5 else 6
+        // 1) Top-right icons: portrait uses a tighter five-button cluster while keeping time visible.
+        val topIconSize = if (enabled) 28 else 32
+        val topIconPadding = if (enabled) 4 else 6
+        val portraitIconMargin = 2.dpToPx()
+        val landscapeIconMargin = 4.dpToPx()
+        val portraitWideIconMargin = 4.dpToPx()
+        val landscapeWideIconMargin = 6.dpToPx()
         listOf(
             R.id.btnSubtitle,
             R.id.btnDanmaku,
@@ -1163,6 +1190,12 @@ class VideoPlayerActivity : AppCompatActivity(),
                 val lp = icon.layoutParams as? ViewGroup.MarginLayoutParams ?: return@let
                 lp.width = topIconSize.dpToPx()
                 lp.height = topIconSize.dpToPx()
+                lp.marginStart = when {
+                    enabled && (id == R.id.btnLock || id == R.id.btnMore) -> portraitWideIconMargin
+                    enabled -> portraitIconMargin
+                    id == R.id.btnLock || id == R.id.btnMore -> landscapeWideIconMargin
+                    else -> landscapeIconMargin
+                }
                 icon.setPadding(
                     topIconPadding.dpToPx(),
                     topIconPadding.dpToPx(),
@@ -1173,7 +1206,7 @@ class VideoPlayerActivity : AppCompatActivity(),
             }
         }
 
-        // 3) Bottom main controls: reduce icon size/margins in portrait so they don't feel cramped.
+        // 2) Bottom main controls: reduce icon size/margins in portrait so they don't feel cramped.
         val normalIconSize = if (enabled) 40 else 44
         val playIconSize = if (enabled) 44 else 48
         val normalPadding = if (enabled) 6 else 8
