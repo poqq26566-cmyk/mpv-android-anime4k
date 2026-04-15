@@ -617,6 +617,42 @@
 
     </LinearLayout>
 
+    <!-- 竖屏悬浮按钮：超分辨率（左侧中间） -->
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnAnime4KFloat"
+        android:layout_width="70dp"
+        android:layout_height="36dp"
+        android:minWidth="70dp"
+        android:text="超分"
+        android:textSize="12sp"
+        android:textColor="#FFFFFF"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:background="@drawable/btn_anime4k_bg"
+        android:elevation="12dp"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="14dp"
+        android:visibility="gone" />
+
+    <!-- 竖屏悬浮按钮：旋转/切换布局（右侧中间） -->
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnRotateFloat"
+        android:layout_width="70dp"
+        android:layout_height="36dp"
+        android:minWidth="70dp"
+        android:text="旋转"
+        android:textSize="12sp"
+        android:textColor="#FFFFFF"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:background="@drawable/bg_mode_icon"
+        android:elevation="12dp"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="14dp"
+        android:visibility="gone" />
+
     <!-- 进度调整提示（屏幕中央）- 优化为圆角背景 -->
     <TextView
         android:id="@+id/seekHint"

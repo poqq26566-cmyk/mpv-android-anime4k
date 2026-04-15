@@ -945,7 +945,16 @@ class VideoPlayerActivity : AppCompatActivity(),
         btnDanmaku.setOnClickListener {
             dialogManager.showDanmakuDialog()
         }
-        
+
+        // Portrait-only floating buttons (exist in both layouts; only visible in portrait mode).
+        findViewById<Button>(R.id.btnAnime4KFloat)?.setOnClickListener {
+            dialogManager.showAnime4KModeDialog(anime4KMode)
+            controlsManager.resetAutoHideTimer()
+        }
+        findViewById<Button>(R.id.btnRotateFloat)?.setOnClickListener {
+            onTogglePortraitUi()
+        }
+          
         // 弹幕显示/隐藏按钮
         val btnDanmakuToggle = findViewById<ImageView>(R.id.btnDanmakuToggle)
         btnDanmakuToggle.setOnClickListener {
@@ -1057,6 +1066,8 @@ class VideoPlayerActivity : AppCompatActivity(),
             R.id.doubleTapSeekRight,
             R.id.btnUnlock,
             R.id.btnUnlockRight,
+            R.id.btnAnime4KFloat,
+            R.id.btnRotateFloat,
             R.id.brightnessIndicator,
             R.id.volumeIndicator,
             R.id.seekHint,
@@ -1093,6 +1104,11 @@ class VideoPlayerActivity : AppCompatActivity(),
     }
 
     private fun applyPortraitSizing(enabled: Boolean) {
+        // Anime4K: use a floating button in portrait to avoid overlapping the bottom control row.
+        findViewById<View>(R.id.btnAnime4K)?.visibility = if (enabled) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.btnAnime4KFloat)?.visibility = if (enabled) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.btnRotateFloat)?.visibility = if (enabled) View.VISIBLE else View.GONE
+
         // 1) Top-right icon group: reduce end margin so buttons sit closer to the right edge in portrait.
         findViewById<View>(R.id.topRightPanel)?.let { v ->
             val lp = v.layoutParams as? LinearLayout.LayoutParams ?: return@let
