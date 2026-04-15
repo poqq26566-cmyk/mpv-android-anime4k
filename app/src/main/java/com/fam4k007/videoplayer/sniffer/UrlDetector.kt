@@ -1,7 +1,6 @@
 package com.fam4k007.videoplayer.sniffer
 
 import android.util.Log
-import java.util.regex.Pattern
 
 /**
  * URL检测工具类（参考海阔视界的UrlDetector实现）
@@ -11,7 +10,7 @@ object UrlDetector {
     
     // 视频扩展名列表
     private val videoExtensions = listOf(
-        ".mp4", ".MP4", ".m3u8", ".M3U8", ".flv", ".FLV",
+        ".mp4", ".MP4", ".m3u8", ".M3U8", ".mpd", ".MPD", ".flv", ".FLV",
         ".avi", ".AVI", ".3gp", ".3GP", ".mpeg", ".MPEG",
         ".wmv", ".WMV", ".mov", ".MOV", ".rmvb", ".RMVB",
         ".dat", ".DAT", ".mkv", ".MKV", ".webm", ".WEBM",
@@ -84,7 +83,7 @@ object UrlDetector {
         // 检查视频扩展名
         for (ext in videoExtensions) {
             if (url.contains(ext, ignoreCase = true)) {
-                Log.d(TAG, "Detected video by extension: $ext in $url")
+                logDebug("Detected video by extension: $ext in $url")
                 return true
             }
         }
@@ -96,7 +95,7 @@ object UrlDetector {
                 val hasMediaExt = videoExtensions.any { pathUrl.contains(it, ignoreCase = true) } ||
                                  audioExtensions.any { pathUrl.contains(it, ignoreCase = true) }
                 if (!hasMediaExt) {
-                    Log.d(TAG, "Detected video by path keyword: $keyword in $url")
+                    logDebug("Detected video by path keyword: $keyword in $url")
                     return true
                 }
             }
@@ -107,7 +106,7 @@ object UrlDetector {
         if (queryParams != null) {
             for (keyword in videoParamKeywords) {
                 if (queryParams.contains("$keyword=", ignoreCase = true)) {
-                    Log.d(TAG, "Detected video by param keyword: $keyword in $url")
+                    logDebug("Detected video by param keyword: $keyword in $url")
                     return true
                 }
             }
@@ -115,8 +114,14 @@ object UrlDetector {
         
         // 检查Content-Type（如果有headers）
         val contentType = headers["Content-Type"]?.lowercase() ?: headers["content-type"]?.lowercase()
-        if (contentType != null && (contentType.contains("video/") || contentType.contains("application/vnd.apple.mpegurl"))) {
-            Log.d(TAG, "Detected video by Content-Type: $contentType")
+        if (contentType != null && (
+                contentType.contains("video/") ||
+                    contentType.contains("application/vnd.apple.mpegurl") ||
+                    contentType.contains("application/x-mpegurl") ||
+                    contentType.contains("application/dash+xml")
+                )
+        ) {
+            logDebug("Detected video by Content-Type: $contentType")
             return true
         }
         
@@ -160,6 +165,7 @@ object UrlDetector {
     fun getVideoFormat(url: String): String {
         return when {
             url.contains(".m3u8", ignoreCase = true) -> "M3U8"
+            url.contains(".mpd", ignoreCase = true) -> "DASH"
             url.contains(".mp4", ignoreCase = true) -> "MP4"
             url.contains(".flv", ignoreCase = true) -> "FLV"
             url.contains(".avi", ignoreCase = true) -> "AVI"
@@ -169,6 +175,14 @@ object UrlDetector {
             url.contains("rtmp://") -> "RTMP"
             url.contains("rtsp://") -> "RTSP"
             else -> "UNKNOWN"
+        }
+    }
+
+    private fun logDebug(message: String) {
+        try {
+            Log.d(TAG, message)
+        } catch (_: RuntimeException) {
+            // Ignore JVM unit-test environments without android.util.Log backend.
         }
     }
 }

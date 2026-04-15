@@ -38,6 +38,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fam4k007.videoplayer.VideoPlayerActivity
 import com.fam4k007.videoplayer.compose.ImmersiveTopAppBar
+import com.fam4k007.videoplayer.remote.RemotePlaybackLauncher
 import com.fam4k007.videoplayer.sniffer.DetectedVideo
 import com.fam4k007.videoplayer.sniffer.VideoSnifferManager
 import com.fam4k007.videoplayer.utils.ThemeManager
@@ -430,7 +431,7 @@ private fun WebView.setupWebView(
 /**
  * 智能选择最佳视频
  * 优先级：
- * 1. .m3u8 流媒体格式（通常是清晰度最高的）
+ * 1. .m3u8 / .mpd 流媒体格式（通常是清晰度最高的）
  * 2. .mp4 格式
  * 3. 其他视频格式
  * 在相同格式内，按质量评分选择最佳
@@ -439,10 +440,12 @@ private fun selectBestVideo(videos: List<DetectedVideo>): DetectedVideo {
     if (videos.isEmpty()) return videos.first()
     if (videos.size == 1) return videos.first()
 
-    // 优先选择m3u8
-    val m3u8Videos = videos.filter { it.url.contains(".m3u8", ignoreCase = true) }
-    if (m3u8Videos.isNotEmpty()) {
-        return selectBestInGroup(m3u8Videos)
+    // 优先选择流媒体清单（HLS / DASH）
+    val manifestVideos = videos.filter {
+        it.url.contains(".m3u8", ignoreCase = true) || it.url.contains(".mpd", ignoreCase = true)
+    }
+    if (manifestVideos.isNotEmpty()) {
+        return selectBestInGroup(manifestVideos)
     }
 
     // 其次选择mp4
@@ -554,12 +557,9 @@ private fun calculateQualityScore(url: String): Int {
 private fun playVideo(context: Context, video: DetectedVideo) {
     Log.d("TVBrowser", "Playing video: ${video.url}")
     Log.d("TVBrowser", "With headers: ${video.headers}")
-    
-    val intent = Intent(context, VideoPlayerActivity::class.java).apply {
-        // 使用带HTTP头的完整URL字符串
-        data = Uri.parse(video.toFullUrlString())
-        putExtra("is_online_video", true)
-        putExtra("video_title", video.title.ifEmpty { "在线视频" })
-    }
-    context.startActivity(intent)
+
+    val request = video.toRemotePlaybackRequest().copy(
+        title = video.title.ifEmpty { "在线视频" }
+    )
+    RemotePlaybackLauncher.start(context, request)
 }

@@ -41,6 +41,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.fam4k007.videoplayer.Anime4KManager
 import com.fam4k007.videoplayer.manager.PreferencesManager
 import com.fam4k007.videoplayer.manager.SubtitleManager
+import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
+import com.fam4k007.videoplayer.remote.RemotePlaybackLauncher
+import com.fam4k007.videoplayer.remote.RemotePlaybackRequest
+import com.fam4k007.videoplayer.remote.RemotePlaybackResolver
+import com.fam4k007.videoplayer.remote.RemoteUrlParser
 import com.fam4k007.videoplayer.player.GestureHandler
 import com.fam4k007.videoplayer.player.PlaybackEngine
 import com.fam4k007.videoplayer.player.PlayerControlsManager
@@ -54,6 +59,7 @@ import com.fam4k007.videoplayer.utils.getThemeAttrColor
 import com.fam4k007.videoplayer.utils.Logger
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -103,6 +109,9 @@ class VideoPlayerActivity : AppCompatActivity(),
     private val resumePromptHandler = Handler(Looper.getMainLooper())
 
     private var videoUri: Uri? = null
+    private var remotePlaybackRequest: RemotePlaybackRequest? = null
+    private var remoteResolveJob: Job? = null
+    private var remoteResolveSequence = 0L
     private lateinit var preferencesManager: PreferencesManager
     private lateinit var historyManager: PlaybackHistoryManager
     private val subtitleManager = SubtitleManager()
@@ -192,10 +201,15 @@ class VideoPlayerActivity : AppCompatActivity(),
         historyManager = PlaybackHistoryManager(this)
         
         loadUserSettings()
+        remotePlaybackRequest = intent.getParcelableExtra(RemotePlaybackLauncher.EXTRA_REMOTE_REQUEST)
 
         // 处理视频URI - 支持本地文件和在线URL
         try {
             videoUri = when {
+                remotePlaybackRequest != null -> {
+                    com.fam4k007.videoplayer.utils.Logger.d(TAG, "Remote playback request from intent")
+                    Uri.parse(remotePlaybackRequest!!.url)
+                }
                 intent.action == android.content.Intent.ACTION_VIEW -> {
                     com.fam4k007.videoplayer.utils.Logger.d(TAG, "ACTION_VIEW intent")
                     intent.data
@@ -205,7 +219,27 @@ class VideoPlayerActivity : AppCompatActivity(),
                     if (intent.type?.startsWith("video/") == true || intent.type?.startsWith("audio/") == true) {
                         intent.getParcelableExtra(android.content.Intent.EXTRA_STREAM)
                     } else {
-                        intent.data
+                        val sharedText = intent.getStringExtra(android.content.Intent.EXTRA_TEXT)
+                        val parsedSharedInput = sharedText?.let { RemoteUrlParser.parsePlaybackInput(it) }
+                        if (parsedSharedInput != null) {
+                            val sourcePageUrl = RemotePlaybackHeaders.deriveSourcePageUrl(
+                                headers = parsedSharedInput.headers
+                            )
+                            remotePlaybackRequest = RemotePlaybackRequest(
+                                url = parsedSharedInput.url,
+                                title = intent.getStringExtra(android.content.Intent.EXTRA_SUBJECT).orEmpty(),
+                                sourcePageUrl = sourcePageUrl,
+                                headers = parsedSharedInput.headers,
+                                source = RemotePlaybackRequest.Source.DIRECT_INPUT
+                            )
+                            Logger.d(
+                                TAG,
+                                "Parsed shared remote text: url=${parsedSharedInput.url}, headers=${RemotePlaybackHeaders.describeForLog(parsedSharedInput.headers)}"
+                            )
+                            Uri.parse(parsedSharedInput.url)
+                        } else {
+                            intent.data
+                        }
                     }
                 }
                 // 支持从MainActivity传递的URL
@@ -242,8 +276,14 @@ class VideoPlayerActivity : AppCompatActivity(),
         com.fam4k007.videoplayer.utils.Logger.d(TAG, "URI scheme: ${videoUri?.scheme}")
         
         // 判断是否为在线视频
-        isOnlineVideo = intent.getBooleanExtra("is_online", false) ||
+        isOnlineVideo = remotePlaybackRequest != null ||
+            intent.getBooleanExtra("is_online", false) ||
+            intent.getBooleanExtra("is_online_video", false) ||
             videoUri?.scheme?.let { it == "http" || it == "https" } == true
+
+        if (isOnlineVideo && remotePlaybackRequest == null) {
+            remotePlaybackRequest = buildLegacyRemotePlaybackRequest(videoUri!!)
+        }
         
         com.fam4k007.videoplayer.utils.Logger.d(TAG, "Is online video: $isOnlineVideo")
         
@@ -1007,20 +1047,10 @@ class VideoPlayerActivity : AppCompatActivity(),
             
             // 对于在线视频,直接使用URI字符串;对于本地文件,使用URI对象
             if (isOnlineVideo) {
-                // 在线视频:直接使用原始URL字符串
-                val urlString = uri.toString()
-                com.fam4k007.videoplayer.utils.Logger.d(TAG, "Loading online video with URL string: $urlString")
-                
-                // B站视频需要设置Referer头(防盗链)
-                if (urlString.contains("bilivideo.com")) {
-                    com.fam4k007.videoplayer.utils.Logger.d(TAG, "Detected Bilibili video, setting Referer header")
-                    `is`.xyz.mpv.MPVLib.setOptionString(
-                        "http-header-fields",
-                        "Referer: https://www.bilibili.com"
-                    )
-                }
-                
-                playbackEngine?.loadVideoFromUrl(urlString, position)
+                val request = remotePlaybackRequest ?: buildLegacyRemotePlaybackRequest(uri)
+                remotePlaybackRequest = request
+                com.fam4k007.videoplayer.utils.Logger.d(TAG, "Loading online video with request: ${request.url}")
+                loadResolvedRemoteVideo(request, position)
             } else {
                 // 本地视频:使用URI对象
                 playbackEngine?.loadVideo(uri, position)
@@ -1613,6 +1643,15 @@ class VideoPlayerActivity : AppCompatActivity(),
         
         // 更新在线视频标志
         isOnlineVideo = uri.scheme?.startsWith("http") == true
+        remotePlaybackRequest = if (isOnlineVideo) {
+            RemotePlaybackRequest(
+                url = uri.toString(),
+                title = resolveVideoTitle(uri),
+                source = RemotePlaybackRequest.Source.UNKNOWN
+            )
+        } else {
+            null
+        }
         
         // 显示加载动画（仅在线视频）
         if (isOnlineVideo) {
@@ -1631,7 +1670,11 @@ class VideoPlayerActivity : AppCompatActivity(),
         Logger.d(TAG, "Releasing old danmaku before playing new video")
         danmakuManager.release()
         
-        playbackEngine?.loadVideo(uri, position)
+        if (isOnlineVideo) {
+            loadResolvedRemoteVideo(remotePlaybackRequest!!, position)
+        } else {
+            playbackEngine?.loadVideo(uri, position)
+        }
         
         // 设置当前视频 URI 给文件选择器管理器
         filePickerManager.setCurrentVideoUri(uri)
@@ -1662,6 +1705,46 @@ class VideoPlayerActivity : AppCompatActivity(),
         }
         
         updateEpisodeButtons()
+    }
+
+    private fun loadResolvedRemoteVideo(
+        request: RemotePlaybackRequest,
+        position: Double
+    ) {
+        remoteResolveJob?.cancel()
+        val sequence = ++remoteResolveSequence
+        remoteResolveJob = lifecycleScope.launch {
+            val result = RemotePlaybackResolver.resolve(request)
+            val debugSummary = RemotePlaybackResolver.buildDebugSummary(result)
+            preferencesManager.setLastRemoteDebugSummary(debugSummary)
+            Logger.d(TAG, "Remote debug summary:\n$debugSummary")
+            if (sequence != remoteResolveSequence) {
+                Logger.d(TAG, "Discarding stale remote resolve result for: ${request.url}")
+                return@launch
+            }
+
+            when (result) {
+                is RemotePlaybackResolver.ResolveResult.Success -> {
+                    remotePlaybackRequest = result.request
+                    videoUri = Uri.parse(result.request.url)
+                    Logger.d(
+                        TAG,
+                        "Remote request resolved via ${result.probeMethod}: ${request.url} -> ${result.request.url}"
+                    )
+                    playbackEngine.loadRemote(result.request, position)
+                }
+                is RemotePlaybackResolver.ResolveResult.Failed -> {
+                    remotePlaybackRequest = result.request
+                    Logger.w(TAG, "Remote resolve fallback: reason=${result.reason}, message=${result.message}", result.cause)
+                    val suggestion = RemotePlaybackResolver.buildFailureSuggestion(result.reason)
+                    DialogUtils.showToastLong(
+                        this@VideoPlayerActivity,
+                        "${result.message}，继续尝试直接播放\n$suggestion"
+                    )
+                    playbackEngine.loadRemote(result.request, position)
+                }
+            }
+        }
     }
     
     override fun onBackPressed() {
@@ -1755,6 +1838,8 @@ class VideoPlayerActivity : AppCompatActivity(),
     override fun onDestroy() {
         super.onDestroy()
         Logger.d(TAG, "Activity destroyed")
+
+        remoteResolveJob?.cancel()
         
         savePlaybackState()
         
@@ -1840,16 +1925,81 @@ class VideoPlayerActivity : AppCompatActivity(),
     }
     
     
+    private fun buildLegacyRemotePlaybackRequest(uri: Uri): RemotePlaybackRequest {
+        val headers = linkedMapOf<String, String>()
+        intent.getStringExtra("cookies")
+            ?.takeIf { it.isNotBlank() }
+            ?.let { headers["Cookie"] = it }
+        intent.getStringExtra("referer")
+            ?.takeIf { it.isNotBlank() }
+            ?.let { headers["Referer"] = it }
+        intent.getStringExtra("user_agent")
+            ?.takeIf { it.isNotBlank() }
+            ?.let { headers["User-Agent"] = it }
+
+        val urlString = uri.toString()
+        if (urlString.contains("bilivideo.com") && headers["Referer"].isNullOrBlank()) {
+            headers["Referer"] = "https://www.bilibili.com"
+        }
+
+        val source = when {
+            intent.hasExtra("cookies") -> RemotePlaybackRequest.Source.BILIBILI
+            intent.getBooleanExtra("is_webdav", false) -> RemotePlaybackRequest.Source.WEBDAV
+            else -> RemotePlaybackRequest.Source.UNKNOWN
+        }
+
+        return RemotePlaybackRequest(
+            url = urlString,
+            title = resolveVideoTitle(uri),
+            sourcePageUrl = RemotePlaybackHeaders.deriveSourcePageUrl(headers),
+            headers = RemotePlaybackHeaders.normalize(headers),
+            source = source
+        )
+    }
+
+    private fun resolveVideoTitle(uri: Uri): String {
+        remotePlaybackRequest?.title
+            ?.takeIf { it.isNotBlank() }
+            ?.let { return it }
+
+        val intentTitle = listOf("video_title", "title", "file_name", "video_name")
+            .asSequence()
+            .mapNotNull { key -> intent.getStringExtra(key) }
+            .firstOrNull { it.isNotBlank() }
+        if (!intentTitle.isNullOrBlank()) {
+            return intentTitle
+        }
+
+        if (uri.scheme == "http" || uri.scheme == "https") {
+            val remoteName = uri.lastPathSegment
+                ?.substringBefore("?")
+                ?.takeIf { it.isNotBlank() }
+                ?.let { Uri.decode(it) }
+            return remoteName ?: uri.host ?: "在线视频"
+        }
+
+        return try {
+            val cursor = contentResolver.query(uri, null, null, null, null)
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val nameIndex = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    if (nameIndex >= 0) {
+                        it.getString(nameIndex)
+                    } else {
+                        uri.lastPathSegment ?: "未知文件"
+                    }
+                } else {
+                    uri.lastPathSegment ?: "未知文件"
+                }
+            } ?: uri.lastPathSegment ?: "未知文件"
+        } catch (e: Exception) {
+            Logger.w(TAG, "Failed to resolve file name from uri: $uri", e)
+            uri.lastPathSegment ?: "未知文件"
+        }
+    }
+
     private fun getFileNameFromUri(uri: Uri): String {
-        val cursor = contentResolver.query(uri, null, null, null, null)
-        return cursor?.use {
-            if (it.moveToFirst()) {
-                val nameIndex = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                if (nameIndex >= 0) it.getString(nameIndex) else uri.lastPathSegment ?: "未知文件"
-            } else {
-                uri.lastPathSegment ?: "未知文件"
-            }
-        } ?: uri.lastPathSegment ?: "未知文件"
+        return resolveVideoTitle(uri)
     }
     
     private fun applyAnime4K() {
