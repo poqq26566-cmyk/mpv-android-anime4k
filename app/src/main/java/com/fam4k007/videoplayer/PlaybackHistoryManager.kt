@@ -164,9 +164,11 @@ class PlaybackHistoryManager(private val context: Context) {
      * 删除单条历史记录
      */
     fun removeHistory(uri: String) {
-        scope.launch {
+        runBlocking {
             try {
-                historyDao.deleteByUri(uri)
+                withContext(Dispatchers.IO) {
+                    historyDao.deleteByUri(uri)
+                }
                 Logger.d(TAG, "History removed successfully: $uri")
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to remove history: ${e.message}", e)
@@ -178,9 +180,11 @@ class PlaybackHistoryManager(private val context: Context) {
      * 清空所有历史记录
      */
     fun clearHistory() {
-        scope.launch {
+        runBlocking {
             try {
-                historyDao.clearAll()
+                withContext(Dispatchers.IO) {
+                    historyDao.clearAll()
+                }
                 Logger.d(TAG, "History cleared successfully")
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to clear history: ${e.message}", e)

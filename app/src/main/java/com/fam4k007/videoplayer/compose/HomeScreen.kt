@@ -1,5 +1,8 @@
 package com.fam4k007.videoplayer.compose
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.*
@@ -7,8 +10,11 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -24,6 +30,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -35,6 +42,11 @@ import com.fam4k007.videoplayer.PlaybackHistoryManager
 import com.fam4k007.videoplayer.VideoBrowserComposeActivity
 import com.fam4k007.videoplayer.VideoPlayerActivity
 import com.fam4k007.videoplayer.BiliBiliPlayActivity
+import com.fam4k007.videoplayer.manager.PreferencesManager
+import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
+import com.fam4k007.videoplayer.remote.RemotePlaybackLauncher
+import com.fam4k007.videoplayer.remote.RemotePlaybackRequest
+import com.fam4k007.videoplayer.remote.RemoteUrlParser
 import com.fam4k007.videoplayer.webdav.WebDavComposeActivity
 import com.fanchen.fam4k007.manager.compose.BiliBiliLoginActivity
 
@@ -49,6 +61,7 @@ fun HomeScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var isExpanded by remember { mutableStateOf(false) }
+    var showRemoteUrlDialog by remember { mutableStateOf(false) }
     
     // 监听生命周期，返回时自动收起
     DisposableEffect(lifecycleOwner) {
@@ -107,6 +120,15 @@ fun HomeScreen(
                     )
                 }
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            GradientButton(
+                text = "播放网络视频",
+                onClick = {
+                    showRemoteUrlDialog = true
+                }
+            )
             
             Spacer(modifier = Modifier.weight(1f))
         }
@@ -140,6 +162,20 @@ fun HomeScreen(
                 )
             }
         )
+
+        if (showRemoteUrlDialog) {
+            RemoteUrlDialog(
+                onDismiss = { showRemoteUrlDialog = false },
+                onConfirm = { request ->
+                    showRemoteUrlDialog = false
+                    RemotePlaybackLauncher.start(context, request)
+                    (context as? android.app.Activity)?.overridePendingTransition(
+                        R.anim.slide_in_right,
+                        R.anim.slide_out_left
+                    )
+                }
+            )
+        }
     }
 }
 
@@ -279,6 +315,378 @@ fun GradientButton(
     }
 }
 
+@Composable
+fun RemoteUrlDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (RemotePlaybackRequest) -> Unit
+) {
+    val context = LocalContext.current
+    val preferencesManager = remember(context) { PreferencesManager.getInstance(context) }
+    var lastRemoteDebugSummary by remember { mutableStateOf(preferencesManager.getLastRemoteDebugSummary()) }
+    var url by remember { mutableStateOf(preferencesManager.getLastRemoteInputUrl()) }
+    var title by remember { mutableStateOf(preferencesManager.getLastRemoteInputTitle()) }
+    var sourcePageUrl by remember { mutableStateOf(preferencesManager.getLastRemoteInputSourcePageUrl()) }
+    var referer by remember { mutableStateOf(preferencesManager.getLastRemoteInputReferer()) }
+    var origin by remember { mutableStateOf(preferencesManager.getLastRemoteInputOrigin()) }
+    var cookie by remember { mutableStateOf(preferencesManager.getLastRemoteInputCookie()) }
+    var authorization by remember { mutableStateOf(preferencesManager.getLastRemoteInputAuthorization()) }
+    var userAgent by remember { mutableStateOf(preferencesManager.getLastRemoteInputUserAgent()) }
+    val hasSavedAdvancedInput =
+        listOf(sourcePageUrl, referer, origin, cookie, authorization, userAgent).any { it.isNotBlank() }
+    var showAdvanced by remember { mutableStateOf(hasSavedAdvancedInput) }
+    val dialogContainerColor = MaterialTheme.colorScheme.primary
+    val dialogFieldColor = MaterialTheme.colorScheme.surfaceVariant
+    val dialogPrimaryColor = MaterialTheme.colorScheme.primary
+    val dialogSecondaryColor = MaterialTheme.colorScheme.onPrimary
+    val dialogTextColor = MaterialTheme.colorScheme.onPrimary
+    val dialogMutedTextColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f)
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = dialogFieldColor,
+        unfocusedContainerColor = dialogFieldColor,
+        disabledContainerColor = dialogFieldColor,
+        focusedTextColor = dialogTextColor,
+        unfocusedTextColor = dialogTextColor,
+        disabledTextColor = dialogMutedTextColor,
+        focusedLabelColor = dialogSecondaryColor,
+        unfocusedLabelColor = dialogMutedTextColor,
+        disabledLabelColor = dialogMutedTextColor,
+        focusedPlaceholderColor = dialogMutedTextColor,
+        unfocusedPlaceholderColor = dialogMutedTextColor,
+        disabledPlaceholderColor = dialogMutedTextColor,
+        focusedBorderColor = dialogPrimaryColor,
+        unfocusedBorderColor = dialogPrimaryColor.copy(alpha = 0.35f),
+        disabledBorderColor = dialogPrimaryColor.copy(alpha = 0.2f),
+        cursorColor = dialogPrimaryColor
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = dialogContainerColor,
+        titleContentColor = dialogTextColor,
+        textContentColor = dialogTextColor,
+        title = {
+            Text(
+                text = "播放网络视频",
+                color = dialogTextColor,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = dialogContainerColor)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Link,
+                                contentDescription = null,
+                                tint = dialogSecondaryColor,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = "基础信息",
+                                color = dialogTextColor,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        OutlinedTextField(
+                            value = url,
+                            onValueChange = { url = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("视频链接") },
+                            placeholder = { Text("https://example.com/video.mp4 或直接粘贴 curl / 请求头") },
+                            minLines = 3,
+                            maxLines = 6,
+                            colors = textFieldColors
+                        )
+
+                        OutlinedTextField(
+                            value = title,
+                            onValueChange = { title = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("标题（可选）") },
+                            singleLine = true,
+                            colors = textFieldColors
+                        )
+                    }
+                }
+
+                FilledTonalButton(
+                    onClick = { showAdvanced = !showAdvanced },
+                    modifier = Modifier.align(Alignment.End),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = dialogPrimaryColor.copy(alpha = 0.12f),
+                        contentColor = dialogSecondaryColor
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = if (showAdvanced) Icons.Default.ExpandLess else Icons.Default.Tune,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(if (showAdvanced) "收起高级设置" else "展开高级设置")
+                }
+
+                if (lastRemoteDebugSummary.isNotBlank()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = dialogFieldColor)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Info,
+                                        contentDescription = null,
+                                        tint = dialogSecondaryColor,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(
+                                        text = "上次远程调试信息",
+                                        color = dialogTextColor,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+
+                                TextButton(
+                                    onClick = {
+                                        val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                        clipboardManager.setPrimaryClip(
+                                            ClipData.newPlainText("remote_debug_summary", lastRemoteDebugSummary)
+                                        )
+                                        android.widget.Toast.makeText(
+                                            context,
+                                            "已复制上次远程调试信息",
+                                            android.widget.Toast.LENGTH_SHORT
+                                        ).show()
+                                    },
+                                    colors = ButtonDefaults.textButtonColors(contentColor = dialogSecondaryColor)
+                                ) {
+                                    Text("复制")
+                                }
+                            }
+
+                            SelectionContainer {
+                                Text(
+                                    text = lastRemoteDebugSummary,
+                                    color = dialogMutedTextColor,
+                                    fontSize = 12.sp,
+                                    lineHeight = 18.sp,
+                                    fontFamily = FontFamily.Monospace
+                                )
+                            }
+
+                            TextButton(
+                                onClick = {
+                                    preferencesManager.clearLastRemoteDebugSummary()
+                                    lastRemoteDebugSummary = ""
+                                },
+                                modifier = Modifier.align(Alignment.End),
+                                colors = ButtonDefaults.textButtonColors(contentColor = dialogMutedTextColor)
+                            ) {
+                                Text("清空调试信息")
+                            }
+                        }
+                    }
+                }
+
+                if (url.isNotBlank() || title.isNotBlank() || hasSavedAdvancedInput) {
+                    TextButton(
+                        onClick = {
+                            url = ""
+                            title = ""
+                            sourcePageUrl = ""
+                            referer = ""
+                            origin = ""
+                            cookie = ""
+                            authorization = ""
+                            userAgent = ""
+                            showAdvanced = false
+                            preferencesManager.clearLastRemoteInputDraft()
+                        },
+                        modifier = Modifier.align(Alignment.End),
+                        colors = ButtonDefaults.textButtonColors(contentColor = dialogMutedTextColor)
+                    ) {
+                        Text("清空已保存输入")
+                    }
+                }
+
+                if (showAdvanced) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = dialogContainerColor)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(4.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Security,
+                                    contentDescription = null,
+                                    tint = dialogSecondaryColor,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = "高级请求头",
+                                    color = dialogTextColor,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+
+                            OutlinedTextField(
+                                value = referer,
+                                onValueChange = { referer = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Referer（可选）") },
+                                singleLine = true,
+                                colors = textFieldColors
+                            )
+
+                            OutlinedTextField(
+                                value = origin,
+                                onValueChange = { origin = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Origin（可选）") },
+                                singleLine = true,
+                                colors = textFieldColors
+                            )
+
+                            OutlinedTextField(
+                                value = cookie,
+                                onValueChange = { cookie = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Cookie（可选）") },
+                                singleLine = true,
+                                colors = textFieldColors
+                            )
+
+                            OutlinedTextField(
+                                value = authorization,
+                                onValueChange = { authorization = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Authorization（可选）") },
+                                singleLine = true,
+                                colors = textFieldColors
+                            )
+
+                            OutlinedTextField(
+                                value = userAgent,
+                                onValueChange = { userAgent = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("User-Agent（可选）") },
+                                singleLine = true,
+                                colors = textFieldColors
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val parsedInput = RemoteUrlParser.parsePlaybackInput(url)
+                    val normalizedSourcePageUrl = sourcePageUrl.trim().ifBlank { referer.trim() }
+                    val headers = linkedMapOf<String, String>().apply {
+                        putAll(parsedInput?.headers.orEmpty())
+                    }
+                    if (referer.isNotBlank()) {
+                        headers["Referer"] = referer.trim()
+                    }
+                    if (origin.isNotBlank()) {
+                        headers["Origin"] = origin.trim()
+                    }
+                    if (cookie.isNotBlank()) {
+                        headers["Cookie"] = cookie.trim()
+                    }
+                    if (authorization.isNotBlank()) {
+                        headers["Authorization"] = authorization.trim()
+                    }
+                    if (userAgent.isNotBlank()) {
+                        headers["User-Agent"] = userAgent.trim()
+                    }
+
+                    preferencesManager.setLastRemoteInputUrl(url)
+                    preferencesManager.setLastRemoteInputTitle(title.trim())
+                    preferencesManager.setLastRemoteInputSourcePageUrl(normalizedSourcePageUrl)
+                    preferencesManager.setLastRemoteInputReferer(referer.trim())
+                    preferencesManager.setLastRemoteInputOrigin(origin.trim())
+                    preferencesManager.setLastRemoteInputCookie(cookie.trim())
+                    preferencesManager.setLastRemoteInputAuthorization(authorization.trim())
+                    preferencesManager.setLastRemoteInputUserAgent(userAgent.trim())
+
+                    onConfirm(
+                        RemotePlaybackRequest(
+                            url = parsedInput?.url ?: url.trim(),
+                            title = title.trim(),
+                            sourcePageUrl = normalizedSourcePageUrl,
+                            headers = RemotePlaybackHeaders.normalize(headers),
+                            source = RemotePlaybackRequest.Source.DIRECT_INPUT
+                        )
+                    )
+                },
+                enabled = url.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = dialogPrimaryColor,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("播放")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(contentColor = dialogMutedTextColor)
+            ) {
+                Text("取消")
+            }
+        }
+    )
+}
+
 /**
  * 可展开的操作按钮
  */
@@ -290,7 +698,6 @@ fun ExpandableActionButton(
     onWebDavClick: () -> Unit,
     onTVClick: () -> Unit
 ) {
-    val context = LocalContext.current
     var localIsExpanded by remember { mutableStateOf(isExpanded) }
     
     LaunchedEffect(isExpanded) {

@@ -1,14 +1,13 @@
-
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-    id 'kotlin-kapt'
+    id 'org.jetbrains.kotlin.kapt'
+    id 'org.jetbrains.kotlin.plugin.parcelize'
     id 'com.mikepenz.aboutlibraries.plugin'
 }
 
-apply plugin: 'kotlin-parcelize'
+def versions = rootProject.ext.versions
 
-// 读取 local.properties 中的 DanDanPlay API 凭证
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
 if (localPropertiesFile.exists()) {
@@ -17,188 +16,149 @@ if (localPropertiesFile.exists()) {
 
 android {
     namespace 'com.fam4k007.videoplayer'
-    compileSdkVersion 34
-    
-    // ========== APK 分包配置 ==========
-    // 只编译 64 位架构，加快编译速度
+    compileSdk 34
+    ndkVersion versions.ndk
+
     splits {
         abi {
             enable true
             reset()
-            include 'arm64-v8a'  // 只包含 64 位架构
-            universalApk false  // 不生成包含所有架构的通用 APK
+            include 'arm64-v8a'
+            universalApk false
         }
     }
-    
+
     defaultConfig {
         applicationId "com.fam4k007.videoplayer"
-        minSdkVersion 26
-        targetSdkVersion 34
+        minSdk 26
+        targetSdk 34
         versionCode 22
         versionName "1.2.2"
-        
-        // DanDanPlay API 凭证（从 local.properties 读取）
+
         buildConfigField "String", "DANDANPLAY_APP_ID", "\"${localProperties.getProperty('dandanplay.appId', '')}\""
         buildConfigField "String", "DANDANPLAY_APP_SECRET", "\"${localProperties.getProperty('dandanplay.appSecret', '')}\""
-        
-        // Wyzie 字幕 API 密钥（从 local.properties 读取）
         buildConfigField "String", "WYZIE_API_KEY", "\"${localProperties.getProperty('wyzie.apiKey', '')}\""
-        
-        // 移除 defaultConfig 中的 ndk 配置，让各个 buildType 自己控制
-    }
-    buildTypes {
-        debug {
-            minifyEnabled false
-            debuggable true
-            
-            // Debug 版本也使用分包配置，由 splits 控制
-        }
-        
-        release {
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            
-            // Release 版本也使用分包配置，由 splits 控制
-        }
-    }
-    
-    // 排除 mpv-android-lib 自带的默认字体文件，使用自定义字幕字体系统
-    aaptOptions {
-        ignoreAssetsPattern "!subfont.ttf"
-    }
-    
-    // 打包配置：排除调试文件和重复资源
-    packagingOptions {
-        resources {
-            excludes += ['DebugProbesKt.bin']  // 移除协程调试探针文件
-            excludes += ['META-INF/kotlinx_coroutines_core.version']  // 移除协程版本文件
-            excludes += ['META-INF/CHANGES']  // 移除 jsoup 更新日志
-            excludes += ['META-INF/README.md']  // 移除 jsoup 说明文档
-            excludes += ['kotlin-tooling-metadata.json']  // 移除 Kotlin 工具链元数据
-        }
-    }
-    
-    compileOptions {
-        sourceCompatibility = 17
-        targetCompatibility = 17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
-        // Room Schema 导出配置
-        freeCompilerArgs += ["-Xopt-in=kotlin.RequiresOptIn"]
-    }
-    
-    buildFeatures {
-        viewBinding true
-        compose true
-        buildConfig true  // 启用 BuildConfig 功能，支持 buildConfigField
-    }
-    
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.3"  // 兼容 Kotlin 1.9.10
-    }
-    
-    // Room Schema 导出路径配置
-    defaultConfig {
+
         javaCompileOptions {
             annotationProcessorOptions {
                 arguments += ["room.schemaLocation": "$projectDir/schemas".toString()]
             }
         }
     }
-    
-    // Kapt 配置 (用于 Room 编译)
-    kapt {
-        arguments {
-            arg("room.schemaLocation", "$projectDir/schemas")
-            arg("room.incremental", "true")
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            debuggable true
+        }
+
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    
-    // ========== 为分包 APK 设置不同的版本号 ==========
-    // 这样 Google Play 可以为不同设备提供正确的 APK
-    applicationVariants.all { variant ->
-        variant.outputs.each { output ->
-            def abiName = output.getFilter(com.android.build.OutputFile.ABI)
-            if (abiName != null) {
-                // 为不同架构分配不同的版本码偏移
-                // arm64-v8a: +2, armeabi-v7a: +1
-                def abiVersionCodes = [
-                    'arm64-v8a': 2,
-                    'armeabi-v7a': 1
-                ]
-                output.versionCodeOverride = 
-                    defaultConfig.versionCode * 10 + (abiVersionCodes[abiName] ?: 0)
-            }
+
+    androidResources {
+        ignoreAssetsPattern = "!subfont.ttf"
+    }
+
+    packaging {
+        resources {
+            excludes += [
+                'DebugProbesKt.bin',
+                'META-INF/kotlinx_coroutines_core.version',
+                'META-INF/CHANGES',
+                'META-INF/README.md',
+                'kotlin-tooling-metadata.json'
+            ]
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+        freeCompilerArgs += ["-opt-in=kotlin.RequiresOptIn"]
+    }
+
+    buildFeatures {
+        viewBinding true
+        compose true
+        buildConfig true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion versions.composeCompiler
+    }
+}
+
+kapt {
+    correctErrorTypes true
+    arguments {
+        arg("room.schemaLocation", "$projectDir/schemas")
+        arg("room.incremental", "true")
+    }
+}
+
+def abiVersionCodes = [
+    'arm64-v8a'  : 2,
+    'armeabi-v7a': 1
+]
+
+android.applicationVariants.all { variant ->
+    variant.outputs.each { output ->
+        def abiName = output.getFilter(com.android.build.OutputFile.ABI)
+        if (abiName != null) {
+            output.versionCodeOverride = variant.versionCode * 10 + (abiVersionCodes[abiName] ?: 0)
         }
     }
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.10"
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.recyclerview:recyclerview:1.3.1'
-    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
-    implementation 'com.google.android.material:material:1.9.0'
-    implementation 'androidx.cardview:cardview:1.0.0'
-    
-    // Compose BOM (Bill of Materials)
-    def composeBom = platform('androidx.compose:compose-bom:2023.10.01')
+    implementation "androidx.appcompat:appcompat:${versions.appcompat}"
+    implementation "androidx.recyclerview:recyclerview:${versions.recyclerview}"
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:${versions.swipeRefresh}"
+    implementation "com.google.android.material:material:${versions.material}"
+    implementation "androidx.cardview:cardview:${versions.cardview}"
+
+    def composeBom = platform("androidx.compose:compose-bom:${versions.composeBom}")
     implementation composeBom
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.material3:material3'
     implementation 'androidx.compose.ui:ui-tooling-preview'
-    implementation 'androidx.activity:activity-compose:1.8.0'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1'
-    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.6.1'
-    implementation 'androidx.compose.material:material-icons-extended'  // Material Icons Extended
+    implementation "androidx.activity:activity-compose:${versions.activityCompose}"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:${versions.lifecycle}"
+    implementation "androidx.lifecycle:lifecycle-runtime-compose:${versions.lifecycle}"
+    implementation 'androidx.compose.material:material-icons-extended'
     debugImplementation 'androidx.compose.ui:ui-tooling'
-    
+
     implementation(name: 'mpv-android-lib-v0.1.10', ext: 'aar')
-    // Danmaku - 弹幕库
     implementation(name: 'DanmakuFlameMaster', ext: 'aar')
-    // WebDAV - Sardine library
     implementation files('libs/sardine-1.0.2.jar')
     implementation files('libs/simple-xml-2.7.1.jar')
-    // Glide - image loading for video thumbnails
-    implementation 'com.github.bumptech.glide:glide:4.15.1'
-    // Lifecycle and Coroutines
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
-    // OkHttp - for network requests
-    implementation 'com.squareup.okhttp3:okhttp:4.11.0'
-    // Jsoup - for HTML parsing
-    implementation 'org.jsoup:jsoup:1.16.1'
-    // Room Database
-    implementation 'androidx.room:room-runtime:2.5.2'
-    implementation 'androidx.room:room-ktx:2.5.2'
-    kapt 'androidx.room:room-compiler:2.5.2'
-    
-    // WorkManager - 后台任务调度
-    implementation 'androidx.work:work-runtime-ktx:2.9.0'
-    
-    // Paging3 - 分页加载防OOM
-    implementation 'androidx.paging:paging-runtime-ktx:3.2.1'
-    implementation 'androidx.paging:paging-compose:3.2.1'
-    
-    // 二维码生成 - B站扫码登录
-    implementation 'com.google.zxing:core:3.5.1'
-    
-    // 图片加载 (Coil) - B站番剧封面
-    implementation 'io.coil-kt:coil-compose:2.5.0'
-    implementation 'io.coil-kt:coil-video:2.5.0'  // 视频帧提取支持
-    
-    // Gson - JSON解析
-    implementation 'com.google.code.gson:gson:2.10.1'
-    
-    // 加密存储 - EncryptedSharedPreferences (AndroidX Security)
-    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
-    
-    // AboutLibraries - 自动化开源许可证管理
-    implementation 'com.mikepenz:aboutlibraries-core:10.10.0'
-    implementation 'com.mikepenz:aboutlibraries-compose:10.10.0'
-    
-    // If you use annotation processing for Glide's generated API, enable kapt and add the compiler below:
-    // kapt 'com.github.bumptech.glide:compiler:4.15.1'
+
+    implementation "com.github.bumptech.glide:glide:${versions.glide}"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:${versions.lifecycle}"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${versions.coroutines}"
+    implementation "com.squareup.okhttp3:okhttp:${versions.okhttp}"
+    implementation "org.jsoup:jsoup:${versions.jsoup}"
+    implementation "androidx.room:room-runtime:${versions.room}"
+    implementation "androidx.room:room-ktx:${versions.room}"
+    kapt "androidx.room:room-compiler:${versions.room}"
+    implementation "androidx.work:work-runtime-ktx:${versions.work}"
+    implementation "androidx.paging:paging-runtime-ktx:${versions.paging}"
+    implementation "androidx.paging:paging-compose:${versions.paging}"
+    implementation "com.google.zxing:core:${versions.zxing}"
+    implementation "io.coil-kt:coil-compose:${versions.coil}"
+    implementation "io.coil-kt:coil-video:${versions.coil}"
+    implementation "com.google.code.gson:gson:${versions.gson}"
+    implementation "androidx.security:security-crypto:${versions.securityCrypto}"
+    implementation "com.mikepenz:aboutlibraries-core:${versions.aboutLibraries}"
+    implementation "com.mikepenz:aboutlibraries-compose:${versions.aboutLibraries}"
+
+    testImplementation 'junit:junit:4.13.2'
 }

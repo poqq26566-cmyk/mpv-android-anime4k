@@ -5,11 +5,19 @@
     android:background="#000000"
     android:fitsSystemWindows="false">
 
+    <!--
+      Portrait UI (v0):
+      Keep all existing view IDs to avoid touching VideoPlayerActivity logic.
+      The key behavioral change is that the video surface (and related overlays) are constrained above the bottom control panel,
+      so controls no longer cover the video area in portrait.
+    -->
+
     <com.fam4k007.videoplayer.player.CustomMPVView
         android:id="@+id/surfaceView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerInParent="true"
+        android:layout_alignParentTop="true"
+        android:layout_above="@id/controlPanel"
         android:fitsSystemWindows="false" />
 
     <!-- 弹幕视图 - 覆盖在视频播放器上方 -->
@@ -17,13 +25,16 @@
         android:id="@+id/danmakuView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerInParent="true" />
+        android:layout_alignParentTop="true"
+        android:layout_above="@id/controlPanel" />
 
     <!-- 点击区域，用于显示/隐藏控制面板 -->
     <View
         android:id="@+id/clickArea"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_alignParentTop="true"
+        android:layout_above="@id/controlPanel"
         android:background="@android:color/transparent" />
 
     <!-- 加载动画 -->
@@ -32,6 +43,7 @@
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_centerInParent="true"
+        android:layout_above="@id/controlPanel"
         android:indeterminateTint="#FFFFFF"
         android:visibility="gone" />
 
@@ -42,6 +54,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_centerVertical="true"
+        android:layout_above="@id/controlPanel"
         android:layout_marginStart="20dp"
         android:visibility="gone" />
 
@@ -52,6 +65,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
+        android:layout_above="@id/controlPanel"
         android:layout_marginEnd="20dp"
         android:visibility="gone" />
 
@@ -67,6 +81,7 @@
         android:focusable="true"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:layout_centerVertical="true"
+        android:layout_above="@id/controlPanel"
         android:layout_alignParentStart="true"
         android:layout_marginStart="60dp"
         android:visibility="gone" />
@@ -83,6 +98,7 @@
         android:focusable="true"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:layout_centerVertical="true"
+        android:layout_above="@id/controlPanel"
         android:layout_alignParentEnd="true"
         android:layout_marginEnd="60dp"
         android:visibility="gone" />
@@ -110,7 +126,6 @@
 
         <!-- 实际内容区域 -->
         <LinearLayout
-            android:id="@+id/topInfoContentRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -166,9 +181,8 @@
                 android:gravity="end|center_vertical"
                 android:layout_marginEnd="60dp">
 
-                <!-- 电量和时间显示（向左移动，给字幕按钮留空间） -->
+                <!-- 电量和时间显示 -->
                 <LinearLayout
-                    android:id="@+id/topStatusContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="32dp"
                     android:orientation="vertical"
@@ -197,7 +211,7 @@
 
                 </LinearLayout>
 
-                <!-- 字幕按钮（新增） -->
+                <!-- 字幕按钮 -->
                 <ImageView
                     android:id="@+id/btnSubtitle"
                     android:layout_width="32dp"
@@ -210,7 +224,7 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:layout_marginStart="4dp" />
 
-                <!-- 弹幕按钮（新增） -->
+                <!-- 弹幕按钮 -->
                 <ImageView
                     android:id="@+id/btnDanmaku"
                     android:layout_width="32dp"
@@ -266,7 +280,6 @@
 
         </LinearLayout>
     </LinearLayout>
-
 
     <!-- 底部渐变阴影背景层 -->
     <View
@@ -401,7 +414,7 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:layout_marginStart="12dp" />
 
-                    <!-- 播放按钮（屏幕正中间的参考点） -->
+                    <!-- 播放按钮 -->
                     <ImageView
                         android:id="@+id/btnPlayPause"
                         android:layout_width="48dp"
@@ -466,32 +479,12 @@
                     android:text="超分辨率"
                     android:textSize="12sp"
                     android:textColor="#FFFFFF"
-                    android:textAllCaps="false"
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp"
                     android:background="@android:color/transparent"
-                    android:layout_gravity="start|bottom"
-                    android:layout_marginStart="18dp"
-                    android:layout_marginBottom="4dp" />
-
-                <!-- 横屏旋转按钮 - 右下角（随控制栏显示隐藏） -->
-                <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/btnRotateCorner"
-                    android:layout_width="wrap_content"
-                    android:layout_height="38dp"
-                    android:minWidth="80dp"
-                    android:text="旋转"
-                    android:textSize="12sp"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:gravity="center"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:background="@android:color/transparent"
-                    android:layout_gravity="end|bottom"
-                    android:layout_marginEnd="18dp"
-                    android:layout_marginBottom="4dp"
-                    android:visibility="gone" />
+                    android:elevation="2dp"
+                    android:layout_gravity="start|center_vertical"
+                    android:layout_marginStart="50dp" />
 
             </FrameLayout>
         </LinearLayout>
@@ -504,6 +497,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
+        android:layout_above="@id/controlPanel"
         android:layout_alignParentStart="true"
         android:layout_marginStart="20dp"
         android:background="#66000000"
@@ -539,39 +533,28 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
+        android:layout_above="@id/controlPanel"
         android:layout_alignParentEnd="true"
-        android:layout_marginEnd="40dp"
+        android:layout_marginEnd="30dp"
+        android:background="#66000000"
         android:orientation="vertical"
-        android:visibility="gone"
-        android:gravity="center_horizontal"
-        android:background="@drawable/indicator_card_background"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="16dp">
+        android:padding="10dp"
+        android:gravity="center"
+        android:visibility="gone">
 
-        <!-- 亮度图标 -->
-        <ImageView
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:src="@drawable/ic_brightness"
-            android:tint="#FFFFFF"
-            android:layout_marginBottom="8dp" />
-
-        <!-- 亮度数值（1-10） -->
         <TextView
             android:id="@+id/brightnessText"
-            android:layout_width="44dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="5"
+            android:text="50"
             android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginBottom="8dp" />
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
-        <!-- 背景容器 -->
         <FrameLayout
             android:layout_width="5dp"
             android:layout_height="120dp"
+            android:layout_marginTop="8dp"
             android:background="@drawable/progress_track_background">
 
             <!-- 亮度条 -->
@@ -592,39 +575,28 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
+        android:layout_above="@id/controlPanel"
         android:layout_alignParentStart="true"
-        android:layout_marginStart="40dp"
+        android:layout_marginStart="30dp"
+        android:background="#66000000"
         android:orientation="vertical"
-        android:visibility="gone"
-        android:gravity="center_horizontal"
-        android:background="@drawable/indicator_card_background"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="16dp">
+        android:padding="10dp"
+        android:gravity="center"
+        android:visibility="gone">
 
-        <!-- 音量图标 -->
-        <ImageView
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:src="@drawable/ic_volume"
-            android:tint="#FFFFFF"
-            android:layout_marginBottom="8dp" />
-
-        <!-- 音量数值（1-10） -->
         <TextView
             android:id="@+id/volumeText"
-            android:layout_width="44dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="5"
+            android:text="50%"
             android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginBottom="8dp" />
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
-        <!-- 背景容器 -->
         <FrameLayout
             android:layout_width="5dp"
             android:layout_height="120dp"
+            android:layout_marginTop="8dp"
             android:background="@drawable/progress_track_background">
 
             <!-- 音量条 -->
@@ -639,52 +611,13 @@
 
     </LinearLayout>
 
-    <!-- 竖屏悬浮按钮：超分辨率（左侧中间） -->
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnAnime4KFloat"
-        android:layout_width="wrap_content"
-        android:layout_height="38dp"
-        android:minWidth="80dp"
-        android:text="超分辨率"
-        android:textSize="12sp"
-        android:textAllCaps="false"
-        android:textColor="#FFFFFF"
-        android:gravity="center"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:background="@android:color/transparent"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="14dp"
-        android:layout_marginBottom="122dp"
-        android:visibility="gone" />
-
-    <!-- 竖屏悬浮按钮：旋转/切换布局（右侧中间） -->
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnRotateFloat"
-        android:layout_width="wrap_content"
-        android:layout_height="38dp"
-        android:minWidth="80dp"
-        android:text="旋转"
-        android:textSize="12sp"
-        android:textAllCaps="false"
-        android:textColor="#FFFFFF"
-        android:gravity="center"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:background="@android:color/transparent"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginEnd="12dp"
-        android:layout_marginBottom="122dp"
-        android:visibility="gone" />
-
-    <!-- 进度调整提示（屏幕中央）- 优化为圆角背景 -->
+    <!-- 进度调整提示（屏幕中央） -->
     <TextView
         android:id="@+id/seekHint"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
+        android:layout_above="@id/controlPanel"
         android:background="@drawable/speed_hint_background"
         android:paddingHorizontal="28dp"
         android:paddingVertical="18dp"
@@ -732,16 +665,16 @@
 
     </LinearLayout>
 
-    <!-- 进度恢复提示框（左下角，横向布局） -->
+    <!-- 进度恢复提示框（左下角） -->
     <LinearLayout
         android:id="@+id/resumeProgressPrompt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:minHeight="36dp"
         android:layout_alignParentStart="true"
-        android:layout_alignParentBottom="true"
+        android:layout_above="@id/controlPanel"
         android:layout_marginStart="20dp"
-        android:layout_marginBottom="130dp"
+        android:layout_marginBottom="10dp"
         android:orientation="horizontal"
         android:background="@drawable/resume_prompt_background"
         android:paddingVertical="6dp"
@@ -750,12 +683,11 @@
         android:visibility="gone"
         android:elevation="8dp">
 
-        <!-- 关闭按钮 (X) -->
         <TextView
             android:id="@+id/btnResumePromptClose"
             android:layout_width="18dp"
             android:layout_height="18dp"
-            android:text="✕"
+            android:text="✖"
             android:textColor="#FFFFFF"
             android:textSize="14sp"
             android:gravity="center"
@@ -764,7 +696,6 @@
             android:focusable="true"
             android:layout_marginEnd="8dp" />
 
-        <!-- 提示文字 -->
         <TextView
             android:id="@+id/tvResumePromptText"
             android:layout_width="wrap_content"
@@ -774,7 +705,6 @@
             android:textSize="12sp"
             android:layout_marginEnd="10dp" />
 
-        <!-- 重新开始按钮 -->
         <TextView
             android:id="@+id/btnResumePromptConfirm"
             android:layout_width="wrap_content"
@@ -783,22 +713,9 @@
             android:textColor="@color/primary"
             android:textSize="12sp"
             android:textStyle="bold"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="3dp"
-            android:background="@drawable/resume_button_background"
             android:clickable="true"
             android:focusable="true" />
 
     </LinearLayout>
-
-    <!-- 截图状态指示器 -->
-    <include
-        android:id="@+id/screenshotStatusContainer"
-        layout="@layout/view_screenshot_status"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="120dp" />
 
 </RelativeLayout>

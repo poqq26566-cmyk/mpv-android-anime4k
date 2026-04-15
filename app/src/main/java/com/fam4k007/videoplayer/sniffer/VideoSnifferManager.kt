@@ -25,15 +25,19 @@ object VideoSnifferManager {
      * 添加检测到的视频
      */
     fun addVideo(video: DetectedVideo) {
-        // URL去重
-        if (urlSet.contains(video.url)) {
-            Log.d(TAG, "Video already exists: ${video.url}")
+        val currentList = _detectedVideos.value.toMutableList()
+        val existingIndex = currentList.indexOfFirst { it.url == video.url }
+
+        if (existingIndex >= 0) {
+            val mergedVideo = mergeVideo(currentList[existingIndex], video)
+            currentList.removeAt(existingIndex)
+            currentList.add(0, mergedVideo)
+            _detectedVideos.value = currentList
+            Log.d(TAG, "Updated video: ${mergedVideo.getDisplayText()}, total: ${currentList.size}")
             return
         }
-        
+
         urlSet.add(video.url)
-        
-        val currentList = _detectedVideos.value.toMutableList()
         currentList.add(0, video)  // 添加到列表开头
         
         // 限制列表大小
@@ -99,5 +103,21 @@ object VideoSnifferManager {
      */
     fun getVideoCount(): Int {
         return _detectedVideos.value.size
+    }
+
+    internal fun mergeVideo(existing: DetectedVideo, incoming: DetectedVideo): DetectedVideo {
+        val mergedHeaders = LinkedHashMap(existing.headers)
+        incoming.headers.forEach { (key, value) ->
+            if (value.isNotBlank()) {
+                mergedHeaders[key] = value
+            }
+        }
+
+        return existing.copy(
+            title = incoming.title.ifBlank { existing.title },
+            pageUrl = incoming.pageUrl.ifBlank { existing.pageUrl },
+            headers = mergedHeaders,
+            timestamp = maxOf(existing.timestamp, incoming.timestamp)
+        )
     }
 }

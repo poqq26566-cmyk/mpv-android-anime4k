@@ -49,6 +49,7 @@ class PlayerControlsManager(
         fun onSpeedClick()
         fun onSeekBarChange(position: Double)
         fun onBackClick()
+        fun onControlsVisibilityChanged(visible: Boolean)
         fun onAspectRatioClick()  // 新增：画面比例按钮回调
         fun onLockClick()  // 新增：锁定按钮回调
         fun onVideoTitleClick()  // 新增：视频标题点击回调
@@ -221,6 +222,7 @@ class PlayerControlsManager(
         
         // 启动自动隐藏
         resetAutoHideTimer()
+        notifyControlsVisibilityChanged()
         
         Log.d(TAG, "PlayerControlsManager initialized")
     }
@@ -498,6 +500,7 @@ class PlayerControlsManager(
         }
         
         isVisible = true
+        notifyControlsVisibilityChanged()
         resetAutoHideTimer()
     }
 
@@ -551,6 +554,7 @@ class PlayerControlsManager(
             ?.start()
         
         isVisible = false
+        notifyControlsVisibilityChanged()
         handler.removeCallbacks(hideControlsRunnable)
     }
 
@@ -795,6 +799,8 @@ class PlayerControlsManager(
             
             Log.d(TAG, "Controls unlocked")
         }
+
+        notifyControlsVisibilityChanged()
     }
     
     /**
@@ -869,6 +875,10 @@ class PlayerControlsManager(
         return isLocked
     }
 
+    private fun notifyControlsVisibilityChanged() {
+        callback.onControlsVisibilityChanged(isVisible && !isLocked)
+    }
+
     /**
      * 清理资源
      */
@@ -909,6 +919,7 @@ class PlayerControlsManager(
         btnAspectRatio = null
         btnLock = null
         btnUnlock = null
+        btnUnlockRight = null
         btnMore = null
         btnSpeed = null
         btnAnime4K = null

@@ -1,20 +1,32 @@
-// Top-level build file
-buildscript {
-    ext.kotlin_version = '1.9.10'  // 升级到 1.9.10，兼容 AGP 8.0.2
-    repositories {
-        // 使用阿里云镜像加速
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
-        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath "com.android.tools.build:gradle:8.0.2"
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.mikepenz.aboutlibraries.plugin:aboutlibraries-plugin:10.10.0"
-    }
+plugins {
+    id 'com.android.application' version '8.5.2' apply false
+    id 'org.jetbrains.kotlin.android' version '1.9.25' apply false
+    id 'org.jetbrains.kotlin.kapt' version '1.9.25' apply false
+    id 'org.jetbrains.kotlin.plugin.parcelize' version '1.9.25' apply false
+    id 'com.mikepenz.aboutlibraries.plugin' version '10.10.0' apply false
 }
 
-// 仓库配置已移至 settings.gradle
-// 任务占位
+ext.versions = [
+    ndk              : '25.2.9519653',
+    appcompat        : '1.6.1',
+    recyclerview     : '1.3.1',
+    swipeRefresh     : '1.1.0',
+    material         : '1.9.0',
+    cardview         : '1.0.0',
+    composeBom       : '2023.10.01',
+    composeCompiler  : '1.5.15',
+    activityCompose  : '1.8.0',
+    lifecycle        : '2.6.1',
+    glide            : '4.15.1',
+    coroutines       : '1.7.3',
+    okhttp           : '4.11.0',
+    jsoup            : '1.16.1',
+    room             : '2.5.2',
+    work             : '2.9.0',
+    paging           : '3.2.1',
+    zxing            : '3.5.1',
+    coil             : '2.5.0',
+    gson             : '2.10.1',
+    securityCrypto   : '1.1.0-alpha06',
+    aboutLibraries   : '10.10.0'
+]
