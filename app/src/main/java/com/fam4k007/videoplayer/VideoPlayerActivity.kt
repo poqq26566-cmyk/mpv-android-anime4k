@@ -82,7 +82,6 @@ class VideoPlayerActivity : AppCompatActivity(),
         private const val SEEK_DEBUG = "SEEK_DEBUG"  // 快进调试专用日志标签
         private val REMOTE_URI_SCHEMES = setOf("http", "https", "rtsp", "rtmp", "rtmps")
         private const val EXTRA_PORTRAIT_UI = "portrait_ui"
-        private const val EXTRA_START_POSITION_SEC = "start_position_sec"
     }
 
     private lateinit var playbackEngine: PlaybackEngine
@@ -187,15 +186,9 @@ class VideoPlayerActivity : AppCompatActivity(),
         super.onCreate(savedInstanceState)
 
         val portraitUi = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
-        requestedOrientation = if (portraitUi) {
-            ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
-        } else {
-            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-        }
-
-        setContentView(
-            if (portraitUi) R.layout.activity_video_player_portrait else R.layout.activity_video_player
-        )
+        // Always use the same layout to avoid tearing down / re-initializing MPV when toggling portrait UI.
+        // Portrait mode is applied by updating RelativeLayout rules at runtime.
+        setContentView(R.layout.activity_video_player)
         
         // 确保内容不受系统栏影响，视频画面完全居中
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -318,12 +311,6 @@ class VideoPlayerActivity : AppCompatActivity(),
         }
 
         savedPosition = preferencesManager.getPlaybackPosition(videoUri.toString())
-        intent.getDoubleExtra(EXTRA_START_POSITION_SEC, -1.0)
-            .takeIf { it > 0.0 }
-            ?.let { overridePosition ->
-                savedPosition = overridePosition
-                Logger.d(TAG, "Overriding start position from intent: $savedPosition seconds")
-            }
         com.fam4k007.videoplayer.utils.Logger.d(TAG, "Saved position: $savedPosition seconds")
 
         mpvView = findViewById(R.id.surfaceView)
@@ -398,6 +385,9 @@ class VideoPlayerActivity : AppCompatActivity(),
         danmakuManager.setPlaybackEngine(playbackEngine)
         
         handleVideoListIntent()
+
+        // Apply portrait UI last: by this point all views are inflated and bound.
+        applyPortraitUiEnabled(portraitUi)
         
     }
 
@@ -1046,24 +1036,58 @@ class VideoPlayerActivity : AppCompatActivity(),
 
     override fun onTogglePortraitUi() {
         val currentPortrait = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
-        val resumePosition = try {
-            playbackEngine.currentPosition
-        } catch (_: Exception) {
-            savedPosition
+        val nextPortrait = !currentPortrait
+        intent.putExtra(EXTRA_PORTRAIT_UI, nextPortrait)
+        applyPortraitUiEnabled(nextPortrait)
+    }
+
+    private fun applyPortraitUiEnabled(enabled: Boolean) {
+        requestedOrientation = if (enabled) {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         }
 
-        // VideoPlayerActivity is configured as singleTop. Starting itself and then finishing
-        // would close the current activity (because no new instance is created). Instead,
-        // update the intent and force a recreation.
-        val nextIntent = Intent(this, VideoPlayerActivity::class.java).apply {
-            data = videoUri
-            replaceExtras(intent)
-            putExtra(EXTRA_PORTRAIT_UI, !currentPortrait)
-            putExtra(EXTRA_START_POSITION_SEC, resumePosition)
-            remotePlaybackRequest?.let { putExtra(RemotePlaybackLauncher.EXTRA_REMOTE_REQUEST, it) }
+        val aboveControlIds = listOf(
+            R.id.surfaceView,
+            R.id.danmakuView,
+            R.id.clickArea,
+            R.id.loadingIndicator,
+            R.id.doubleTapSeekLeft,
+            R.id.doubleTapSeekRight,
+            R.id.btnUnlock,
+            R.id.btnUnlockRight,
+            R.id.brightnessIndicator,
+            R.id.volumeIndicator,
+            R.id.seekHint,
+            R.id.resumePlaybackPrompt
+        )
+
+        aboveControlIds.forEach { id ->
+            val v = findViewById<View>(id) ?: return@forEach
+            val lp = v.layoutParams as? android.widget.RelativeLayout.LayoutParams ?: return@forEach
+            if (enabled) {
+                lp.addRule(android.widget.RelativeLayout.ABOVE, R.id.controlPanel)
+            } else {
+                lp.removeRule(android.widget.RelativeLayout.ABOVE)
+            }
+            v.layoutParams = lp
         }
-        setIntent(nextIntent)
-        recreate()
+
+        // Resume prompt location: keep it visible above the bottom controls in portrait.
+        findViewById<View>(R.id.resumeProgressPrompt)?.let { v ->
+            val lp = v.layoutParams as? android.widget.RelativeLayout.LayoutParams ?: return@let
+            if (enabled) {
+                lp.addRule(android.widget.RelativeLayout.ABOVE, R.id.controlPanel)
+                lp.removeRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM)
+                lp.bottomMargin = (10f * resources.displayMetrics.density).toInt()
+            } else {
+                lp.removeRule(android.widget.RelativeLayout.ABOVE)
+                lp.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM)
+                lp.bottomMargin = (130f * resources.displayMetrics.density).toInt()
+            }
+            v.layoutParams = lp
+        }
     }
     
     /**
