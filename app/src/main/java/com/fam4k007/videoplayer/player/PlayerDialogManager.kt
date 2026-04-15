@@ -567,13 +567,7 @@ class PlayerDialogManager(
         if (hasChapters) {
             items.add(activity.getString(R.string.player_menu_chapter))
         }
-        items.addAll(listOf(
-            activity.getString(R.string.player_menu_screenshot),
-            activity.getString(R.string.player_menu_audio_track),
-            activity.getString(R.string.player_menu_decoder),
-            activity.getString(R.string.player_menu_skip_intro_outro),
-            assOverrideText
-        ))
+        items.addAll(listOf("截图", "音轨", "解码", "片头片尾", assOverrideText, "切换竖屏界面"))
         
         val btnMore = activity.findViewById<ImageView>(R.id.btnMore)
 
@@ -599,6 +593,7 @@ class PlayerDialogManager(
                 3 -> showDecoderDialog()  // 解码方式
                 4 -> (activity as? MoreOptionsCallback)?.onShowSkipSettings()  // 片头片尾设置
                 5 -> toggleAssOverride()  // 点击切换样式覆盖
+                6 -> (activity as? MoreOptionsCallback)?.onTogglePortraitUi()
             }
         }
     }
@@ -963,6 +958,7 @@ interface DanmakuDialogCallback {
 interface MoreOptionsCallback {
     fun onScreenshot()
     fun onShowSkipSettings()
+    fun onTogglePortraitUi()
 }
 
 interface VideoAspectCallback {

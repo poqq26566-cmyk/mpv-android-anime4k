@@ -12,6 +12,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
+import android.content.pm.ActivityInfo
 import android.view.MotionEvent
 import android.view.Gravity
 import android.view.View
@@ -80,6 +81,8 @@ class VideoPlayerActivity : AppCompatActivity(),
         private const val TAG = "VideoPlayerActivity"
         private const val SEEK_DEBUG = "SEEK_DEBUG"  // 快进调试专用日志标签
         private val REMOTE_URI_SCHEMES = setOf("http", "https", "rtsp", "rtmp", "rtmps")
+        private const val EXTRA_PORTRAIT_UI = "portrait_ui"
+        private const val EXTRA_START_POSITION_SEC = "start_position_sec"
     }
 
     private lateinit var playbackEngine: PlaybackEngine
@@ -182,8 +185,17 @@ class VideoPlayerActivity : AppCompatActivity(),
         ThemeManager.applyTheme(this)
         
         super.onCreate(savedInstanceState)
-        
-        setContentView(R.layout.activity_video_player)
+
+        val portraitUi = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
+        requestedOrientation = if (portraitUi) {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        }
+
+        setContentView(
+            if (portraitUi) R.layout.activity_video_player_portrait else R.layout.activity_video_player
+        )
         
         // 确保内容不受系统栏影响，视频画面完全居中
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -306,6 +318,12 @@ class VideoPlayerActivity : AppCompatActivity(),
         }
 
         savedPosition = preferencesManager.getPlaybackPosition(videoUri.toString())
+        intent.getDoubleExtra(EXTRA_START_POSITION_SEC, -1.0)
+            .takeIf { it > 0.0 }
+            ?.let { overridePosition ->
+                savedPosition = overridePosition
+                Logger.d(TAG, "Overriding start position from intent: $savedPosition seconds")
+            }
         com.fam4k007.videoplayer.utils.Logger.d(TAG, "Saved position: $savedPosition seconds")
 
         mpvView = findViewById(R.id.surfaceView)
@@ -1024,6 +1042,25 @@ class VideoPlayerActivity : AppCompatActivity(),
         }
         
         updateEpisodeButtons()
+    }
+
+    override fun onTogglePortraitUi() {
+        val currentPortrait = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
+        val resumePosition = try {
+            playbackEngine.currentPosition
+        } catch (_: Exception) {
+            savedPosition
+        }
+
+        val nextIntent = Intent(this, VideoPlayerActivity::class.java).apply {
+            data = videoUri
+            replaceExtras(intent)
+            putExtra(EXTRA_PORTRAIT_UI, !currentPortrait)
+            putExtra(EXTRA_START_POSITION_SEC, resumePosition)
+            remotePlaybackRequest?.let { putExtra(RemotePlaybackLauncher.EXTRA_REMOTE_REQUEST, it) }
+        }
+        startActivity(nextIntent)
+        finish()
     }
     
     /**

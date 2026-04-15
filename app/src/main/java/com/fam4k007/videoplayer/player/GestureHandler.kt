@@ -575,14 +575,18 @@ class GestureHandler(
             
             // 首次或屏幕尺寸变化时更新缓存（避免每次 onScroll 都获取）
             val context = contextRef.get()
-            if (context != null && (cachedScreenWidth == 0 || cachedScreenHeight == 0)) {
-                cachedScreenWidth = context.resources.displayMetrics.widthPixels
-                cachedScreenHeight = context.resources.displayMetrics.heightPixels
-                Log.d(TAG, "Screen size cached: ${cachedScreenWidth}x${cachedScreenHeight}")
-            }
-            
-            return true
-        }
+              if (context != null) {
+                  val width = context.resources.displayMetrics.widthPixels
+                  val height = context.resources.displayMetrics.heightPixels
+                  if (width != cachedScreenWidth || height != cachedScreenHeight) {
+                      cachedScreenWidth = width
+                      cachedScreenHeight = height
+                      Log.d(TAG, "Screen size cached: ${cachedScreenWidth}x${cachedScreenHeight}")
+                  }
+              }
+              
+              return true
+          }
 
         override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
             if (!isAdjusting) {
