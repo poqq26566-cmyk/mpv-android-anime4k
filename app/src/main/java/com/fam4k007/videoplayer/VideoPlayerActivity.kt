@@ -946,10 +946,16 @@ class VideoPlayerActivity : AppCompatActivity(),
             btnMore = findViewById(R.id.btnMore),
             btnSpeed = findViewById(R.id.btnSpeed),
             btnAnime4K = findViewById(R.id.btnAnime4K),
+            btnRotateCorner = findViewById(R.id.btnRotateCorner),  // 新增：横屏旋转按钮
             seekBar = findViewById(R.id.seekBar),
             resumePlaybackPrompt = findViewById(R.id.resumePlaybackPrompt),
             tvResumeConfirm = findViewById(R.id.tvResumeConfirm)
         )
+        
+        // 初始化旋转按钮的 tag（根据当前方向）
+        val portraitUiInitial = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
+        findViewById<View>(R.id.btnRotateCorner)?.tag = 
+            if (!portraitUiInitial) "should_show" else "should_hide"
         
         val btnDanmaku = findViewById<ImageView>(R.id.btnDanmaku)
         btnDanmaku.setOnClickListener {
@@ -961,11 +967,11 @@ class VideoPlayerActivity : AppCompatActivity(),
             dialogManager.showAnime4KModeDialog(anime4KMode)
             controlsManager.resetAutoHideTimer()
         }
-        findViewById<Button>(R.id.btnRotateFloat)?.setOnClickListener {
+        findViewById<ImageView>(R.id.btnRotateFloat)?.setOnClickListener {
             onTogglePortraitUi()
             controlsManager.resetAutoHideTimer()
         }
-        findViewById<Button>(R.id.btnRotateCorner)?.setOnClickListener {
+        findViewById<ImageView>(R.id.btnRotateCorner)?.setOnClickListener {
             onTogglePortraitUi()
             controlsManager.resetAutoHideTimer()
         }
@@ -1059,15 +1065,28 @@ class VideoPlayerActivity : AppCompatActivity(),
     }
 
     override fun onTogglePortraitUi() {
-        intent.putExtra(EXTRA_AUTO_ROTATE, false)
+        val autoRotateEnabled = intent.getBooleanExtra(EXTRA_AUTO_ROTATE, false)
+        
         val currentPortrait = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
         val nextPortrait = !currentPortrait
         intent.putExtra(EXTRA_PORTRAIT_UI, nextPortrait)
         applyPortraitUiEnabled(nextPortrait)
-        requestedOrientation = if (nextPortrait) {
-            ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+        
+        // 手动旋转时不改变自动旋转状态
+        if (!autoRotateEnabled) {
+            // 自动旋转关闭时，锁定到对应的方向
+            requestedOrientation = if (nextPortrait) {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            }
         } else {
-            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            // 自动旋转开启时，临时改变方向，但保持自动旋转开启
+            requestedOrientation = if (nextPortrait) {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            }
         }
 
         refreshVideoLayoutAfterOrientationToggle()
@@ -1118,13 +1137,14 @@ class VideoPlayerActivity : AppCompatActivity(),
 
         findViewById<View>(R.id.resumeProgressPrompt)?.let { v ->
             val lp = v.layoutParams as? android.widget.RelativeLayout.LayoutParams ?: return@let
+            // 竖屏和横屏都使用 ALIGN_PARENT_BOTTOM，通过不同的 margin 控制位置
+            lp.removeRule(android.widget.RelativeLayout.ABOVE)
+            lp.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM)
             if (enabled) {
-                lp.addRule(android.widget.RelativeLayout.ABOVE, R.id.controlPanel)
-                lp.removeRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM)
-                lp.bottomMargin = (10f * resources.displayMetrics.density).toInt()
+                // 竖屏：位置在超分辨率悬浮按钮上方
+                lp.bottomMargin = (175f * resources.displayMetrics.density).toInt()
             } else {
-                lp.removeRule(android.widget.RelativeLayout.ABOVE)
-                lp.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM)
+                // 横屏：位置在控制栏上方
                 lp.bottomMargin = (130f * resources.displayMetrics.density).toInt()
             }
             v.layoutParams = lp
@@ -1142,6 +1162,23 @@ class VideoPlayerActivity : AppCompatActivity(),
     private fun applyPortraitSizing(enabled: Boolean) {
         // Anime4K: use a floating button in portrait to avoid overlapping the bottom control row.
         findViewById<View>(R.id.btnAnime4K)?.visibility = if (enabled) View.GONE else View.VISIBLE
+
+        // 竖屏时增加顶部间距，避开前置摄像头/刘海屏
+        findViewById<LinearLayout>(R.id.topInfoPanel)?.let { panel ->
+            val topPadding = if (enabled) {
+                // 竖屏：增加顶部间距避开摄像头
+                (32f * resources.displayMetrics.density).toInt()
+            } else {
+                // 横屏：使用默认间距
+                (8f * resources.displayMetrics.density).toInt()
+            }
+            panel.setPadding(
+                panel.paddingLeft,
+                topPadding,
+                panel.paddingRight,
+                panel.paddingBottom
+            )
+        }
 
         findViewById<View>(R.id.topStatusContainer)?.visibility = View.VISIBLE
 
@@ -1252,12 +1289,81 @@ class VideoPlayerActivity : AppCompatActivity(),
         val shouldShowPortraitButtons = portraitEnabled && controlsVisible
         val shouldShowLandscapeRotate = !portraitEnabled && controlsVisible
 
-        findViewById<View>(R.id.btnAnime4KFloat)?.visibility =
-            if (shouldShowPortraitButtons) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.btnRotateFloat)?.visibility =
-            if (shouldShowPortraitButtons) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.btnRotateCorner)?.visibility =
-            if (shouldShowLandscapeRotate) View.VISIBLE else View.GONE
+        // 竖屏超分辨率按钮：淡入淡出动画
+        findViewById<View>(R.id.btnAnime4KFloat)?.let { btn ->
+            if (shouldShowPortraitButtons && btn.visibility != View.VISIBLE) {
+                btn.visibility = View.VISIBLE
+                btn.alpha = 0f
+                btn.animate()
+                    .alpha(1f)
+                    .setDuration(250)
+                    .setInterpolator(android.view.animation.DecelerateInterpolator())
+                    .start()
+            } else if (!shouldShowPortraitButtons && btn.visibility == View.VISIBLE) {
+                btn.animate()
+                    .alpha(0f)
+                    .setDuration(200)
+                    .setInterpolator(android.view.animation.AccelerateInterpolator())
+                    .withEndAction { btn.visibility = View.GONE }
+                    .start()
+            }
+        }
+        
+        // 竖屏旋转按钮：淡入淡出动画
+        findViewById<View>(R.id.btnRotateFloat)?.let { btn ->
+            if (shouldShowPortraitButtons && btn.visibility != View.VISIBLE) {
+                btn.visibility = View.VISIBLE
+                btn.alpha = 0f
+                btn.animate()
+                    .alpha(1f)
+                    .setDuration(250)
+                    .setInterpolator(android.view.animation.DecelerateInterpolator())
+                    .start()
+            } else if (!shouldShowPortraitButtons && btn.visibility == View.VISIBLE) {
+                btn.animate()
+                    .alpha(0f)
+                    .setDuration(200)
+                    .setInterpolator(android.view.animation.AccelerateInterpolator())
+                    .withEndAction { btn.visibility = View.GONE }
+                    .start()
+            }
+        }
+        
+        // 横屏旋转按钮：设置标记，并处理显示/隐藏
+        findViewById<View>(R.id.btnRotateCorner)?.let { btn ->
+            val oldTag = btn.tag
+            val newTag = if (shouldShowLandscapeRotate) "should_show" else "should_hide"
+            btn.tag = newTag
+            
+            // 如果控制栏可见且按钮应该显示（从隐藏变为显示）
+            if (controlsVisible && newTag == "should_show" && btn.visibility != View.VISIBLE) {
+                btn.visibility = View.VISIBLE
+                btn.alpha = 0f
+                btn.translationY = 100f
+                btn.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(250)
+                    .setInterpolator(android.view.animation.DecelerateInterpolator())
+                    .start()
+            } 
+            // 如果按钮应该隐藏（从显示变为隐藏）
+            else if (newTag == "should_hide" && btn.visibility == View.VISIBLE) {
+                btn.animate()
+                    .alpha(0f)
+                    .setDuration(200)
+                    .setInterpolator(android.view.animation.AccelerateInterpolator())
+                    .withEndAction { 
+                        btn.visibility = View.GONE
+                        btn.alpha = 1f
+                    }
+                    .start()
+            }
+            // 如果控制栏不可见，直接设置 visibility（不需要动画）
+            else if (!controlsVisible) {
+                btn.visibility = View.GONE
+            }
+        }
     }
 
     private fun refreshVideoLayoutAfterOrientationToggle() {
@@ -2103,6 +2209,9 @@ class VideoPlayerActivity : AppCompatActivity(),
         remoteResolveJob?.cancel()
         
         savePlaybackState()
+        
+        // 清除自动旋转设置，避免影响下次播放
+        intent.removeExtra(EXTRA_AUTO_ROTATE)
         
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         

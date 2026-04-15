@@ -82,6 +82,7 @@ class PlayerControlsManager(
     private var btnMore: ImageView? = null
     private var btnSpeed: ImageView? = null
     private var btnAnime4K: Button? = null
+    private var btnRotateCorner: ImageView? = null  // 新增：横屏旋转按钮
     
     private var seekBar: SeekBar? = null
     
@@ -165,6 +166,7 @@ class PlayerControlsManager(
         btnMore: ImageView,
         btnSpeed: ImageView,
         btnAnime4K: Button,
+        btnRotateCorner: ImageView,  // 新增参数：横屏旋转按钮
         seekBar: SeekBar,
         resumePlaybackPrompt: LinearLayout,
         tvResumeConfirm: TextView
@@ -194,6 +196,7 @@ class PlayerControlsManager(
         this.btnMore = btnMore
         this.btnSpeed = btnSpeed
         this.btnAnime4K = btnAnime4K
+        this.btnRotateCorner = btnRotateCorner  // 初始化横屏旋转按钮
         
         this.seekBar = seekBar
         
@@ -499,6 +502,22 @@ class PlayerControlsManager(
                 .start()
         }
         
+        // 横屏旋转按钮：如果不是明确要求隐藏，就显示
+        btnRotateCorner?.let { btn ->
+            // 检查按钮是否应该显示（tag 不是 "should_hide"）
+            if (btn.tag != "should_hide") {
+                btn.visibility = View.VISIBLE
+                btn.alpha = 0f
+                btn.translationY = 100f
+                btn.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(250)
+                    .setInterpolator(android.view.animation.DecelerateInterpolator())
+                    .start()
+            }
+        }
+        
         isVisible = true
         notifyControlsVisibilityChanged()
         resetAutoHideTimer()
@@ -552,6 +571,21 @@ class PlayerControlsManager(
                 bottomGradientBackground?.alpha = 1f
             }
             ?.start()
+        
+        // 横屏旋转按钮：只在可见时才淡出
+        btnRotateCorner?.let { btn ->
+            if (btn.visibility == View.VISIBLE) {
+                btn.animate()
+                    ?.alpha(0f)
+                    ?.setDuration(200)
+                    ?.setInterpolator(android.view.animation.AccelerateInterpolator())
+                    ?.withEndAction {
+                        btn.visibility = View.GONE
+                        btn.alpha = 1f
+                    }
+                    ?.start()
+            }
+        }
         
         isVisible = false
         notifyControlsVisibilityChanged()
