@@ -125,7 +125,7 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             GradientButton(
-                text = "播放网络链接",
+                text = "播放网络视频",
                 onClick = {
                     showRemoteUrlDialog = true
                 }
@@ -335,12 +335,12 @@ fun RemoteUrlDialog(
     val hasSavedAdvancedInput =
         listOf(sourcePageUrl, referer, origin, cookie, authorization, userAgent).any { it.isNotBlank() }
     var showAdvanced by remember { mutableStateOf(hasSavedAdvancedInput) }
-    val dialogContainerColor = MaterialTheme.colorScheme.surface
+    val dialogContainerColor = MaterialTheme.colorScheme.primary
     val dialogFieldColor = MaterialTheme.colorScheme.surfaceVariant
     val dialogPrimaryColor = MaterialTheme.colorScheme.primary
-    val dialogSecondaryColor = MaterialTheme.colorScheme.secondary
-    val dialogTextColor = MaterialTheme.colorScheme.onSurface
-    val dialogMutedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f)
+    val dialogSecondaryColor = MaterialTheme.colorScheme.onPrimary
+    val dialogTextColor = MaterialTheme.colorScheme.onPrimary
+    val dialogMutedTextColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f)
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedContainerColor = dialogFieldColor,
         unfocusedContainerColor = dialogFieldColor,
@@ -367,7 +367,7 @@ fun RemoteUrlDialog(
         textContentColor = dialogTextColor,
         title = {
             Text(
-                text = "播放网络链接",
+                text = "播放网络视频",
                 color = dialogTextColor,
                 fontWeight = FontWeight.Bold
             )
@@ -379,44 +379,6 @@ fun RemoteUrlDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = dialogFieldColor)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Text(
-                            text = "支持直链、浏览器请求文本、curl、fetch 片段。",
-                            color = dialogTextColor,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            AssistChip(
-                                onClick = {},
-                                enabled = false,
-                                label = { Text("MP4") }
-                            )
-                            AssistChip(
-                                onClick = {},
-                                enabled = false,
-                                label = { Text("M3U8") }
-                            )
-                            AssistChip(
-                                onClick = {},
-                                enabled = false,
-                                label = { Text("DASH") }
-                            )
-                        }
-                    }
-                }
-
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -612,31 +574,6 @@ fun RemoteUrlDialog(
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
-
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(dialogFieldColor)
-                                    .padding(12.dp)
-                            ) {
-                                Text(
-                                    text = "可补充 Referer、Origin、Cookie、Authorization、User-Agent，提高防盗链资源兼容性。",
-                                    color = dialogMutedTextColor,
-                                    fontSize = 13.sp,
-                                    lineHeight = 18.sp
-                                )
-                            }
-
-                            OutlinedTextField(
-                                value = sourcePageUrl,
-                                onValueChange = { sourcePageUrl = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                label = { Text("来源页面 URL（可选）") },
-                                placeholder = { Text("https://example.com/watch/123") },
-                                singleLine = true,
-                                colors = textFieldColors
-                            )
 
                             OutlinedTextField(
                                 value = referer,

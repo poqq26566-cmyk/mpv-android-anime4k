@@ -3,6 +3,7 @@
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
@@ -82,6 +83,7 @@ class VideoPlayerActivity : AppCompatActivity(),
         private const val SEEK_DEBUG = "SEEK_DEBUG"  // 快进调试专用日志标签
         private val REMOTE_URI_SCHEMES = setOf("http", "https", "rtsp", "rtmp", "rtmps")
         private const val EXTRA_PORTRAIT_UI = "portrait_ui"
+        private const val EXTRA_AUTO_ROTATE = "auto_rotate"
     }
 
     private lateinit var playbackEngine: PlaybackEngine
@@ -186,6 +188,9 @@ class VideoPlayerActivity : AppCompatActivity(),
         super.onCreate(savedInstanceState)
 
         val portraitUi = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
+        if (intent.getBooleanExtra(EXTRA_AUTO_ROTATE, false)) {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
+        }
         // Always use the same layout to avoid tearing down / re-initializing MPV when toggling portrait UI.
         // Portrait mode is applied by updating RelativeLayout rules at runtime.
         setContentView(R.layout.activity_video_player)
@@ -780,6 +785,10 @@ class VideoPlayerActivity : AppCompatActivity(),
                 override fun onBackClick() {
                     handleBackNavigation()
                 }
+
+                override fun onControlsVisibilityChanged(visible: Boolean) {
+                    updatePortraitFloatingButtonsVisibility(visible)
+                }
                 
                 override fun onVideoTitleClick() {
                     showVideoListDrawer()
@@ -953,6 +962,11 @@ class VideoPlayerActivity : AppCompatActivity(),
         }
         findViewById<Button>(R.id.btnRotateFloat)?.setOnClickListener {
             onTogglePortraitUi()
+            controlsManager.resetAutoHideTimer()
+        }
+        findViewById<Button>(R.id.btnRotateCorner)?.setOnClickListener {
+            onTogglePortraitUi()
+            controlsManager.resetAutoHideTimer()
         }
           
         // 弹幕显示/隐藏按钮
@@ -1044,48 +1058,63 @@ class VideoPlayerActivity : AppCompatActivity(),
     }
 
     override fun onTogglePortraitUi() {
+        intent.putExtra(EXTRA_AUTO_ROTATE, false)
         val currentPortrait = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
         val nextPortrait = !currentPortrait
         intent.putExtra(EXTRA_PORTRAIT_UI, nextPortrait)
         applyPortraitUiEnabled(nextPortrait)
-    }
-
-    private fun applyPortraitUiEnabled(enabled: Boolean) {
-        requestedOrientation = if (enabled) {
+        requestedOrientation = if (nextPortrait) {
             ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
         } else {
             ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         }
 
-        val aboveControlIds = listOf(
-            R.id.surfaceView,
-            R.id.danmakuView,
-            R.id.clickArea,
-            R.id.loadingIndicator,
-            R.id.doubleTapSeekLeft,
-            R.id.doubleTapSeekRight,
-            R.id.btnUnlock,
-            R.id.btnUnlockRight,
-            R.id.btnAnime4KFloat,
-            R.id.btnRotateFloat,
-            R.id.brightnessIndicator,
-            R.id.volumeIndicator,
-            R.id.seekHint,
-            R.id.resumePlaybackPrompt
-        )
+        refreshVideoLayoutAfterOrientationToggle()
+    }
 
-        aboveControlIds.forEach { id ->
-            val v = findViewById<View>(id) ?: return@forEach
-            val lp = v.layoutParams as? android.widget.RelativeLayout.LayoutParams ?: return@forEach
-            if (enabled) {
-                lp.addRule(android.widget.RelativeLayout.ABOVE, R.id.controlPanel)
+    override fun onToggleAutoRotate() {
+        val enableAutoRotate = !intent.getBooleanExtra(EXTRA_AUTO_ROTATE, false)
+        intent.putExtra(EXTRA_AUTO_ROTATE, enableAutoRotate)
+
+        if (enableAutoRotate) {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
+            syncPortraitUiWithConfiguration(resources.configuration)
+        } else {
+            val currentPortrait = resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+            intent.putExtra(EXTRA_PORTRAIT_UI, currentPortrait)
+            applyPortraitUiEnabled(currentPortrait)
+            requestedOrientation = if (currentPortrait) {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
             } else {
-                lp.removeRule(android.widget.RelativeLayout.ABOVE)
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             }
-            v.layoutParams = lp
         }
 
-        // Resume prompt location: keep it visible above the bottom controls in portrait.
+        refreshVideoLayoutAfterOrientationToggle()
+    }
+
+    override fun isAutoRotateEnabled(): Boolean {
+        return intent.getBooleanExtra(EXTRA_AUTO_ROTATE, false)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        if (intent.getBooleanExtra(EXTRA_AUTO_ROTATE, false)) {
+            syncPortraitUiWithConfiguration(newConfig)
+            refreshVideoLayoutAfterOrientationToggle()
+        }
+    }
+
+    private fun applyPortraitUiEnabled(enabled: Boolean) {
+        if (!intent.getBooleanExtra(EXTRA_AUTO_ROTATE, false)) {
+            requestedOrientation = if (enabled) {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            }
+        }
+
         findViewById<View>(R.id.resumeProgressPrompt)?.let { v ->
             val lp = v.layoutParams as? android.widget.RelativeLayout.LayoutParams ?: return@let
             if (enabled) {
@@ -1103,11 +1132,15 @@ class VideoPlayerActivity : AppCompatActivity(),
         applyPortraitSizing(enabled)
     }
 
+    private fun syncPortraitUiWithConfiguration(configuration: Configuration) {
+        val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+        intent.putExtra(EXTRA_PORTRAIT_UI, isPortrait)
+        applyPortraitUiEnabled(isPortrait)
+    }
+
     private fun applyPortraitSizing(enabled: Boolean) {
         // Anime4K: use a floating button in portrait to avoid overlapping the bottom control row.
         findViewById<View>(R.id.btnAnime4K)?.visibility = if (enabled) View.GONE else View.VISIBLE
-        findViewById<View>(R.id.btnAnime4KFloat)?.visibility = if (enabled) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.btnRotateFloat)?.visibility = if (enabled) View.VISIBLE else View.GONE
 
         // 1) Top-right icon group: reduce end margin so buttons sit closer to the right edge in portrait.
         findViewById<View>(R.id.topRightPanel)?.let { v ->
@@ -1175,6 +1208,49 @@ class VideoPlayerActivity : AppCompatActivity(),
         adjustBottomIcon(R.id.btnForward, normalIconSize, normalPadding, marginStartDp = 0, marginEndDp = compactMargin)
         adjustBottomIcon(R.id.btnNext, normalIconSize, normalPadding, marginStartDp = 0, marginEndDp = compactMargin)
         adjustBottomIcon(R.id.btnSpeed, normalIconSize, normalPadding)
+
+        updatePortraitFloatingButtonsVisibility(
+            controlsManager.isVisible && !controlsManager.isControlsLocked()
+        )
+    }
+
+    private fun updatePortraitFloatingButtonsVisibility(controlsVisible: Boolean) {
+        val portraitEnabled = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
+        val shouldShowPortraitButtons = portraitEnabled && controlsVisible
+        val shouldShowLandscapeRotate = !portraitEnabled && controlsVisible
+
+        findViewById<View>(R.id.btnAnime4KFloat)?.visibility =
+            if (shouldShowPortraitButtons) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.btnRotateFloat)?.visibility =
+            if (shouldShowPortraitButtons) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.btnRotateCorner)?.visibility =
+            if (shouldShowLandscapeRotate) View.VISIBLE else View.GONE
+    }
+
+    private fun refreshVideoLayoutAfterOrientationToggle() {
+        mpvView.post {
+            playbackEngine.changeVideoAspect(currentVideoAspect)
+            listOf(
+                R.id.surfaceView,
+                R.id.danmakuView,
+                R.id.clickArea,
+                R.id.loadingIndicator
+            ).forEach { id ->
+                findViewById<View>(id)?.apply {
+                    requestLayout()
+                    invalidate()
+                }
+            }
+
+            if (!isPlaying) {
+                val pausedPosition = currentPosition.toInt().coerceAtLeast(0)
+                mpvView.postDelayed({
+                    playbackEngine.seekTo(pausedPosition, precise = true)
+                    playbackEngine.pause()
+                    controlsManager.updatePlayPauseButton(false)
+                }, 120)
+            }
+        }
     }
     
     /**
