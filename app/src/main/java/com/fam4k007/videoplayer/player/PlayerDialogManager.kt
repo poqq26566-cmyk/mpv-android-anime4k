@@ -511,13 +511,20 @@ class PlayerDialogManager(
         )
         
         val currentSelection = modes.indexOf(currentMode)
-        val btnAnime4K = activity.findViewById<android.widget.Button>(R.id.btnAnime4K)
+        
+        // 根据当前屏幕方向选择锚点按钮
+        val isPortrait = activity.resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
+        val btnAnime4K = if (isPortrait) {
+            activity.findViewById<android.widget.Button>(R.id.btnAnime4KFloat)
+        } else {
+            activity.findViewById<android.widget.Button>(R.id.btnAnime4K)
+        }
 
         showPopupDialog(
             btnAnime4K,
             modeNames,
             currentSelection,
-            showAbove = true,
+            showAbove = true,  // 横屏和竖屏都显示在上方
             useFixedHeight = true,
             showScrollHint = true
         ) { position ->

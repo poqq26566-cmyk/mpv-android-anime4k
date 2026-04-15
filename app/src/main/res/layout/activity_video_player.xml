@@ -471,25 +471,22 @@
                     android:paddingEnd="16dp"
                     android:background="@android:color/transparent"
                     android:layout_gravity="start|bottom"
-                    android:layout_marginStart="18dp"
+                    android:layout_marginStart="48dp"
                     android:layout_marginBottom="4dp" />
 
                 <!-- 横屏旋转按钮 - 右下角（随控制栏显示隐藏） -->
-                <androidx.appcompat.widget.AppCompatButton
+                <ImageView
                     android:id="@+id/btnRotateCorner"
-                    android:layout_width="wrap_content"
+                    android:layout_width="38dp"
                     android:layout_height="38dp"
-                    android:minWidth="80dp"
-                    android:text="旋转"
-                    android:textSize="12sp"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:gravity="center"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:background="@android:color/transparent"
+                    android:src="@drawable/ic_rotate"
+                    android:tint="#FFFFFF"
+                    android:padding="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:layout_gravity="end|bottom"
-                    android:layout_marginEnd="18dp"
+                    android:layout_marginEnd="52dp"
                     android:layout_marginBottom="4dp"
                     android:visibility="gone" />
 
@@ -660,22 +657,19 @@
         android:visibility="gone" />
 
     <!-- 竖屏悬浮按钮：旋转/切换布局（右侧中间） -->
-    <androidx.appcompat.widget.AppCompatButton
+    <ImageView
         android:id="@+id/btnRotateFloat"
-        android:layout_width="wrap_content"
+        android:layout_width="38dp"
         android:layout_height="38dp"
-        android:minWidth="80dp"
-        android:text="旋转"
-        android:textSize="12sp"
-        android:textAllCaps="false"
-        android:textColor="#FFFFFF"
-        android:gravity="center"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:background="@android:color/transparent"
+        android:src="@drawable/ic_rotate"
+        android:tint="#FFFFFF"
+        android:padding="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginEnd="12dp"
+        android:layout_marginEnd="14dp"
         android:layout_marginBottom="122dp"
         android:visibility="gone" />
 
