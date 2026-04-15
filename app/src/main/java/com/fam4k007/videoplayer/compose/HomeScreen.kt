@@ -10,6 +10,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,12 +33,16 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.PlaybackHistoryManager
 import com.fam4k007.videoplayer.VideoBrowserComposeActivity
@@ -108,7 +113,7 @@ fun HomeScreen(
                 }
             )
             
-            Spacer(modifier = Modifier.height(80.dp))
+            Spacer(modifier = Modifier.height(40.dp))
             
             // 播放本地视频按钮（给文本留出空间）
             GradientButton(
@@ -122,14 +127,6 @@ fun HomeScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            GradientButton(
-                text = "播放网络视频",
-                onClick = {
-                    showRemoteUrlDialog = true
-                }
-            )
             
             Spacer(modifier = Modifier.weight(1f))
         }
@@ -161,6 +158,10 @@ fun HomeScreen(
                     R.anim.slide_in_right,
                     R.anim.slide_out_left
                 )
+            },
+            onNetworkLinkClick = {
+                isExpanded = false
+                showRemoteUrlDialog = true
             }
         )
 
@@ -322,370 +323,201 @@ fun RemoteUrlDialog(
     onConfirm: (RemotePlaybackRequest) -> Unit
 ) {
     val context = LocalContext.current
-    val preferencesManager = remember(context) { PreferencesManager.getInstance(context) }
-    var lastRemoteDebugSummary by remember { mutableStateOf(preferencesManager.getLastRemoteDebugSummary()) }
-    var url by remember { mutableStateOf(preferencesManager.getLastRemoteInputUrl()) }
-    var title by remember { mutableStateOf(preferencesManager.getLastRemoteInputTitle()) }
-    var sourcePageUrl by remember { mutableStateOf(preferencesManager.getLastRemoteInputSourcePageUrl()) }
-    var referer by remember { mutableStateOf(preferencesManager.getLastRemoteInputReferer()) }
-    var origin by remember { mutableStateOf(preferencesManager.getLastRemoteInputOrigin()) }
-    var cookie by remember { mutableStateOf(preferencesManager.getLastRemoteInputCookie()) }
-    var authorization by remember { mutableStateOf(preferencesManager.getLastRemoteInputAuthorization()) }
-    var userAgent by remember { mutableStateOf(preferencesManager.getLastRemoteInputUserAgent()) }
-    val hasSavedAdvancedInput =
-        listOf(sourcePageUrl, referer, origin, cookie, authorization, userAgent).any { it.isNotBlank() }
-    var showAdvanced by remember { mutableStateOf(hasSavedAdvancedInput) }
-    val dialogContainerColor = MaterialTheme.colorScheme.primary
-    val dialogFieldColor = MaterialTheme.colorScheme.surfaceVariant
-    val dialogPrimaryColor = MaterialTheme.colorScheme.primary
-    val dialogSecondaryColor = MaterialTheme.colorScheme.onPrimary
-    val dialogTextColor = MaterialTheme.colorScheme.onPrimary
-    val dialogMutedTextColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f)
-    val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedContainerColor = dialogFieldColor,
-        unfocusedContainerColor = dialogFieldColor,
-        disabledContainerColor = dialogFieldColor,
-        focusedTextColor = dialogTextColor,
-        unfocusedTextColor = dialogTextColor,
-        disabledTextColor = dialogMutedTextColor,
-        focusedLabelColor = dialogSecondaryColor,
-        unfocusedLabelColor = dialogMutedTextColor,
-        disabledLabelColor = dialogMutedTextColor,
-        focusedPlaceholderColor = dialogMutedTextColor,
-        unfocusedPlaceholderColor = dialogMutedTextColor,
-        disabledPlaceholderColor = dialogMutedTextColor,
-        focusedBorderColor = dialogPrimaryColor,
-        unfocusedBorderColor = dialogPrimaryColor.copy(alpha = 0.35f),
-        disabledBorderColor = dialogPrimaryColor.copy(alpha = 0.2f),
-        cursorColor = dialogPrimaryColor
-    )
+    val scope = rememberCoroutineScope()
+    var url by remember { mutableStateOf("") }
+    var title by remember { mutableStateOf("") }
+    var sourcePageUrl by remember { mutableStateOf("") }
+    var referer by remember { mutableStateOf("") }
+    var origin by remember { mutableStateOf("") }
+    var cookie by remember { mutableStateOf("") }
+    var authorization by remember { mutableStateOf("") }
+    var userAgent by remember { mutableStateOf("") }
+    var showAdvanced by remember { mutableStateOf(false) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = dialogContainerColor,
-        titleContentColor = dialogTextColor,
-        textContentColor = dialogTextColor,
-        title = {
-            Text(
-                text = "播放网络视频",
-                color = dialogTextColor,
-                fontWeight = FontWeight.Bold
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
             )
-        },
-        text = {
-            Column(
+        ) {
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = dialogContainerColor)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(4.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Link,
-                                contentDescription = null,
-                                tint = dialogSecondaryColor,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Text(
-                                text = "基础信息",
-                                color = dialogTextColor,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-
-                        OutlinedTextField(
-                            value = url,
-                            onValueChange = { url = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            label = { Text("视频链接") },
-                            placeholder = { Text("https://example.com/video.mp4 或直接粘贴 curl / 请求头") },
-                            minLines = 3,
-                            maxLines = 6,
-                            colors = textFieldColors
-                        )
-
-                        OutlinedTextField(
-                            value = title,
-                            onValueChange = { title = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            label = { Text("标题（可选）") },
-                            singleLine = true,
-                            colors = textFieldColors
-                        )
-                    }
-                }
-
-                FilledTonalButton(
-                    onClick = { showAdvanced = !showAdvanced },
-                    modifier = Modifier.align(Alignment.End),
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = dialogPrimaryColor.copy(alpha = 0.12f),
-                        contentColor = dialogSecondaryColor
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(
-                        imageVector = if (showAdvanced) Icons.Default.ExpandLess else Icons.Default.Tune,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                item {
+                    Text(
+                        text = "播放网络视频",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF212121)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(if (showAdvanced) "收起高级设置" else "展开高级设置")
                 }
-
-                if (lastRemoteDebugSummary.isNotBlank()) {
-                    Card(
+                
+                item {
+                    OutlinedTextField(
+                        value = url,
+                        onValueChange = { url = it },
+                        label = { Text("视频链接") },
+                        placeholder = { Text("https://example.com/video.mp4 或直接粘贴 curl / 请求头") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = dialogFieldColor)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Info,
-                                        contentDescription = null,
-                                        tint = dialogSecondaryColor,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Text(
-                                        text = "上次远程调试信息",
-                                        color = dialogTextColor,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-
-                                TextButton(
-                                    onClick = {
-                                        val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                        clipboardManager.setPrimaryClip(
-                                            ClipData.newPlainText("remote_debug_summary", lastRemoteDebugSummary)
-                                        )
-                                        android.widget.Toast.makeText(
-                                            context,
-                                            "已复制上次远程调试信息",
-                                            android.widget.Toast.LENGTH_SHORT
-                                        ).show()
-                                    },
-                                    colors = ButtonDefaults.textButtonColors(contentColor = dialogSecondaryColor)
-                                ) {
-                                    Text("复制")
-                                }
-                            }
-
-                            SelectionContainer {
-                                Text(
-                                    text = lastRemoteDebugSummary,
-                                    color = dialogMutedTextColor,
-                                    fontSize = 12.sp,
-                                    lineHeight = 18.sp,
-                                    fontFamily = FontFamily.Monospace
-                                )
-                            }
-
-                            TextButton(
-                                onClick = {
-                                    preferencesManager.clearLastRemoteDebugSummary()
-                                    lastRemoteDebugSummary = ""
-                                },
-                                modifier = Modifier.align(Alignment.End),
-                                colors = ButtonDefaults.textButtonColors(contentColor = dialogMutedTextColor)
-                            ) {
-                                Text("清空调试信息")
-                            }
-                        }
-                    }
+                        minLines = 1,
+                        maxLines = 3,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black
+                        )
+                    )
+                }
+                
+                item {
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text("标题（可选）") },
+                        placeholder = { Text("为视频指定一个标题") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
                 }
 
-                if (url.isNotBlank() || title.isNotBlank() || hasSavedAdvancedInput) {
+                item {
                     TextButton(
-                        onClick = {
-                            url = ""
-                            title = ""
-                            sourcePageUrl = ""
-                            referer = ""
-                            origin = ""
-                            cookie = ""
-                            authorization = ""
-                            userAgent = ""
-                            showAdvanced = false
-                            preferencesManager.clearLastRemoteInputDraft()
-                        },
-                        modifier = Modifier.align(Alignment.End),
-                        colors = ButtonDefaults.textButtonColors(contentColor = dialogMutedTextColor)
+                        onClick = { showAdvanced = !showAdvanced },
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("清空已保存输入")
+                        Icon(
+                            imageVector = if (showAdvanced) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = null
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (showAdvanced) "收起高级设置" else "展开高级设置")
                     }
                 }
-
+                
                 if (showAdvanced) {
-                    Card(
+                    item {
+                        OutlinedTextField(
+                            value = referer,
+                            onValueChange = { referer = it },
+                            label = { Text("Referer（可选）") },
+                            placeholder = { Text("HTTP Referer 头") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                    
+                    item {
+                        OutlinedTextField(
+                            value = origin,
+                            onValueChange = { origin = it },
+                            label = { Text("Origin（可选）") },
+                            placeholder = { Text("HTTP Origin 头") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                    
+                    item {
+                        OutlinedTextField(
+                            value = cookie,
+                            onValueChange = { cookie = it },
+                            label = { Text("Cookie（可选）") },
+                            placeholder = { Text("HTTP Cookie") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                    
+                    item {
+                        OutlinedTextField(
+                            value = authorization,
+                            onValueChange = { authorization = it },
+                            label = { Text("Authorization（可选）") },
+                            placeholder = { Text("HTTP Authorization") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                    
+                    item {
+                        OutlinedTextField(
+                            value = userAgent,
+                            onValueChange = { userAgent = it },
+                            label = { Text("User-Agent（可选）") },
+                            placeholder = { Text("HTTP User-Agent") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                }
+                
+                // 底部按钮
+                item {
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = dialogContainerColor)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(4.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        OutlinedButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Security,
-                                    contentDescription = null,
-                                    tint = dialogSecondaryColor,
-                                    modifier = Modifier.size(18.dp)
+                            Text("取消")
+                        }
+                        
+                        Button(
+                            onClick = {
+                                val parsedInput = RemoteUrlParser.parsePlaybackInput(url)
+                                val normalizedSourcePageUrl = sourcePageUrl.trim().ifBlank { referer.trim() }
+                                val headers = linkedMapOf<String, String>().apply {
+                                    putAll(parsedInput?.headers.orEmpty())
+                                }
+                                if (referer.isNotBlank()) {
+                                    headers["Referer"] = referer.trim()
+                                }
+                                if (origin.isNotBlank()) {
+                                    headers["Origin"] = origin.trim()
+                                }
+                                if (cookie.isNotBlank()) {
+                                    headers["Cookie"] = cookie.trim()
+                                }
+                                if (authorization.isNotBlank()) {
+                                    headers["Authorization"] = authorization.trim()
+                                }
+                                if (userAgent.isNotBlank()) {
+                                    headers["User-Agent"] = userAgent.trim()
+                                }
+
+                                onConfirm(
+                                    RemotePlaybackRequest(
+                                        url = parsedInput?.url ?: url.trim(),
+                                        title = title.trim(),
+                                        sourcePageUrl = normalizedSourcePageUrl,
+                                        headers = RemotePlaybackHeaders.normalize(headers),
+                                        source = RemotePlaybackRequest.Source.DIRECT_INPUT
+                                    )
                                 )
-                                Text(
-                                    text = "高级请求头",
-                                    color = dialogTextColor,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-
-                            OutlinedTextField(
-                                value = referer,
-                                onValueChange = { referer = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                label = { Text("Referer（可选）") },
-                                singleLine = true,
-                                colors = textFieldColors
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = url.isNotBlank(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                disabledContainerColor = Color(0xFFE0E0E0),
+                                disabledContentColor = Color(0xFF757575)
                             )
-
-                            OutlinedTextField(
-                                value = origin,
-                                onValueChange = { origin = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                label = { Text("Origin（可选）") },
-                                singleLine = true,
-                                colors = textFieldColors
-                            )
-
-                            OutlinedTextField(
-                                value = cookie,
-                                onValueChange = { cookie = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                label = { Text("Cookie（可选）") },
-                                singleLine = true,
-                                colors = textFieldColors
-                            )
-
-                            OutlinedTextField(
-                                value = authorization,
-                                onValueChange = { authorization = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                label = { Text("Authorization（可选）") },
-                                singleLine = true,
-                                colors = textFieldColors
-                            )
-
-                            OutlinedTextField(
-                                value = userAgent,
-                                onValueChange = { userAgent = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                label = { Text("User-Agent（可选）") },
-                                singleLine = true,
-                                colors = textFieldColors
-                            )
+                        ) {
+                            Text("播放")
                         }
                     }
                 }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val parsedInput = RemoteUrlParser.parsePlaybackInput(url)
-                    val normalizedSourcePageUrl = sourcePageUrl.trim().ifBlank { referer.trim() }
-                    val headers = linkedMapOf<String, String>().apply {
-                        putAll(parsedInput?.headers.orEmpty())
-                    }
-                    if (referer.isNotBlank()) {
-                        headers["Referer"] = referer.trim()
-                    }
-                    if (origin.isNotBlank()) {
-                        headers["Origin"] = origin.trim()
-                    }
-                    if (cookie.isNotBlank()) {
-                        headers["Cookie"] = cookie.trim()
-                    }
-                    if (authorization.isNotBlank()) {
-                        headers["Authorization"] = authorization.trim()
-                    }
-                    if (userAgent.isNotBlank()) {
-                        headers["User-Agent"] = userAgent.trim()
-                    }
-
-                    preferencesManager.setLastRemoteInputUrl(url)
-                    preferencesManager.setLastRemoteInputTitle(title.trim())
-                    preferencesManager.setLastRemoteInputSourcePageUrl(normalizedSourcePageUrl)
-                    preferencesManager.setLastRemoteInputReferer(referer.trim())
-                    preferencesManager.setLastRemoteInputOrigin(origin.trim())
-                    preferencesManager.setLastRemoteInputCookie(cookie.trim())
-                    preferencesManager.setLastRemoteInputAuthorization(authorization.trim())
-                    preferencesManager.setLastRemoteInputUserAgent(userAgent.trim())
-
-                    onConfirm(
-                        RemotePlaybackRequest(
-                            url = parsedInput?.url ?: url.trim(),
-                            title = title.trim(),
-                            sourcePageUrl = normalizedSourcePageUrl,
-                            headers = RemotePlaybackHeaders.normalize(headers),
-                            source = RemotePlaybackRequest.Source.DIRECT_INPUT
-                        )
-                    )
-                },
-                enabled = url.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = dialogPrimaryColor,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("播放")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(contentColor = dialogMutedTextColor)
-            ) {
-                Text("取消")
             }
         }
-    )
+    }
 }
 
 /**
@@ -697,12 +529,17 @@ fun ExpandableActionButton(
     onToggle: () -> Unit,
     onBiliBiliClick: () -> Unit,
     onWebDavClick: () -> Unit,
-    onTVClick: () -> Unit
+    onTVClick: () -> Unit,
+    onNetworkLinkClick: () -> Unit
 ) {
     var localIsExpanded by remember { mutableStateOf(isExpanded) }
+    var showNetworkSubmenu by remember { mutableStateOf(false) }
     
     LaunchedEffect(isExpanded) {
         localIsExpanded = isExpanded
+        if (!isExpanded) {
+            showNetworkSubmenu = false
+        }
     }
     
     Box(
@@ -715,9 +552,9 @@ fun ExpandableActionButton(
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.Bottom
         ) {
-            // 展开的功能区
+            // 二级菜单 - 网络功能
             AnimatedVisibility(
-                visible = isExpanded,
+                visible = isExpanded && showNetworkSubmenu,
                 enter = fadeIn(animationSpec = tween(300)) + 
                         expandVertically(animationSpec = tween(300)),
                 exit = fadeOut(animationSpec = tween(300)) + 
@@ -741,7 +578,52 @@ fun ExpandableActionButton(
                         ActionItem(
                             icon = Icons.Default.Tv,
                             label = "TV",
-                            onClick = onTVClick
+                            onClick = {
+                                showNetworkSubmenu = false
+                                onTVClick()
+                            }
+                        )
+                        
+                        // 网络链接
+                        ActionItem(
+                            icon = Icons.Default.Link,
+                            label = "链接",
+                            onClick = {
+                                showNetworkSubmenu = false
+                                onNetworkLinkClick()
+                            }
+                        )
+                    }
+                }
+            }
+            
+            // 展开的功能区
+            AnimatedVisibility(
+                visible = isExpanded && !showNetworkSubmenu,
+                enter = fadeIn(animationSpec = tween(300)) + 
+                        expandVertically(animationSpec = tween(300)),
+                exit = fadeOut(animationSpec = tween(300)) + 
+                       shrinkVertically(animationSpec = tween(300))
+            ) {
+                Card(
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .wrapContentSize(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        // 网络（原TV，添加二级菜单）
+                        ActionItem(
+                            icon = Icons.Default.Public,
+                            label = "网络",
+                            onClick = { showNetworkSubmenu = true }
                         )
                         
                         // 哔哩哔哩番剧
