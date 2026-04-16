@@ -1,5 +1,8 @@
 package com.fam4k007.videoplayer.compose
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.*
@@ -7,8 +10,12 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -24,18 +31,29 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.PlaybackHistoryManager
 import com.fam4k007.videoplayer.VideoBrowserComposeActivity
 import com.fam4k007.videoplayer.VideoPlayerActivity
 import com.fam4k007.videoplayer.BiliBiliPlayActivity
+import com.fam4k007.videoplayer.manager.PreferencesManager
+import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
+import com.fam4k007.videoplayer.remote.RemotePlaybackLauncher
+import com.fam4k007.videoplayer.remote.RemotePlaybackRequest
+import com.fam4k007.videoplayer.remote.RemoteUrlParser
 import com.fam4k007.videoplayer.webdav.WebDavComposeActivity
 import com.fanchen.fam4k007.manager.compose.BiliBiliLoginActivity
 
@@ -50,6 +68,7 @@ fun HomeScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var isExpanded by remember { mutableStateOf(false) }
+    var showRemoteUrlDialog by remember { mutableStateOf(false) }
     
     // 监听生命周期，返回时自动收起
     DisposableEffect(lifecycleOwner) {
@@ -95,7 +114,7 @@ fun HomeScreen(
                 }
             )
             
-            Spacer(modifier = Modifier.height(80.dp))
+            Spacer(modifier = Modifier.height(40.dp))
             
             // 播放本地视频按钮（给文本留出空间）
             GradientButton(
@@ -108,6 +127,7 @@ fun HomeScreen(
                     )
                 }
             )
+
             
             Spacer(modifier = Modifier.weight(1f))
         }
@@ -139,8 +159,26 @@ fun HomeScreen(
                     R.anim.slide_in_right,
                     R.anim.slide_out_left
                 )
+            },
+            onNetworkLinkClick = {
+                isExpanded = false
+                showRemoteUrlDialog = true
             }
         )
+
+        if (showRemoteUrlDialog) {
+            RemoteUrlDialog(
+                onDismiss = { showRemoteUrlDialog = false },
+                onConfirm = { request ->
+                    showRemoteUrlDialog = false
+                    RemotePlaybackLauncher.start(context, request)
+                    (context as? android.app.Activity)?.overridePendingTransition(
+                        R.anim.slide_in_right,
+                        R.anim.slide_out_left
+                    )
+                }
+            )
+        }
     }
 }
 
@@ -280,6 +318,209 @@ fun GradientButton(
     }
 }
 
+@Composable
+fun RemoteUrlDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (RemotePlaybackRequest) -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var url by remember { mutableStateOf("") }
+    var title by remember { mutableStateOf("") }
+    var sourcePageUrl by remember { mutableStateOf("") }
+    var referer by remember { mutableStateOf("") }
+    var origin by remember { mutableStateOf("") }
+    var cookie by remember { mutableStateOf("") }
+    var authorization by remember { mutableStateOf("") }
+    var userAgent by remember { mutableStateOf("") }
+    var showAdvanced by remember { mutableStateOf(false) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            )
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    Text(
+                        text = "Play Network Video",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF212121)
+                    )
+                }
+                
+                item {
+                    OutlinedTextField(
+                        value = url,
+                        onValueChange = { url = it },
+                        label = { Text("Video URL") },
+                        placeholder = { Text("https://example.com/video.mp4 or paste curl / headers") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 1,
+                        maxLines = 3,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black
+                        )
+                    )
+                }
+                
+                item {
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text("Title (Optional)") },
+                        placeholder = { Text("Specify a title for the video") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                }
+
+                item {
+                    TextButton(
+                        onClick = { showAdvanced = !showAdvanced },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = if (showAdvanced) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = null
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (showAdvanced) "Collapse Advanced" else "Expand Advanced")
+                    }
+                }
+                
+                if (showAdvanced) {
+                    item {
+                        OutlinedTextField(
+                            value = referer,
+                            onValueChange = { referer = it },
+                            label = { Text("Referer（可选）") },
+                            placeholder = { Text("HTTP Referer 头") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                    
+                    item {
+                        OutlinedTextField(
+                            value = origin,
+                            onValueChange = { origin = it },
+                            label = { Text("Origin（可选）") },
+                            placeholder = { Text("HTTP Origin 头") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                    
+                    item {
+                        OutlinedTextField(
+                            value = cookie,
+                            onValueChange = { cookie = it },
+                            label = { Text("Cookie（可选）") },
+                            placeholder = { Text("HTTP Cookie") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                    
+                    item {
+                        OutlinedTextField(
+                            value = authorization,
+                            onValueChange = { authorization = it },
+                            label = { Text("Authorization（可选）") },
+                            placeholder = { Text("HTTP Authorization") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                    
+                    item {
+                        OutlinedTextField(
+                            value = userAgent,
+                            onValueChange = { userAgent = it },
+                            label = { Text("User-Agent（可选）") },
+                            placeholder = { Text("HTTP User-Agent") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                }
+                
+                // 底部按钮
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Cancel")
+                        }
+                        
+                        Button(
+                            onClick = {
+                                val parsedInput = RemoteUrlParser.parsePlaybackInput(url)
+                                val normalizedSourcePageUrl = sourcePageUrl.trim().ifBlank { referer.trim() }
+                                val headers = linkedMapOf<String, String>().apply {
+                                    putAll(parsedInput?.headers.orEmpty())
+                                }
+                                if (referer.isNotBlank()) {
+                                    headers["Referer"] = referer.trim()
+                                }
+                                if (origin.isNotBlank()) {
+                                    headers["Origin"] = origin.trim()
+                                }
+                                if (cookie.isNotBlank()) {
+                                    headers["Cookie"] = cookie.trim()
+                                }
+                                if (authorization.isNotBlank()) {
+                                    headers["Authorization"] = authorization.trim()
+                                }
+                                if (userAgent.isNotBlank()) {
+                                    headers["User-Agent"] = userAgent.trim()
+                                }
+
+                                onConfirm(
+                                    RemotePlaybackRequest(
+                                        url = parsedInput?.url ?: url.trim(),
+                                        title = title.trim(),
+                                        sourcePageUrl = normalizedSourcePageUrl,
+                                        headers = RemotePlaybackHeaders.normalize(headers),
+                                        source = RemotePlaybackRequest.Source.DIRECT_INPUT
+                                    )
+                                )
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = url.isNotBlank(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                disabledContainerColor = Color(0xFFE0E0E0),
+                                disabledContentColor = Color(0xFF757575)
+                            )
+                        ) {
+                            Text("Play")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /**
  * 可展开的操作按钮
  */
@@ -289,13 +530,17 @@ fun ExpandableActionButton(
     onToggle: () -> Unit,
     onBiliBiliClick: () -> Unit,
     onWebDavClick: () -> Unit,
-    onTVClick: () -> Unit
+    onTVClick: () -> Unit,
+    onNetworkLinkClick: () -> Unit
 ) {
-    val context = LocalContext.current
     var localIsExpanded by remember { mutableStateOf(isExpanded) }
+    var showNetworkSubmenu by remember { mutableStateOf(false) }
     
     LaunchedEffect(isExpanded) {
         localIsExpanded = isExpanded
+        if (!isExpanded) {
+            showNetworkSubmenu = false
+        }
     }
     
     Box(
@@ -308,9 +553,9 @@ fun ExpandableActionButton(
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.Bottom
         ) {
-            // 展开的功能区
+            // 二级菜单 - 网络功能
             AnimatedVisibility(
-                visible = isExpanded,
+                visible = isExpanded && showNetworkSubmenu,
                 enter = fadeIn(animationSpec = tween(300)) + 
                         expandVertically(animationSpec = tween(300)),
                 exit = fadeOut(animationSpec = tween(300)) + 
@@ -334,13 +579,58 @@ fun ExpandableActionButton(
                         ActionItem(
                             icon = Icons.Default.Tv,
                             label = "TV",
-                            onClick = onTVClick
+                            onClick = {
+                                showNetworkSubmenu = false
+                                onTVClick()
+                            }
+                        )
+                        
+                        // 网络链接
+                        ActionItem(
+                            icon = Icons.Default.Link,
+                            label = "Link",
+                            onClick = {
+                                showNetworkSubmenu = false
+                                onNetworkLinkClick()
+                            }
+                        )
+                    }
+                }
+            }
+            
+            // 展开的功能区
+            AnimatedVisibility(
+                visible = isExpanded && !showNetworkSubmenu,
+                enter = fadeIn(animationSpec = tween(300)) + 
+                        expandVertically(animationSpec = tween(300)),
+                exit = fadeOut(animationSpec = tween(300)) + 
+                       shrinkVertically(animationSpec = tween(300))
+            ) {
+                Card(
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .wrapContentSize(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        // 网络（原TV，添加二级菜单）
+                        ActionItem(
+                            icon = Icons.Default.Public,
+                            label = "Network",
+                            onClick = { showNetworkSubmenu = true }
                         )
                         
                         // 哔哩哔哩番剧
                         ActionItem(
                             icon = Icons.Default.VideoLibrary,
-                            label = "哔哩哔哩番剧",
+                            label = "Bilibili",
                             onClick = onBiliBiliClick
                         )
                         

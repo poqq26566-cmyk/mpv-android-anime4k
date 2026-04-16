@@ -279,8 +279,8 @@ class PlayerDialogManager(
 
         val btnSubtitle = activity.findViewById<ImageView>(R.id.btnSubtitle)
         val menuItems = listOf(
-            activity.getString(R.string.subtitle_menu_track),
-            activity.getString(R.string.subtitle_menu_external),
+            "Subtitle Track",
+            "External Subtitle",
             activity.getString(R.string.subtitle_more_settings)
         )
 
@@ -522,13 +522,20 @@ class PlayerDialogManager(
         )
         
         val currentSelection = modes.indexOf(currentMode)
-        val btnAnime4K = activity.findViewById<android.widget.Button>(R.id.btnAnime4K)
+        
+        // 根据当前屏幕方向选择锚点按钮
+        val isPortrait = activity.resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
+        val btnAnime4K = if (isPortrait) {
+            activity.findViewById<android.widget.Button>(R.id.btnAnime4KFloat)
+        } else {
+            activity.findViewById<android.widget.Button>(R.id.btnAnime4K)
+        }
 
         showPopupDialog(
             btnAnime4K,
             modeNames,
             currentSelection,
-            showAbove = true,
+            showAbove = true,  // 横屏和竖屏都显示在上方
             useFixedHeight = true,
             showScrollHint = true
         ) { position ->
@@ -556,24 +563,17 @@ class PlayerDialogManager(
         val hasChapters = chapterCount > 0
         
         // 动态显示样式覆盖状态
-        val assOverrideText = if (assOverrideEnabled) {
-            activity.getString(R.string.player_menu_style_override_on)
-        } else {
-            activity.getString(R.string.player_menu_style_override_off)
-        }
+        val assOverrideText = if (assOverrideEnabled) "Style Override: ON" else "Style Override: OFF"
+        val autoRotateEnabled =
+            (activity as? MoreOptionsCallback)?.isAutoRotateEnabled() == true
+        val autoRotateText = if (autoRotateEnabled) "Auto Rotate: ON" else "Auto Rotate: OFF"
         
         // 根据是否有章节动态构建菜单项
         val items = mutableListOf<String>()
         if (hasChapters) {
             items.add(activity.getString(R.string.player_menu_chapter))
         }
-        items.addAll(listOf(
-            activity.getString(R.string.player_menu_screenshot),
-            activity.getString(R.string.player_menu_audio_track),
-            activity.getString(R.string.player_menu_decoder),
-            activity.getString(R.string.player_menu_skip_intro_outro),
-            assOverrideText
-        ))
+        items.addAll(listOf("Screenshot", "Audio Track", "Decoder", "Skip Intro/Outro", assOverrideText, autoRotateText))
         
         val btnMore = activity.findViewById<ImageView>(R.id.btnMore)
 
@@ -599,6 +599,7 @@ class PlayerDialogManager(
                 3 -> showDecoderDialog()  // 解码方式
                 4 -> (activity as? MoreOptionsCallback)?.onShowSkipSettings()  // 片头片尾设置
                 5 -> toggleAssOverride()  // 点击切换样式覆盖
+                6 -> (activity as? MoreOptionsCallback)?.onToggleAutoRotate()
             }
         }
     }
@@ -687,9 +688,9 @@ class PlayerDialogManager(
         
         // 简化的菜单项：移除了显示/隐藏选项，合并弹幕来源
         val menuItems = listOf(
-            activity.getString(R.string.danmaku_menu_select),
-            activity.getString(R.string.danmaku_menu_match),
-            activity.getString(R.string.danmaku_menu_track),
+            "Select Danmaku",
+            "Match Danmaku",
+            "Danmaku Track",
             activity.getString(R.string.danmaku_settings)
         )
 
@@ -719,8 +720,8 @@ class PlayerDialogManager(
         val btnDanmaku = activity.findViewById<ImageView>(R.id.btnDanmaku)
         
         val sourceItems = listOf(
-            activity.getString(R.string.danmaku_source_local),
-            activity.getString(R.string.danmaku_source_network)
+            "Local Danmaku",
+            "Network Danmaku"
         )
 
         showPopupDialog(
@@ -963,6 +964,9 @@ interface DanmakuDialogCallback {
 interface MoreOptionsCallback {
     fun onScreenshot()
     fun onShowSkipSettings()
+    fun onTogglePortraitUi()
+    fun onToggleAutoRotate()
+    fun isAutoRotateEnabled(): Boolean
 }
 
 interface VideoAspectCallback {

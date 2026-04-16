@@ -1,5 +1,6 @@
 package com.fam4k007.videoplayer
 
+import android.content.Context
 import android.graphics.PorterDuff
 import android.os.Bundle
 import android.view.View
@@ -14,6 +15,10 @@ import com.fam4k007.videoplayer.utils.ThemeManager
  * 所有业务 Activity 应继承此类
  */
 abstract class BaseActivity : AppCompatActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppApplication.updateLocale(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // 应用主题

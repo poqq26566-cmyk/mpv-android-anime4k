@@ -3,8 +3,8 @@ package com.fam4k007.videoplayer
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
+import com.fam4k007.videoplayer.BaseComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -44,7 +44,7 @@ import com.fam4k007.videoplayer.utils.ThemeManager
 import kotlinx.coroutines.launch
 import android.util.Log
 
-class DownloadActivity : ComponentActivity() {
+class DownloadActivity : BaseComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -81,7 +81,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
     val downloadPath by viewModel.downloadPath.collectAsState()
     val downloadPathDisplay by viewModel.downloadPathDisplay.collectAsState()
     val context = LocalContext.current
-    val activity = context as? ComponentActivity
+    val activity = context as? BaseComponentActivity
 
     var videoUrl by remember { mutableStateOf("") }
     var isParsing by remember { mutableStateOf(false) }

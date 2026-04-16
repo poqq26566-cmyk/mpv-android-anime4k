@@ -88,7 +88,7 @@ object AppConstants {
 
         // 支持的视频文件扩展名
         val SUPPORTED_VIDEO_EXTENSIONS = arrayOf(
-            "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m3u8", "ts",
+            "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m3u8", "mpd", "ts",
             "3gp", "3g2", "mxf", "ogv", "m2ts", "mts"
         )
 

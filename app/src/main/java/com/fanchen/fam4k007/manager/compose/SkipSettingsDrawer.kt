@@ -118,14 +118,39 @@ fun SkipSettingsDrawer(
                             .verticalScroll(rememberScrollState())
                             .padding(16.dp)
                     ) {
-                        // 标题
-                        Text(
-                            text = stringResource(R.string.skip_settings),
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
+                        // 标题栏
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Skip Intro/Outro",
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            
+                            // 关闭按钮
+                            IconButton(
+                                onClick = {
+                                    isVisible = false
+                                    coroutineScope.launch {
+                                        delay(300)
+                                        onDismiss()
+                                    }
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Text(
+                                    text = "✕",
+                                    fontSize = 20.sp,
+                                    color = Color(0xFFBBBBBB)
+                                )
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         Divider(
                             color = Color(0x33FFFFFF),

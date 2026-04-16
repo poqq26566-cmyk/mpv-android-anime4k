@@ -161,15 +161,32 @@ private fun DanDanPlaySearchContent(
                 color = Color.White
             )
 
-            // 返回按钮（在选择剧集界面显示）
-            if (selectedAnime != null) {
-                TextButton(
-                    onClick = { selectedAnime = null },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = Color(0xFF64B5F6)
-                    )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 返回按钮（在选择剧集界面显示）
+                if (selectedAnime != null) {
+                    TextButton(
+                        onClick = { selectedAnime = null },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = Color(0xFF64B5F6)
+                        )
+                    ) {
+                        Text("← 返回", fontSize = 13.sp)
+                    }
+                }
+                
+                // 关闭按钮
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(32.dp)
                 ) {
-                    Text(stringResource(R.string.dandanplay_back), fontSize = 13.sp)
+                    Text(
+                        text = "✕",
+                        fontSize = 20.sp,
+                        color = Color(0xFFBBBBBB)
+                    )
                 }
             }
         }

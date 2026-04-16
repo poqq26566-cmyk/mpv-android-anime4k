@@ -2,11 +2,10 @@ package com.fam4k007.videoplayer
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.fam4k007.videoplayer.BaseComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,6 +36,9 @@ import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.bilibili.auth.BiliBiliAuthManager
 import com.fam4k007.videoplayer.bilibili.model.BiliApiResponse
 import com.fam4k007.videoplayer.compose.ImmersiveTopAppBar
+import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
+import com.fam4k007.videoplayer.remote.RemotePlaybackLauncher
+import com.fam4k007.videoplayer.remote.RemotePlaybackRequest
 import com.fanchen.fam4k007.manager.compose.BiliBiliLoginActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,7 +57,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
  * 用户输入番剧链接，解析后显示集数列表
  */
 @OptIn(ExperimentalFoundationApi::class)
-class BiliBiliPlayActivity : ComponentActivity() {
+class BiliBiliPlayActivity : BaseComponentActivity() {
     
     private lateinit var authManager: BiliBiliAuthManager
     private val client by lazy { authManager.getClient() }
@@ -126,16 +128,22 @@ class BiliBiliPlayActivity : ComponentActivity() {
                 }
                 
                 android.util.Log.d("BiliPlay", "Play URL: $playUrl")
-                
-                // 启动播放器
-                val intent = Intent(this@BiliBiliPlayActivity, VideoPlayerActivity::class.java).apply {
-                    data = Uri.parse(playUrl)
-                    putExtra("title", title)
-                    putExtra("is_online", true)
-                    // 传递Cookie用于验证
-                    putExtra("cookies", authManager.getCookies().entries.joinToString("; ") { "${it.key}=${it.value}" })
-                }
-                startActivity(intent)
+
+                val requestHeaders = RemotePlaybackHeaders.normalize(
+                    linkedMapOf(
+                        "Cookie" to authManager.getCookieString(),
+                        "Referer" to "https://www.bilibili.com"
+                    )
+                )
+
+                val request = RemotePlaybackRequest(
+                    url = playUrl,
+                    title = title,
+                    headers = requestHeaders,
+                    sourcePageUrl = "https://www.bilibili.com",
+                    source = RemotePlaybackRequest.Source.BILIBILI
+                )
+                RemotePlaybackLauncher.start(this@BiliBiliPlayActivity, request)
                 
             } catch (e: Exception) {
                 android.util.Log.e("BiliPlay", "Play error", e)

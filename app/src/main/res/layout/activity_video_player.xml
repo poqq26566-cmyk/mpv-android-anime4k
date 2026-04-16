@@ -110,6 +110,7 @@
 
         <!-- 实际内容区域 -->
         <LinearLayout
+            android:id="@+id/topInfoContentRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -157,6 +158,7 @@
 
             <!-- 右侧区域:状态+按钮(占1/2宽度,预留导航栏空间) -->
             <LinearLayout
+                android:id="@+id/topRightPanel"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -166,6 +168,7 @@
 
                 <!-- 电量和时间显示（向左移动，给字幕按钮留空间） -->
                 <LinearLayout
+                    android:id="@+id/topStatusContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="32dp"
                     android:orientation="vertical"
@@ -351,6 +354,7 @@
 
                 <!-- 主控制按钮组 - 相对于整个屏幕居中 -->
                 <LinearLayout
+                    android:id="@+id/mainControlsRow"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -462,12 +466,29 @@
                     android:text="超分辨率"
                     android:textSize="12sp"
                     android:textColor="#FFFFFF"
+                    android:textAllCaps="false"
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp"
                     android:background="@android:color/transparent"
-                    android:elevation="2dp"
-                    android:layout_gravity="start|center_vertical"
-                    android:layout_marginStart="50dp" />
+                    android:layout_gravity="start|bottom"
+                    android:layout_marginStart="48dp"
+                    android:layout_marginBottom="4dp" />
+
+                <!-- 横屏旋转按钮 - 右下角（随控制栏显示隐藏） -->
+                <ImageView
+                    android:id="@+id/btnRotateCorner"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:src="@drawable/ic_rotate"
+                    android:tint="#FFFFFF"
+                    android:padding="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:layout_gravity="end|bottom"
+                    android:layout_marginEnd="52dp"
+                    android:layout_marginBottom="4dp"
+                    android:visibility="gone" />
 
             </FrameLayout>
         </LinearLayout>
@@ -614,6 +635,43 @@
         </FrameLayout>
 
     </LinearLayout>
+
+    <!-- 竖屏悬浮按钮：超分辨率（左侧中间） -->
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnAnime4KFloat"
+        android:layout_width="wrap_content"
+        android:layout_height="38dp"
+        android:minWidth="80dp"
+        android:text="超分辨率"
+        android:textSize="12sp"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF"
+        android:gravity="center"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="@android:color/transparent"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="14dp"
+        android:layout_marginBottom="122dp"
+        android:visibility="gone" />
+
+    <!-- 竖屏悬浮按钮：旋转/切换布局（右侧中间） -->
+    <ImageView
+        android:id="@+id/btnRotateFloat"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:src="@drawable/ic_rotate"
+        android:tint="#FFFFFF"
+        android:padding="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="14dp"
+        android:layout_marginBottom="122dp"
+        android:visibility="gone" />
 
     <!-- 进度调整提示（屏幕中央）- 优化为圆角背景 -->
     <TextView

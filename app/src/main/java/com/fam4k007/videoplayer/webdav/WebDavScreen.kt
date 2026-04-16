@@ -341,7 +341,7 @@ private fun WebDavAddAccountDialog(
             ) {
                 item {
                     Text(
-                        text = "添加 WebDAV 账户",
+                        text = "Add WebDAV Account",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF212121)
@@ -352,8 +352,8 @@ private fun WebDavAddAccountDialog(
                     OutlinedTextField(
                         value = displayName,
                         onValueChange = { displayName = it },
-                        label = { Text("显示名称") },
-                        placeholder = { Text("如: 我的网盘") },
+                        label = { Text("Display Name") },
+                        placeholder = { Text("e.g.: My Cloud") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -363,7 +363,7 @@ private fun WebDavAddAccountDialog(
                     OutlinedTextField(
                         value = serverUrl,
                         onValueChange = { serverUrl = it },
-                        label = { Text("服务器地址") },
+                        label = { Text("Server URL") },
                         placeholder = { Text("http://example.com/dav/") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
@@ -380,7 +380,7 @@ private fun WebDavAddAccountDialog(
                         FilterChip(
                             selected = !isAnonymous,
                             onClick = { isAnonymous = false },
-                            label = { Text("账号登录") },
+                            label = { Text("Login") },
                             leadingIcon = {
                                 if (!isAnonymous) {
                                     Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -392,7 +392,7 @@ private fun WebDavAddAccountDialog(
                         FilterChip(
                             selected = isAnonymous,
                             onClick = { isAnonymous = true },
-                            label = { Text("匿名访问") },
+                            label = { Text("Anonymous") },
                             leadingIcon = {
                                 if (isAnonymous) {
                                     Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -408,8 +408,8 @@ private fun WebDavAddAccountDialog(
                         OutlinedTextField(
                             value = account,
                             onValueChange = { account = it },
-                            label = { Text("账号") },
-                            placeholder = { Text("用户名") },
+                            label = { Text("Account") },
+                            placeholder = { Text("Username") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
@@ -419,8 +419,8 @@ private fun WebDavAddAccountDialog(
                         OutlinedTextField(
                             value = password,
                             onValueChange = { password = it },
-                            label = { Text("密码") },
-                            placeholder = { Text("密码") },
+                            label = { Text("Password") },
+                            placeholder = { Text("Password") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             visualTransformation = if (passwordVisible) 
@@ -435,7 +435,7 @@ private fun WebDavAddAccountDialog(
                                             Icons.Default.Visibility 
                                         else 
                                             Icons.Default.VisibilityOff,
-                                        contentDescription = if (passwordVisible) "隐藏密码" else "显示密码"
+                                        contentDescription = if (passwordVisible) "Hide password" else "Show password"
                                     )
                                 }
                             }
@@ -502,11 +502,11 @@ private fun WebDavAddAccountDialog(
                                     strokeWidth = 2.dp
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("测试中...")
+                                Text("Testing...")
                             } else {
                                 Icon(Icons.Default.Wifi, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("测试连接")
+                                Text("Test Connection")
                             }
                         }
                         
@@ -531,7 +531,7 @@ private fun WebDavAddAccountDialog(
                             onClick = onDismiss,
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("取消")
+                            Text("Cancel")
                         }
                         
                         Button(
@@ -574,7 +574,7 @@ private fun WebDavAddAccountDialog(
                                 containerColor = MaterialTheme.colorScheme.primary
                             )
                         ) {
-                            Text("保存")
+                            Text("Save")
                         }
                     }
                 }
@@ -610,7 +610,7 @@ fun WebDavBrowserScreen(
     var error by remember { mutableStateOf<String?>(null) }
     var currentPath by remember { mutableStateOf("") }
     val pathStack = remember { mutableListOf<String>() }
-    var sortType by remember { mutableStateOf(0) } // 0:名称升序, 1:名称降序, 2:大小升序, 3:大小降序, 4:时间升序, 5:时间降序
+    var sortType by remember { mutableStateOf(0) } // 0:名称升序, 1:名称降序, 2:时间降序, 3:时间升序
     var showSortDialog by remember { mutableStateOf(false) }
     
     // 加载文件函数
@@ -678,35 +678,44 @@ fun WebDavBrowserScreen(
     Scaffold(
         topBar = {
             Column {
-                TopAppBar(
-                    title = { Text(account.displayName, fontWeight = FontWeight.Bold) },
+                ImmersiveTopAppBar(
+                    title = { 
+                        Text(
+                            account.displayName, 
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        ) 
+                    },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                            Icon(
+                                Icons.Default.ArrowBack, 
+                                contentDescription = "返回",
+                                tint = Color.White
+                            )
                         }
                     },
                     actions = {
                         IconButton(onClick = { showSortDialog = true }) {
-                            Icon(Icons.Default.Sort, contentDescription = "排序")
+                            Icon(
+                                Icons.Default.Sort, 
+                                contentDescription = "排序",
+                                tint = Color.White
+                            )
                         }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                        actionIconContentColor = MaterialTheme.colorScheme.onPrimary
-                    )
+                    }
                 )
                 
                 // 当前路径显示
                 Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
+                    color = Color.Transparent,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = if (currentPath.isEmpty()) "/" else "/$currentPath",
                         fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = Color.Black,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -855,20 +864,16 @@ private fun sortFiles(fileList: List<WebDavClient.WebDavFile>, sortType: Int): L
     val sortedFolders = when (sortType) {
         0 -> folders.sortedWith(naturalComparator { it.name }) // 名称升序
         1 -> folders.sortedWith(naturalComparator<WebDavClient.WebDavFile> { it.name }.reversed()) // 名称降序
-        2 -> folders.sortedBy { it.size } // 大小升序
-        3 -> folders.sortedByDescending { it.size } // 大小降序
-        4 -> folders.sortedBy { it.modifiedTime } // 时间升序
-        5 -> folders.sortedByDescending { it.modifiedTime } // 时间降序
+        2 -> folders.sortedByDescending { it.modifiedTime } // 时间降序（新到旧）
+        3 -> folders.sortedBy { it.modifiedTime } // 时间升序（旧到新）
         else -> folders.sortedWith(naturalComparator { it.name })
     }
     
     val sortedFiles = when (sortType) {
         0 -> files.sortedWith(naturalComparator { it.name })
         1 -> files.sortedWith(naturalComparator<WebDavClient.WebDavFile> { it.name }.reversed())
-        2 -> files.sortedBy { it.size }
-        3 -> files.sortedByDescending { it.size }
-        4 -> files.sortedBy { it.modifiedTime }
-        5 -> files.sortedByDescending { it.modifiedTime }
+        2 -> files.sortedByDescending { it.modifiedTime } // 时间降序（新到旧）
+        3 -> files.sortedBy { it.modifiedTime } // 时间升序（旧到新）
         else -> files.sortedWith(naturalComparator { it.name })
     }
     
@@ -940,10 +945,8 @@ private fun WebDavSortDialog(
                 val sortOptions = listOf(
                     0 to "名称 (A-Z)",
                     1 to "名称 (Z-A)",
-                    2 to "大小 (小到大)",
-                    3 to "大小 (大到小)",
-                    4 to "时间 (旧到新)",
-                    5 to "时间 (新到旧)"
+                    2 to "时间 (新到旧)",
+                    3 to "时间 (旧到新)"
                 )
                 
                 sortOptions.forEach { (type, label) ->

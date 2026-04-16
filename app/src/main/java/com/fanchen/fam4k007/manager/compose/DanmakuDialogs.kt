@@ -139,14 +139,39 @@ fun DanmakuSettingsDrawer(
                             .fillMaxSize()
                             .padding(16.dp)
                     ) {
-                    // 标题
-                    Text(
-                        text = stringResource(R.string.danmaku_settings),
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+                    // 标题栏
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "弹幕设置",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        
+                        // 关闭按钮
+                        IconButton(
+                            onClick = {
+                                isVisible = false
+                                coroutineScope.launch {
+                                    delay(300)
+                                    onDismiss()
+                                }
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Text(
+                                text = "✕",
+                                fontSize = 20.sp,
+                                color = Color(0xFFBBBBBB)
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     // 弹幕信息卡片
                     if (danmakuPath != null) {
@@ -212,7 +237,7 @@ fun DanmakuSettingsDrawer(
                         // 弹幕样式设置
                         item {
                             ExpandableSection(
-                                title = stringResource(R.string.danmaku_style),
+                                title = "Danmaku Style",
                                 isExpanded = expandedSection == "style",
                                 onToggle = { expandedSection = if (expandedSection == "style") null else "style" }
                             ) {
@@ -232,7 +257,7 @@ fun DanmakuSettingsDrawer(
                         // 弹幕配置设置
                         item {
                             ExpandableSection(
-                                title = stringResource(R.string.danmaku_config),
+                                title = "Danmaku Config",
                                 isExpanded = expandedSection == "config",
                                 onToggle = { expandedSection = if (expandedSection == "config") null else "config" }
                             ) {

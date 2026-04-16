@@ -185,11 +185,25 @@ fun DanmakuFilePickerDialog(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            // 动态标题：根目录显示文件名，非根目录显示返回按钮
+                            val isRootPath = currentPath == "/storage/emulated/0" || currentPath == "/"
                             Text(
-                                text = stringResource(R.string.dialog_select_danmaku),
+                                text = if (isRootPath) "Select Danmaku File" else "← Back",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = if (isRootPath) Color.White else Color(0xFF64B5F6),
+                                modifier = Modifier.clickable(
+                                    enabled = !isRootPath,
+                                    indication = null,
+                                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                                ) {
+                                    if (!isRootPath) {
+                                        val parentPath = File(currentPath).parent
+                                        if (parentPath != null) {
+                                            loadFiles(parentPath, direction = 1)
+                                        }
+                                    }
+                                }
                             )
 
                             // 关闭按钮
@@ -210,7 +224,7 @@ fun DanmakuFilePickerDialog(
                             }
                         }
 
-                        // 路径导航栏（合并路径显示和返回按钮）
+                        // 路径导航栏
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -220,31 +234,9 @@ fun DanmakuFilePickerDialog(
                         ) {
                             Row(
                                 modifier = Modifier
-                                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // 返回上级按钮（紧凑设计）
-                                if (currentPath != "/storage/emulated/0" && currentPath != "/") {
-                                    Surface(
-                                        modifier = Modifier
-                                            .clickable {
-                                                val parentPath = File(currentPath).parent
-                                                if (parentPath != null) {
-                                                    loadFiles(parentPath, direction = 1)
-                                                }
-                                            },
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = Color(0x33FFFFFF)
-                                    ) {
-                                        Text(
-                                            text = "⬆️",
-                                            fontSize = 16.sp,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                        )
-                                    }
-                                }
-                                
                                 // 当前路径显示
                                 Row(
                                     modifier = Modifier.weight(1f),

@@ -4,9 +4,10 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import com.fam4k007.videoplayer.BaseComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
@@ -19,13 +20,16 @@ import com.fam4k007.videoplayer.utils.ThemeManager
 /**
  * WebDAV 文件浏览 Compose Activity
  */
-class WebDavBrowserComposeActivity : ComponentActivity() {
+class WebDavBrowserComposeActivity : BaseComponentActivity() {
     
     private var accountId: String? = null
     private var onBackCallback: (() -> Unit)? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // 启用边到边显示，让内容可以绘制到状态栏区域
+        enableEdgeToEdge()
         
         accountId = intent.getStringExtra("account_id")
         

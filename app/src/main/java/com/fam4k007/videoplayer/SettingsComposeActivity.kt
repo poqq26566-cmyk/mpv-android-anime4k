@@ -1,8 +1,8 @@
 package com.fam4k007.videoplayer
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.fam4k007.videoplayer.BaseComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
@@ -14,7 +14,7 @@ import com.fam4k007.videoplayer.utils.ThemeManager
 /**
  * Compose 版本的设置 Activity
  */
-class SettingsComposeActivity : ComponentActivity() {
+class SettingsComposeActivity : BaseComponentActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -222,35 +222,58 @@ fun VideoListDrawer(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = stringResource(R.string.video_list),
+                                text = "Video List",
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
                             
-                            // 排序按钮
-                            Box {
-                                IconButton(
-                                    onClick = { showSortMenu = !showSortMenu },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Sort,
-                                        contentDescription = stringResource(R.string.content_desc_sort),
-                                        tint = Color(0xFF64B5F6),
-                                        modifier = Modifier.size(20.dp)
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // 排序按钮
+                                Box {
+                                    IconButton(
+                                        onClick = { showSortMenu = !showSortMenu },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Sort,
+                                            contentDescription = "排序",
+                                            tint = Color(0xFF64B5F6),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    
+                                    // 排序菜单
+                                    DropdownMenuWithStyle(
+                                        expanded = showSortMenu,
+                                        onDismissRequest = { showSortMenu = false },
+                                        sortBy = sortBy,
+                                        sortOrder = sortOrder,
+                                        onSortByChange = { sortBy = it },
+                                        onSortOrderChange = { sortOrder = it }
                                     )
                                 }
                                 
-                                // 排序菜单
-                                DropdownMenuWithStyle(
-                                    expanded = showSortMenu,
-                                    onDismissRequest = { showSortMenu = false },
-                                    sortBy = sortBy,
-                                    sortOrder = sortOrder,
-                                    onSortByChange = { sortBy = it },
-                                    onSortOrderChange = { sortOrder = it }
-                                )
+                                // 关闭按钮
+                                IconButton(
+                                    onClick = {
+                                        isVisible = false
+                                        coroutineScope.launch {
+                                            delay(300)
+                                            onDismiss()
+                                        }
+                                    },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Text(
+                                        text = "✕",
+                                        fontSize = 20.sp,
+                                        color = Color(0xFFBBBBBB)
+                                    )
+                                }
                             }
                         }
 

@@ -2,7 +2,6 @@ package com.fam4k007.videoplayer.download
 
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,6 +15,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fam4k007.videoplayer.BaseComponentActivity
 import com.fam4k007.videoplayer.R
 import kotlinx.coroutines.launch
 
@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
  * 3. 如果是番剧，显示集数列表供用户选择
  * 4. 开始下载并显示进度
  */
-class DownloadExampleActivity : ComponentActivity() {
+class DownloadExampleActivity : BaseComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
