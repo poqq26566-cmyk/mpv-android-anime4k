@@ -225,7 +225,7 @@ fun SubtitleSettingsDrawer(
                         // 字幕延迟设置
                         item {
                             ExpandableSection(
-                                title = stringResource(R.string.subtitle_delay_settings),
+                                title = "Subtitle Delay",
                                 isExpanded = expandedSection == "delay",
                                 onToggle = { expandedSection = if (expandedSection == "delay") null else "delay" }
                             ) {
@@ -239,7 +239,7 @@ fun SubtitleSettingsDrawer(
                         // 字幕样式设置
                         item {
                             ExpandableSection(
-                                title = stringResource(R.string.subtitle_style_settings),
+                                title = "Subtitle Style",
                                 isExpanded = expandedSection == "style",
                                 onToggle = { expandedSection = if (expandedSection == "style") null else "style" }
                             ) {
@@ -261,7 +261,7 @@ fun SubtitleSettingsDrawer(
                         // 字幕杂项设置
                         item {
                             ExpandableSection(
-                                title = stringResource(R.string.subtitle_misc_settings),
+                                title = "Subtitle Misc",
                                 isExpanded = expandedSection == "misc",
                                 onToggle = { expandedSection = if (expandedSection == "misc") null else "misc" }
                             ) {
@@ -277,7 +277,7 @@ fun SubtitleSettingsDrawer(
                         // 字幕字体设置
                         item {
                             ExpandableSection(
-                                title = stringResource(R.string.subtitle_font_settings),
+                                title = "Subtitle Font",
                                 isExpanded = expandedSection == "font",
                                 onToggle = { expandedSection = if (expandedSection == "font") null else "font" }
                             ) {

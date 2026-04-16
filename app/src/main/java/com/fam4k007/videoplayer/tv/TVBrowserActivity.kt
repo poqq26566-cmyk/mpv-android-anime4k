@@ -11,9 +11,9 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.fam4k007.videoplayer.BaseComponentActivity
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,7 +47,7 @@ import com.fam4k007.videoplayer.utils.ThemeManager
  * TV浏览器 - 带视频嗅探功能的WebView
  * 使用Compose架构
  */
-class TVBrowserActivity : ComponentActivity() {
+class TVBrowserActivity : BaseComponentActivity() {
     companion object {
         private const val TAG = "TVBrowserActivity"
         const val EXTRA_URL = "extra_url"

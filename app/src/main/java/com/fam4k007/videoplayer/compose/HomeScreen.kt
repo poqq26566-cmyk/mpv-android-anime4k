@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -352,7 +353,7 @@ fun RemoteUrlDialog(
             ) {
                 item {
                     Text(
-                        text = "播放网络视频",
+                        text = "Play Network Video",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF212121)
@@ -363,8 +364,8 @@ fun RemoteUrlDialog(
                     OutlinedTextField(
                         value = url,
                         onValueChange = { url = it },
-                        label = { Text("视频链接") },
-                        placeholder = { Text("https://example.com/video.mp4 或直接粘贴 curl / 请求头") },
+                        label = { Text("Video URL") },
+                        placeholder = { Text("https://example.com/video.mp4 or paste curl / headers") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 1,
                         maxLines = 3,
@@ -379,8 +380,8 @@ fun RemoteUrlDialog(
                     OutlinedTextField(
                         value = title,
                         onValueChange = { title = it },
-                        label = { Text("标题（可选）") },
-                        placeholder = { Text("为视频指定一个标题") },
+                        label = { Text("Title (Optional)") },
+                        placeholder = { Text("Specify a title for the video") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -396,7 +397,7 @@ fun RemoteUrlDialog(
                             contentDescription = null
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (showAdvanced) "收起高级设置" else "展开高级设置")
+                        Text(if (showAdvanced) "Collapse Advanced" else "Expand Advanced")
                     }
                 }
                 
@@ -467,7 +468,7 @@ fun RemoteUrlDialog(
                             onClick = onDismiss,
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("取消")
+                            Text("Cancel")
                         }
                         
                         Button(
@@ -511,7 +512,7 @@ fun RemoteUrlDialog(
                                 disabledContentColor = Color(0xFF757575)
                             )
                         ) {
-                            Text("播放")
+                            Text("Play")
                         }
                     }
                 }
@@ -587,7 +588,7 @@ fun ExpandableActionButton(
                         // 网络链接
                         ActionItem(
                             icon = Icons.Default.Link,
-                            label = "链接",
+                            label = "Link",
                             onClick = {
                                 showNetworkSubmenu = false
                                 onNetworkLinkClick()
@@ -622,14 +623,14 @@ fun ExpandableActionButton(
                         // 网络（原TV，添加二级菜单）
                         ActionItem(
                             icon = Icons.Default.Public,
-                            label = "网络",
+                            label = "Network",
                             onClick = { showNetworkSubmenu = true }
                         )
                         
                         // 哔哩哔哩番剧
                         ActionItem(
                             icon = Icons.Default.VideoLibrary,
-                            label = "哔哩哔哩番剧",
+                            label = "Bilibili",
                             onClick = onBiliBiliClick
                         )
                         

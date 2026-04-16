@@ -183,6 +183,10 @@ class VideoPlayerActivity : AppCompatActivity(),
     
     private var wasPlayingBeforeDanmakuPicker = false
     
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppApplication.updateLocale(newBase))
+    }
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeManager.applyTheme(this)
         

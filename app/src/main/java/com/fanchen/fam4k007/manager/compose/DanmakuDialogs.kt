@@ -237,7 +237,7 @@ fun DanmakuSettingsDrawer(
                         // 弹幕样式设置
                         item {
                             ExpandableSection(
-                                title = stringResource(R.string.danmaku_style),
+                                title = "Danmaku Style",
                                 isExpanded = expandedSection == "style",
                                 onToggle = { expandedSection = if (expandedSection == "style") null else "style" }
                             ) {
@@ -257,7 +257,7 @@ fun DanmakuSettingsDrawer(
                         // 弹幕配置设置
                         item {
                             ExpandableSection(
-                                title = stringResource(R.string.danmaku_config),
+                                title = "Danmaku Config",
                                 isExpanded = expandedSection == "config",
                                 onToggle = { expandedSection = if (expandedSection == "config") null else "config" }
                             ) {

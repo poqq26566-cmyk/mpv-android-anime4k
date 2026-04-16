@@ -10,8 +10,8 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.fam4k007.videoplayer.BaseComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
@@ -28,7 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class VideoBrowserComposeActivity : ComponentActivity() {
+class VideoBrowserComposeActivity : BaseComponentActivity() {
 
     companion object {
         private const val TAG = "VideoBrowserCompose"

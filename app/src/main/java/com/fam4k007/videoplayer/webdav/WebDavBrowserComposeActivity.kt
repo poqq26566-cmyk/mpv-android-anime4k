@@ -4,9 +4,9 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import com.fam4k007.videoplayer.BaseComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
@@ -20,7 +20,7 @@ import com.fam4k007.videoplayer.utils.ThemeManager
 /**
  * WebDAV 文件浏览 Compose Activity
  */
-class WebDavBrowserComposeActivity : ComponentActivity() {
+class WebDavBrowserComposeActivity : BaseComponentActivity() {
     
     private var accountId: String? = null
     private var onBackCallback: (() -> Unit)? = null

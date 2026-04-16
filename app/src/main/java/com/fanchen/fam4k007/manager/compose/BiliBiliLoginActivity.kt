@@ -3,7 +3,6 @@ package com.fanchen.fam4k007.manager.compose
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
 import androidx.compose.foundation.Image
@@ -26,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fam4k007.videoplayer.BaseComponentActivity
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.bilibili.auth.BiliBiliAuthManager
 import com.fam4k007.videoplayer.bilibili.model.LoginResult
@@ -41,7 +41,7 @@ import kotlinx.coroutines.flow.StateFlow
 /**
  * B站登录界面
  */
-class BiliBiliLoginActivity : ComponentActivity() {
+class BiliBiliLoginActivity : BaseComponentActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

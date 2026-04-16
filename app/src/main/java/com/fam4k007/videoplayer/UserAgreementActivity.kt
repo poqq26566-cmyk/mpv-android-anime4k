@@ -3,8 +3,8 @@ package com.fam4k007.videoplayer
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.fam4k007.videoplayer.BaseComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import com.fam4k007.videoplayer.compose.UserAgreementScreen
@@ -13,7 +13,7 @@ import com.fam4k007.videoplayer.compose.UserAgreementScreen
  * 用户协议 Activity - 使用 Compose 实现
  * 第一次启动应用时显示，用户必须同意协议才能继续使用
  */
-class UserAgreementActivity : ComponentActivity() {
+class UserAgreementActivity : BaseComponentActivity() {
 
     companion object {
         private const val PREFS_NAME = "user_agreement_prefs"

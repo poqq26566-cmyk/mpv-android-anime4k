@@ -1,6 +1,10 @@
 package com.fam4k007.videoplayer
 
 import android.app.Application
+import android.content.Context
+import android.content.res.Configuration
+import android.os.Build
+import java.util.Locale
 import com.fam4k007.videoplayer.database.VideoDatabase
 import com.fam4k007.videoplayer.manager.ThemeManager
 import com.fam4k007.videoplayer.utils.CrashHandler
@@ -15,6 +19,10 @@ import kotlinx.coroutines.launch
 class AppApplication : Application() {
     
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(updateLocale(base))
+    }
     
     override fun onCreate() {
         super.onCreate()
@@ -36,6 +44,21 @@ class AppApplication : Application() {
                 // 预热失败不影响应用启动
                 com.fam4k007.videoplayer.utils.Logger.e("AppApplication", "Failed to warm up database", e)
             }
+        }
+    }
+    
+    companion object {
+        /**
+         * 强制设置应用语言为英文
+         */
+        fun updateLocale(context: Context): Context {
+            val locale = Locale.ENGLISH
+            Locale.setDefault(locale)
+            
+            val config = Configuration(context.resources.configuration)
+            config.setLocale(locale)
+            
+            return context.createConfigurationContext(config)
         }
     }
 }

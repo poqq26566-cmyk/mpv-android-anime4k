@@ -341,7 +341,7 @@ private fun WebDavAddAccountDialog(
             ) {
                 item {
                     Text(
-                        text = "添加 WebDAV 账户",
+                        text = "Add WebDAV Account",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF212121)
@@ -352,8 +352,8 @@ private fun WebDavAddAccountDialog(
                     OutlinedTextField(
                         value = displayName,
                         onValueChange = { displayName = it },
-                        label = { Text("显示名称") },
-                        placeholder = { Text("如: 我的网盘") },
+                        label = { Text("Display Name") },
+                        placeholder = { Text("e.g.: My Cloud") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -363,7 +363,7 @@ private fun WebDavAddAccountDialog(
                     OutlinedTextField(
                         value = serverUrl,
                         onValueChange = { serverUrl = it },
-                        label = { Text("服务器地址") },
+                        label = { Text("Server URL") },
                         placeholder = { Text("http://example.com/dav/") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
@@ -380,7 +380,7 @@ private fun WebDavAddAccountDialog(
                         FilterChip(
                             selected = !isAnonymous,
                             onClick = { isAnonymous = false },
-                            label = { Text("账号登录") },
+                            label = { Text("Login") },
                             leadingIcon = {
                                 if (!isAnonymous) {
                                     Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -392,7 +392,7 @@ private fun WebDavAddAccountDialog(
                         FilterChip(
                             selected = isAnonymous,
                             onClick = { isAnonymous = true },
-                            label = { Text("匿名访问") },
+                            label = { Text("Anonymous") },
                             leadingIcon = {
                                 if (isAnonymous) {
                                     Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -408,8 +408,8 @@ private fun WebDavAddAccountDialog(
                         OutlinedTextField(
                             value = account,
                             onValueChange = { account = it },
-                            label = { Text("账号") },
-                            placeholder = { Text("用户名") },
+                            label = { Text("Account") },
+                            placeholder = { Text("Username") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
@@ -419,8 +419,8 @@ private fun WebDavAddAccountDialog(
                         OutlinedTextField(
                             value = password,
                             onValueChange = { password = it },
-                            label = { Text("密码") },
-                            placeholder = { Text("密码") },
+                            label = { Text("Password") },
+                            placeholder = { Text("Password") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             visualTransformation = if (passwordVisible) 
@@ -435,7 +435,7 @@ private fun WebDavAddAccountDialog(
                                             Icons.Default.Visibility 
                                         else 
                                             Icons.Default.VisibilityOff,
-                                        contentDescription = if (passwordVisible) "隐藏密码" else "显示密码"
+                                        contentDescription = if (passwordVisible) "Hide password" else "Show password"
                                     )
                                 }
                             }
@@ -502,11 +502,11 @@ private fun WebDavAddAccountDialog(
                                     strokeWidth = 2.dp
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("测试中...")
+                                Text("Testing...")
                             } else {
                                 Icon(Icons.Default.Wifi, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("测试连接")
+                                Text("Test Connection")
                             }
                         }
                         
@@ -531,7 +531,7 @@ private fun WebDavAddAccountDialog(
                             onClick = onDismiss,
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("取消")
+                            Text("Cancel")
                         }
                         
                         Button(
@@ -574,7 +574,7 @@ private fun WebDavAddAccountDialog(
                                 containerColor = MaterialTheme.colorScheme.primary
                             )
                         ) {
-                            Text("保存")
+                            Text("Save")
                         }
                     }
                 }

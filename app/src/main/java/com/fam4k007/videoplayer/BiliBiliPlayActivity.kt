@@ -4,8 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.fam4k007.videoplayer.BaseComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -57,7 +57,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
  * 用户输入番剧链接，解析后显示集数列表
  */
 @OptIn(ExperimentalFoundationApi::class)
-class BiliBiliPlayActivity : ComponentActivity() {
+class BiliBiliPlayActivity : BaseComponentActivity() {
     
     private lateinit var authManager: BiliBiliAuthManager
     private val client by lazy { authManager.getClient() }

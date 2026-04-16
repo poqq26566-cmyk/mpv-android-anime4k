@@ -125,7 +125,7 @@ fun SkipSettingsDrawer(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "片头片尾设置",
+                                text = "Skip Intro/Outro",
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White

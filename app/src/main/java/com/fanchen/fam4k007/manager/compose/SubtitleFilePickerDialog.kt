@@ -193,7 +193,7 @@ fun SubtitleFilePickerDialog(
                             // 动态标题：根目录显示文件名，非根目录显示返回按钮
                             val isRootPath = currentPath == "/storage/emulated/0" || currentPath == "/"
                             Text(
-                                text = if (isRootPath) "选择字幕文件" else "← 返回上级",
+                                text = if (isRootPath) "Select Subtitle File" else "← Back",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (isRootPath) Color.White else Color(0xFF64B5F6),
