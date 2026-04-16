@@ -51,7 +51,7 @@ object UriUtils {
         val filepath = when (scheme) {
             "file" -> path
             "content" -> openContentFd(context)
-            "http", "https", "rtsp", "rtmp" -> toString()
+            "http", "https", "rtsp", "rtmp", "rtmps" -> toString()
             else -> {
                 Log.e(TAG, "Unknown URI scheme: $scheme")
                 null

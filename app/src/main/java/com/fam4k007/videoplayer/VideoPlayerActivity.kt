@@ -3,6 +3,7 @@
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
@@ -11,7 +12,9 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.text.TextUtils
 import android.util.Log
+import android.content.pm.ActivityInfo
 import android.view.MotionEvent
 import android.view.Gravity
 import android.view.View
@@ -41,6 +44,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.fam4k007.videoplayer.Anime4KManager
 import com.fam4k007.videoplayer.manager.PreferencesManager
 import com.fam4k007.videoplayer.manager.SubtitleManager
+import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
+import com.fam4k007.videoplayer.remote.RemotePlaybackLauncher
+import com.fam4k007.videoplayer.remote.RemotePlaybackRequest
+import com.fam4k007.videoplayer.remote.RemotePlaybackResolver
+import com.fam4k007.videoplayer.remote.RemoteUrlParser
 import com.fam4k007.videoplayer.player.GestureHandler
 import com.fam4k007.videoplayer.player.PlaybackEngine
 import com.fam4k007.videoplayer.player.PlayerControlsManager
@@ -54,6 +62,7 @@ import com.fam4k007.videoplayer.utils.getThemeAttrColor
 import com.fam4k007.videoplayer.utils.Logger
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -73,6 +82,9 @@ class VideoPlayerActivity : AppCompatActivity(),
     companion object {
         private const val TAG = "VideoPlayerActivity"
         private const val SEEK_DEBUG = "SEEK_DEBUG"  // 快进调试专用日志标签
+        private val REMOTE_URI_SCHEMES = setOf("http", "https", "rtsp", "rtmp", "rtmps")
+        private const val EXTRA_PORTRAIT_UI = "portrait_ui"
+        private const val EXTRA_AUTO_ROTATE = "auto_rotate"
     }
 
     private lateinit var playbackEngine: PlaybackEngine
@@ -103,6 +115,9 @@ class VideoPlayerActivity : AppCompatActivity(),
     private val resumePromptHandler = Handler(Looper.getMainLooper())
 
     private var videoUri: Uri? = null
+    private var remotePlaybackRequest: RemotePlaybackRequest? = null
+    private var remoteResolveJob: Job? = null
+    private var remoteResolveSequence = 0L
     private lateinit var preferencesManager: PreferencesManager
     private lateinit var historyManager: PlaybackHistoryManager
     private val subtitleManager = SubtitleManager()
@@ -172,7 +187,13 @@ class VideoPlayerActivity : AppCompatActivity(),
         ThemeManager.applyTheme(this)
         
         super.onCreate(savedInstanceState)
-        
+
+        val portraitUi = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
+        if (intent.getBooleanExtra(EXTRA_AUTO_ROTATE, false)) {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
+        }
+        // Always use the same layout to avoid tearing down / re-initializing MPV when toggling portrait UI.
+        // Portrait mode is applied by updating RelativeLayout rules at runtime.
         setContentView(R.layout.activity_video_player)
         
         // 确保内容不受系统栏影响，视频画面完全居中
@@ -192,10 +213,15 @@ class VideoPlayerActivity : AppCompatActivity(),
         historyManager = PlaybackHistoryManager(this)
         
         loadUserSettings()
+        remotePlaybackRequest = intent.getParcelableExtra(RemotePlaybackLauncher.EXTRA_REMOTE_REQUEST)
 
         // 处理视频URI - 支持本地文件和在线URL
         try {
             videoUri = when {
+                remotePlaybackRequest != null -> {
+                    com.fam4k007.videoplayer.utils.Logger.d(TAG, "Remote playback request from intent")
+                    Uri.parse(remotePlaybackRequest!!.url)
+                }
                 intent.action == android.content.Intent.ACTION_VIEW -> {
                     com.fam4k007.videoplayer.utils.Logger.d(TAG, "ACTION_VIEW intent")
                     intent.data
@@ -205,7 +231,27 @@ class VideoPlayerActivity : AppCompatActivity(),
                     if (intent.type?.startsWith("video/") == true || intent.type?.startsWith("audio/") == true) {
                         intent.getParcelableExtra(android.content.Intent.EXTRA_STREAM)
                     } else {
-                        intent.data
+                        val sharedText = intent.getStringExtra(android.content.Intent.EXTRA_TEXT)
+                        val parsedSharedInput = sharedText?.let { RemoteUrlParser.parsePlaybackInput(it) }
+                        if (parsedSharedInput != null) {
+                            val sourcePageUrl = RemotePlaybackHeaders.deriveSourcePageUrl(
+                                headers = parsedSharedInput.headers
+                            )
+                            remotePlaybackRequest = RemotePlaybackRequest(
+                                url = parsedSharedInput.url,
+                                title = intent.getStringExtra(android.content.Intent.EXTRA_SUBJECT).orEmpty(),
+                                sourcePageUrl = sourcePageUrl,
+                                headers = parsedSharedInput.headers,
+                                source = RemotePlaybackRequest.Source.DIRECT_INPUT
+                            )
+                            Logger.d(
+                                TAG,
+                                "Parsed shared remote text: url=${parsedSharedInput.url}, headers=${RemotePlaybackHeaders.describeForLog(parsedSharedInput.headers)}"
+                            )
+                            Uri.parse(parsedSharedInput.url)
+                        } else {
+                            intent.data
+                        }
                     }
                 }
                 // 支持从MainActivity传递的URL
@@ -242,8 +288,14 @@ class VideoPlayerActivity : AppCompatActivity(),
         com.fam4k007.videoplayer.utils.Logger.d(TAG, "URI scheme: ${videoUri?.scheme}")
         
         // 判断是否为在线视频
-        isOnlineVideo = intent.getBooleanExtra("is_online", false) ||
-            videoUri?.scheme?.let { it == "http" || it == "https" } == true
+        isOnlineVideo = remotePlaybackRequest != null ||
+            intent.getBooleanExtra("is_online", false) ||
+            intent.getBooleanExtra("is_online_video", false) ||
+            isRemotePlaybackUri(videoUri)
+
+        if (isOnlineVideo && remotePlaybackRequest == null) {
+            remotePlaybackRequest = buildLegacyRemotePlaybackRequest(videoUri!!)
+        }
         
         com.fam4k007.videoplayer.utils.Logger.d(TAG, "Is online video: $isOnlineVideo")
         
@@ -339,6 +391,9 @@ class VideoPlayerActivity : AppCompatActivity(),
         danmakuManager.setPlaybackEngine(playbackEngine)
         
         handleVideoListIntent()
+
+        // Apply portrait UI last: by this point all views are inflated and bound.
+        applyPortraitUiEnabled(portraitUi)
         
     }
 
@@ -731,6 +786,10 @@ class VideoPlayerActivity : AppCompatActivity(),
                 override fun onBackClick() {
                     handleBackNavigation()
                 }
+
+                override fun onControlsVisibilityChanged(visible: Boolean) {
+                    updatePortraitFloatingButtonsVisibility(visible)
+                }
                 
                 override fun onVideoTitleClick() {
                     showVideoListDrawer()
@@ -887,16 +946,36 @@ class VideoPlayerActivity : AppCompatActivity(),
             btnMore = findViewById(R.id.btnMore),
             btnSpeed = findViewById(R.id.btnSpeed),
             btnAnime4K = findViewById(R.id.btnAnime4K),
+            btnRotateCorner = findViewById(R.id.btnRotateCorner),  // 新增：横屏旋转按钮
             seekBar = findViewById(R.id.seekBar),
             resumePlaybackPrompt = findViewById(R.id.resumePlaybackPrompt),
             tvResumeConfirm = findViewById(R.id.tvResumeConfirm)
         )
         
+        // 初始化旋转按钮的 tag（根据当前方向）
+        val portraitUiInitial = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
+        findViewById<View>(R.id.btnRotateCorner)?.tag = 
+            if (!portraitUiInitial) "should_show" else "should_hide"
+        
         val btnDanmaku = findViewById<ImageView>(R.id.btnDanmaku)
         btnDanmaku.setOnClickListener {
             dialogManager.showDanmakuDialog()
         }
-        
+
+        // Portrait-only floating buttons (exist in both layouts; only visible in portrait mode).
+        findViewById<Button>(R.id.btnAnime4KFloat)?.setOnClickListener {
+            dialogManager.showAnime4KModeDialog(anime4KMode)
+            controlsManager.resetAutoHideTimer()
+        }
+        findViewById<ImageView>(R.id.btnRotateFloat)?.setOnClickListener {
+            onTogglePortraitUi()
+            controlsManager.resetAutoHideTimer()
+        }
+        findViewById<ImageView>(R.id.btnRotateCorner)?.setOnClickListener {
+            onTogglePortraitUi()
+            controlsManager.resetAutoHideTimer()
+        }
+          
         // 弹幕显示/隐藏按钮
         val btnDanmakuToggle = findViewById<ImageView>(R.id.btnDanmakuToggle)
         btnDanmakuToggle.setOnClickListener {
@@ -984,6 +1063,334 @@ class VideoPlayerActivity : AppCompatActivity(),
         
         updateEpisodeButtons()
     }
+
+    override fun onTogglePortraitUi() {
+        val autoRotateEnabled = intent.getBooleanExtra(EXTRA_AUTO_ROTATE, false)
+        
+        val currentPortrait = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
+        val nextPortrait = !currentPortrait
+        intent.putExtra(EXTRA_PORTRAIT_UI, nextPortrait)
+        applyPortraitUiEnabled(nextPortrait)
+        
+        // 手动旋转时不改变自动旋转状态
+        if (!autoRotateEnabled) {
+            // 自动旋转关闭时，锁定到对应的方向
+            requestedOrientation = if (nextPortrait) {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            }
+        } else {
+            // 自动旋转开启时，临时改变方向，但保持自动旋转开启
+            requestedOrientation = if (nextPortrait) {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            }
+        }
+
+        refreshVideoLayoutAfterOrientationToggle()
+    }
+
+    override fun onToggleAutoRotate() {
+        val enableAutoRotate = !intent.getBooleanExtra(EXTRA_AUTO_ROTATE, false)
+        intent.putExtra(EXTRA_AUTO_ROTATE, enableAutoRotate)
+
+        if (enableAutoRotate) {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
+            syncPortraitUiWithConfiguration(resources.configuration)
+        } else {
+            val currentPortrait = resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+            intent.putExtra(EXTRA_PORTRAIT_UI, currentPortrait)
+            applyPortraitUiEnabled(currentPortrait)
+            requestedOrientation = if (currentPortrait) {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            }
+        }
+
+        refreshVideoLayoutAfterOrientationToggle()
+    }
+
+    override fun isAutoRotateEnabled(): Boolean {
+        return intent.getBooleanExtra(EXTRA_AUTO_ROTATE, false)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        if (intent.getBooleanExtra(EXTRA_AUTO_ROTATE, false)) {
+            syncPortraitUiWithConfiguration(newConfig)
+            refreshVideoLayoutAfterOrientationToggle()
+        }
+    }
+
+    private fun applyPortraitUiEnabled(enabled: Boolean) {
+        if (!intent.getBooleanExtra(EXTRA_AUTO_ROTATE, false)) {
+            requestedOrientation = if (enabled) {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            }
+        }
+
+        findViewById<View>(R.id.resumeProgressPrompt)?.let { v ->
+            val lp = v.layoutParams as? android.widget.RelativeLayout.LayoutParams ?: return@let
+            // 竖屏和横屏都使用 ALIGN_PARENT_BOTTOM，通过不同的 margin 控制位置
+            lp.removeRule(android.widget.RelativeLayout.ABOVE)
+            lp.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM)
+            if (enabled) {
+                // 竖屏：位置在超分辨率悬浮按钮上方
+                lp.bottomMargin = (175f * resources.displayMetrics.density).toInt()
+            } else {
+                // 横屏：位置在控制栏上方
+                lp.bottomMargin = (130f * resources.displayMetrics.density).toInt()
+            }
+            v.layoutParams = lp
+        }
+
+        applyPortraitSizing(enabled)
+    }
+
+    private fun syncPortraitUiWithConfiguration(configuration: Configuration) {
+        val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+        intent.putExtra(EXTRA_PORTRAIT_UI, isPortrait)
+        applyPortraitUiEnabled(isPortrait)
+    }
+
+    private fun applyPortraitSizing(enabled: Boolean) {
+        // Anime4K: use a floating button in portrait to avoid overlapping the bottom control row.
+        findViewById<View>(R.id.btnAnime4K)?.visibility = if (enabled) View.GONE else View.VISIBLE
+
+        // 竖屏时增加顶部间距，避开前置摄像头/刘海屏
+        findViewById<LinearLayout>(R.id.topInfoPanel)?.let { panel ->
+            val topPadding = if (enabled) {
+                // 竖屏：增加顶部间距避开摄像头
+                (32f * resources.displayMetrics.density).toInt()
+            } else {
+                // 横屏：使用默认间距
+                (8f * resources.displayMetrics.density).toInt()
+            }
+            panel.setPadding(
+                panel.paddingLeft,
+                topPadding,
+                panel.paddingRight,
+                panel.paddingBottom
+            )
+        }
+
+        findViewById<View>(R.id.topStatusContainer)?.visibility = View.VISIBLE
+
+        // In portrait, prioritize the right-side status and five-button cluster. The title only
+        // gets a small fixed slot and must ellipsize instead of competing for more width.
+        findViewById<View>(R.id.titleClickArea)?.let { v ->
+            val lp = v.layoutParams as? LinearLayout.LayoutParams ?: return@let
+            if (enabled) {
+                lp.width = 84.dpToPx()
+                lp.weight = 0f
+            } else {
+                lp.width = 0
+                lp.weight = 1f
+            }
+            v.layoutParams = lp
+        }
+        findViewById<View>(R.id.topRightPanel)?.let { v ->
+            val lp = v.layoutParams as? LinearLayout.LayoutParams ?: return@let
+            lp.width = 0
+            lp.weight = if (enabled) 2f else 1f
+            lp.marginEnd = (if (enabled) 8 else 60).dpToPx()
+            v.layoutParams = lp
+        }
+        findViewById<TextView>(R.id.tvFileName)?.let { tv ->
+            tv.maxLines = if (enabled) 1 else 2
+            tv.ellipsize = TextUtils.TruncateAt.END
+            tv.setSingleLine(enabled)
+            tv.textSize = if (enabled) 12f else 13f
+        }
+
+        // 1) Top-right icons: portrait uses a tighter five-button cluster while keeping time visible.
+        val topIconSize = if (enabled) 28 else 32
+        val topIconPadding = if (enabled) 4 else 6
+        val portraitIconMargin = 2.dpToPx()
+        val landscapeIconMargin = 4.dpToPx()
+        val portraitWideIconMargin = 4.dpToPx()
+        val landscapeWideIconMargin = 6.dpToPx()
+        listOf(
+            R.id.btnSubtitle,
+            R.id.btnDanmaku,
+            R.id.btnAspectRatio,
+            R.id.btnLock,
+            R.id.btnMore
+        ).forEach { id ->
+            findViewById<ImageView>(id)?.let { icon ->
+                val lp = icon.layoutParams as? ViewGroup.MarginLayoutParams ?: return@let
+                lp.width = topIconSize.dpToPx()
+                lp.height = topIconSize.dpToPx()
+                lp.marginStart = when {
+                    enabled && (id == R.id.btnLock || id == R.id.btnMore) -> portraitWideIconMargin
+                    enabled -> portraitIconMargin
+                    id == R.id.btnLock || id == R.id.btnMore -> landscapeWideIconMargin
+                    else -> landscapeIconMargin
+                }
+                icon.setPadding(
+                    topIconPadding.dpToPx(),
+                    topIconPadding.dpToPx(),
+                    topIconPadding.dpToPx(),
+                    topIconPadding.dpToPx()
+                )
+                icon.layoutParams = lp
+            }
+        }
+
+        // 2) Bottom main controls: reduce icon size/margins in portrait so they don't feel cramped.
+        val normalIconSize = if (enabled) 40 else 44
+        val playIconSize = if (enabled) 44 else 48
+        val normalPadding = if (enabled) 6 else 8
+        val compactMargin = if (enabled) 8 else 12
+
+        fun adjustBottomIcon(
+            id: Int,
+            sizeDp: Int,
+            paddingDp: Int,
+            marginStartDp: Int? = null,
+            marginEndDp: Int? = null
+        ) {
+            val icon = findViewById<ImageView>(id) ?: return
+            val lp = icon.layoutParams as? LinearLayout.LayoutParams ?: return
+            lp.width = sizeDp.dpToPx()
+            lp.height = sizeDp.dpToPx()
+            marginStartDp?.let { lp.marginStart = it.dpToPx() }
+            marginEndDp?.let { lp.marginEnd = it.dpToPx() }
+            icon.setPadding(
+                paddingDp.dpToPx(),
+                paddingDp.dpToPx(),
+                paddingDp.dpToPx(),
+                paddingDp.dpToPx()
+            )
+            icon.layoutParams = lp
+        }
+
+        adjustBottomIcon(R.id.btnDanmakuToggle, normalIconSize, 6)
+        adjustBottomIcon(R.id.btnPrevious, normalIconSize, normalPadding, marginStartDp = compactMargin, marginEndDp = 0)
+        adjustBottomIcon(R.id.btnRewind, normalIconSize, normalPadding, marginStartDp = compactMargin, marginEndDp = 0)
+        adjustBottomIcon(R.id.btnPlayPause, playIconSize, 6, marginStartDp = compactMargin, marginEndDp = compactMargin)
+        adjustBottomIcon(R.id.btnForward, normalIconSize, normalPadding, marginStartDp = 0, marginEndDp = compactMargin)
+        adjustBottomIcon(R.id.btnNext, normalIconSize, normalPadding, marginStartDp = 0, marginEndDp = compactMargin)
+        adjustBottomIcon(R.id.btnSpeed, normalIconSize, normalPadding)
+
+        updatePortraitFloatingButtonsVisibility(
+            controlsManager.isVisible && !controlsManager.isControlsLocked()
+        )
+    }
+
+    private fun updatePortraitFloatingButtonsVisibility(controlsVisible: Boolean) {
+        val portraitEnabled = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
+        val shouldShowPortraitButtons = portraitEnabled && controlsVisible
+        val shouldShowLandscapeRotate = !portraitEnabled && controlsVisible
+
+        // 竖屏超分辨率按钮：淡入淡出动画
+        findViewById<View>(R.id.btnAnime4KFloat)?.let { btn ->
+            if (shouldShowPortraitButtons && btn.visibility != View.VISIBLE) {
+                btn.visibility = View.VISIBLE
+                btn.alpha = 0f
+                btn.animate()
+                    .alpha(1f)
+                    .setDuration(250)
+                    .setInterpolator(android.view.animation.DecelerateInterpolator())
+                    .start()
+            } else if (!shouldShowPortraitButtons && btn.visibility == View.VISIBLE) {
+                btn.animate()
+                    .alpha(0f)
+                    .setDuration(200)
+                    .setInterpolator(android.view.animation.AccelerateInterpolator())
+                    .withEndAction { btn.visibility = View.GONE }
+                    .start()
+            }
+        }
+        
+        // 竖屏旋转按钮：淡入淡出动画
+        findViewById<View>(R.id.btnRotateFloat)?.let { btn ->
+            if (shouldShowPortraitButtons && btn.visibility != View.VISIBLE) {
+                btn.visibility = View.VISIBLE
+                btn.alpha = 0f
+                btn.animate()
+                    .alpha(1f)
+                    .setDuration(250)
+                    .setInterpolator(android.view.animation.DecelerateInterpolator())
+                    .start()
+            } else if (!shouldShowPortraitButtons && btn.visibility == View.VISIBLE) {
+                btn.animate()
+                    .alpha(0f)
+                    .setDuration(200)
+                    .setInterpolator(android.view.animation.AccelerateInterpolator())
+                    .withEndAction { btn.visibility = View.GONE }
+                    .start()
+            }
+        }
+        
+        // 横屏旋转按钮：设置标记，并处理显示/隐藏
+        findViewById<View>(R.id.btnRotateCorner)?.let { btn ->
+            val oldTag = btn.tag
+            val newTag = if (shouldShowLandscapeRotate) "should_show" else "should_hide"
+            btn.tag = newTag
+            
+            // 如果控制栏可见且按钮应该显示（从隐藏变为显示）
+            if (controlsVisible && newTag == "should_show" && btn.visibility != View.VISIBLE) {
+                btn.visibility = View.VISIBLE
+                btn.alpha = 0f
+                btn.translationY = 100f
+                btn.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(250)
+                    .setInterpolator(android.view.animation.DecelerateInterpolator())
+                    .start()
+            } 
+            // 如果按钮应该隐藏（从显示变为隐藏）
+            else if (newTag == "should_hide" && btn.visibility == View.VISIBLE) {
+                btn.animate()
+                    .alpha(0f)
+                    .setDuration(200)
+                    .setInterpolator(android.view.animation.AccelerateInterpolator())
+                    .withEndAction { 
+                        btn.visibility = View.GONE
+                        btn.alpha = 1f
+                    }
+                    .start()
+            }
+            // 如果控制栏不可见，直接设置 visibility（不需要动画）
+            else if (!controlsVisible) {
+                btn.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun refreshVideoLayoutAfterOrientationToggle() {
+        mpvView.post {
+            playbackEngine.changeVideoAspect(currentVideoAspect)
+            listOf(
+                R.id.surfaceView,
+                R.id.danmakuView,
+                R.id.clickArea,
+                R.id.loadingIndicator
+            ).forEach { id ->
+                findViewById<View>(id)?.apply {
+                    requestLayout()
+                    invalidate()
+                }
+            }
+
+            if (!isPlaying) {
+                val pausedPosition = currentPosition.toInt().coerceAtLeast(0)
+                mpvView.postDelayed({
+                    playbackEngine.seekTo(pausedPosition, precise = true)
+                    playbackEngine.pause()
+                    controlsManager.updatePlayPauseButton(false)
+                }, 120)
+            }
+        }
+    }
     
     /**
      * 加载视频
@@ -1007,20 +1414,10 @@ class VideoPlayerActivity : AppCompatActivity(),
             
             // 对于在线视频,直接使用URI字符串;对于本地文件,使用URI对象
             if (isOnlineVideo) {
-                // 在线视频:直接使用原始URL字符串
-                val urlString = uri.toString()
-                com.fam4k007.videoplayer.utils.Logger.d(TAG, "Loading online video with URL string: $urlString")
-                
-                // B站视频需要设置Referer头(防盗链)
-                if (urlString.contains("bilivideo.com")) {
-                    com.fam4k007.videoplayer.utils.Logger.d(TAG, "Detected Bilibili video, setting Referer header")
-                    `is`.xyz.mpv.MPVLib.setOptionString(
-                        "http-header-fields",
-                        "Referer: https://www.bilibili.com"
-                    )
-                }
-                
-                playbackEngine?.loadVideoFromUrl(urlString, position)
+                val request = remotePlaybackRequest ?: buildLegacyRemotePlaybackRequest(uri)
+                remotePlaybackRequest = request
+                com.fam4k007.videoplayer.utils.Logger.d(TAG, "Loading online video with request: ${request.url}")
+                loadResolvedRemoteVideo(request, position)
             } else {
                 // 本地视频:使用URI对象
                 playbackEngine?.loadVideo(uri, position)
@@ -1612,7 +2009,16 @@ class VideoPlayerActivity : AppCompatActivity(),
         hasAutoLoadedSubtitle = false
         
         // 更新在线视频标志
-        isOnlineVideo = uri.scheme?.startsWith("http") == true
+        isOnlineVideo = isRemotePlaybackUri(uri)
+        remotePlaybackRequest = if (isOnlineVideo) {
+            RemotePlaybackRequest(
+                url = uri.toString(),
+                title = resolveVideoTitle(uri),
+                source = RemotePlaybackRequest.Source.UNKNOWN
+            )
+        } else {
+            null
+        }
         
         // 显示加载动画（仅在线视频）
         if (isOnlineVideo) {
@@ -1631,7 +2037,11 @@ class VideoPlayerActivity : AppCompatActivity(),
         Logger.d(TAG, "Releasing old danmaku before playing new video")
         danmakuManager.release()
         
-        playbackEngine?.loadVideo(uri, position)
+        if (isOnlineVideo) {
+            loadResolvedRemoteVideo(remotePlaybackRequest!!, position)
+        } else {
+            playbackEngine?.loadVideo(uri, position)
+        }
         
         // 设置当前视频 URI 给文件选择器管理器
         filePickerManager.setCurrentVideoUri(uri)
@@ -1662,6 +2072,46 @@ class VideoPlayerActivity : AppCompatActivity(),
         }
         
         updateEpisodeButtons()
+    }
+
+    private fun loadResolvedRemoteVideo(
+        request: RemotePlaybackRequest,
+        position: Double
+    ) {
+        remoteResolveJob?.cancel()
+        val sequence = ++remoteResolveSequence
+        remoteResolveJob = lifecycleScope.launch {
+            val result = RemotePlaybackResolver.resolve(request)
+            val debugSummary = RemotePlaybackResolver.buildDebugSummary(result)
+            preferencesManager.setLastRemoteDebugSummary(debugSummary)
+            Logger.d(TAG, "Remote debug summary:\n$debugSummary")
+            if (sequence != remoteResolveSequence) {
+                Logger.d(TAG, "Discarding stale remote resolve result for: ${request.url}")
+                return@launch
+            }
+
+            when (result) {
+                is RemotePlaybackResolver.ResolveResult.Success -> {
+                    remotePlaybackRequest = result.request
+                    videoUri = Uri.parse(result.request.url)
+                    Logger.d(
+                        TAG,
+                        "Remote request resolved via ${result.probeMethod}: ${request.url} -> ${result.request.url}"
+                    )
+                    playbackEngine.loadRemote(result.request, position)
+                }
+                is RemotePlaybackResolver.ResolveResult.Failed -> {
+                    remotePlaybackRequest = result.request
+                    Logger.w(TAG, "Remote resolve fallback: reason=${result.reason}, message=${result.message}", result.cause)
+                    val suggestion = RemotePlaybackResolver.buildFailureSuggestion(result.reason)
+                    DialogUtils.showToastLong(
+                        this@VideoPlayerActivity,
+                        "${result.message}，继续尝试直接播放\n$suggestion"
+                    )
+                    playbackEngine.loadRemote(result.request, position)
+                }
+            }
+        }
     }
     
     override fun onBackPressed() {
@@ -1755,8 +2205,13 @@ class VideoPlayerActivity : AppCompatActivity(),
     override fun onDestroy() {
         super.onDestroy()
         Logger.d(TAG, "Activity destroyed")
+
+        remoteResolveJob?.cancel()
         
         savePlaybackState()
+        
+        // 清除自动旋转设置，避免影响下次播放
+        intent.removeExtra(EXTRA_AUTO_ROTATE)
         
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         
@@ -1840,16 +2295,86 @@ class VideoPlayerActivity : AppCompatActivity(),
     }
     
     
+    private fun buildLegacyRemotePlaybackRequest(uri: Uri): RemotePlaybackRequest {
+        val headers = linkedMapOf<String, String>()
+        intent.getStringExtra("cookies")
+            ?.takeIf { it.isNotBlank() }
+            ?.let { headers["Cookie"] = it }
+        intent.getStringExtra("referer")
+            ?.takeIf { it.isNotBlank() }
+            ?.let { headers["Referer"] = it }
+        intent.getStringExtra("user_agent")
+            ?.takeIf { it.isNotBlank() }
+            ?.let { headers["User-Agent"] = it }
+
+        val urlString = uri.toString()
+        if (urlString.contains("bilivideo.com") && headers["Referer"].isNullOrBlank()) {
+            headers["Referer"] = "https://www.bilibili.com"
+        }
+
+        val source = when {
+            intent.hasExtra("cookies") -> RemotePlaybackRequest.Source.BILIBILI
+            intent.getBooleanExtra("is_webdav", false) -> RemotePlaybackRequest.Source.WEBDAV
+            else -> RemotePlaybackRequest.Source.UNKNOWN
+        }
+
+        return RemotePlaybackRequest(
+            url = urlString,
+            title = resolveVideoTitle(uri),
+            sourcePageUrl = RemotePlaybackHeaders.deriveSourcePageUrl(headers),
+            headers = RemotePlaybackHeaders.normalize(headers),
+            source = source
+        )
+    }
+
+    private fun isRemotePlaybackUri(uri: Uri?): Boolean {
+        val scheme = uri?.scheme?.lowercase().orEmpty()
+        return scheme in REMOTE_URI_SCHEMES
+    }
+
+    private fun resolveVideoTitle(uri: Uri): String {
+        remotePlaybackRequest?.title
+            ?.takeIf { it.isNotBlank() }
+            ?.let { return it }
+
+        val intentTitle = listOf("video_title", "title", "file_name", "video_name")
+            .asSequence()
+            .mapNotNull { key -> intent.getStringExtra(key) }
+            .firstOrNull { it.isNotBlank() }
+        if (!intentTitle.isNullOrBlank()) {
+            return intentTitle
+        }
+
+        if (isRemotePlaybackUri(uri)) {
+            val remoteName = uri.lastPathSegment
+                ?.substringBefore("?")
+                ?.takeIf { it.isNotBlank() }
+                ?.let { Uri.decode(it) }
+            return remoteName ?: uri.host ?: "在线视频"
+        }
+
+        return try {
+            val cursor = contentResolver.query(uri, null, null, null, null)
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val nameIndex = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    if (nameIndex >= 0) {
+                        it.getString(nameIndex)
+                    } else {
+                        uri.lastPathSegment ?: "未知文件"
+                    }
+                } else {
+                    uri.lastPathSegment ?: "未知文件"
+                }
+            } ?: uri.lastPathSegment ?: "未知文件"
+        } catch (e: Exception) {
+            Logger.w(TAG, "Failed to resolve file name from uri: $uri", e)
+            uri.lastPathSegment ?: "未知文件"
+        }
+    }
+
     private fun getFileNameFromUri(uri: Uri): String {
-        val cursor = contentResolver.query(uri, null, null, null, null)
-        return cursor?.use {
-            if (it.moveToFirst()) {
-                val nameIndex = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                if (nameIndex >= 0) it.getString(nameIndex) else uri.lastPathSegment ?: "未知文件"
-            } else {
-                uri.lastPathSegment ?: "未知文件"
-            }
-        } ?: uri.lastPathSegment ?: "未知文件"
+        return resolveVideoTitle(uri)
     }
     
     private fun applyAnime4K() {

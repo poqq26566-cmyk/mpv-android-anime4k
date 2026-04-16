@@ -511,13 +511,20 @@ class PlayerDialogManager(
         )
         
         val currentSelection = modes.indexOf(currentMode)
-        val btnAnime4K = activity.findViewById<android.widget.Button>(R.id.btnAnime4K)
+        
+        // 根据当前屏幕方向选择锚点按钮
+        val isPortrait = activity.resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
+        val btnAnime4K = if (isPortrait) {
+            activity.findViewById<android.widget.Button>(R.id.btnAnime4KFloat)
+        } else {
+            activity.findViewById<android.widget.Button>(R.id.btnAnime4K)
+        }
 
         showPopupDialog(
             btnAnime4K,
             modeNames,
             currentSelection,
-            showAbove = true,
+            showAbove = true,  // 横屏和竖屏都显示在上方
             useFixedHeight = true,
             showScrollHint = true
         ) { position ->
@@ -546,13 +553,16 @@ class PlayerDialogManager(
         
         // 动态显示样式覆盖状态
         val assOverrideText = if (assOverrideEnabled) "样式覆盖：开" else "样式覆盖：关"
+        val autoRotateEnabled =
+            (activity as? MoreOptionsCallback)?.isAutoRotateEnabled() == true
+        val autoRotateText = if (autoRotateEnabled) "自动旋转：开" else "自动旋转：关"
         
         // 根据是否有章节动态构建菜单项
         val items = mutableListOf<String>()
         if (hasChapters) {
             items.add("章节")
         }
-        items.addAll(listOf("截图", "音轨", "解码", "片头片尾", assOverrideText))
+        items.addAll(listOf("截图", "音轨", "解码", "片头片尾", assOverrideText, autoRotateText))
         
         val btnMore = activity.findViewById<ImageView>(R.id.btnMore)
 
@@ -578,6 +588,7 @@ class PlayerDialogManager(
                 3 -> showDecoderDialog()  // 解码方式
                 4 -> (activity as? MoreOptionsCallback)?.onShowSkipSettings()  // 片头片尾设置
                 5 -> toggleAssOverride()  // 点击切换样式覆盖
+                6 -> (activity as? MoreOptionsCallback)?.onToggleAutoRotate()
             }
         }
     }
@@ -941,6 +952,9 @@ interface DanmakuDialogCallback {
 interface MoreOptionsCallback {
     fun onScreenshot()
     fun onShowSkipSettings()
+    fun onTogglePortraitUi()
+    fun onToggleAutoRotate()
+    fun isAutoRotateEnabled(): Boolean
 }
 
 interface VideoAspectCallback {

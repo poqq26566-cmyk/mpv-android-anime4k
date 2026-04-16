@@ -4,6 +4,8 @@ package com.fam4k007.videoplayer.player
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
+import com.fam4k007.videoplayer.remote.RemotePlaybackRequest
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVNode
 import java.lang.ref.WeakReference
@@ -198,75 +200,30 @@ class PlaybackEngine(
             
             // 解析URL和HTTP头（支持海阔视界格式）
             val (actualUrl, httpHeaders) = parseUrlWithHeaders(urlString)
-            
-            // 保存文件路径
-            currentFilePath = actualUrl
-            
-            // 设置HTTP头
-            if (httpHeaders.isNotEmpty()) {
-                val headerString = httpHeaders.joinToString(",")
-                MPVLib.setOptionString("http-header-fields", headerString)
-                Log.d(TAG, "Set HTTP headers: $headerString")
-            }
-            
-            // 为在线视频设置必要的缓存和流选项，确保可以跳转
-            // 注意：这些都是内存缓存，不占用存储空间，应用关闭后自动释放
-            MPVLib.setOptionString("cache", "yes")  // 启用缓存
-            MPVLib.setOptionString("cache-secs", "120")  // 缓存2分钟（合理范围）
-            MPVLib.setOptionString("demuxer-max-bytes", "150M")  // 最大缓存150MB
-            MPVLib.setOptionString("demuxer-seekable-cache", "yes")  // 启用可跳转缓存
-            MPVLib.setOptionString("stream-buffer-size", "5M")  // 流缓冲区5MB
-            
-            Log.d(TAG, "MPV loading URL: $actualUrl")
-            MPVLib.command("loadfile", actualUrl)
-            
-            // 确保视频加载后开始播放
-            handler.postDelayed({
-                try {
-                    MPVLib.setPropertyBoolean("pause", false)
-                    isPlaying = true
-                    
-                    Log.d(TAG, "Video auto-play started")
-                } catch (e: Exception) {
-                    Log.w(TAG, "Failed to start auto-play: ${e.message}")
-                }
-            }, 100)
-            
-            // 如果有起始位置,在文件加载后立即跳转
-            if (startPosition > 0.1) {
-                handler.postDelayed({
-                    try {
-                        seekTo(startPosition.toInt())
-                        Log.d(TAG, "Restored position: $startPosition")
-                    } catch (e: Exception) {
-                        Log.w(TAG, "Failed to restore position: ${e.message}")
-                    }
-                }, 200)
-            }
-            
-            // 异步记录视频信息(不阻塞播放) - 在线视频需要更长时间
-            handler.postDelayed({
-                try {
-                    val videoCodec = MPVLib.getPropertyString("video-codec")
-                    val audioCodec = MPVLib.getPropertyString("audio-codec")
-                    val videoFormat = MPVLib.getPropertyString("video-format")
-                    val hwdec = MPVLib.getPropertyString("hwdec-current")
-                    
-                    Log.d(TAG, "Video codec: $videoCodec")
-                    Log.d(TAG, "Audio codec: $audioCodec")
-                    Log.d(TAG, "Video format: $videoFormat")
-                    Log.d(TAG, "Hardware decoding: $hwdec")
-                } catch (e: Exception) {
-                    Log.w(TAG, "Failed to get video info: ${e.message}")
-                }
-            }, 3000)  // 在线视频延长到3秒
-
-            // 延迟开始进度更新,避免在视频未就绪时查询属性
-            handler.postDelayed({
-                handler.post(updateProgressRunnable)
-            }, 2000)  // 在线视频延迟2秒开始更新
+            loadRemoteInternal(actualUrl, httpHeaders, startPosition)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load video from URL", e)
+            eventCallback.onError("加载视频失败: ${e.message}")
+        }
+    }
+
+    fun loadRemote(request: RemotePlaybackRequest, startPosition: Double = 0.0) {
+        if (!isInitialized) {
+            Log.e(TAG, "PlaybackEngine not initialized")
+            return
+        }
+
+        try {
+            val normalizedHeaders = RemotePlaybackHeaders.enrich(
+                headers = request.headers,
+                sourcePageUrl = request.sourcePageUrl
+            )
+            Log.d(TAG, "Loading remote request: ${request.url}")
+            Log.d(TAG, "Remote request source: ${request.source}")
+            Log.d(TAG, "Remote request headers: ${RemotePlaybackHeaders.describeForLog(normalizedHeaders)}")
+            loadRemoteInternal(request.url, normalizedHeaders, startPosition)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load remote request", e)
             eventCallback.onError("加载视频失败: ${e.message}")
         }
     }
@@ -276,42 +233,146 @@ class PlaybackEngine(
      * 支持格式：url;{Cookie@xxx&&User-Agent@yyy&&Referer@zzz}
      * @return Pair<实际URL, HTTP头列表>
      */
-    private fun parseUrlWithHeaders(input: String): Pair<String, List<String>> {
+    private fun parseUrlWithHeaders(input: String): Pair<String, Map<String, String>> {
         if (!input.contains(";{") || !input.contains("}")) {
             // 普通URL，没有头信息
-            return Pair(input, emptyList())
+            return Pair(input, emptyMap())
         }
         
         try {
             val parts = input.split(";{", "}")
             if (parts.size < 2) {
-                return Pair(input, emptyList())
+                return Pair(input, emptyMap())
             }
             
             val url = parts[0].trim()
             val headersStr = parts[1]
             
             // 解析HTTP头：Cookie@xxx&&User-Agent@yyy
-            val headers = headersStr.split("&&").mapNotNull { header ->
+            val headers = linkedMapOf<String, String>()
+            headersStr.split("&&").forEach { header ->
                 val keyValue = header.split("@", limit = 2)
                 if (keyValue.size == 2) {
                     val key = keyValue[0].trim()
                     // 将全角分号转换为半角分号（海阔视界的格式）
                     val value = keyValue[1].replace("；；", "; ").trim()
-                    "$key: $value"
-                } else {
-                    null
+                    if (key.isNotEmpty() && value.isNotEmpty()) {
+                        headers[key] = value
+                    }
                 }
             }
             
             Log.d(TAG, "Parsed URL: $url")
             Log.d(TAG, "Parsed ${headers.size} HTTP headers")
             
-            return Pair(url, headers)
+            return Pair(url, RemotePlaybackHeaders.normalize(headers))
         } catch (e: Exception) {
             Log.w(TAG, "Failed to parse URL with headers: ${e.message}")
-            return Pair(input, emptyList())
+            return Pair(input, emptyMap())
         }
+    }
+
+    private fun loadRemoteInternal(
+        actualUrl: String,
+        headers: Map<String, String>,
+        startPosition: Double
+    ) {
+        currentFilePath = actualUrl
+
+        resetRemotePlaybackOptions()
+        applyRemoteHeaders(headers)
+        applyStreamingOptions()
+
+        Log.d(TAG, "MPV loading URL: $actualUrl")
+        MPVLib.command("loadfile", actualUrl)
+
+        scheduleAutoPlay()
+        scheduleSeekRestore(startPosition)
+        scheduleRemoteMediaInfoLog()
+
+        // 延迟开始进度更新,避免在视频未就绪时查询属性
+        handler.postDelayed({
+            handler.post(updateProgressRunnable)
+        }, 2000)
+    }
+
+    private fun resetRemotePlaybackOptions() {
+        MPVLib.setOptionString("user-agent", RemotePlaybackHeaders.DEFAULT_USER_AGENT)
+        MPVLib.setOptionString("referrer", "")
+        MPVLib.setOptionString("http-header-fields", "Accept: */*")
+    }
+
+    private fun applyRemoteHeaders(headers: Map<String, String>) {
+        val normalizedHeaders = RemotePlaybackHeaders.enrich(headers)
+        val userAgent = RemotePlaybackHeaders.get(normalizedHeaders, "User-Agent").orEmpty()
+            .ifBlank { RemotePlaybackHeaders.DEFAULT_USER_AGENT }
+        val referer = RemotePlaybackHeaders.get(normalizedHeaders, "Referer").orEmpty().trim()
+
+        MPVLib.setOptionString("user-agent", userAgent)
+        MPVLib.setOptionString("referrer", referer)
+
+        val headerString = RemotePlaybackHeaders.toMpvHeaderFields(
+            headers = normalizedHeaders,
+            excludeNames = setOf("User-Agent", "Referer")
+        )
+        MPVLib.setOptionString("http-header-fields", headerString)
+        Log.d(TAG, "Set HTTP headers: ${RemotePlaybackHeaders.describeForLog(normalizedHeaders)}")
+    }
+
+    private fun applyStreamingOptions() {
+        // 这些都是内存缓存，不占用持久化存储
+        MPVLib.setOptionString("cache", "yes")
+        MPVLib.setOptionString("cache-secs", "120")
+        MPVLib.setOptionString("demuxer-max-bytes", "150M")
+        MPVLib.setOptionString("demuxer-seekable-cache", "yes")
+        MPVLib.setOptionString("stream-buffer-size", "5M")
+        MPVLib.setOptionString("http-allow-redirect", "yes")
+        MPVLib.setOptionString("hls-bitrate", "max")
+    }
+
+    private fun scheduleAutoPlay() {
+        handler.postDelayed({
+            try {
+                MPVLib.setPropertyBoolean("pause", false)
+                isPlaying = true
+                Log.d(TAG, "Video auto-play started")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to start auto-play: ${e.message}")
+            }
+        }, 100)
+    }
+
+    private fun scheduleSeekRestore(startPosition: Double) {
+        if (startPosition <= 0.1) {
+            return
+        }
+
+        handler.postDelayed({
+            try {
+                seekTo(startPosition.toInt())
+                Log.d(TAG, "Restored position: $startPosition")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to restore position: ${e.message}")
+            }
+        }, 200)
+    }
+
+    private fun scheduleRemoteMediaInfoLog() {
+        handler.postDelayed({
+            try {
+                val videoCodec = MPVLib.getPropertyString("video-codec")
+                val audioCodec = MPVLib.getPropertyString("audio-codec")
+                val videoFormat = MPVLib.getPropertyString("video-format")
+                val hwdec = MPVLib.getPropertyString("hwdec-current")
+
+                Log.d(TAG, "Video codec: $videoCodec")
+                Log.d(TAG, "Audio codec: $audioCodec")
+                Log.d(TAG, "Video format: $videoFormat")
+                Log.d(TAG, "Hardware decoding: $hwdec")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to get video info: ${e.message}")
+            }
+        }, 3000)
     }
 
     /**
@@ -1096,4 +1157,3 @@ class PlaybackEngine(
         }
     }
 }
-

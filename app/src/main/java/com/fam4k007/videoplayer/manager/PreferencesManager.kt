@@ -728,6 +728,95 @@ class PreferencesManager private constructor(context: Context) {
     /**
      * 清除所有设置（谨慎使用）
      */
+    fun getLastRemoteInputUrl(): String {
+        return sharedPreferences.getString("remote_input_url", "") ?: ""
+    }
+
+    fun setLastRemoteInputUrl(value: String) {
+        sharedPreferences.edit().putString("remote_input_url", value).apply()
+    }
+
+    fun getLastRemoteInputTitle(): String {
+        return sharedPreferences.getString("remote_input_title", "") ?: ""
+    }
+
+    fun setLastRemoteInputTitle(value: String) {
+        sharedPreferences.edit().putString("remote_input_title", value).apply()
+    }
+
+    fun getLastRemoteInputSourcePageUrl(): String {
+        return sharedPreferences.getString("remote_input_source_page_url", "") ?: ""
+    }
+
+    fun setLastRemoteInputSourcePageUrl(value: String) {
+        sharedPreferences.edit().putString("remote_input_source_page_url", value).apply()
+    }
+
+    fun getLastRemoteInputReferer(): String {
+        return sharedPreferences.getString("remote_input_referer", "") ?: ""
+    }
+
+    fun setLastRemoteInputReferer(value: String) {
+        sharedPreferences.edit().putString("remote_input_referer", value).apply()
+    }
+
+    fun getLastRemoteInputOrigin(): String {
+        return sharedPreferences.getString("remote_input_origin", "") ?: ""
+    }
+
+    fun setLastRemoteInputOrigin(value: String) {
+        sharedPreferences.edit().putString("remote_input_origin", value).apply()
+    }
+
+    fun getLastRemoteInputCookie(): String {
+        return sharedPreferences.getString("remote_input_cookie", "") ?: ""
+    }
+
+    fun setLastRemoteInputCookie(value: String) {
+        sharedPreferences.edit().putString("remote_input_cookie", value).apply()
+    }
+
+    fun getLastRemoteInputAuthorization(): String {
+        return sharedPreferences.getString("remote_input_authorization", "") ?: ""
+    }
+
+    fun setLastRemoteInputAuthorization(value: String) {
+        sharedPreferences.edit().putString("remote_input_authorization", value).apply()
+    }
+
+    fun getLastRemoteInputUserAgent(): String {
+        return sharedPreferences.getString("remote_input_user_agent", "") ?: ""
+    }
+
+    fun setLastRemoteInputUserAgent(value: String) {
+        sharedPreferences.edit().putString("remote_input_user_agent", value).apply()
+    }
+
+    fun clearLastRemoteInputDraft() {
+        sharedPreferences.edit()
+            .remove("remote_input_url")
+            .remove("remote_input_title")
+            .remove("remote_input_source_page_url")
+            .remove("remote_input_referer")
+            .remove("remote_input_origin")
+            .remove("remote_input_cookie")
+            .remove("remote_input_authorization")
+            .remove("remote_input_user_agent")
+            .apply()
+    }
+
+    fun getLastRemoteDebugSummary(): String {
+        return sharedPreferences.getString("remote_debug_summary", "") ?: ""
+    }
+
+    fun setLastRemoteDebugSummary(value: String) {
+        sharedPreferences.edit().putString("remote_debug_summary", value).apply()
+    }
+
+    fun clearLastRemoteDebugSummary() {
+        sharedPreferences.edit().remove("remote_debug_summary").apply()
+    }
+
     fun clearAll() {
         sharedPreferences.edit().clear().apply()
     }

@@ -1,7 +1,6 @@
 package com.fam4k007.videoplayer
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -34,6 +33,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fam4k007.videoplayer.bilibili.auth.BiliBiliAuthManager
 import com.fam4k007.videoplayer.bilibili.model.BiliApiResponse
 import com.fam4k007.videoplayer.compose.ImmersiveTopAppBar
+import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
+import com.fam4k007.videoplayer.remote.RemotePlaybackLauncher
+import com.fam4k007.videoplayer.remote.RemotePlaybackRequest
 import com.fanchen.fam4k007.manager.compose.BiliBiliLoginActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -123,16 +125,22 @@ class BiliBiliPlayActivity : ComponentActivity() {
                 }
                 
                 android.util.Log.d("BiliPlay", "Play URL: $playUrl")
-                
-                // 启动播放器
-                val intent = Intent(this@BiliBiliPlayActivity, VideoPlayerActivity::class.java).apply {
-                    data = Uri.parse(playUrl)
-                    putExtra("title", title)
-                    putExtra("is_online", true)
-                    // 传递Cookie用于验证
-                    putExtra("cookies", authManager.getCookies().entries.joinToString("; ") { "${it.key}=${it.value}" })
-                }
-                startActivity(intent)
+
+                val requestHeaders = RemotePlaybackHeaders.normalize(
+                    linkedMapOf(
+                        "Cookie" to authManager.getCookieString(),
+                        "Referer" to "https://www.bilibili.com"
+                    )
+                )
+
+                val request = RemotePlaybackRequest(
+                    url = playUrl,
+                    title = title,
+                    headers = requestHeaders,
+                    sourcePageUrl = "https://www.bilibili.com",
+                    source = RemotePlaybackRequest.Source.BILIBILI
+                )
+                RemotePlaybackLauncher.start(this@BiliBiliPlayActivity, request)
                 
             } catch (e: Exception) {
                 android.util.Log.e("BiliPlay", "Play error", e)

@@ -49,6 +49,7 @@ class PlayerControlsManager(
         fun onSpeedClick()
         fun onSeekBarChange(position: Double)
         fun onBackClick()
+        fun onControlsVisibilityChanged(visible: Boolean)
         fun onAspectRatioClick()  // 新增：画面比例按钮回调
         fun onLockClick()  // 新增：锁定按钮回调
         fun onVideoTitleClick()  // 新增：视频标题点击回调
@@ -81,6 +82,7 @@ class PlayerControlsManager(
     private var btnMore: ImageView? = null
     private var btnSpeed: ImageView? = null
     private var btnAnime4K: Button? = null
+    private var btnRotateCorner: ImageView? = null  // 新增：横屏旋转按钮
     
     private var seekBar: SeekBar? = null
     
@@ -164,6 +166,7 @@ class PlayerControlsManager(
         btnMore: ImageView,
         btnSpeed: ImageView,
         btnAnime4K: Button,
+        btnRotateCorner: ImageView,  // 新增参数：横屏旋转按钮
         seekBar: SeekBar,
         resumePlaybackPrompt: LinearLayout,
         tvResumeConfirm: TextView
@@ -193,6 +196,7 @@ class PlayerControlsManager(
         this.btnMore = btnMore
         this.btnSpeed = btnSpeed
         this.btnAnime4K = btnAnime4K
+        this.btnRotateCorner = btnRotateCorner  // 初始化横屏旋转按钮
         
         this.seekBar = seekBar
         
@@ -221,6 +225,7 @@ class PlayerControlsManager(
         
         // 启动自动隐藏
         resetAutoHideTimer()
+        notifyControlsVisibilityChanged()
         
         Log.d(TAG, "PlayerControlsManager initialized")
     }
@@ -497,7 +502,24 @@ class PlayerControlsManager(
                 .start()
         }
         
+        // 横屏旋转按钮：如果不是明确要求隐藏，就显示
+        btnRotateCorner?.let { btn ->
+            // 检查按钮是否应该显示（tag 不是 "should_hide"）
+            if (btn.tag != "should_hide") {
+                btn.visibility = View.VISIBLE
+                btn.alpha = 0f
+                btn.translationY = 100f
+                btn.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(250)
+                    .setInterpolator(android.view.animation.DecelerateInterpolator())
+                    .start()
+            }
+        }
+        
         isVisible = true
+        notifyControlsVisibilityChanged()
         resetAutoHideTimer()
     }
 
@@ -550,7 +572,23 @@ class PlayerControlsManager(
             }
             ?.start()
         
+        // 横屏旋转按钮：只在可见时才淡出
+        btnRotateCorner?.let { btn ->
+            if (btn.visibility == View.VISIBLE) {
+                btn.animate()
+                    ?.alpha(0f)
+                    ?.setDuration(200)
+                    ?.setInterpolator(android.view.animation.AccelerateInterpolator())
+                    ?.withEndAction {
+                        btn.visibility = View.GONE
+                        btn.alpha = 1f
+                    }
+                    ?.start()
+            }
+        }
+        
         isVisible = false
+        notifyControlsVisibilityChanged()
         handler.removeCallbacks(hideControlsRunnable)
     }
 
@@ -795,6 +833,8 @@ class PlayerControlsManager(
             
             Log.d(TAG, "Controls unlocked")
         }
+
+        notifyControlsVisibilityChanged()
     }
     
     /**
@@ -869,6 +909,10 @@ class PlayerControlsManager(
         return isLocked
     }
 
+    private fun notifyControlsVisibilityChanged() {
+        callback.onControlsVisibilityChanged(isVisible && !isLocked)
+    }
+
     /**
      * 清理资源
      */
@@ -909,6 +953,7 @@ class PlayerControlsManager(
         btnAspectRatio = null
         btnLock = null
         btnUnlock = null
+        btnUnlockRight = null
         btnMore = null
         btnSpeed = null
         btnAnime4K = null
