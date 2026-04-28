@@ -464,8 +464,9 @@ class PlayerDialogManager(
     fun showSpeedDialog(currentSpeed: Double) {
         val activity = activityRef.get() ?: return
 
-        val speeds = listOf("0.5x", "0.75x", "1.0x", "1.25x", "1.5x", "1.75x", "2.0x", "2.5x", "3.0x")
-        val speedValues = listOf(0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0)
+        val speedStrings = preferencesManager.getCustomSpeedPresets()
+        val speedValues = speedStrings.mapNotNull { it.toDoubleOrNull() }.sorted()
+        val speeds = speedValues.map { "${it}x" }
         val currentSelection = speedValues.indexOf(currentSpeed)
 
         val btnSpeed = activity.findViewById<ImageView>(R.id.btnSpeed)

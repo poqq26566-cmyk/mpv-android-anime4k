@@ -114,9 +114,9 @@ fun SettingsScreen(
                 )
             }
             
-            // 弹幕设置分组
+            // 下载分组
             item {
-                SettingsSectionHeader(title = "弹幕")
+                SettingsSectionHeader(title = "下载")
             }
             
             item {
@@ -142,11 +142,6 @@ fun SettingsScreen(
                 )
             }
             
-            // 字幕设置分组
-            item {
-                SettingsSectionHeader(title = "字幕")
-            }
-            
             item {
                 SettingsCard(
                     icon = Icons.Default.Subtitles,
@@ -160,11 +155,6 @@ fun SettingsScreen(
                         )
                     }
                 )
-            }
-            
-            // 下载分组
-            item {
-                SettingsSectionHeader(title = "下载")
             }
             
             item {
