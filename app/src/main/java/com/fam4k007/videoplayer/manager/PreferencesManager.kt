@@ -117,6 +117,26 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putStringSet(AppConstants.Preferences.CUSTOM_SPEED_PRESETS, presets).apply()
     }
     
+    // ==================== 视频显示模式 ====================
+    
+    /**
+     * 获取视频显示模式
+     * @return "folder" 显示文件夹列表 | "flat" 直接显示视频
+     */
+    fun getVideoDisplayMode(): String {
+        return sharedPreferences.getString(
+            AppConstants.Preferences.VIDEO_DISPLAY_MODE,
+            AppConstants.Defaults.DEFAULT_VIDEO_DISPLAY_MODE
+        ) ?: AppConstants.Defaults.DEFAULT_VIDEO_DISPLAY_MODE
+    }
+    
+    /**
+     * 保存视频显示模式
+     */
+    fun setVideoDisplayMode(mode: String) {
+        sharedPreferences.edit().putString(AppConstants.Preferences.VIDEO_DISPLAY_MODE, mode).apply()
+    }
+    
     // ==================== 精确进度定位 ====================
     
     /**
