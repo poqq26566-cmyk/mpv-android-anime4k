@@ -414,9 +414,7 @@ class DanmakuPlayerView @JvmOverloads constructor(
      * 设置播放倍速（用于倍速播放时同步弹幕）
      */
     fun setPlaybackSpeed(speed: Float) {
-        if (speed >= 1f) {
-            danmakuContext.setSpeed(speed)
-            Log.d(TAG, "Playback speed set to: $speed")
-        }
+        danmakuContext.setSpeed(speed)
+        Log.d(TAG, "Playback speed set to: $speed")
     }
 }

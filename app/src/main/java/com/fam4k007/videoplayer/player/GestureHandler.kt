@@ -479,11 +479,11 @@ class GestureHandler(
         volumeBar?.layoutParams?.height = barHeight
         volumeBar?.requestLayout()
         
-        // 显示格式: 0.1% - 99.9% 显示一位小数, 100%+ 显示整数
+        // 显示格式: 0.1 - 99.9 显示一位小数, 100+ 显示整数
         val text = if (currentVolume < 100f) {
-            String.format("%.1f%%", displayPercent)
+            String.format("%.1f", displayPercent)
         } else {
-            "${displayPercent.toInt()}%"
+            displayPercent.toInt().toString()
         }
         volumeText?.text = text
     }

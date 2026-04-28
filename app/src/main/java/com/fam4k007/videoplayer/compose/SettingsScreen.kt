@@ -115,9 +115,9 @@ fun SettingsScreen(
                 )
             }
             
-            // 弹幕设置分组
+            // 下载分组
             item {
-                SettingsSectionHeader(title = stringResource(R.string.settings_danmaku_header))
+                SettingsSectionHeader(title = "下载")
             }
             
             item {
@@ -143,11 +143,6 @@ fun SettingsScreen(
                 )
             }
             
-            // 字幕设置分组
-            item {
-                SettingsSectionHeader(title = stringResource(R.string.settings_subtitle_header))
-            }
-            
             item {
                 SettingsCard(
                     icon = Icons.Default.Subtitles,
@@ -161,11 +156,6 @@ fun SettingsScreen(
                         )
                     }
                 )
-            }
-            
-            // 下载分组
-            item {
-                SettingsSectionHeader(title = stringResource(R.string.settings_download_header))
             }
             
             item {
