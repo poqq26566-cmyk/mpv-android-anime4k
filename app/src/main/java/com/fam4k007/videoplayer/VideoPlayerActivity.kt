@@ -873,6 +873,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                 currentSpeed = speed
                 playbackEngine.setSpeed(speed)
                 danmakuManager.setSpeed(speed.toFloat())
+                preferencesManager.setLastPlaybackSpeed(speed.toFloat())
             }
             
             override fun onAnime4KChanged(enabled: Boolean, mode: Anime4KManager.Mode, quality: Anime4KManager.Quality) {
@@ -1421,6 +1422,7 @@ class VideoPlayerActivity : AppCompatActivity(),
             } else {
                 // 本地视频:使用URI对象
                 playbackEngine?.loadVideo(uri, position)
+                applyRememberedSpeed()
             }
             
             loadDanmakuForVideo(uri)
@@ -1924,6 +1926,21 @@ class VideoPlayerActivity : AppCompatActivity(),
     }
     
     /**
+     * 应用记忆的播放倍速
+     */
+    private fun applyRememberedSpeed() {
+        if (preferencesManager.isRememberSpeedEnabled()) {
+            val lastSpeed = preferencesManager.getLastPlaybackSpeed()
+            if (lastSpeed != 1.0f) {
+                currentSpeed = lastSpeed.toDouble()
+                playbackEngine.setSpeed(lastSpeed.toDouble())
+                danmakuManager.setSpeed(lastSpeed)
+                Logger.d(TAG, "Restored remembered playback speed: ${lastSpeed}x")
+            }
+        }
+    }
+    
+    /**
      * 隐藏进度恢复提示框
      */
     private fun hideResumeProgressPrompt() {
@@ -2041,6 +2058,7 @@ class VideoPlayerActivity : AppCompatActivity(),
             loadResolvedRemoteVideo(remotePlaybackRequest!!, position)
         } else {
             playbackEngine?.loadVideo(uri, position)
+            applyRememberedSpeed()
         }
         
         // 设置当前视频 URI 给文件选择器管理器
@@ -2111,6 +2129,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                     playbackEngine.loadRemote(result.request, position)
                 }
             }
+            applyRememberedSpeed()
         }
     }
     

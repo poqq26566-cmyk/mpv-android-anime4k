@@ -32,8 +32,8 @@ android {
         applicationId "com.fam4k007.videoplayer"
         minSdk 26
         targetSdk 34
-        versionCode 23
-        versionName "1.2.3"
+        versionCode 24
+        versionName "1.2.4"
 
         buildConfigField "String", "DANDANPLAY_APP_ID", "\"${localProperties.getProperty('dandanplay.appId', '')}\""
         buildConfigField "String", "DANDANPLAY_APP_SECRET", "\"${localProperties.getProperty('dandanplay.appSecret', '')}\""
@@ -138,6 +138,7 @@ dependencies {
 
     implementation(name: 'mpv-android-lib-v0.1.10', ext: 'aar')
     implementation(name: 'DanmakuFlameMaster', ext: 'aar')
+    implementation(name: 'mediainfoAndroid-v1.0.0-fix', ext: 'aar')
     implementation files('libs/sardine-1.0.2.jar')
     implementation files('libs/simple-xml-2.7.1.jar')
 

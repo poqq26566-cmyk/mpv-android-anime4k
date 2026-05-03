@@ -4,11 +4,14 @@ import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,6 +43,7 @@ import kotlinx.coroutines.flow.StateFlow
 class BiliBiliLoginActivity : ComponentActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         
         val authManager = BiliBiliAuthManager.getInstance(this)
@@ -86,17 +90,22 @@ fun BiliBiliLoginScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("登录 Bilibili") },
+                title = { Text("登录 Bilibili", color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
-                        Text("✕", fontSize = 24.sp)
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "返回",
+                            tint = Color.White
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFFFF6699)
                 )
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
         Box(
             modifier = Modifier
@@ -125,12 +134,6 @@ fun BiliBiliLoginScreen(
                         userInfo = state.userInfo,
                         onLogout = { viewModel.logout() }
                     )
-                    
-                    // 登录成功后自动关闭
-                    LaunchedEffect(Unit) {
-                        kotlinx.coroutines.delay(1500)
-                        onClose()
-                    }
                 }
                 is LoginUiState.Error -> {
                     ErrorContent(
@@ -226,8 +229,9 @@ private fun QRCodeContent(
             text = "1.扫描以后不要马上点确认！\n2.等二维码下方等待扫码变为已扫码以后，再点确定！\n3.点确定以后不要急！本页面会自动返回到上一级，在此期间请不要进行任何操作！",
             fontSize = 14.sp,
             color = Color.Gray,
-            textAlign = TextAlign.Center,
-            lineHeight = 20.sp
+            textAlign = TextAlign.Start,
+            lineHeight = 20.sp,
+            modifier = Modifier.fillMaxWidth()
         )
         
         if (status == "二维码已过期") {

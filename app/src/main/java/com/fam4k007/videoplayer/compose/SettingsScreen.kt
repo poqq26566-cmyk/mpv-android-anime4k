@@ -23,9 +23,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.fam4k007.videoplayer.*
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.bilibili.auth.BiliBiliAuthManager
+import com.fam4k007.videoplayer.manager.PreferencesManager
 import com.fam4k007.videoplayer.utils.ThemeManager
 import com.fam4k007.videoplayer.utils.UpdateManager
 import com.fam4k007.videoplayer.compose.SettingsColors as SettingsPalette
@@ -41,9 +43,11 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val authManager = remember { BiliBiliAuthManager.getInstance(context) }
+    val preferencesManager = remember { PreferencesManager.getInstance(context) }
     val currentTheme = remember { mutableStateOf(ThemeManager.getCurrentTheme(context)) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showUpdateDialog by remember { mutableStateOf(false) }
+    var showDisplayModeDialog by remember { mutableStateOf(false) }
     var updateInfo by remember { mutableStateOf<UpdateManager.UpdateInfo?>(null) }
     var isCheckingUpdate by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -94,6 +98,17 @@ fun SettingsScreen(
                 )
             }
             
+            item {
+                val mode = preferencesManager.getVideoDisplayMode()
+                val modeText = if (mode == "flat") "直接显示视频" else "显示文件夹列表"
+                SettingsCard(
+                    icon = Icons.Default.VideoLibrary,
+                    title = "视频显示模式",
+                    subtitle = "当前: $modeText",
+                    onClick = { showDisplayModeDialog = true }
+                )
+            }
+            
             // 播放设置分组
             item {
                 SettingsSectionHeader(title = "播放")
@@ -114,9 +129,9 @@ fun SettingsScreen(
                 )
             }
             
-            // 弹幕设置分组
+            // 下载分组
             item {
-                SettingsSectionHeader(title = "弹幕")
+                SettingsSectionHeader(title = "下载")
             }
             
             item {
@@ -142,31 +157,6 @@ fun SettingsScreen(
                 )
             }
             
-            // 字幕设置分组
-            item {
-                SettingsSectionHeader(title = "字幕")
-            }
-            
-            item {
-                SettingsCard(
-                    icon = Icons.Default.Subtitles,
-                    title = "字幕搜索下载",
-                    subtitle = "搜索并下载在线字幕",
-                    onClick = {
-                        context.startActivity(Intent(context, SubtitleSearchActivity::class.java))
-                        (context as? android.app.Activity)?.overridePendingTransition(
-                            R.anim.slide_in_right,
-                            R.anim.slide_out_left
-                        )
-                    }
-                )
-            }
-            
-            // 下载分组
-            item {
-                SettingsSectionHeader(title = "下载")
-            }
-            
             item {
                 SettingsCard(
                     icon = Icons.Default.Download,
@@ -186,6 +176,21 @@ fun SettingsScreen(
                                 android.widget.Toast.LENGTH_SHORT
                             ).show()
                         }
+                    }
+                )
+            }
+            
+            item {
+                SettingsCard(
+                    icon = Icons.Default.Subtitles,
+                    title = "字幕搜索下载",
+                    subtitle = "搜索并下载在线字幕",
+                    onClick = {
+                        context.startActivity(Intent(context, SubtitleSearchActivity::class.java))
+                        (context as? android.app.Activity)?.overridePendingTransition(
+                            R.anim.slide_in_right,
+                            R.anim.slide_out_left
+                        )
                     }
                 )
             }
@@ -289,6 +294,14 @@ fun SettingsScreen(
                 UpdateManager.openDownloadPage(context, updateInfo!!.downloadUrl)
                 showUpdateDialog = false
             }
+        )
+    }
+    
+    // 视频显示模式对话框
+    if (showDisplayModeDialog) {
+        VideoDisplayModeDialog(
+            preferencesManager = preferencesManager,
+            onDismiss = { showDisplayModeDialog = false }
         )
     }
 }
@@ -458,6 +471,132 @@ fun ThemeSelectionDialog(
         },
         shape = RoundedCornerShape(16.dp)
     )
+}
+
+@Composable
+fun VideoDisplayModeDialog(
+    preferencesManager: PreferencesManager,
+    onDismiss: () -> Unit
+) {
+    var selected by remember { mutableStateOf(preferencesManager.getVideoDisplayMode()) }
+    
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    "视频显示模式",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF212121)
+                )
+                
+                Spacer(Modifier.height(16.dp))
+                
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { selected = "folder" }
+                        .background(if (selected == "folder") SettingsPalette.Highlight else Color.Transparent)
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = selected == "folder",
+                        onClick = { selected = "folder" },
+                        modifier = Modifier.size(24.dp),
+                        colors = RadioButtonDefaults.colors(
+                            selectedColor = MaterialTheme.colorScheme.primary,
+                            unselectedColor = SettingsPalette.PrimaryText.copy(alpha = 0.4f)
+                        )
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            "显示文件夹列表",
+                            fontSize = 15.sp,
+                            color = if (selected == "folder") MaterialTheme.colorScheme.primary else SettingsPalette.PrimaryText,
+                            fontWeight = if (selected == "folder") FontWeight.SemiBold else FontWeight.Normal
+                        )
+                        Text(
+                            "按文件夹分类显示视频",
+                            fontSize = 12.sp,
+                            color = SettingsPalette.SecondaryText
+                        )
+                    }
+                }
+                
+                Spacer(Modifier.height(8.dp))
+                
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { selected = "flat" }
+                        .background(if (selected == "flat") SettingsPalette.Highlight else Color.Transparent)
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = selected == "flat",
+                        onClick = { selected = "flat" },
+                        modifier = Modifier.size(24.dp),
+                        colors = RadioButtonDefaults.colors(
+                            selectedColor = MaterialTheme.colorScheme.primary,
+                            unselectedColor = SettingsPalette.PrimaryText.copy(alpha = 0.4f)
+                        )
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            "直接显示视频",
+                            fontSize = 15.sp,
+                            color = if (selected == "flat") MaterialTheme.colorScheme.primary else SettingsPalette.PrimaryText,
+                            fontWeight = if (selected == "flat") FontWeight.SemiBold else FontWeight.Normal
+                        )
+                        Text(
+                            "跳过文件夹，直接显示所有视频",
+                            fontSize = 12.sp,
+                            color = SettingsPalette.SecondaryText
+                        )
+                    }
+                }
+                
+                Spacer(Modifier.height(20.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("取消")
+                    }
+                    
+                    Button(
+                        onClick = {
+                            preferencesManager.setVideoDisplayMode(selected)
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text("保存")
+                    }
+                }
+            }
+        }
+    }
 }
 
 /**

@@ -2,10 +2,13 @@ package com.fam4k007.videoplayer.compose
 
 import android.net.Uri
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -41,20 +46,23 @@ import coil.request.ImageRequest
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.VideoFileParcelable
 import com.fam4k007.videoplayer.database.VideoDatabase
+import com.fam4k007.videoplayer.mediainfo.MediaInfoActivity
 import com.fam4k007.videoplayer.paging.VideoPagingSource
 import com.fam4k007.videoplayer.utils.ThumbnailCacheManager
+import com.fam4k007.videoplayer.utils.FileOperationManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
+import java.io.File
 
 /**
  * 使用Paging3的视频列表界面
  * 防止大量视频导致OOM
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun VideoListScreenPaging(
     folderName: String,
@@ -66,6 +74,7 @@ fun VideoListScreenPaging(
     coroutineScope: CoroutineScope
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     
     // 排序状态
     var sortType by remember { mutableStateOf(preferencesManager.getVideoSortType()) }
@@ -97,7 +106,19 @@ fun VideoListScreenPaging(
     var showSortDialog by remember { mutableStateOf(false) }
     var selectedVideo by remember { mutableStateOf<VideoFileParcelable?>(null) }
     var isRefreshing by remember { mutableStateOf(false) }
+    
+    // 文件操作菜单相关状态
+    var selectedVideoForOperation by remember { mutableStateOf<VideoFileParcelable?>(null) }
+    var showOperationMenu by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showCopyDialog by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
+    
+    // 多选编辑模式
+    var isEditMode by remember { mutableStateOf(false) }
+    var selectedVideos by remember { mutableStateOf<Set<VideoFileParcelable>>(emptySet()) }
+    var showBatchDeleteDialog by remember { mutableStateOf(false) }
     
     // 当需要刷新时
     fun refreshVideos() {
@@ -141,6 +162,18 @@ fun VideoListScreenPaging(
                         }
                     },
                     actions = {
+                        IconButton(onClick = { 
+                            isEditMode = !isEditMode
+                            if (!isEditMode) {
+                                selectedVideos = emptySet()
+                            }
+                        }) {
+                            Icon(
+                                imageVector = if (isEditMode) Icons.Default.Close else Icons.Default.Edit,
+                                contentDescription = if (isEditMode) "退出编辑" else "编辑",
+                                tint = Color.White
+                            )
+                        }
                         IconButton(onClick = { showSearch = true }) {
                             Icon(
                                 imageVector = Icons.Default.Search,
@@ -167,7 +200,7 @@ fun VideoListScreenPaging(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color(0xFFF5F5F5))
+                .background(Color.White)
         ) {
             // 根据搜索关键词过滤显示
             val filteredItems = if (searchQuery.isEmpty()) {
@@ -209,51 +242,149 @@ fun VideoListScreenPaging(
                             if (searchQuery.isEmpty() || video.name.contains(searchQuery, ignoreCase = true)) {
                                 VideoItem(
                                     video = video,
+                                    isSelected = video == selectedVideoForOperation,
+                                    isEditMode = isEditMode,
+                                    isChecked = selectedVideos.contains(video),
                                     onClick = { 
-                                        // 从数据库查询该文件夹的所有视频（使用当前排序方式）
-                                        coroutineScope.launch {
-                                            val allVideos = withContext(Dispatchers.IO) {
-                                                val dao = VideoDatabase.getDatabase(context).videoCacheDao()
-                                                val entities = when {
-                                                    sortType == "NAME" && sortOrder == "ASCENDING" -> 
-                                                        dao.getVideosByFolderSortedByNameAsc(folderPath)
-                                                    sortType == "NAME" && sortOrder == "DESCENDING" -> 
-                                                        dao.getVideosByFolderSortedByNameDesc(folderPath)
-                                                    sortType == "DATE" && sortOrder == "ASCENDING" -> 
-                                                        dao.getVideosByFolderSortedByDateAsc(folderPath)
-                                                    sortType == "DATE" && sortOrder == "DESCENDING" -> 
-                                                        dao.getVideosByFolderSortedByDateDesc(folderPath)
-                                                    else -> 
-                                                        dao.getVideosByFolderSortedByNameAsc(folderPath)
-                                                }
-                                                entities.map { entity ->
-                                                    VideoFileParcelable(
-                                                        uri = entity.uri,
-                                                        name = entity.name,
-                                                        path = entity.path,
-                                                        size = entity.size,
-                                                        duration = entity.duration,
-                                                        dateAdded = entity.dateAdded
-                                                    )
-                                                }
+                                        if (isEditMode) {
+                                            // 编辑模式下切换选中状态
+                                            selectedVideos = if (selectedVideos.contains(video)) {
+                                                selectedVideos - video
+                                            } else {
+                                                selectedVideos + video
                                             }
-                                            onOpenVideo(video, allVideos)
+                                        } else {
+                                            // 正常模式下打开视频
+                                            // 从数据库查询该文件夹的所有视频（使用当前排序方式）
+                                            coroutineScope.launch {
+                                                val allVideos = withContext(Dispatchers.IO) {
+                                                    val dao = VideoDatabase.getDatabase(context).videoCacheDao()
+                                                    val entities = when {
+                                                        sortType == "NAME" && sortOrder == "ASCENDING" -> 
+                                                            dao.getVideosByFolderSortedByNameAsc(folderPath)
+                                                        sortType == "NAME" && sortOrder == "DESCENDING" -> 
+                                                            dao.getVideosByFolderSortedByNameDesc(folderPath)
+                                                        sortType == "DATE" && sortOrder == "ASCENDING" -> 
+                                                            dao.getVideosByFolderSortedByDateAsc(folderPath)
+                                                        sortType == "DATE" && sortOrder == "DESCENDING" -> 
+                                                            dao.getVideosByFolderSortedByDateDesc(folderPath)
+                                                        else -> 
+                                                            dao.getVideosByFolderSortedByNameAsc(folderPath)
+                                                    }
+                                                    entities.map { entity ->
+                                                        VideoFileParcelable(
+                                                            uri = entity.uri,
+                                                            name = entity.name,
+                                                            path = entity.path,
+                                                            size = entity.size,
+                                                            duration = entity.duration,
+                                                            dateAdded = entity.dateAdded
+                                                        )
+                                                    }
+                                                }
+                                                onOpenVideo(video, allVideos)
+                                            }
                                         }
                                     },
-                                    onMoreClick = { selectedVideo = video }
+                                    onMoreClick = { 
+                                        if (!isEditMode) selectedVideo = video 
+                                    },
+                                    onLongClick = {
+                                        if (!isEditMode) {
+                                            selectedVideoForOperation = video
+                                            showOperationMenu = true
+                                        }
+                                    }
                                 )
                             }
                         }
                     }
                 }
                 
-                FloatingActionButton(
-                    onClick = { refreshVideos() },
+                // 文件操作菜单（全屏显示）
+                FileOperationMenu(
+                    visible = showOperationMenu && selectedVideoForOperation != null && !isEditMode,
+                    fileName = selectedVideoForOperation?.name ?: "",
+                    onDismiss = { 
+                        showOperationMenu = false
+                        selectedVideoForOperation = null
+                    },
+                    onRename = { 
+                        showRenameDialog = true
+                        showOperationMenu = false  // 关闭菜单
+                    },
+                    onDelete = { 
+                        showDeleteDialog = true
+                        showOperationMenu = false  // 关闭菜单
+                    },
+                    onCopy = { 
+                        showCopyDialog = true
+                        showOperationMenu = false  // 关闭菜单
+                    }
+                )
+                
+                // 多选操作栏
+                MultiSelectActionBar(
+                    visible = isEditMode && selectedVideos.isNotEmpty(),
+                    selectedCount = selectedVideos.size,
+                    totalCount = lazyPagingItems.itemCount,
+                    onSelectAll = {
+                        if (selectedVideos.size == lazyPagingItems.itemCount) {
+                            // 取消全选
+                            selectedVideos = emptySet()
+                        } else {
+                            // 全选当前加载的所有项
+                            val allVideos = mutableSetOf<VideoFileParcelable>()
+                            for (i in 0 until lazyPagingItems.itemCount) {
+                                lazyPagingItems[i]?.let { allVideos.add(it) }
+                            }
+                            selectedVideos = allVideos
+                        }
+                    },
+                    onRename = {
+                        if (selectedVideos.size == 1) {
+                            selectedVideoForOperation = selectedVideos.first()
+                            showRenameDialog = true
+                        }
+                    },
+                    onDelete = {
+                        showBatchDeleteDialog = true
+                    },
+                    onCopy = {
+                        showCopyDialog = true
+                    },
+                    onCancel = {
+                        isEditMode = false
+                        selectedVideos = emptySet()
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .windowInsetsPadding(WindowInsets.navigationBars)
+                )
+                
+                // 刷新按钮（编辑模式时隐藏）
+                AnimatedVisibility(
+                    visible = !isEditMode,
+                    enter = scaleIn(
+                        initialScale = 0.3f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    ) + fadeIn(animationSpec = tween(200)),
+                    exit = scaleOut(
+                        targetScale = 0.3f,
+                        animationSpec = tween(200)
+                    ) + fadeOut(animationSpec = tween(200)),
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(16.dp)
                 ) {
-                    Icon(Icons.Default.Refresh, "刷新", tint = Color.White)
+                    FloatingActionButton(
+                        onClick = { refreshVideos() }
+                    ) {
+                        Icon(Icons.Default.Refresh, "刷新", tint = Color.White)
+                    }
                 }
             }
         }
@@ -274,17 +405,175 @@ fun VideoListScreenPaging(
         )
     }
 
-    AnimatedVisibility(
-        visible = selectedVideo != null,
-        enter = fadeIn(),
-        exit = fadeOut()
-    ) {
+    // 监听selectedVideo变化，启动MediaInfoActivity
+    LaunchedEffect(selectedVideo) {
         selectedVideo?.let { video ->
-            VideoInfoDialog(
-                video = video,
-                onDismiss = { selectedVideo = null }
-            )
+            MediaInfoActivity.start(context, video.uri, video.name)
+            selectedVideo = null // 重置状态
         }
+    }
+    
+    // 重命名对话框
+    if (showRenameDialog && selectedVideoForOperation != null) {
+        RenameDialog(
+            visible = true,
+            currentName = selectedVideoForOperation!!.name,
+            onDismiss = { 
+                showRenameDialog = false
+                selectedVideoForOperation = null
+            },
+            onConfirm = { newName ->
+                lifecycleOwner.lifecycleScope.launch {
+                    val videoPath = selectedVideoForOperation!!.path
+                    val newPath = FileOperationManager.rename(context, videoPath, newName)
+                    if (newPath != null) {
+                        // 刷新列表
+                        lazyPagingItems.refresh()
+                    }
+                    showRenameDialog = false
+                    selectedVideoForOperation = null
+                    // 退出编辑模式
+                    if (isEditMode) {
+                        selectedVideos = emptySet()
+                        isEditMode = false
+                    }
+                }
+            }
+        )
+    }
+    
+    // 删除确认对话框
+    if (showDeleteDialog && selectedVideoForOperation != null) {
+        DeleteConfirmDialog(
+            visible = true,
+            fileName = selectedVideoForOperation!!.name,
+            isFolder = false,
+            onDismiss = { 
+                showDeleteDialog = false
+                selectedVideoForOperation = null
+            },
+            onConfirm = {
+                lifecycleOwner.lifecycleScope.launch {
+                    val videoPath = selectedVideoForOperation!!.path
+                    val success = FileOperationManager.delete(
+                        context,
+                        videoPath,
+                        isFolder = false
+                    )
+                    if (success) {
+                        // 刷新列表
+                        lazyPagingItems.refresh()
+                    }
+                    showDeleteDialog = false
+                    selectedVideoForOperation = null
+                }
+            }
+        )
+    }
+    
+    // 复制对话框
+    if (showCopyDialog && selectedVideoForOperation != null) {
+        CopyDestinationDialog(
+            visible = true,
+            fileName = selectedVideoForOperation!!.name,
+            onDismiss = { 
+                showCopyDialog = false
+                selectedVideoForOperation = null
+            },
+            onConfirm = { destPath ->
+                lifecycleOwner.lifecycleScope.launch {
+                    val sourcePath = selectedVideoForOperation!!.path
+                    val sourceFile = File(sourcePath)
+                    val fullDestPath = File(destPath, sourceFile.name).absolutePath
+                    val success = FileOperationManager.copy(
+                        context,
+                        sourcePath,
+                        fullDestPath,
+                        isFolder = false
+                    )
+                    if (success) {
+                        // 刷新列表
+                        lazyPagingItems.refresh()
+                    }
+                    showCopyDialog = false
+                    selectedVideoForOperation = null
+                }
+            }
+        )
+    }
+    
+    // 批量删除确认对话框
+    if (showBatchDeleteDialog && selectedVideos.isNotEmpty()) {
+        BatchDeleteConfirmDialog(
+            visible = true,
+            count = selectedVideos.size,
+            isFolder = false,
+            onDismiss = { showBatchDeleteDialog = false },
+            onConfirm = {
+                lifecycleOwner.lifecycleScope.launch {
+                    selectedVideos.forEach { video ->
+                        FileOperationManager.delete(
+                            context,
+                            video.path,
+                            isFolder = false
+                        )
+                    }
+                    // 刷新列表
+                    lazyPagingItems.refresh()
+                    selectedVideos = emptySet()
+                    isEditMode = false
+                    showBatchDeleteDialog = false
+                }
+            }
+        )
+    }
+    
+    // 多选复制对话框
+    if (showCopyDialog && (selectedVideos.isNotEmpty() || selectedVideoForOperation != null)) {
+        val fileName = when {
+            selectedVideos.size == 1 -> selectedVideos.first().name
+            selectedVideos.size > 1 -> "${selectedVideos.size} 个文件"
+            else -> selectedVideoForOperation?.name ?: ""
+        }
+        
+        CopyDestinationDialog(
+            visible = true,
+            fileName = fileName,
+            onDismiss = { 
+                showCopyDialog = false
+                selectedVideoForOperation = null
+            },
+            onConfirm = { destPath ->
+                lifecycleOwner.lifecycleScope.launch {
+                    val videosToCode = if (selectedVideos.isNotEmpty()) {
+                        selectedVideos.toList()
+                    } else {
+                        listOfNotNull(selectedVideoForOperation)
+                    }
+                    
+                    videosToCode.forEach { video ->
+                        val sourcePath = video.path
+                        val sourceFile = File(sourcePath)
+                        val fullDestPath = File(destPath, sourceFile.name).absolutePath
+                        FileOperationManager.copy(
+                            context,
+                            sourcePath,
+                            fullDestPath,
+                            isFolder = false
+                        )
+                    }
+                    
+                    // 刷新列表
+                    lazyPagingItems.refresh()
+                    showCopyDialog = false
+                    selectedVideoForOperation = null
+                    if (isEditMode) {
+                        selectedVideos = emptySet()
+                        isEditMode = false
+                    }
+                }
+            }
+        )
     }
 }
 
@@ -347,11 +636,16 @@ private fun SearchTopBar(
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun VideoItem(
     video: VideoFileParcelable,
+    isSelected: Boolean,
+    isEditMode: Boolean,
+    isChecked: Boolean,
     onClick: () -> Unit,
-    onMoreClick: () -> Unit
+    onMoreClick: () -> Unit,
+    onLongClick: () -> Unit
 ) {
     val context = LocalContext.current
     var thumbnailBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
@@ -373,19 +667,54 @@ private fun VideoItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+            containerColor = if (isSelected && !isEditMode) 
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) 
+            else 
+                Color.White
+        ),
+        border = if (isSelected && !isEditMode) 
+            androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) 
+        else 
+            null
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(12.dp)
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // 复选框（编辑模式）
+            AnimatedVisibility(
+                visible = isEditMode,
+                enter = slideInHorizontally(
+                    initialOffsetX = { -it },
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                ) + fadeIn(animationSpec = tween(300)),
+                exit = slideOutHorizontally(
+                    targetOffsetX = { -it },
+                    animationSpec = tween(250, easing = FastOutSlowInEasing)
+                ) + fadeOut(animationSpec = tween(250))
+            ) {
+                Checkbox(
+                    checked = isChecked,
+                    onCheckedChange = null,  // 点击整行触发
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+            }
+            
             // 缩略图
             Box(
                 modifier = Modifier
@@ -416,19 +745,23 @@ private fun VideoItem(
 
             // 视频信息
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .height(68.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
+                // 标题（顶部对齐）
                 Text(
                     text = video.name,
-                    fontSize = 15.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
-                    maxLines = 2,
+                    maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
-                    color = Color(0xFF212121)
+                    color = Color(0xFF212121),
+                    lineHeight = 16.sp
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
-
+                // 时长和大小标签（底部对齐）
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -445,72 +778,17 @@ private fun VideoItem(
                 }
             }
 
-            IconButton(onClick = onMoreClick) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "更多",
-                    tint = Color(0xFF757575)
-                )
+            // 更多按钮（非编辑模式）
+            if (!isEditMode) {
+                IconButton(onClick = onMoreClick) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "更多",
+                        tint = Color(0xFF757575)
+                    )
+                }
             }
         }
-    }
-}
-
-@Composable
-private fun VideoInfoDialog(
-    video: VideoFileParcelable,
-    onDismiss: () -> Unit
-) {
-    // 简化版对话框，不加载元数据
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = video.name,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                InfoRow("文件大小", formatFileSize(video.size))
-                InfoRow("时长", formatDuration(video.duration))
-                InfoRow("路径", video.path)
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("关闭")
-            }
-        }
-    )
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            fontSize = 14.sp,
-            color = Color(0xFF757575),
-            modifier = Modifier.weight(0.4f)
-        )
-        Text(
-            text = value,
-            fontSize = 14.sp,
-            color = Color(0xFF212121),
-            modifier = Modifier.weight(0.6f),
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }
 

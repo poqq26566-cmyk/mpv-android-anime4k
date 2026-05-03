@@ -23,6 +23,14 @@ object AppConstants {
         const val ANIME4K_MEMORY_ENABLED = "anime4k_memory_enabled"
         const val ANIME4K_LAST_MODE = "anime4k_last_mode"
         
+        // 倍速记忆设置 Key
+        const val REMEMBER_PLAYBACK_SPEED = "remember_playback_speed"
+        const val LAST_PLAYBACK_SPEED = "last_playback_speed"
+        const val CUSTOM_SPEED_PRESETS = "custom_speed_presets"
+        
+        // 视频显示模式 Key
+        const val VIDEO_DISPLAY_MODE = "video_display_mode"
+        
         // 双击手势设置 Key
         const val DOUBLE_TAP_MODE = "double_tap_mode"  // 0=暂停, 1=快进快退
         const val DOUBLE_TAP_SEEK_SECONDS = "double_tap_seek_seconds"  // 双击跳转秒数
@@ -63,6 +71,15 @@ object AppConstants {
 
         // 播放历史最大记录数
         const val MAX_HISTORY_SIZE = 50
+        
+        // 默认播放倍速
+        const val DEFAULT_PLAYBACK_SPEED = 1.0f
+        
+        // 默认自定义倍速预设列表
+        val DEFAULT_SPEED_PRESETS = setOf("0.5", "0.75", "1.0", "1.25", "1.5", "1.75", "2.0", "2.5", "3.0")
+        
+        // 视频显示模式
+        const val DEFAULT_VIDEO_DISPLAY_MODE = "folder"
     }
 
     /**
