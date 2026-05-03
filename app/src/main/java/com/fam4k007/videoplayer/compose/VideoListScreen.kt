@@ -34,6 +34,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.VideoFileParcelable
+import com.fam4k007.videoplayer.mediainfo.MediaInfoActivity
 import com.fam4k007.videoplayer.utils.ThumbnailCacheManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -191,16 +192,12 @@ fun VideoListScreen(
         )
     }
 
-    AnimatedVisibility(
-        visible = selectedVideo != null,
-        enter = fadeIn(),
-        exit = fadeOut()
-    ) {
+    // 监听selectedVideo变化，启动MediaInfoActivity
+    val context = LocalContext.current
+    LaunchedEffect(selectedVideo) {
         selectedVideo?.let { video ->
-            VideoInfoDialog(
-                video = video,
-                onDismiss = { selectedVideo = null }
-            )
+            MediaInfoActivity.start(context, video.uri, video.name)
+            selectedVideo = null // 重置状态
         }
     }
 }
@@ -415,90 +412,6 @@ private fun VideoSortDialog(
             }
         }
     )
-}
-
-@Composable
-private fun VideoInfoDialog(
-    video: VideoFileParcelable,
-    onDismiss: () -> Unit
-) {
-    val context = LocalContext.current
-    var metadata by remember { mutableStateOf<com.fam4k007.videoplayer.utils.VideoMetadataHelper.VideoMetadata?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
-
-    LaunchedEffect(video) {
-        withContext(Dispatchers.IO) {
-            metadata = com.fam4k007.videoplayer.utils.VideoMetadataHelper.getVideoMetadata(
-                context,
-                Uri.parse(video.uri)
-            )
-            isLoading = false
-        }
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = video.name,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        },
-        text = {
-            if (isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    InfoRow("分辨率", metadata?.getResolution() ?: "无法获取")
-                    InfoRow("视频编码", metadata?.videoCodec ?: "无法获取")
-                    InfoRow("音频编码", metadata?.audioCodec ?: "无法获取")
-                    InfoRow("比特率", metadata?.getFormattedBitrate() ?: "无法获取")
-                    InfoRow("帧率", metadata?.getFormattedFrameRate() ?: "无法获取")
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("关闭")
-            }
-        }
-    )
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            fontSize = 14.sp,
-            color = Color(0xFF757575),
-            modifier = Modifier.weight(0.4f)
-        )
-        Text(
-            text = value,
-            fontSize = 14.sp,
-            color = Color(0xFF212121),
-            modifier = Modifier.weight(0.6f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
 }
 
 @Composable

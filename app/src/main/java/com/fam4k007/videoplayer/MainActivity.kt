@@ -3,6 +3,7 @@ package com.fam4k007.videoplayer
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,6 +30,7 @@ class MainActivity : BaseActivity() {
     private var currentUpdateInfo: UpdateManager.UpdateInfo? by mutableStateOf(null)
     
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         ThemeManager.applyTheme(this)
         super.onCreate(savedInstanceState)
         
