@@ -101,11 +101,11 @@ fun SettingsScreen(
             
             item {
                 val mode = preferencesManager.getVideoDisplayMode()
-                val modeText = if (mode == "flat") "直接显示视频" else "显示文件夹列表"
+                val modeText = if (mode == "flat") "Show videos directly" else "Show folder list"
                 SettingsCard(
                     icon = Icons.Default.VideoLibrary,
-                    title = "视频显示模式",
-                    subtitle = "当前: $modeText",
+                    title = "Video Display Mode",
+                    subtitle = "Current: $modeText",
                     onClick = { showDisplayModeDialog = true }
                 )
             }
@@ -184,8 +184,8 @@ fun SettingsScreen(
             item {
                 SettingsCard(
                     icon = Icons.Default.Subtitles,
-                    title = "字幕搜索下载",
-                    subtitle = "搜索并下载在线字幕",
+                    title = "Subtitle Search & Download",
+                    subtitle = "Search and download online subtitles",
                     onClick = {
                         context.startActivity(Intent(context, SubtitleSearchActivity::class.java))
                         (context as? android.app.Activity)?.overridePendingTransition(
@@ -316,7 +316,7 @@ fun SettingsTopBar(onNavigateBack: () -> Unit) {
     ImmersiveTopAppBar(
         title = {
             Text(
-                text = "设置",
+                text = "Settings",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -325,7 +325,7 @@ fun SettingsTopBar(onNavigateBack: () -> Unit) {
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "返回"
+                    contentDescription = "Back"
                 )
             }
         }
@@ -441,7 +441,7 @@ fun ThemeSelectionDialog(
         onDismissRequest = onDismiss,
         title = {
                 Text(
-                    text = "选择主题",
+                    text = "Select Theme",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = SettingsPalette.PrimaryText
@@ -462,12 +462,12 @@ fun ThemeSelectionDialog(
             TextButton(
                 onClick = { onThemeSelected(selectedTheme) }
             ) {
-                Text("确定", color = SettingsPalette.AccentText)
+                Text("OK", color = SettingsPalette.AccentText)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消", color = SettingsPalette.SecondaryText)
+                Text("Cancel", color = SettingsPalette.SecondaryText)
             }
         },
         shape = RoundedCornerShape(16.dp)
@@ -491,7 +491,7 @@ fun VideoDisplayModeDialog(
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
-                    "视频显示模式",
+                    "Video Display Mode",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF212121)
@@ -520,13 +520,13 @@ fun VideoDisplayModeDialog(
                     Spacer(Modifier.width(12.dp))
                     Column {
                         Text(
-                            "显示文件夹列表",
+                            "Show Folder List",
                             fontSize = 15.sp,
                             color = if (selected == "folder") MaterialTheme.colorScheme.primary else SettingsPalette.PrimaryText,
                             fontWeight = if (selected == "folder") FontWeight.SemiBold else FontWeight.Normal
                         )
                         Text(
-                            "按文件夹分类显示视频",
+                            "Display videos organized by folders",
                             fontSize = 12.sp,
                             color = SettingsPalette.SecondaryText
                         )
@@ -556,13 +556,13 @@ fun VideoDisplayModeDialog(
                     Spacer(Modifier.width(12.dp))
                     Column {
                         Text(
-                            "直接显示视频",
+                            "Show Videos Directly",
                             fontSize = 15.sp,
                             color = if (selected == "flat") MaterialTheme.colorScheme.primary else SettingsPalette.PrimaryText,
                             fontWeight = if (selected == "flat") FontWeight.SemiBold else FontWeight.Normal
                         )
                         Text(
-                            "跳过文件夹，直接显示所有视频",
+                            "Skip folders and show all videos directly",
                             fontSize = 12.sp,
                             color = SettingsPalette.SecondaryText
                         )
@@ -579,7 +579,7 @@ fun VideoDisplayModeDialog(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("取消")
+                        Text("Cancel")
                     }
                     
                     Button(
@@ -592,7 +592,7 @@ fun VideoDisplayModeDialog(
                             containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
-                        Text("保存")
+                        Text("Save")
                     }
                 }
             }

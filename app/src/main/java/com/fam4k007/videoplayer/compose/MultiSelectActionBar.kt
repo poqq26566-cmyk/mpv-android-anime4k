@@ -63,12 +63,12 @@ fun MultiSelectActionBar(
                 // 左侧：已选数量
                 Column {
                     Text(
-                        text = "已选择",
+                        text = "Selected",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
                     Text(
-                        text = "$selectedCount 项",
+                        text = "$selectedCount items",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -88,7 +88,7 @@ fun MultiSelectActionBar(
                     ) {
                         Icon(
                             imageVector = if (isAllSelected) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
-                            contentDescription = if (isAllSelected) "取消全选" else "全选",
+                            contentDescription = if (isAllSelected) "Deselect all" else "Select all",
                             tint = if (isAllSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
                     }
@@ -101,7 +101,7 @@ fun MultiSelectActionBar(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
-                                contentDescription = "重命名",
+                                contentDescription = "Rename",
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -115,7 +115,7 @@ fun MultiSelectActionBar(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ContentCopy,
-                                contentDescription = "复制",
+                                contentDescription = "Copy",
                                 tint = MaterialTheme.colorScheme.secondary
                             )
                         }
@@ -129,7 +129,7 @@ fun MultiSelectActionBar(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                contentDescription = "删除",
+                                contentDescription = "Delete",
                                 tint = Color(0xFFE53935)
                             )
                         }
@@ -142,7 +142,7 @@ fun MultiSelectActionBar(
                             contentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
                     ) {
-                        Text("取消")
+                        Text("Cancel")
                     }
                 }
             }
@@ -172,24 +172,24 @@ fun BatchDeleteConfirmDialog(
                     modifier = Modifier.size(48.dp)
                 )
             },
-            title = { Text("确认批量删除") },
+            title = { Text("Confirm Batch Delete") },
             text = {
                 Column {
                     Text(
-                        "确定要删除选中的 $count 个${if (isFolder) "文件夹" else "文件"}吗？",
+                        "Are you sure you want to delete $count selected ${if (isFolder) "folders" else "files"}?",
                         fontWeight = FontWeight.Bold
                     )
                     if (isFolder) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "注意：文件夹内的所有文件也将被删除",
+                            "Warning: All files in the folders will also be deleted",
                             color = Color(0xFFE53935),
                             fontSize = 13.sp
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "此操作不可撤销！",
+                        "This action cannot be undone!",
                         color = Color(0xFFE53935),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
@@ -203,12 +203,12 @@ fun BatchDeleteConfirmDialog(
                         contentColor = Color(0xFFE53935)
                     )
                 ) {
-                    Text("删除")
+                    Text("Delete")
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("取消")
+                    Text("Cancel")
                 }
             }
         )

@@ -21,11 +21,11 @@ object ThemeManager {
      * 主题枚举
      */
     enum class Theme(val themeName: String, @StyleRes val styleRes: Int) {
-        BLUE_PURPLE("蓝紫主题", R.style.Theme_VideoPlayer_BluePurple),
-        GREEN("绿色主题", R.style.Theme_VideoPlayer_Green),
-        ORANGE("橙色主题", R.style.Theme_VideoPlayer_Orange),
-        PINK("粉色主题", R.style.Theme_VideoPlayer_Pink),
-        INDIGO("靛蓝主题", R.style.Theme_VideoPlayer_Indigo);
+        BLUE_PURPLE("Blue Purple", R.style.Theme_VideoPlayer_BluePurple),
+        GREEN("Green", R.style.Theme_VideoPlayer_Green),
+        ORANGE("Orange", R.style.Theme_VideoPlayer_Orange),
+        PINK("Pink", R.style.Theme_VideoPlayer_Pink),
+        INDIGO("Indigo", R.style.Theme_VideoPlayer_Indigo);
         
         companion object {
             fun fromName(name: String): Theme {

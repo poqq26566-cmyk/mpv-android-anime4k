@@ -115,7 +115,7 @@ fun FolderBrowserScreen(
                         }) {
                             Icon(
                                 imageVector = if (isEditMode) Icons.Default.Close else Icons.Default.Edit,
-                                contentDescription = if (isEditMode) "退出编辑" else "编辑",
+                                contentDescription = if (isEditMode) "Exit edit mode" else "Edit",
                                 tint = Color.White
                             )
                         }

@@ -71,7 +71,7 @@ class MediaInfoActivity : ComponentActivity() {
         val videoName = intent.getStringExtra(EXTRA_VIDEO_NAME) ?: "未知视频"
 
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this).themeName)
+            val themeColors = getThemeColors(this@MediaInfoActivity, ThemeManager.getCurrentTheme(this@MediaInfoActivity).themeName)
             
             MaterialTheme(
                 colorScheme = lightColorScheme(

@@ -150,8 +150,8 @@ fun PlaybackSettingsScreen(
             
             item {
                 SwitchSettingCard(
-                    title = "记忆播放倍速",
-                    description = if (rememberSpeed) "始终使用上次设置的播放倍速" else "每次切换视频恢复到1倍速",
+                    title = "Remember Playback Speed",
+                    description = if (rememberSpeed) "Always use the last set playback speed" else "Reset to 1x speed when switching videos",
                     checked = rememberSpeed,
                     onCheckedChange = {
                         rememberSpeed = it
@@ -162,8 +162,8 @@ fun PlaybackSettingsScreen(
             
             item {
                 ClickableSettingCard(
-                    title = "自定义倍速选项",
-                    value = "点击设置",
+                    title = "Custom Speed Options",
+                    value = "Click to set",
                     onClick = { showSpeedPresetsDialog = true }
                 )
             }
@@ -447,7 +447,7 @@ fun SeekTimeDialog(
                         )
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            "${seconds}秒",
+                            "${seconds}s",
                             fontSize = 15.sp,
                             color = if (selected == seconds) accentColor else SettingsPalette.PrimaryText,
                             fontWeight = if (selected == seconds) FontWeight.SemiBold else FontWeight.Normal
@@ -458,12 +458,12 @@ fun SeekTimeDialog(
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(selected) }) {
-                Text("确定", color = SettingsPalette.AccentText, fontSize = 14.sp)
+                Text("OK", color = SettingsPalette.AccentText, fontSize = 14.sp)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消", color = SettingsPalette.SecondaryText, fontSize = 14.sp)
+                Text("Cancel", color = SettingsPalette.SecondaryText, fontSize = 14.sp)
             }
         },
         shape = RoundedCornerShape(12.dp),
@@ -629,7 +629,7 @@ fun DoubleTapSeekDialog(
                         )
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            "${seconds}秒",
+                            "${seconds}s",
                             fontSize = 15.sp,
                             color = if (selected == seconds) accentColor else SettingsPalette.PrimaryText,
                             fontWeight = if (selected == seconds) FontWeight.SemiBold else FontWeight.Normal
@@ -713,12 +713,12 @@ fun SpeedDialog(
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(selected) }) {
-                Text("确定", color = SettingsPalette.AccentText, fontSize = 14.sp)
+                Text("OK", color = SettingsPalette.AccentText, fontSize = 14.sp)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消", color = SettingsPalette.SecondaryText, fontSize = 14.sp)
+                Text("Cancel", color = SettingsPalette.SecondaryText, fontSize = 14.sp)
             }
         },
         shape = RoundedCornerShape(12.dp),
@@ -757,7 +757,7 @@ fun SpeedPresetsDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "自定义倍速选项",
+                        "Custom Speed Options",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF212121)
@@ -772,7 +772,7 @@ fun SpeedPresetsDialog(
                         }
                     ) {
                         Text(
-                            if (allSelected) "取消全选" else "全选",
+                            if (allSelected) "Deselect All" else "Select All",
                             color = SettingsPalette.AccentText,
                             fontSize = 14.sp
                         )
@@ -781,7 +781,7 @@ fun SpeedPresetsDialog(
                 
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "1倍速强制勾选",
+                    "1x speed is required",
                     fontSize = 13.sp,
                     color = SettingsPalette.SecondaryText
                 )
@@ -854,13 +854,13 @@ fun SpeedPresetsDialog(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("取消")
+                        Text("Cancel")
                     }
                     
                     Button(
                         onClick = {
                             preferencesManager.setCustomSpeedPresets(currentPresets.value)
-                            Toast.makeText(context, "倍速选项已保存", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Speed options saved", Toast.LENGTH_SHORT).show()
                             onDismiss()
                         },
                         modifier = Modifier.weight(1f),
@@ -870,7 +870,7 @@ fun SpeedPresetsDialog(
                             disabledContainerColor = SettingsPalette.DisabledText
                         )
                     ) {
-                        Text("保存")
+                        Text("Save")
                     }
                 }
             }
