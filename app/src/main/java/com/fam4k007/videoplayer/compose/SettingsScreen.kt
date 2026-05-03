@@ -160,21 +160,6 @@ fun SettingsScreen(
             
             item {
                 SettingsCard(
-                    icon = Icons.Default.Subtitles,
-                    title = stringResource(R.string.settings_subtitle_search),
-                    subtitle = stringResource(R.string.settings_subtitle_search_desc),
-                    onClick = {
-                        context.startActivity(Intent(context, SubtitleSearchActivity::class.java))
-                        (context as? android.app.Activity)?.overridePendingTransition(
-                            R.anim.slide_in_right,
-                            R.anim.slide_out_left
-                        )
-                    }
-                )
-            }
-            
-            item {
-                SettingsCard(
                     icon = Icons.Default.Download,
                     title = stringResource(R.string.settings_bilibili_download),
                     subtitle = stringResource(R.string.settings_bilibili_download_desc),
@@ -192,6 +177,21 @@ fun SettingsScreen(
                                 android.widget.Toast.LENGTH_SHORT
                             ).show()
                         }
+                    }
+                )
+            }
+            
+            item {
+                SettingsCard(
+                    icon = Icons.Default.Subtitles,
+                    title = "字幕搜索下载",
+                    subtitle = "搜索并下载在线字幕",
+                    onClick = {
+                        context.startActivity(Intent(context, SubtitleSearchActivity::class.java))
+                        (context as? android.app.Activity)?.overridePendingTransition(
+                            R.anim.slide_in_right,
+                            R.anim.slide_out_left
+                        )
                     }
                 )
             }

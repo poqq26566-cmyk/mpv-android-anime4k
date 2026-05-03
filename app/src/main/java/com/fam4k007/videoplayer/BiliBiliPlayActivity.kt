@@ -15,6 +15,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -327,10 +329,9 @@ fun BiliBiliPlayScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_back_arrow),
-                            contentDescription = stringResource(R.string.common_back),
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "返回",
+                            tint = Color.White
                         )
                     }
                 },
@@ -361,7 +362,7 @@ fun BiliBiliPlayScreen(
                         }
                     }
                 },
-                gradientColors = Color(0xFFFF6699) to Color(0xFFFF99BB)  // B站粉色渐变
+                gradientColors = Color(0xFFFF6699) to Color(0xFFFF6699)  // 纯B站粉色，不渐变
             )
         }
     ) { padding ->
