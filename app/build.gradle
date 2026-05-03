@@ -32,8 +32,8 @@ android {
         applicationId "com.fam4k007.videoplayer"
         minSdk 26
         targetSdk 34
-        versionCode 23
-        versionName "1.2.3"
+        versionCode 24
+        versionName "1.2.4"
 
         buildConfigField "String", "DANDANPLAY_APP_ID", "\"${localProperties.getProperty('dandanplay.appId', '')}\""
         buildConfigField "String", "DANDANPLAY_APP_SECRET", "\"${localProperties.getProperty('dandanplay.appSecret', '')}\""
