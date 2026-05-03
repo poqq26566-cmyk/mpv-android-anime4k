@@ -42,6 +42,7 @@ import coil.request.ImageRequest
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.VideoFileParcelable
 import com.fam4k007.videoplayer.database.VideoDatabase
+import com.fam4k007.videoplayer.mediainfo.MediaInfoActivity
 import com.fam4k007.videoplayer.paging.VideoPagingSource
 import com.fam4k007.videoplayer.utils.ThumbnailCacheManager
 import kotlinx.coroutines.CoroutineScope
@@ -275,16 +276,11 @@ fun VideoListScreenPaging(
         )
     }
 
-    AnimatedVisibility(
-        visible = selectedVideo != null,
-        enter = fadeIn(),
-        exit = fadeOut()
-    ) {
+    // 监听selectedVideo变化，启动MediaInfoActivity
+    LaunchedEffect(selectedVideo) {
         selectedVideo?.let { video ->
-            VideoInfoDialog(
-                video = video,
-                onDismiss = { selectedVideo = null }
-            )
+            MediaInfoActivity.start(context, video.uri, video.name)
+            selectedVideo = null // 重置状态
         }
     }
 }
@@ -454,64 +450,6 @@ private fun VideoItem(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun VideoInfoDialog(
-    video: VideoFileParcelable,
-    onDismiss: () -> Unit
-) {
-    // 简化版对话框，不加载元数据
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = video.name,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                InfoRow(stringResource(R.string.video_file_size), formatFileSize(video.size))
-                InfoRow(stringResource(R.string.video_duration), formatDuration(video.duration))
-                InfoRow(stringResource(R.string.video_path), video.path)
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.common_close))
-            }
-        }
-    )
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            fontSize = 14.sp,
-            color = Color(0xFF757575),
-            modifier = Modifier.weight(0.4f)
-        )
-        Text(
-            text = value,
-            fontSize = 14.sp,
-            color = Color(0xFF212121),
-            modifier = Modifier.weight(0.6f),
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }
 

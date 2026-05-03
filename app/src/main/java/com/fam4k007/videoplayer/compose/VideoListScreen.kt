@@ -35,6 +35,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.VideoFileParcelable
+import com.fam4k007.videoplayer.mediainfo.MediaInfoActivity
 import com.fam4k007.videoplayer.utils.ThumbnailCacheManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -192,16 +193,12 @@ fun VideoListScreen(
         )
     }
 
-    AnimatedVisibility(
-        visible = selectedVideo != null,
-        enter = fadeIn(),
-        exit = fadeOut()
-    ) {
+    // 监听selectedVideo变化，启动MediaInfoActivity
+    val context = LocalContext.current
+    LaunchedEffect(selectedVideo) {
         selectedVideo?.let { video ->
-            VideoInfoDialog(
-                video = video,
-                onDismiss = { selectedVideo = null }
-            )
+            MediaInfoActivity.start(context, video.uri, video.name)
+            selectedVideo = null // 重置状态
         }
     }
 }
@@ -416,90 +413,6 @@ private fun VideoSortDialog(
             }
         }
     )
-}
-
-@Composable
-private fun VideoInfoDialog(
-    video: VideoFileParcelable,
-    onDismiss: () -> Unit
-) {
-    val context = LocalContext.current
-    var metadata by remember { mutableStateOf<com.fam4k007.videoplayer.utils.VideoMetadataHelper.VideoMetadata?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
-
-    LaunchedEffect(video) {
-        withContext(Dispatchers.IO) {
-            metadata = com.fam4k007.videoplayer.utils.VideoMetadataHelper.getVideoMetadata(
-                context,
-                Uri.parse(video.uri)
-            )
-            isLoading = false
-        }
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = video.name,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        },
-        text = {
-            if (isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    InfoRow(stringResource(R.string.video_list_resolution), metadata?.getResolution() ?: stringResource(R.string.video_list_cannot_get))
-                    InfoRow(stringResource(R.string.video_list_video_codec), metadata?.videoCodec ?: stringResource(R.string.video_list_cannot_get))
-                    InfoRow(stringResource(R.string.video_list_audio_codec), metadata?.audioCodec ?: stringResource(R.string.video_list_cannot_get))
-                    InfoRow(stringResource(R.string.video_list_bitrate), metadata?.getFormattedBitrate() ?: stringResource(R.string.video_list_cannot_get))
-                    InfoRow(stringResource(R.string.video_list_framerate), metadata?.getFormattedFrameRate() ?: stringResource(R.string.video_list_cannot_get))
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.common_close))
-            }
-        }
-    )
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            fontSize = 14.sp,
-            color = Color(0xFF757575),
-            modifier = Modifier.weight(0.4f)
-        )
-        Text(
-            text = value,
-            fontSize = 14.sp,
-            color = Color(0xFF212121),
-            modifier = Modifier.weight(0.6f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
 }
 
 @Composable

@@ -23,6 +23,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -89,7 +93,9 @@ fun HomeScreen(
             .background(Color.White)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 顶部区域
@@ -554,7 +560,8 @@ fun ExpandableActionButton(
     ) {
         Column(
             modifier = Modifier
-                .padding(24.dp),
+                .padding(24.dp)
+                .windowInsetsPadding(WindowInsets.navigationBars),
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.Bottom
         ) {
