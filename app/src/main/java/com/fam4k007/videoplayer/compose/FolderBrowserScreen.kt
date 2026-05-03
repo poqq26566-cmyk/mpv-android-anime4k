@@ -1,9 +1,12 @@
 package com.fam4k007.videoplayer.compose
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,16 +21,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 import com.fam4k007.videoplayer.R
 import androidx.compose.ui.res.stringResource
 import com.fam4k007.videoplayer.VideoFolder
+import com.fam4k007.videoplayer.utils.FileOperationManager
+import kotlinx.coroutines.launch
+import java.io.File
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun FolderBrowserScreen(
     hasPermission: Boolean,
@@ -37,12 +45,26 @@ fun FolderBrowserScreen(
     onOpenFolder: (VideoFolder) -> Unit,
     preferencesManager: com.fam4k007.videoplayer.manager.PreferencesManager
 ) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    
     var folders by remember { mutableStateOf<List<VideoFolder>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var isRefreshing by remember { mutableStateOf(false) }
     var sortType by remember { mutableStateOf(preferencesManager.getFolderSortType()) }
     var sortOrder by remember { mutableStateOf(preferencesManager.getFolderSortOrder()) }
     var showSortDialog by remember { mutableStateOf(false) }
+    
+    // 文件操作菜单相关状态
+    var selectedFolder by remember { mutableStateOf<VideoFolder?>(null) }
+    var showOperationMenu by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    
+    // 多选编辑模式
+    var isEditMode by remember { mutableStateOf(false) }
+    var selectedFolders by remember { mutableStateOf<Set<VideoFolder>>(emptySet()) }
+    var showBatchDeleteDialog by remember { mutableStateOf(false) }
     
     fun refreshFolders() {
         isRefreshing = true
@@ -84,6 +106,19 @@ fun FolderBrowserScreen(
                 },
                 actions = {
                     if (hasPermission) {
+                        // 编辑按钮
+                        IconButton(onClick = { 
+                            isEditMode = !isEditMode
+                            if (!isEditMode) {
+                                selectedFolders = emptySet()
+                            }
+                        }) {
+                            Icon(
+                                imageVector = if (isEditMode) Icons.Default.Close else Icons.Default.Edit,
+                                contentDescription = if (isEditMode) "Exit edit mode" else "Edit",
+                                tint = Color.White
+                            )
+                        }
                         IconButton(onClick = { showSortDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.Sort,
@@ -136,19 +171,107 @@ fun FolderBrowserScreen(
                             items(folders) { folder ->
                                 FolderItem(
                                     folder = folder,
-                                    onClick = { onOpenFolder(folder) }
+                                    isSelected = folder == selectedFolder,
+                                    isEditMode = isEditMode,
+                                    isChecked = selectedFolders.contains(folder),
+                                    onClick = { 
+                                        if (isEditMode) {
+                                            // 编辑模式下切换选中状态
+                                            selectedFolders = if (selectedFolders.contains(folder)) {
+                                                selectedFolders - folder
+                                            } else {
+                                                selectedFolders + folder
+                                            }
+                                        } else {
+                                            // 正常模式下打开文件夹
+                                            onOpenFolder(folder)
+                                        }
+                                    },
+                                    onLongClick = {
+                                        if (!isEditMode) {
+                                            selectedFolder = folder
+                                            showOperationMenu = true
+                                        }
+                                    }
                                 )
                             }
                         }
                         
-                        // 添加刷新按钮
-                        FloatingActionButton(
-                            onClick = { refreshFolders() },
+                        // 文件操作菜单（全屏显示）
+                        FileOperationMenu(
+                            visible = showOperationMenu && selectedFolder != null && !isEditMode,
+                            fileName = selectedFolder?.folderName ?: "",
+                            onDismiss = { 
+                                showOperationMenu = false
+                                selectedFolder = null
+                            },
+                            onRename = { 
+                                showRenameDialog = true
+                                showOperationMenu = false  // 关闭菜单
+                            },
+                            onDelete = { 
+                                showDeleteDialog = true
+                                showOperationMenu = false  // 关闭菜单
+                            },
+                            onCopy = null  // 文件夹不提供复制功能
+                        )
+                        
+                        // 多选操作栏
+                        MultiSelectActionBar(
+                            visible = isEditMode && selectedFolders.isNotEmpty(),
+                            selectedCount = selectedFolders.size,
+                            totalCount = folders.size,
+                            onSelectAll = {
+                                if (selectedFolders.size == folders.size) {
+                                    // 取消全选
+                                    selectedFolders = emptySet()
+                                } else {
+                                    // 全选
+                                    selectedFolders = folders.toSet()
+                                }
+                            },
+                            onRename = {
+                                if (selectedFolders.size == 1) {
+                                    selectedFolder = selectedFolders.first()
+                                    showRenameDialog = true
+                                }
+                            },
+                            onDelete = {
+                                showBatchDeleteDialog = true
+                            },
+                            onCopy = null,  // 文件夹不提供复制功能
+                            onCancel = {
+                                isEditMode = false
+                                selectedFolders = emptySet()
+                            },
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .windowInsetsPadding(WindowInsets.navigationBars)
+                        )
+                        
+                        // 添加刷新按钮（编辑模式时隐藏）
+                        AnimatedVisibility(
+                            visible = !isEditMode,
+                            enter = scaleIn(
+                                initialScale = 0.3f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                )
+                            ) + fadeIn(animationSpec = tween(200)),
+                            exit = scaleOut(
+                                targetScale = 0.3f,
+                                animationSpec = tween(200)
+                            ) + fadeOut(animationSpec = tween(200)),
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)
                                 .padding(16.dp)
                         ) {
-                            Icon(Icons.Default.Refresh, stringResource(R.string.common_refresh), tint = Color.White)
+                            FloatingActionButton(
+                                onClick = { refreshFolders() }
+                            ) {
+                                Icon(Icons.Default.Refresh, "刷新", tint = Color.White)
+                            }
                         }
                     }
                 }
@@ -171,29 +294,152 @@ fun FolderBrowserScreen(
             }
         )
     }
+    
+    // 重命名对话框
+    if (showRenameDialog && selectedFolder != null) {
+        RenameDialog(
+            visible = true,
+            currentName = selectedFolder!!.folderName,
+            onDismiss = { 
+                showRenameDialog = false
+                selectedFolder = null
+            },
+            onConfirm = { newName ->
+                lifecycleOwner.lifecycleScope.launch {
+                    val oldPath = selectedFolder!!.folderPath
+                    val newPath = FileOperationManager.rename(context, oldPath, newName)
+                    if (newPath != null) {
+                        // 刷新列表
+                        refreshFolders()
+                    }
+                    showRenameDialog = false
+                    selectedFolder = null
+                    // 退出编辑模式
+                    if (isEditMode) {
+                        selectedFolders = emptySet()
+                        isEditMode = false
+                    }
+                }
+            }
+        )
+    }
+    
+    // 删除确认对话框
+    if (showDeleteDialog && selectedFolder != null) {
+        DeleteConfirmDialog(
+            visible = true,
+            fileName = selectedFolder!!.folderName,
+            isFolder = true,
+            onDismiss = { 
+                showDeleteDialog = false
+                selectedFolder = null
+            },
+            onConfirm = {
+                lifecycleOwner.lifecycleScope.launch {
+                    val success = FileOperationManager.delete(
+                        context,
+                        selectedFolder!!.folderPath,
+                        isFolder = true
+                    )
+                    if (success) {
+                        // 刷新列表
+                        refreshFolders()
+                    }
+                    showDeleteDialog = false
+                    selectedFolder = null
+                }
+            }
+        )
+    }
+    
+    // 批量删除确认对话框
+    if (showBatchDeleteDialog && selectedFolders.isNotEmpty()) {
+        BatchDeleteConfirmDialog(
+            visible = true,
+            count = selectedFolders.size,
+            isFolder = true,
+            onDismiss = { showBatchDeleteDialog = false },
+            onConfirm = {
+                lifecycleOwner.lifecycleScope.launch {
+                    selectedFolders.forEach { folder ->
+                        FileOperationManager.delete(
+                            context,
+                            folder.folderPath,
+                            isFolder = true
+                        )
+                    }
+                    // 刷新列表
+                    refreshFolders()
+                    selectedFolders = emptySet()
+                    isEditMode = false
+                    showBatchDeleteDialog = false
+                }
+            }
+        )
+    }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FolderItem(
     folder: VideoFolder,
-    onClick: () -> Unit
+    isSelected: Boolean,
+    isEditMode: Boolean,
+    isChecked: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+            containerColor = if (isSelected && !isEditMode) 
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) 
+            else 
+                Color.White
+        ),
+        border = if (isSelected && !isEditMode) 
+            androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) 
+        else 
+            null
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(16.dp)
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // 复选框（编辑模式）
+            AnimatedVisibility(
+                visible = isEditMode,
+                enter = slideInHorizontally(
+                    initialOffsetX = { -it },
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                ) + fadeIn(animationSpec = tween(300)),
+                exit = slideOutHorizontally(
+                    targetOffsetX = { -it },
+                    animationSpec = tween(250, easing = FastOutSlowInEasing)
+                ) + fadeOut(animationSpec = tween(250))
+            ) {
+                Checkbox(
+                    checked = isChecked,
+                    onCheckedChange = null,  // 点击整行触发
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+            }
+            
             // 文件夹图标
             Icon(
                 imageVector = Icons.Default.Folder,
@@ -226,11 +472,14 @@ private fun FolderItem(
                 )
             }
 
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = Color(0xFFBDBDBD)
-            )
+            // 右箭头（非编辑模式）
+            if (!isEditMode) {
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = Color(0xFFBDBDBD)
+                )
+            }
         }
     }
 }

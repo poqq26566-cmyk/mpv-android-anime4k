@@ -64,6 +64,79 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putFloat(AppConstants.Preferences.LONG_PRESS_SPEED, speed).apply()
     }
     
+    // ==================== 播放倍速记忆 ====================
+    
+    /**
+     * 获取是否启用播放倍速记忆
+     */
+    fun isRememberSpeedEnabled(): Boolean {
+        return sharedPreferences.getBoolean(
+            AppConstants.Preferences.REMEMBER_PLAYBACK_SPEED,
+            false
+        )
+    }
+    
+    /**
+     * 保存播放倍速记忆开关
+     */
+    fun setRememberSpeedEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.REMEMBER_PLAYBACK_SPEED, enabled).apply()
+    }
+    
+    /**
+     * 获取上次播放倍速
+     */
+    fun getLastPlaybackSpeed(): Float {
+        return sharedPreferences.getFloat(
+            AppConstants.Preferences.LAST_PLAYBACK_SPEED,
+            AppConstants.Defaults.DEFAULT_PLAYBACK_SPEED
+        )
+    }
+    
+    /**
+     * 保存上次播放倍速
+     */
+    fun setLastPlaybackSpeed(speed: Float) {
+        sharedPreferences.edit().putFloat(AppConstants.Preferences.LAST_PLAYBACK_SPEED, speed).apply()
+    }
+    
+    /**
+     * 获取自定义倍速预设列表
+     */
+    fun getCustomSpeedPresets(): Set<String> {
+        return sharedPreferences.getStringSet(
+            AppConstants.Preferences.CUSTOM_SPEED_PRESETS,
+            AppConstants.Defaults.DEFAULT_SPEED_PRESETS
+        ) ?: AppConstants.Defaults.DEFAULT_SPEED_PRESETS
+    }
+    
+    /**
+     * 保存自定义倍速预设列表
+     */
+    fun setCustomSpeedPresets(presets: Set<String>) {
+        sharedPreferences.edit().putStringSet(AppConstants.Preferences.CUSTOM_SPEED_PRESETS, presets).apply()
+    }
+    
+    // ==================== 视频显示模式 ====================
+    
+    /**
+     * 获取视频显示模式
+     * @return "folder" 显示文件夹列表 | "flat" 直接显示视频
+     */
+    fun getVideoDisplayMode(): String {
+        return sharedPreferences.getString(
+            AppConstants.Preferences.VIDEO_DISPLAY_MODE,
+            AppConstants.Defaults.DEFAULT_VIDEO_DISPLAY_MODE
+        ) ?: AppConstants.Defaults.DEFAULT_VIDEO_DISPLAY_MODE
+    }
+    
+    /**
+     * 保存视频显示模式
+     */
+    fun setVideoDisplayMode(mode: String) {
+        sharedPreferences.edit().putString(AppConstants.Preferences.VIDEO_DISPLAY_MODE, mode).apply()
+    }
+    
     // ==================== 精确进度定位 ====================
     
     /**

@@ -20,6 +20,8 @@ dependencyResolutionManagement {
         // 使用阿里云镜像加速
         maven { url 'https://maven.aliyun.com/repository/google' }
         maven { url 'https://maven.aliyun.com/repository/public' }
+        // JitPack 仓库（用于 MediaInfo 库）
+        maven { url 'https://jitpack.io' }
         google()
         mavenCentral()
     }

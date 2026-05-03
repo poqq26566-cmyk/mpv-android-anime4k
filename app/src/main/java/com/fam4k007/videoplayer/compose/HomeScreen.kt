@@ -23,6 +23,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -89,7 +93,9 @@ fun HomeScreen(
             .background(Color.White)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 顶部区域
@@ -120,11 +126,16 @@ fun HomeScreen(
             GradientButton(
                 text = stringResource(R.string.home_play_local),
                 onClick = {
-                    context.startActivity(Intent(context, VideoBrowserComposeActivity::class.java))
-                    (context as? android.app.Activity)?.overridePendingTransition(
-                        R.anim.slide_in_right,
-                        R.anim.slide_out_left
-                    )
+                    val prefs = PreferencesManager.getInstance(context)
+                    if (prefs.getVideoDisplayMode() == "flat") {
+                        flatScanAndPlayAllVideos(context)
+                    } else {
+                        context.startActivity(Intent(context, VideoBrowserComposeActivity::class.java))
+                        (context as? android.app.Activity)?.overridePendingTransition(
+                            R.anim.slide_in_right,
+                            R.anim.slide_out_left
+                        )
+                    }
                 }
             )
 
@@ -549,7 +560,8 @@ fun ExpandableActionButton(
     ) {
         Column(
             modifier = Modifier
-                .padding(24.dp),
+                .padding(24.dp)
+                .windowInsetsPadding(WindowInsets.navigationBars),
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.Bottom
         ) {
@@ -896,6 +908,100 @@ private fun scanVideosInFolder(context: android.content.Context, folderPath: Str
         }
     } catch (e: Exception) {
         com.fam4k007.videoplayer.utils.Logger.e("HomeScreen", "Failed to scan videos in folder: $folderPath", e)
+    }
+    
+    return videos
+}
+
+/**
+ * 平铺模式：扫描所有视频并直接跳转到视频列表
+ */
+private fun flatScanAndPlayAllVideos(context: android.content.Context) {
+    kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+        val toast = android.widget.Toast.makeText(context, "正在扫描视频...", android.widget.Toast.LENGTH_SHORT)
+        toast.show()
+        
+        val videos = withContext(kotlinx.coroutines.Dispatchers.IO) {
+            scanAllVideosFlat(context)
+        }
+        
+        if (videos.isEmpty()) {
+            android.widget.Toast.makeText(context, "未找到视频文件", android.widget.Toast.LENGTH_SHORT).show()
+            return@launch
+        }
+        
+        val intent = Intent(context, com.fam4k007.videoplayer.VideoListComposeActivity::class.java)
+        intent.putExtra("folder_name", "所有视频")
+        intent.putExtra("folder_path", "所有视频")
+        intent.putParcelableArrayListExtra("video_list", ArrayList(videos))
+        context.startActivity(intent)
+        (context as? android.app.Activity)?.overridePendingTransition(
+            com.fam4k007.videoplayer.R.anim.slide_in_right,
+            com.fam4k007.videoplayer.R.anim.slide_out_left
+        )
+    }
+}
+
+/**
+ * 扫描全部视频（不分文件夹）
+ */
+private fun scanAllVideosFlat(context: android.content.Context): List<com.fam4k007.videoplayer.VideoFileParcelable> {
+    val videos = mutableListOf<com.fam4k007.videoplayer.VideoFileParcelable>()
+    val projection = arrayOf(
+        android.provider.MediaStore.Video.Media._ID,
+        android.provider.MediaStore.Video.Media.DISPLAY_NAME,
+        android.provider.MediaStore.Video.Media.DATA,
+        android.provider.MediaStore.Video.Media.DURATION,
+        android.provider.MediaStore.Video.Media.SIZE,
+        android.provider.MediaStore.Video.Media.DATE_ADDED
+    )
+    
+    val sortOrder = "${android.provider.MediaStore.Video.Media.DATE_ADDED} DESC"
+    
+    try {
+        context.contentResolver.query(
+            android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            projection,
+            null,
+            null,
+            sortOrder
+        )?.use { cursor ->
+            val idColumn = cursor.getColumnIndexOrThrow(android.provider.MediaStore.Video.Media._ID)
+            val nameColumn = cursor.getColumnIndexOrThrow(android.provider.MediaStore.Video.Media.DISPLAY_NAME)
+            val dataColumn = cursor.getColumnIndexOrThrow(android.provider.MediaStore.Video.Media.DATA)
+            val durationColumn = cursor.getColumnIndexOrThrow(android.provider.MediaStore.Video.Media.DURATION)
+            val sizeColumn = cursor.getColumnIndexOrThrow(android.provider.MediaStore.Video.Media.SIZE)
+            val dateColumn = cursor.getColumnIndexOrThrow(android.provider.MediaStore.Video.Media.DATE_ADDED)
+            
+            while (cursor.moveToNext()) {
+                val path = cursor.getString(dataColumn)
+                val file = java.io.File(path)
+                if (!file.exists()) continue
+                
+                val id = cursor.getLong(idColumn)
+                val name = cursor.getString(nameColumn)
+                val duration = cursor.getLong(durationColumn)
+                val size = cursor.getLong(sizeColumn)
+                val dateAdded = cursor.getLong(dateColumn)
+                val uri = android.net.Uri.withAppendedPath(
+                    android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                    id.toString()
+                ).toString()
+                
+                videos.add(
+                    com.fam4k007.videoplayer.VideoFileParcelable(
+                        uri = uri,
+                        name = name,
+                        path = path,
+                        size = size,
+                        duration = duration,
+                        dateAdded = dateAdded
+                    )
+                )
+            }
+        }
+    } catch (e: Exception) {
+        com.fam4k007.videoplayer.utils.Logger.e("HomeScreen", "Failed to scan all videos", e)
     }
     
     return videos
