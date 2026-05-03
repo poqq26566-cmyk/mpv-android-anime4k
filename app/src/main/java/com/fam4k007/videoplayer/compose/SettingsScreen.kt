@@ -159,21 +159,6 @@ fun SettingsScreen(
             
             item {
                 SettingsCard(
-                    icon = Icons.Default.Subtitles,
-                    title = "字幕搜索下载",
-                    subtitle = "搜索并下载在线字幕",
-                    onClick = {
-                        context.startActivity(Intent(context, SubtitleSearchActivity::class.java))
-                        (context as? android.app.Activity)?.overridePendingTransition(
-                            R.anim.slide_in_right,
-                            R.anim.slide_out_left
-                        )
-                    }
-                )
-            }
-            
-            item {
-                SettingsCard(
                     icon = Icons.Default.Download,
                     title = "哔哩哔哩视频下载",
                     subtitle = "下载B站视频/番剧",
@@ -191,6 +176,21 @@ fun SettingsScreen(
                                 android.widget.Toast.LENGTH_SHORT
                             ).show()
                         }
+                    }
+                )
+            }
+            
+            item {
+                SettingsCard(
+                    icon = Icons.Default.Subtitles,
+                    title = "字幕搜索下载",
+                    subtitle = "搜索并下载在线字幕",
+                    onClick = {
+                        context.startActivity(Intent(context, SubtitleSearchActivity::class.java))
+                        (context as? android.app.Activity)?.overridePendingTransition(
+                            R.anim.slide_in_right,
+                            R.anim.slide_out_left
+                        )
                     }
                 )
             }
