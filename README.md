@@ -10,20 +10,6 @@ Due to limited personal resources, the English version was not considered at the
 
 Note: There is no language switch button within the app. If your phone's system language is set to English, the app will automatically display in English.
 
-### Chinese-English Translation Reference
-
-Some terms in the app may still appear in Chinese. Here's a reference table:
-
-| Chinese (中文) | English |
-|---------------|---------|
-| 字幕轨道 | Subtitle Track |
-| 外挂字幕 | External Subtitle |
-| 选择弹幕 | Select Danmaku |
-| 匹配弹幕 | Match Danmaku |
-| 弹幕轨道 | Danmaku Track |
-| 本地弹幕 | Local Danmaku |
-| 网络弹幕 | Network Danmaku |
-
 ---
 
 ## Download English Version
