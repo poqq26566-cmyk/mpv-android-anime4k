@@ -9,6 +9,7 @@ import androidx.compose.material3.lightColorScheme
 import com.fam4k007.videoplayer.compose.PlaybackSettingsScreen
 import com.fam4k007.videoplayer.ui.theme.getThemeColors
 import com.fam4k007.videoplayer.utils.ThemeManager
+import org.koin.androidx.compose.KoinAndroidContext
 
 /**
  * Compose 版本的播放设置 Activity
@@ -22,7 +23,8 @@ class PlaybackSettingsComposeActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this).themeName)
+            KoinAndroidContext {
+                val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this@PlaybackSettingsComposeActivity).themeName)
             
             MaterialTheme(
                 colorScheme = lightColorScheme(
@@ -43,7 +45,6 @@ class PlaybackSettingsComposeActivity : ComponentActivity() {
                         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                     }
                 )
-            }
-        }
+            }            }        }
     }
 }

@@ -50,6 +50,8 @@ import okhttp3.Request
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import androidx.compose.foundation.ExperimentalFoundationApi
+import org.koin.android.ext.android.inject
+import org.koin.androidx.compose.KoinAndroidContext
 
 /**
  * B站番剧播放页面 - 简单版
@@ -58,7 +60,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 @OptIn(ExperimentalFoundationApi::class)
 class BiliBiliPlayActivity : ComponentActivity() {
     
-    private lateinit var authManager: BiliBiliAuthManager
+    private val authManager: BiliBiliAuthManager by inject()
     private val client by lazy { authManager.getClient() }
     private val gson = Gson()
     
@@ -68,20 +70,20 @@ class BiliBiliPlayActivity : ComponentActivity() {
         // 启用边到边显示
         enableEdgeToEdge()
         
-        authManager = BiliBiliAuthManager.getInstance(this)
-        
         setContent {
-            MaterialTheme {
-                BiliBiliPlayScreen(
-                    authManager = authManager,
-                    onBack = { 
-                        finish()
-                        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-                    },
-                    onPlayEpisode = { epId, cid, title ->
-                        playEpisode(epId, cid, title)
-                    }
-                )
+            KoinAndroidContext {
+                MaterialTheme {
+                    BiliBiliPlayScreen(
+                        authManager = authManager,
+                        onBack = { 
+                            finish()
+                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+                        },
+                        onPlayEpisode = { epId, cid, title ->
+                            playEpisode(epId, cid, title)
+                        }
+                    )
+                }
             }
         }
     }
@@ -90,17 +92,19 @@ class BiliBiliPlayActivity : ComponentActivity() {
         super.onResume()
         // 从登录页返回时，触发重组以更新登录状态
         setContent {
-            MaterialTheme {
-                BiliBiliPlayScreen(
-                    authManager = authManager,
-                    onBack = { 
-                        finish()
-                        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-                    },
-                    onPlayEpisode = { epId, cid, title ->
-                        playEpisode(epId, cid, title)
-                    }
-                )
+            KoinAndroidContext {
+                MaterialTheme {
+                    BiliBiliPlayScreen(
+                        authManager = authManager,
+                        onBack = { 
+                            finish()
+                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+                        },
+                        onPlayEpisode = { epId, cid, title ->
+                            playEpisode(epId, cid, title)
+                        }
+                    )
+                }
             }
         }
     }

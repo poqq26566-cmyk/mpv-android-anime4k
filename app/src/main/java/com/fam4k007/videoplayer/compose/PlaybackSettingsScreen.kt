@@ -26,6 +26,7 @@ import android.widget.Toast
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.manager.PreferencesManager
 import com.fam4k007.videoplayer.compose.SettingsColors as SettingsPalette
+import org.koin.compose.koinInject
 
 /**
  * Compose 版本的播放设置页面
@@ -36,7 +37,7 @@ fun PlaybackSettingsScreen(
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val preferencesManager = remember { PreferencesManager.getInstance(context) }
+    val preferencesManager: PreferencesManager = koinInject()
     
     var preciseSeeking by remember { mutableStateOf(preferencesManager.isPreciseSeekingEnabled()) }
     var volumeBoost by remember { mutableStateOf(preferencesManager.isVolumeBoostEnabled()) }

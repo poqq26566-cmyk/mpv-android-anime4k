@@ -155,6 +155,10 @@ dependencies {
     // Lifecycle
     implementation(libs.bundles.lifecycle)
 
+    // Dependency Injection
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 

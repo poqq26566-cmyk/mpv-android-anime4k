@@ -32,6 +32,7 @@ import com.fam4k007.videoplayer.utils.ThemeManager
 import com.fam4k007.videoplayer.utils.UpdateManager
 import com.fam4k007.videoplayer.compose.SettingsColors as SettingsPalette
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 /**
  * Compose 版本的设置页面
@@ -42,8 +43,8 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val authManager = remember { BiliBiliAuthManager.getInstance(context) }
-    val preferencesManager = remember { PreferencesManager.getInstance(context) }
+    val authManager: BiliBiliAuthManager = koinInject()
+    val preferencesManager: PreferencesManager = koinInject()
     val currentTheme = remember { mutableStateOf(ThemeManager.getCurrentTheme(context)) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showUpdateDialog by remember { mutableStateOf(false) }

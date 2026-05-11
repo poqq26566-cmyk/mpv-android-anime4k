@@ -27,6 +27,8 @@ import com.fam4k007.videoplayer.utils.ThemeManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.android.ext.android.inject
+import org.koin.androidx.compose.KoinAndroidContext
 
 class VideoBrowserComposeActivity : ComponentActivity() {
 
@@ -35,7 +37,7 @@ class VideoBrowserComposeActivity : ComponentActivity() {
         private const val PERMISSION_REQUEST_CODE = 1001
     }
 
-    private lateinit var preferencesManager: com.fam4k007.videoplayer.manager.PreferencesManager
+    private val preferencesManager: com.fam4k007.videoplayer.manager.PreferencesManager by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,8 +49,6 @@ class VideoBrowserComposeActivity : ComponentActivity() {
         val currentTheme = ThemeManager.getCurrentTheme(this)
         setTheme(currentTheme.styleRes)
 
-        preferencesManager = com.fam4k007.videoplayer.manager.PreferencesManager.getInstance(this)
-
         setupContent()
     }
 
@@ -56,7 +56,8 @@ class VideoBrowserComposeActivity : ComponentActivity() {
         val activity = this
         
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(activity).themeName)
+            KoinAndroidContext {
+                val themeColors = getThemeColors(ThemeManager.getCurrentTheme(activity).themeName)
 
             MaterialTheme(
                 colorScheme = lightColorScheme(
@@ -82,6 +83,7 @@ class VideoBrowserComposeActivity : ComponentActivity() {
                     onOpenFolder = { folder -> openVideoList(folder) },
                     preferencesManager = preferencesManager
                 )
+            }
             }
         }
     }

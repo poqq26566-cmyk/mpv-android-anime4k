@@ -34,6 +34,7 @@ import com.fam4k007.videoplayer.compose.ImmersiveTopAppBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.compose.koinInject
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -47,7 +48,7 @@ fun WebDavAccountListScreen(
     onAccountSelected: (WebDavAccount) -> Unit
 ) {
     val context = LocalContext.current
-    val accountManager = remember { WebDavAccountManager.getInstance(context) }
+    val accountManager: WebDavAccountManager = koinInject()
     var accounts by remember { mutableStateOf(accountManager.getAllAccounts()) }
     var showAddDialog by remember { mutableStateOf(false) }
     var accountToDelete by remember { mutableStateOf<WebDavAccount?>(null) }

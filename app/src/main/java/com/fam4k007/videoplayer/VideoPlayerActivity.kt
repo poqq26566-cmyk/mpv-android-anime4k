@@ -64,6 +64,7 @@ import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import java.io.File
 import java.io.FileOutputStream
 import java.lang.ref.WeakReference
@@ -118,8 +119,8 @@ class VideoPlayerActivity : AppCompatActivity(),
     private var remotePlaybackRequest: RemotePlaybackRequest? = null
     private var remoteResolveJob: Job? = null
     private var remoteResolveSequence = 0L
-    private lateinit var preferencesManager: PreferencesManager
-    private lateinit var historyManager: PlaybackHistoryManager
+    private val preferencesManager: PreferencesManager by inject()
+    private val historyManager: PlaybackHistoryManager by inject()
     private val subtitleManager = SubtitleManager()
     private var savedPosition = 0.0
     private var hasRestoredPosition = false
@@ -207,10 +208,6 @@ class VideoPlayerActivity : AppCompatActivity(),
         
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         com.fam4k007.videoplayer.utils.Logger.d(TAG, "Screen keep-on enabled")
-
-        preferencesManager = PreferencesManager.getInstance(this)
-        
-        historyManager = PlaybackHistoryManager(this)
         
         loadUserSettings()
         remotePlaybackRequest = intent.getParcelableExtra(RemotePlaybackLauncher.EXTRA_REMOTE_REQUEST)

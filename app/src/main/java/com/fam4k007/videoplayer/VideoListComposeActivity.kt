@@ -22,14 +22,17 @@ import com.fam4k007.videoplayer.utils.ThemeManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.android.ext.android.inject
+import org.koin.android.ext.android.get
+import org.koin.androidx.compose.KoinAndroidContext
 
 class VideoListComposeActivity : ComponentActivity() {
 
     companion object {
-        private const val TAG = "VideoListCompose"
+        private const val TAG = "VideoListComposeActivity"
     }
 
-    private lateinit var preferencesManager: com.fam4k007.videoplayer.manager.PreferencesManager
+    private val preferencesManager: com.fam4k007.videoplayer.manager.PreferencesManager by inject()
     private var folderPath: String = ""
     private var usePaging: Boolean = false  // 是否使用Paging3模式
 
@@ -42,8 +45,6 @@ class VideoListComposeActivity : ComponentActivity() {
         // 应用主题
         val currentTheme = ThemeManager.getCurrentTheme(this)
         setTheme(currentTheme.styleRes)
-
-        preferencesManager = com.fam4k007.videoplayer.manager.PreferencesManager.getInstance(this)
 
         val folderName = intent.getStringExtra("folder_name") ?: "视频列表"
         folderPath = intent.getStringExtra("folder_path") ?: ""
@@ -65,7 +66,7 @@ class VideoListComposeActivity : ComponentActivity() {
                 withContext(Dispatchers.IO) {
                     try {
                         Logger.d(TAG, "开始将视频保存到数据库...")
-                        val database = VideoDatabase.getDatabase(activity)
+                        val database: VideoDatabase = activity.get()
                         val entities = videos.map { video ->
                             com.fam4k007.videoplayer.database.VideoCacheEntity(
                                 uri = video.uri,
@@ -91,7 +92,8 @@ class VideoListComposeActivity : ComponentActivity() {
         }
         
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(activity).themeName)
+            KoinAndroidContext {
+                val themeColors = getThemeColors(ThemeManager.getCurrentTheme(activity).themeName)
 
             MaterialTheme(
                 colorScheme = lightColorScheme(
@@ -141,6 +143,7 @@ class VideoListComposeActivity : ComponentActivity() {
                         preferencesManager = preferencesManager
                     )
                 }
+            }
             }
         }
     }
@@ -256,7 +259,7 @@ class VideoListComposeActivity : ComponentActivity() {
                     val videos = scanVideosInFolder(folderPath)
                     
                     // 保存到数据库
-                    val database = VideoDatabase.getDatabase(this@VideoListComposeActivity)
+                    val database: VideoDatabase = get()
                     val entities = videos.map { video ->
                         com.fam4k007.videoplayer.database.VideoCacheEntity(
                             uri = video.uri,

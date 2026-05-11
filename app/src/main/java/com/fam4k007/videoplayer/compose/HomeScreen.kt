@@ -59,6 +59,7 @@ import com.fam4k007.videoplayer.remote.RemotePlaybackRequest
 import com.fam4k007.videoplayer.remote.RemoteUrlParser
 import com.fam4k007.videoplayer.webdav.WebDavComposeActivity
 import com.fanchen.fam4k007.manager.compose.BiliBiliLoginActivity
+import org.koin.compose.koinInject
 
 /**
  * Compose 版本的主页
@@ -69,6 +70,7 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit
 ) {
     val context = LocalContext.current
+    val preferencesManager: PreferencesManager = koinInject()
     val lifecycleOwner = LocalLifecycleOwner.current
     var isExpanded by remember { mutableStateOf(false) }
     var showRemoteUrlDialog by remember { mutableStateOf(false) }
@@ -125,8 +127,7 @@ fun HomeScreen(
             GradientButton(
                 text = "播放本地视频",
                 onClick = {
-                    val prefs = PreferencesManager.getInstance(context)
-                    if (prefs.getVideoDisplayMode() == "flat") {
+                    if (preferencesManager.getVideoDisplayMode() == "flat") {
                         flatScanAndPlayAllVideos(context)
                     } else {
                         context.startActivity(Intent(context, VideoBrowserComposeActivity::class.java))

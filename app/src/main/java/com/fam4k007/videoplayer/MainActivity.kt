@@ -18,6 +18,7 @@ import com.fam4k007.videoplayer.ui.theme.getThemeColors
 import com.fam4k007.videoplayer.utils.ThemeManager
 import com.fam4k007.videoplayer.utils.UpdateManager
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.KoinAndroidContext
 
 class MainActivity : BaseActivity() {
     
@@ -85,9 +86,10 @@ class MainActivity : BaseActivity() {
         val activity = this
         
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(activity).themeName)
+            KoinAndroidContext {
+                val themeColors = getThemeColors(ThemeManager.getCurrentTheme(activity).themeName)
 
-            MaterialTheme(
+                MaterialTheme(
                 colorScheme = lightColorScheme(
                     primary = themeColors.primary,
                     onPrimary = themeColors.onPrimary,
@@ -119,6 +121,7 @@ class MainActivity : BaseActivity() {
                         }
                     )
                 }
+            }
             }
         }
     }
