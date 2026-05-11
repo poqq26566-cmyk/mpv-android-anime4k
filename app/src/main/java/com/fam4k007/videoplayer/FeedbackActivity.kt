@@ -5,12 +5,11 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
-import androidx.core.view.WindowCompat
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
+import androidx.activity.enableEdgeToEdge
 import com.fam4k007.videoplayer.compose.FeedbackScreen
-import com.fam4k007.videoplayer.ui.theme.getThemeColors
-import com.fam4k007.videoplayer.utils.ThemeManager
+import com.fam4k007.videoplayer.ui.theme.ThemeController
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
+import org.koin.androidx.compose.KoinAndroidContext
 
 /**
  * 建议反馈页面
@@ -20,39 +19,30 @@ class FeedbackActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // 启用边到边显示
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        enableEdgeToEdge()
         
         val email = "2297065843@qq.com"
         val githubUrl = AppConstants.URLs.GITHUB_ISSUES_URL
-        val activity = this
 
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(activity).themeName)
-
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = themeColors.primary,
-                    onPrimary = themeColors.onPrimary,
-                    primaryContainer = themeColors.primaryVariant,
-                    secondary = themeColors.secondary,
-                    background = themeColors.background,
-                    onBackground = themeColors.onBackground,
-                    surface = themeColors.surface,
-                    surfaceVariant = themeColors.surfaceVariant,
-                    onSurface = themeColors.onSurface
-                )
-            ) {
-                FeedbackScreen(
-                    email = email,
-                    githubUrl = githubUrl,
-                    onBack = {
-                        activity.finish()
-                        activity.overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-                    },
-                    onOpenEmail = { openEmail(email) },
-                    onOpenGithub = { openUrl(githubUrl) }
-                )
+            KoinAndroidContext {
+                val themeController = ThemeController.from(this@FeedbackActivity)
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
+                ) {
+                    FeedbackScreen(
+                        email = email,
+                        githubUrl = githubUrl,
+                        onBack = {
+                            finish()
+                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+                        },
+                        onOpenEmail = { openEmail(email) },
+                        onOpenGithub = { openUrl(githubUrl) }
+                    )
+                }
             }
         }
     }

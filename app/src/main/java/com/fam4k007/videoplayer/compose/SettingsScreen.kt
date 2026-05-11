@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,7 +31,6 @@ import com.fam4k007.videoplayer.bilibili.auth.BiliBiliAuthManager
 import com.fam4k007.videoplayer.manager.PreferencesManager
 import com.fam4k007.videoplayer.utils.ThemeManager
 import com.fam4k007.videoplayer.utils.UpdateManager
-import com.fam4k007.videoplayer.compose.SettingsColors as SettingsPalette
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -61,7 +61,7 @@ fun SettingsScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(SettingsPalette.ScreenBackground)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
         ) {
@@ -313,7 +313,7 @@ fun SettingsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsTopBar(onNavigateBack: () -> Unit) {
-    ImmersiveTopAppBar(
+    TopAppBar(
         title = {
             Text(
                 text = "设置",
@@ -324,11 +324,14 @@ fun SettingsTopBar(onNavigateBack: () -> Unit) {
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "返回"
                 )
             }
-        }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     )
 }
 
@@ -340,7 +343,7 @@ fun SettingsSectionHeader(title: String) {
     Text(
         text = title,
         fontSize = 13.sp,
-        color = SettingsPalette.SectionHeaderText,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 4.dp, top = 16.dp, bottom = 8.dp),
@@ -382,7 +385,7 @@ fun SettingsCard(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(12.dp))  // 大圆角方形
-                    .background(SettingsPalette.IconContainer),
+                    .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -403,7 +406,7 @@ fun SettingsCard(
                     text = title,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
-                    color = SettingsPalette.PrimaryText
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -411,7 +414,7 @@ fun SettingsCard(
                 Text(
                     text = subtitle,
                     fontSize = 13.sp,
-                    color = SettingsPalette.SecondaryText
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             
@@ -444,7 +447,7 @@ fun ThemeSelectionDialog(
                     text = "选择主题",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = SettingsPalette.PrimaryText
+                    color = MaterialTheme.colorScheme.onSurface
                 )
         },
         text = {
@@ -462,12 +465,12 @@ fun ThemeSelectionDialog(
             TextButton(
                 onClick = { onThemeSelected(selectedTheme) }
             ) {
-                Text("确定", color = SettingsPalette.AccentText)
+                Text("确定", color = MaterialTheme.colorScheme.primary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消", color = SettingsPalette.SecondaryText)
+                Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
         shape = RoundedCornerShape(16.dp)
@@ -504,7 +507,7 @@ fun VideoDisplayModeDialog(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
                         .clickable { selected = "folder" }
-                        .background(if (selected == "folder") SettingsPalette.Highlight else Color.Transparent)
+                        .background(if (selected == "folder") MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
                         .padding(vertical = 12.dp, horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -514,7 +517,7 @@ fun VideoDisplayModeDialog(
                         modifier = Modifier.size(24.dp),
                         colors = RadioButtonDefaults.colors(
                             selectedColor = MaterialTheme.colorScheme.primary,
-                            unselectedColor = SettingsPalette.PrimaryText.copy(alpha = 0.4f)
+                            unselectedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                         )
                     )
                     Spacer(Modifier.width(12.dp))
@@ -522,13 +525,13 @@ fun VideoDisplayModeDialog(
                         Text(
                             "显示文件夹列表",
                             fontSize = 15.sp,
-                            color = if (selected == "folder") MaterialTheme.colorScheme.primary else SettingsPalette.PrimaryText,
+                            color = if (selected == "folder") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                             fontWeight = if (selected == "folder") FontWeight.SemiBold else FontWeight.Normal
                         )
                         Text(
                             "按文件夹分类显示视频",
                             fontSize = 12.sp,
-                            color = SettingsPalette.SecondaryText
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -540,7 +543,7 @@ fun VideoDisplayModeDialog(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
                         .clickable { selected = "flat" }
-                        .background(if (selected == "flat") SettingsPalette.Highlight else Color.Transparent)
+                        .background(if (selected == "flat") MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
                         .padding(vertical = 12.dp, horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -550,7 +553,7 @@ fun VideoDisplayModeDialog(
                         modifier = Modifier.size(24.dp),
                         colors = RadioButtonDefaults.colors(
                             selectedColor = MaterialTheme.colorScheme.primary,
-                            unselectedColor = SettingsPalette.PrimaryText.copy(alpha = 0.4f)
+                            unselectedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                         )
                     )
                     Spacer(Modifier.width(12.dp))
@@ -558,13 +561,13 @@ fun VideoDisplayModeDialog(
                         Text(
                             "直接显示视频",
                             fontSize = 15.sp,
-                            color = if (selected == "flat") MaterialTheme.colorScheme.primary else SettingsPalette.PrimaryText,
+                            color = if (selected == "flat") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                             fontWeight = if (selected == "flat") FontWeight.SemiBold else FontWeight.Normal
                         )
                         Text(
                             "跳过文件夹，直接显示所有视频",
                             fontSize = 12.sp,
-                            color = SettingsPalette.SecondaryText
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -635,7 +638,7 @@ fun ThemeOption(
                  text = theme.themeName,
                  fontSize = 16.sp,
                  color = if (isSelected) MaterialTheme.colorScheme.primary
-                     else SettingsPalette.PrimaryText
+                     else MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -650,11 +653,11 @@ fun UpdateAvailableDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = SettingsPalette.CardBackground,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         title = {
             Text(
                 text = "发现新版本",
-                color = SettingsPalette.PrimaryText,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold
             )
         },
@@ -664,7 +667,7 @@ fun UpdateAvailableDialog(
             ) {
                 Text(
                     text = "最新版本: ${updateInfo.versionName}",
-                    color = SettingsPalette.PrimaryText,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -674,7 +677,7 @@ fun UpdateAvailableDialog(
                 if (updateInfo.releaseNotes.isNotEmpty()) {
                     Text(
                         text = "更新内容:",
-                        color = SettingsPalette.SecondaryText,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -683,7 +686,7 @@ fun UpdateAvailableDialog(
                     
                     Text(
                         text = updateInfo.releaseNotes,
-                        color = SettingsPalette.SecondaryText,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 14.sp,
                         lineHeight = 20.sp
                     )
@@ -703,7 +706,7 @@ fun UpdateAvailableDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("稍后提醒", color = SettingsPalette.SecondaryText)
+                Text("稍后提醒", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
         shape = RoundedCornerShape(16.dp)

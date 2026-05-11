@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -112,13 +113,12 @@ fun VideoListScreen(
                     }
                 )
             } else {
-                ImmersiveTopAppBar(
+                TopAppBar(
                     title = {
                         Text(
                             folderName,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -126,9 +126,8 @@ fun VideoListScreen(
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
                             Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "返回",
-                                tint = Color.White
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "返回"
                             )
                         }
                     },
@@ -141,25 +140,25 @@ fun VideoListScreen(
                         }) {
                             Icon(
                                 imageVector = if (isEditMode) Icons.Default.Close else Icons.Default.Edit,
-                                contentDescription = if (isEditMode) "退出编辑" else "编辑",
-                                tint = Color.White
+                                contentDescription = if (isEditMode) "退出编辑" else "编辑"
                             )
                         }
                         IconButton(onClick = { showSearch = true }) {
                             Icon(
                                 imageVector = Icons.Default.Search,
-                                contentDescription = "搜索",
-                                tint = Color.White
+                                contentDescription = "搜索"
                             )
                         }
                         IconButton(onClick = { showSortDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.Sort,
-                                contentDescription = "排序",
-                                tint = Color.White
+                                contentDescription = "排序"
                             )
                         }
-                    }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
                 )
             }
         }
@@ -660,7 +659,7 @@ private fun SearchTopBar(
     onSearchQueryChange: (String) -> Unit,
     onCloseSearch: () -> Unit
 ) {
-    ImmersiveTopAppBar(
+    TopAppBar(
         title = {
             BasicTextField(
                 value = searchQuery,
@@ -668,15 +667,15 @@ private fun SearchTopBar(
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = TextStyle(
                     fontSize = 18.sp,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onSurface
                 ),
-                cursorBrush = SolidColor(Color.White),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 decorationBox = { innerTextField ->
                     if (searchQuery.isEmpty()) {
                         Text(
                             text = "搜索视频...",
                             fontSize = 18.sp,
-                            color = Color.White.copy(alpha = 0.6f)
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
                     }
                     innerTextField()
@@ -687,9 +686,8 @@ private fun SearchTopBar(
         navigationIcon = {
             IconButton(onClick = onCloseSearch) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "返回",
-                    tint = Color.White
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "返回"
                 )
             }
         },
@@ -698,12 +696,14 @@ private fun SearchTopBar(
                 IconButton(onClick = { onSearchQueryChange("") }) {
                     Icon(
                         imageVector = Icons.Default.Clear,
-                        contentDescription = "清除",
-                        tint = Color.White
+                        contentDescription = "清除"
                     )
                 }
             }
-        }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     )
 }
 

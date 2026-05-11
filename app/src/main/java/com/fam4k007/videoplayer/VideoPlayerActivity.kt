@@ -52,6 +52,7 @@ import com.fam4k007.videoplayer.remote.RemoteUrlParser
 import com.fam4k007.videoplayer.domain.player.GestureHandler
 import com.fam4k007.videoplayer.domain.player.PlaybackEngine
 import com.fam4k007.videoplayer.player.PlayerControlsManager
+import com.fam4k007.videoplayer.player.DoubleTapSeekIndicator
 import com.fam4k007.videoplayer.player.SeriesManager
 import com.fam4k007.videoplayer.utils.FormatUtils
 import com.fam4k007.videoplayer.utils.UriUtils.resolveUri

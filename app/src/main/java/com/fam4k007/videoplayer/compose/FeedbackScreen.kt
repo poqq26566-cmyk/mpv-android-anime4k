@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Send
@@ -46,7 +46,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fam4k007.videoplayer.compose.SettingsColors as SettingsPalette
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,20 +58,23 @@ fun FeedbackScreen(
 ) {
     Scaffold(
         topBar = {
-            ImmersiveTopAppBar(
+            TopAppBar(
                 title = { Text(text = "建议反馈", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         }
     ) { padding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(SettingsPalette.ScreenBackground)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -101,15 +103,15 @@ private fun FeedbackContactCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = SettingsPalette.CardBackground),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text("联系方式", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = SettingsPalette.PrimaryText)
+            Text("联系方式", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(12.dp))
 
             ContactRow(icon = Icons.Default.Email, label = "作者邮箱", value = email)
-            Divider(modifier = Modifier.padding(vertical = 12.dp), color = SettingsPalette.Divider)
+            Divider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
             ContactRow(icon = Icons.Default.OpenInNew, label = "GitHub Issue", value = githubUrl)
         }
     }
@@ -124,15 +126,15 @@ private fun ContactRow(icon: ImageVector, label: String, value: String) {
             modifier = Modifier
                 .size(44.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(SettingsPalette.IconContainer),
+                .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
             Icon(imageVector = icon, contentDescription = null, tint = chipColor)
         }
         Spacer(Modifier.width(14.dp))
         Column {
-            Text(label, fontSize = 14.sp, color = SettingsPalette.SecondaryText)
-            Text(value, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = SettingsPalette.PrimaryText)
+            Text(label, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -147,17 +149,17 @@ private fun FeedbackActionCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = SettingsPalette.CardBackground),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text("立即反馈", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = SettingsPalette.PrimaryText)
+            Text("立即反馈", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(12.dp))
 
             Text(
                 text = "选择你习惯的方式发声：",
                 fontSize = 14.sp,
-                color = SettingsPalette.SecondaryText
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(Modifier.height(16.dp))
@@ -167,7 +169,7 @@ private fun FeedbackActionCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = SettingsPalette.AccentText,
+                    containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = Color.White
                 )
             ) {
@@ -183,9 +185,9 @@ private fun FeedbackActionCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = SettingsPalette.AccentText
+                    contentColor = MaterialTheme.colorScheme.primary
                 ),
-                border = BorderStroke(1.dp, SettingsPalette.AccentText)
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
             ) {
                 Icon(Icons.Default.OpenInNew, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
@@ -200,17 +202,17 @@ private fun FeedbackTipsCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = SettingsPalette.CardBackground),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text("反馈建议", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = SettingsPalette.PrimaryText)
+            Text("反馈建议", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(12.dp))
-            Text("・ 如果有崩溃/异常，请附上复现步骤或截图；", color = SettingsPalette.PrimaryText)
+            Text("・ 如果有崩溃/异常，请附上复现步骤或截图；", color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(6.dp))
-            Text("・ 功能提案欢迎附上期望交互或参考链接；", color = SettingsPalette.PrimaryText)
+            Text("・ 功能提案欢迎附上期望交互或参考链接；", color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(6.dp))
-            Text("・ 欢迎加入开发，共同打磨更好的播放体验。", color = SettingsPalette.PrimaryText)
+            Text("・ 欢迎加入开发，共同打磨更好的播放体验。", color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }

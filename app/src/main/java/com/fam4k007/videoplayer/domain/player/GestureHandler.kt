@@ -14,8 +14,9 @@ import com.fam4k007.videoplayer.player.PlayerControlsManager
 import `is`.xyz.mpv.MPVLib
 import java.lang.ref.WeakReference
 
-// TODO: 阶段3重构 - 移除对UI层的依赖，使用接口代替
-// 当前依赖：PlayerControlsManager, DoubleTapSeekIndicator
+// 架构说明：GestureHandler依赖PlayerControlsManager和DoubleTapSeekIndicator（player层）
+// 原因：VideoPlayerActivity仍使用XML布局，手势处理需要直接操作View
+// 当VideoPlayerActivity完全迁移到Compose后，可通过接口解耦
 
 /**
  * 手势处理管理器

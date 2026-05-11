@@ -8,14 +8,12 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.lifecycleScope
 import com.fam4k007.videoplayer.compose.VideoListScreen
 import com.fam4k007.videoplayer.compose.VideoListScreenPaging
 import com.fam4k007.videoplayer.database.VideoDatabase
-import com.fam4k007.videoplayer.ui.theme.getThemeColors
+import com.fam4k007.videoplayer.ui.theme.ThemeController
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import com.fam4k007.videoplayer.utils.Logger
 import com.fam4k007.videoplayer.utils.NoMediaChecker
 import com.fam4k007.videoplayer.utils.ThemeManager
@@ -93,21 +91,12 @@ class VideoListComposeActivity : ComponentActivity() {
         
         setContent {
             KoinAndroidContext {
-                val themeColors = getThemeColors(ThemeManager.getCurrentTheme(activity).themeName)
-
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = themeColors.primary,
-                    onPrimary = themeColors.onPrimary,
-                    primaryContainer = themeColors.primaryVariant,
-                    secondary = themeColors.secondary,
-                    background = themeColors.background,
-                    onBackground = Color(0xFF212121),
-                    surface = themeColors.background,
-                    surfaceVariant = themeColors.surfaceVariant,
-                    onSurface = Color(0xFF212121)
-                )
-            ) {
+                val themeController = ThemeController.from(activity)
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
+                ) {
                 // 根据视频数量选择不同的加载模式
                 if (usePaging && folderPath.isNotEmpty()) {
                     // 大量视频使用Paging3防止OOM

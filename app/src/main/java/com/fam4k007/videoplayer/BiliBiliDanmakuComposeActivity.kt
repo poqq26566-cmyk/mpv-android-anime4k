@@ -6,8 +6,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.core.view.WindowCompat
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -15,11 +13,12 @@ import androidx.lifecycle.lifecycleScope
 import com.fam4k007.videoplayer.compose.BiliBiliDanmakuScreen
 import com.fam4k007.videoplayer.compose.DownloadProgress
 import com.fam4k007.videoplayer.danmaku.BiliBiliDanmakuDownloadManager
-import com.fam4k007.videoplayer.ui.theme.getThemeColors
-import com.fam4k007.videoplayer.utils.ThemeManager
+import com.fam4k007.videoplayer.ui.theme.ThemeController
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.androidx.compose.KoinAndroidContext
 
 class BiliBiliDanmakuComposeActivity : BaseActivity() {
 
@@ -42,34 +41,27 @@ class BiliBiliDanmakuComposeActivity : BaseActivity() {
         savedFolderUri = savedUriString?.let { Uri.parse(it) }
 
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this).themeName)
-            
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = themeColors.primary,
-                    onPrimary = themeColors.onPrimary,
-                    primaryContainer = themeColors.primaryVariant,
-                    secondary = themeColors.secondary,
-                    background = themeColors.background,
-                    onBackground = themeColors.onBackground,
-                    surface = themeColors.surface,
-                    surfaceVariant = themeColors.surfaceVariant,
-                    onSurface = themeColors.onSurface
-                )
-            ) {
-                BiliBiliDanmakuScreen(
-                    savedFolderUri = savedFolderUri,
-                    downloadProgress = downloadProgress,
-                    isDownloading = isDownloading,
-                    onBack = {
-                        finish()
-                        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-                    },
-                    onFolderSelected = { uri: Uri -> handleFolderSelected(uri) },
-                    onDownloadDanmaku = { url: String, downloadWholeSeason: Boolean ->
-                        startDownload(url, downloadWholeSeason)
-                    }
-                )
+            KoinAndroidContext {
+                val themeController = ThemeController.from(this@BiliBiliDanmakuComposeActivity)
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
+                ) {
+                    BiliBiliDanmakuScreen(
+                        savedFolderUri = savedFolderUri,
+                        downloadProgress = downloadProgress,
+                        isDownloading = isDownloading,
+                        onBack = {
+                            finish()
+                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+                        },
+                        onFolderSelected = { uri: Uri -> handleFolderSelected(uri) },
+                        onDownloadDanmaku = { url: String, downloadWholeSeason: Boolean ->
+                            startDownload(url, downloadWholeSeason)
+                        }
+                    )
+                }
             }
         }
     }

@@ -1,4 +1,4 @@
-package com.fam4k007.videoplayer.compose
+﻿package com.fam4k007.videoplayer.compose
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,7 +24,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.fam4k007.videoplayer.compose.SettingsColors as SettingsPalette
 import com.fam4k007.videoplayer.subtitle.SubtitleInfo
 import com.fam4k007.videoplayer.subtitle.SubtitleLanguages
 import com.fam4k007.videoplayer.subtitle.SubtitleSources
@@ -65,38 +65,41 @@ fun SubtitleSearchScreen(
 
     Scaffold(
         topBar = {
-            ImmersiveTopAppBar(
+            TopAppBar(
                 title = { Text("字幕搜索下载", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(SettingsPalette.ScreenBackground)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
-            // 顶部搜索区域
+        // 顶部搜索区域
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // 主要搜索卡片
+            // 主搜索卡片
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = SettingsPalette.CardBackground
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        // 搜索字幕 - 独占一行
+                    // 搜索字幕 - 独占一行
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -145,7 +148,7 @@ fun SubtitleSearchScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            // 保存文件夹按钮
+                    // 保存文件夹按钮
                             OutlinedButton(
                                 onClick = { folderPickerLauncher.launch(currentFolderUri) },
                                 modifier = Modifier.weight(1f),
@@ -212,7 +215,7 @@ fun SubtitleSearchScreen(
                         ) {
                             CircularProgressIndicator(color = primaryColor)
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("搜索影片中...", color = SettingsPalette.SecondaryText)
+                            Text("搜索影片中...", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                     // 显示媒体选择列表
@@ -225,7 +228,7 @@ fun SubtitleSearchScreen(
                     // 已选择媒体，显示字幕搜索结果
                     selectedMedia != null -> {
                         Column(modifier = Modifier.fillMaxSize()) {
-                            // 已选择的媒体信息
+                        // 已选择的媒体信息
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -245,7 +248,7 @@ fun SubtitleSearchScreen(
                                         Text(
                                             text = "已选择",
                                             fontSize = 12.sp,
-                                            color = SettingsPalette.SecondaryText
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         Text(
                                             text = selectedMedia.displayTitle,
@@ -273,7 +276,7 @@ fun SubtitleSearchScreen(
                                 ) {
                                     CircularProgressIndicator(color = primaryColor)
                                     Spacer(modifier = Modifier.height(16.dp))
-                                    Text("搜索字幕中...", color = SettingsPalette.SecondaryText)
+                                    Text("搜索字幕中...", color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             } else if (searchResults.isEmpty()) {
                                 Column(
@@ -285,12 +288,12 @@ fun SubtitleSearchScreen(
                                         Icons.Default.SearchOff,
                                         contentDescription = null,
                                         modifier = Modifier.size(64.dp),
-                                        tint = SettingsPalette.SecondaryText.copy(alpha = 0.5f)
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Text(
                                         "未找到字幕",
-                                        color = SettingsPalette.SecondaryText,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = 16.sp
                                     )
                                 }
@@ -313,12 +316,12 @@ fun SubtitleSearchScreen(
                                 Icons.Default.VideoLibrary,
                                 contentDescription = null,
                                 modifier = Modifier.size(64.dp),
-                                tint = SettingsPalette.SecondaryText.copy(alpha = 0.3f)
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 "请开始搜索",
-                                color = SettingsPalette.SecondaryText,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 16.sp
                             )
                         }
@@ -328,7 +331,7 @@ fun SubtitleSearchScreen(
         }
     }
 
-    // 搜索对话框
+// 搜索对话框
     if (showSearchDialog) {
         SubtitleSearchDialog(
             onDismiss = { showSearchDialog = false },
@@ -339,7 +342,7 @@ fun SubtitleSearchScreen(
         )
     }
 
-    // 搜索选项对话框
+// 搜索选项对话框
     if (showOptionsDialog) {
         SearchOptionsDialog(
             currentOptions = searchOptions,
@@ -366,7 +369,7 @@ private fun MediaResultList(
                 text = "选择影片 (${mediaList.size})",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = SettingsPalette.PrimaryText,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
         }
@@ -391,7 +394,7 @@ private fun MediaItem(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(
-            containerColor = SettingsPalette.CardBackground
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
@@ -414,13 +417,13 @@ private fun MediaItem(
                     text = media.displayTitle,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = SettingsPalette.PrimaryText
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 media.overview?.let { overview ->
                     Text(
                         text = overview,
                         fontSize = 13.sp,
-                        color = SettingsPalette.SecondaryText,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -429,7 +432,7 @@ private fun MediaItem(
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
-                tint = SettingsPalette.SecondaryText
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -449,7 +452,7 @@ private fun SubtitleResultList(
                 text = "字幕结果 (${subtitles.size})",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = SettingsPalette.PrimaryText,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
         }
@@ -474,7 +477,7 @@ private fun SubtitleItem(
             .clickable(onClick = onDownload),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(
-            containerColor = SettingsPalette.CardBackground
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
@@ -489,7 +492,7 @@ private fun SubtitleItem(
                     text = subtitle.displayName,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
-                    color = SettingsPalette.PrimaryText,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -569,7 +572,7 @@ private fun SubtitleSearchDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = SettingsPalette.CardBackground,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         title = {
             Text(
                 "搜索字幕",
@@ -582,7 +585,7 @@ private fun SubtitleSearchDialog(
                 Text(
                     "请输入影片名称",
                     fontSize = 14.sp,
-                    color = SettingsPalette.SecondaryText
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
@@ -647,7 +650,7 @@ private fun SearchOptionsDialog(
                 .fillMaxHeight(0.8f),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = SettingsPalette.CardBackground
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
             )
         ) {
             Column(
@@ -670,7 +673,7 @@ private fun SearchOptionsDialog(
                         Text(
                             "字幕语言",
                             fontWeight = FontWeight.Bold,
-                            color = SettingsPalette.PrimaryText
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         SubtitleLanguages.ALL.forEach { (code, name) ->
@@ -700,7 +703,7 @@ private fun SearchOptionsDialog(
                                 Text(
                                     name,
                                     modifier = Modifier.padding(start = 8.dp),
-                                    color = SettingsPalette.PrimaryText
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -708,12 +711,12 @@ private fun SearchOptionsDialog(
 
                     // 来源选项
                     item {
-                        Divider(color = SettingsPalette.SecondaryText.copy(alpha = 0.2f))
+                        Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             "字幕来源",
                             fontWeight = FontWeight.Bold,
-                            color = SettingsPalette.PrimaryText
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         SubtitleSources.ALL.forEach { (code, name) ->
@@ -743,7 +746,7 @@ private fun SearchOptionsDialog(
                                 Text(
                                     name,
                                     modifier = Modifier.padding(start = 8.dp),
-                                    color = SettingsPalette.PrimaryText
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -751,12 +754,12 @@ private fun SearchOptionsDialog(
 
                     // 格式选项
                     item {
-                        Divider(color = SettingsPalette.SecondaryText.copy(alpha = 0.2f))
+                        Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             "字幕格式",
                             fontWeight = FontWeight.Bold,
-                            color = SettingsPalette.PrimaryText
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         SubtitleFormats.ALL.forEach { (code, name) ->
@@ -783,7 +786,7 @@ private fun SearchOptionsDialog(
                                 Text(
                                     name,
                                     modifier = Modifier.padding(start = 8.dp),
-                                    color = SettingsPalette.PrimaryText
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }

@@ -83,13 +83,15 @@ class BilibiliRepository(
     
     /**
      * 刷新登录状态（刷新token）
-     * TODO: 实现 authManager.refreshLogin()
+     * 注意：BiliBiliAuthManager暂不支持token刷新，使用Cookie有效性检查代替
+     * 后续可通过B站refresh_token API实现真正的刷新
      */
     suspend fun refreshLogin(): Result<Boolean> {
         return try {
-            // authManager.refreshLogin()  // 暂未实现
-            Logger.w(TAG, "refreshLogin not implemented yet")
-            Result.success(false)
+            // 通过检查登录状态间接判断Cookie是否有效
+            val isValid = authManager.isLoggedIn() && authManager.getUserInfo() != null
+            Logger.d(TAG, "Login status check: $isValid")
+            Result.success(isValid)
         } catch (e: Exception) {
             Logger.e(TAG, "Failed to refresh login: ${e.message}", e)
             Result.failure(e)
@@ -100,13 +102,12 @@ class BilibiliRepository(
     
     /**
      * 获取番剧列表（追番/收藏）
-     * TODO: 实现 authManager.getUserFollowedBangumi()
+     * 注意：需要B站追番API（/x/space/bangumi/follow/list），待BiliBiliAuthManager扩展后实现
+     * 当前返回空列表，不影响其他功能使用
      */
     suspend fun getBangumiList(): List<BangumiItem> {
         return try {
-            // val result = authManager.getUserFollowedBangumi()  // 暂未实现
-            // result.getOrNull() ?: emptyList()
-            Logger.w(TAG, "getBangumiList not implemented yet")
+            Logger.d(TAG, "getBangumiList: pending B站追番API implementation")
             emptyList()
         } catch (e: Exception) {
             Logger.e(TAG, "Failed to get bangumi list: ${e.message}", e)
@@ -116,12 +117,11 @@ class BilibiliRepository(
     
     /**
      * 获取番剧详情
+     * 注意：需要B站番剧详情API（/pgc/view/web/season），待实现
      */
     suspend fun getBangumiDetail(seasonId: String): BangumiDetail {
         return try {
-            // 这里需要实际的API调用，暂时返回空对象
-            // 实际实现需要调用B站API获取番剧详情
-            Logger.w(TAG, "getBangumiDetail not implemented yet: $seasonId")
+            Logger.d(TAG, "getBangumiDetail: pending API implementation for seasonId=$seasonId")
             BangumiDetail(
                 seasonId = seasonId,
                 title = "",
@@ -137,12 +137,11 @@ class BilibiliRepository(
     
     /**
      * 搜索番剧
+     * 注意：需要B站搜索API（/x/web-interface/search/type），待实现
      */
     suspend fun searchBangumi(keyword: String): List<BangumiItem> {
         return try {
-            // 这里需要实际的API调用，暂时返回空列表
-            // 实际实现需要调用B站搜索API
-            Logger.w(TAG, "searchBangumi not implemented yet: $keyword")
+            Logger.d(TAG, "searchBangumi: pending API implementation for keyword=$keyword")
             emptyList()
         } catch (e: Exception) {
             Logger.e(TAG, "Failed to search bangumi: ${e.message}", e)
@@ -152,13 +151,12 @@ class BilibiliRepository(
     
     /**
      * 获取用户追番列表
-     * 注: 实际实现逻辑在BiliBiliAuthManager中，这里提供Repository层的封装
-     * TODO: 实现 authManager.getUserFollowedBangumi()
+     * 注意：需要B站追番API（/x/space/bangumi/follow/list），待BiliBiliAuthManager扩展后实现
+     * 当前返回空列表，不影响其他功能使用
      */
     suspend fun getUserFollowedBangumi(): Result<List<BangumiItem>> {
         return try {
-            // authManager.getUserFollowedBangumi()  // 暂未实现
-            Logger.w(TAG, "getUserFollowedBangumi not implemented yet")
+            Logger.d(TAG, "getUserFollowedBangumi: pending B站追番API implementation")
             Result.success(emptyList())
         } catch (e: Exception) {
             Logger.e(TAG, "Failed to get user followed bangumi: ${e.message}", e)

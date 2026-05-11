@@ -105,15 +105,15 @@ class ThemeState(
     var amoledMode by mutableStateOf(initialAmoledMode)
         private set
     
-    fun setTheme(theme: AppTheme) {
+    fun updateTheme(theme: AppTheme) {
         currentTheme = theme
     }
     
-    fun setDarkMode(mode: DarkMode) {
+    fun updateDarkMode(mode: DarkMode) {
         darkMode = mode
     }
     
-    fun setAmoledMode(enabled: Boolean) {
+    fun updateAmoledMode(enabled: Boolean) {
         amoledMode = enabled
     }
 }

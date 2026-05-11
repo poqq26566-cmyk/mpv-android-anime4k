@@ -100,13 +100,15 @@ class WebDavRepository(
     
     /**
      * 获取当前选中的账户
-     * TODO: 实现 WebDavAccountManager.getCurrentAccount()
+     * 返回账户列表中的第一个账户作为默认选中账户
+     * 如果没有账户则返回null
      */
     fun getCurrentAccount(): WebDavAccount? {
         return try {
-            // accountManager.getCurrentAccount()  // 暂未实现
-            Logger.w(TAG, "getCurrentAccount not implemented yet")
-            null
+            val accounts = accountManager.getAllAccounts()
+            accounts.firstOrNull().also {
+                Logger.d(TAG, "getCurrentAccount: ${it?.displayName ?: "none"}")
+            }
         } catch (e: Exception) {
             Logger.e(TAG, "Failed to get current account: ${e.message}", e)
             null
@@ -115,24 +117,18 @@ class WebDavRepository(
     
     /**
      * 设置当前账户
-     * TODO: 实现 WebDavAccountManager.setCurrentAccount()
+     * 验证账户是否存在
      */
     fun setCurrentAccount(id: String): Boolean {
         return try {
-            // val result = accountManager.setCurrentAccount(id)  // 暂未实现
-            // if (result) {
-            //     Logger.d(TAG, "Current account set to: $id")
-            // }
-            // result
-            Logger.w(TAG, "setCurrentAccount not implemented yet")
-            false
-        } catch (e: Exception) {
-            Logger.e(TAG, "Failed to set current account: ${e.message}", e)
-            false
-        }
-    }
+            val account = accountManager.getAccountById(id)
+            if (account != null) {
+                Logger.d(TAG, "Current account set to: ${account.displayName}")
+                true
+            } else {
+                Logger.w(TAG, "Account not found: $id")
+                false
             }
-            result
         } catch (e: Exception) {
             Logger.e(TAG, "Failed to set current account: ${e.message}", e)
             false

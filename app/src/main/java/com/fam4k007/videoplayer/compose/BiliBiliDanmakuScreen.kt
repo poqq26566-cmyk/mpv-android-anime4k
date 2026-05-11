@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,7 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fam4k007.videoplayer.compose.SettingsColors as SettingsPalette
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,20 +57,23 @@ fun BiliBiliDanmakuScreen(
 
     Scaffold(
         topBar = {
-            ImmersiveTopAppBar(
+            TopAppBar(
                 title = { Text("B站弹幕下载", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(SettingsPalette.ScreenBackground)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
@@ -104,7 +107,7 @@ fun BiliBiliDanmakuScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = SettingsPalette.CardBackground
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
@@ -115,7 +118,7 @@ fun BiliBiliDanmakuScreen(
                         text = "使用说明",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = SettingsPalette.PrimaryText
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
@@ -130,7 +133,7 @@ fun BiliBiliDanmakuScreen(
                             • https://www.bilibili.com/bangumi/play/epxxx
                         """.trimIndent(),
                         fontSize = 14.sp,
-                        color = SettingsPalette.SecondaryText,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 20.sp
                     )
                 }
@@ -188,7 +191,7 @@ private fun SettingCard(
             .clickable(enabled = enabled, onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = SettingsPalette.CardBackground
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -202,7 +205,7 @@ private fun SettingCard(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(SettingsPalette.IconContainer),
+                    .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -220,15 +223,15 @@ private fun SettingCard(
                     text = title,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
-                    color = if (enabled) SettingsPalette.PrimaryText
-                           else SettingsPalette.DisabledText
+                    color = if (enabled) MaterialTheme.colorScheme.onSurface
+                           else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = subtitle,
                     fontSize = 13.sp,
-                    color = if (enabled) SettingsPalette.SecondaryText 
-                           else SettingsPalette.DisabledText,
+                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant 
+                           else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -237,7 +240,7 @@ private fun SettingCard(
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
-                tint = SettingsPalette.TertiaryText
+                tint = MaterialTheme.colorScheme.outline
             )
         }
     }
@@ -255,7 +258,7 @@ private fun DownloadDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("下载B站弹幕", color = SettingsPalette.PrimaryText, fontWeight = FontWeight.Bold) },
+        title = { Text("下载B站弹幕", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) },
         text = {
             Column {
                 OutlinedTextField(
@@ -267,23 +270,23 @@ private fun DownloadDialog(
                     singleLine = false,
                     maxLines = 3,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SettingsPalette.AccentText,
-                        unfocusedBorderColor = SettingsPalette.Divider,
-                        cursorColor = SettingsPalette.AccentText,
-                        focusedLabelColor = SettingsPalette.SecondaryText,
-                        unfocusedLabelColor = SettingsPalette.SecondaryText,
-                        focusedTextColor = SettingsPalette.PrimaryText,
-                        unfocusedTextColor = SettingsPalette.PrimaryText,
-                        focusedPlaceholderColor = SettingsPalette.TertiaryText,
-                        unfocusedPlaceholderColor = SettingsPalette.TertiaryText,
-                        focusedContainerColor = SettingsPalette.DialogSurface,
-                        unfocusedContainerColor = SettingsPalette.DialogSurface
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        focusedPlaceholderColor = MaterialTheme.colorScheme.outline,
+                        unfocusedPlaceholderColor = MaterialTheme.colorScheme.outline,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text("下载模式", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = SettingsPalette.PrimaryText)
+                Text("下载模式", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
@@ -298,7 +301,7 @@ private fun DownloadDialog(
                         onClick = { downloadWholeSeason = true },
                         colors = RadioButtonDefaults.colors(selectedColor = accentColor)
                     )
-                    Text("整季下载", modifier = Modifier.padding(start = 8.dp), color = SettingsPalette.PrimaryText)
+                    Text("整季下载", modifier = Modifier.padding(start = 8.dp), color = MaterialTheme.colorScheme.onSurface)
                 }
 
                 Row(
@@ -313,7 +316,7 @@ private fun DownloadDialog(
                         onClick = { downloadWholeSeason = false },
                         colors = RadioButtonDefaults.colors(selectedColor = accentColor)
                     )
-                    Text("单集下载", modifier = Modifier.padding(start = 8.dp), color = SettingsPalette.PrimaryText)
+                    Text("单集下载", modifier = Modifier.padding(start = 8.dp), color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         },
@@ -326,15 +329,15 @@ private fun DownloadDialog(
                 },
                 enabled = url.isNotBlank()
             ) {
-                Text("下载", color = SettingsPalette.AccentText)
+                Text("下载", color = MaterialTheme.colorScheme.primary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消", color = SettingsPalette.SecondaryText)
+                Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
-        containerColor = SettingsPalette.DialogSurface
+        containerColor = MaterialTheme.colorScheme.surface
     )
 }
 
@@ -358,7 +361,7 @@ private fun DownloadProgressDialog(
                 "正在下载弹幕", 
                 fontSize = 16.sp, 
                 fontWeight = FontWeight.Bold,
-                color = SettingsPalette.PrimaryText
+                color = MaterialTheme.colorScheme.onSurface
             ) 
         },
         text = {
@@ -372,7 +375,7 @@ private fun DownloadProgressDialog(
                     Text(
                         text = "进度: ${progress.current} / ${progress.total}",
                         fontSize = 14.sp,
-                        color = SettingsPalette.SecondaryText,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
                     
@@ -386,14 +389,14 @@ private fun DownloadProgressDialog(
                             .height(6.dp)
                             .clip(RoundedCornerShape(3.dp)),
                         color = primaryColor,
-                        trackColor = SettingsPalette.Divider,
+                        trackColor = MaterialTheme.colorScheme.outlineVariant,
                     )
                 } else {
                     // 准备中
                     Text(
                         text = "准备下载中...",
                         fontSize = 14.sp,
-                        color = SettingsPalette.SecondaryText
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     
                     Spacer(modifier = Modifier.height(8.dp))
@@ -404,7 +407,7 @@ private fun DownloadProgressDialog(
                             .height(6.dp)
                             .clip(RoundedCornerShape(3.dp)),
                         color = primaryColor,
-                        trackColor = SettingsPalette.Divider,
+                        trackColor = MaterialTheme.colorScheme.outlineVariant,
                     )
                 }
                 
@@ -415,7 +418,7 @@ private fun DownloadProgressDialog(
                     Text(
                         text = "当前: ${progress.currentTitle}",
                         fontSize = 13.sp,
-                        color = SettingsPalette.SecondaryText,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -439,7 +442,7 @@ private fun DownloadProgressDialog(
                         Text(
                             text = "成功: ${progress.successCount}",
                             fontSize = 13.sp,
-                            color = SettingsPalette.SecondaryText
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     
@@ -454,7 +457,7 @@ private fun DownloadProgressDialog(
                         Text(
                             text = "失败: ${progress.failedCount}",
                             fontSize = 13.sp,
-                            color = SettingsPalette.SecondaryText
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -463,12 +466,12 @@ private fun DownloadProgressDialog(
         confirmButton = {
             if (isCompleted) {
                 TextButton(onClick = onDismiss) {
-                    Text("完成", color = SettingsPalette.AccentText, fontSize = 14.sp)
+                    Text("完成", color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
                 }
             }
         },
         shape = RoundedCornerShape(12.dp),
-        containerColor = SettingsPalette.DialogSurface
+        containerColor = MaterialTheme.colorScheme.surface
     )
 }
 

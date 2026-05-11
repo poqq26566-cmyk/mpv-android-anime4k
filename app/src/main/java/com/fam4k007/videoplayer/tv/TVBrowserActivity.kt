@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -37,11 +38,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fam4k007.videoplayer.VideoPlayerActivity
-import com.fam4k007.videoplayer.compose.ImmersiveTopAppBar
 import com.fam4k007.videoplayer.remote.RemotePlaybackLauncher
 import com.fam4k007.videoplayer.sniffer.DetectedVideo
 import com.fam4k007.videoplayer.sniffer.VideoSnifferManager
-import com.fam4k007.videoplayer.utils.ThemeManager
+import com.fam4k007.videoplayer.ui.theme.ThemeController
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
+import org.koin.androidx.compose.KoinAndroidContext
 
 /**
  * TV浏览器 - 带视频嗅探功能的WebView
@@ -71,28 +73,19 @@ class TVBrowserActivity : ComponentActivity() {
         val initialUrl = intent.getStringExtra(EXTRA_URL) ?: ""
         
         setContent {
-            val themeColors = com.fam4k007.videoplayer.ui.theme.getThemeColors(
-                ThemeManager.getCurrentTheme(this).themeName
-            )
-            
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = themeColors.primary,
-                    onPrimary = themeColors.onPrimary,
-                    primaryContainer = themeColors.primaryVariant,
-                    secondary = themeColors.secondary,
-                    background = themeColors.background,
-                    onBackground = themeColors.onBackground,
-                    surface = themeColors.surface,
-                    surfaceVariant = themeColors.surfaceVariant,
-                    onSurface = themeColors.onSurface
-                )
-            ) {
-                TVBrowserScreen(
-                    initialUrl = initialUrl,
-                    onWebViewCreated = { webView = it },
-                    onBackPressed = { onBackPressedDispatcher.onBackPressed() }
-                )
+            KoinAndroidContext {
+                val themeController = ThemeController.from(this@TVBrowserActivity)
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
+                ) {
+                    TVBrowserScreen(
+                        initialUrl = initialUrl,
+                        onWebViewCreated = { webView = it },
+                        onBackPressed = { onBackPressedDispatcher.onBackPressed() }
+                    )
+                }
             }
         }
     }
@@ -158,18 +151,17 @@ fun TVBrowserScreen(
             Column(
                 modifier = Modifier.background(Color.White)
             ) {
-                ImmersiveTopAppBar(
+                TopAppBar(
                     title = { 
                         Text(
                             text = if (showUrlBar) "输入网址" else currentTitle,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            color = Color.White
+                            overflow = TextOverflow.Ellipsis
                         )
                     },
                     navigationIcon = {
                         IconButton(onClick = onBackPressed) {
-                            Icon(Icons.Default.ArrowBack, "返回", tint = Color.White)
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回")
                         }
                     },
                     actions = {
@@ -177,8 +169,7 @@ fun TVBrowserScreen(
                         IconButton(onClick = { showUrlBar = !showUrlBar }) {
                             Icon(
                                 if (showUrlBar) Icons.Default.Close else Icons.Default.Search,
-                                if (showUrlBar) "关闭地址栏" else "打开地址栏",
-                                tint = Color.White
+                                if (showUrlBar) "关闭地址栏" else "打开地址栏"
                             )
                         }
                         // 播放按钮 - 智能选择最佳视频
@@ -195,8 +186,7 @@ fun TVBrowserScreen(
                             ) {
                                 Icon(
                                     Icons.Default.PlayCircle,
-                                    "播放视频",
-                                    tint = if (detectedVideos.isNotEmpty()) Color.White else Color.White.copy(alpha = 0.3f)
+                                    "播放视频"
                                 )
                             }
                             // 右上角红点提示
@@ -210,7 +200,10 @@ fun TVBrowserScreen(
                                 )
                             }
                         }
-                    }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
                 )
                 
                 // 地址栏 - 卡片式设计

@@ -8,14 +8,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
-import androidx.compose.ui.graphics.Color
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.VideoPlayerActivity
-import com.fam4k007.videoplayer.ui.theme.getThemeColors
-import com.fam4k007.videoplayer.utils.ThemeManager
+import com.fam4k007.videoplayer.ui.theme.ThemeController
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
+import org.koin.androidx.compose.KoinAndroidContext
 
 /**
  * WebDAV 文件浏览 Compose Activity
@@ -49,34 +47,27 @@ class WebDavBrowserComposeActivity : ComponentActivity() {
         }
         
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this).themeName)
-            
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = themeColors.primary,
-                    onPrimary = themeColors.onPrimary,
-                    primaryContainer = themeColors.primaryVariant,
-                    secondary = themeColors.secondary,
-                    background = themeColors.background,
-                    onBackground = Color(0xFF212121),
-                    surface = themeColors.background,
-                    surfaceVariant = themeColors.surfaceVariant,
-                    onSurface = Color(0xFF212121)
-                )
-            ) {
-                WebDavBrowserScreen(
-                    account = account,
-                    onNavigateBack = {
-                        finish()
-                        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-                    },
-                    onPlayVideo = { file, client ->
-                        playVideo(file, client)
-                    },
-                    onBackCallbackChanged = { callback ->
-                        onBackCallback = callback
-                    }
-                )
+            KoinAndroidContext {
+                val themeController = ThemeController.from(this@WebDavBrowserComposeActivity)
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
+                ) {
+                    WebDavBrowserScreen(
+                        account = account,
+                        onNavigateBack = {
+                            finish()
+                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+                        },
+                        onPlayVideo = { file, client ->
+                            playVideo(file, client)
+                        },
+                        onBackCallbackChanged = { callback ->
+                            onBackCallback = callback
+                        }
+                    )
+                }
             }
         }
     }

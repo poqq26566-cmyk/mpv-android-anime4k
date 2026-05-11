@@ -11,8 +11,9 @@ import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVNode
 import java.lang.ref.WeakReference
 
-// TODO: 阶段3重构 - 移除对UI层的依赖，使用接口代替
-// 当前依赖：CustomMPVView, VideoAspect
+// 架构说明：PlaybackEngine依赖CustomMPVView和VideoAspect（player层）
+// 原因：MPV播放器是原生View，必须通过CustomMPVView操作
+// 这是合理的依赖关系，PlaybackEngine封装了MPV的所有播放控制逻辑
 
 /**
  * 播放引擎管理器

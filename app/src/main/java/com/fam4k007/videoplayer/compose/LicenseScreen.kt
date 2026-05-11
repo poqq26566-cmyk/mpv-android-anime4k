@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,7 +17,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mikepenz.aboutlibraries.ui.compose.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.LibraryDefaults
-import com.fam4k007.videoplayer.compose.SettingsColors as SettingsPalette
 
 /**
  * 许可证书界面 - 使用 AboutLibraries 自动化管理
@@ -33,21 +33,24 @@ fun LicenseScreen(
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            ImmersiveTopAppBar(
+            TopAppBar(
                 title = { Text("开源许可", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
                 },
-                scrollBehavior = scrollBehavior
+                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(SettingsPalette.ScreenBackground)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
         ) {
             // 统计信息卡片
@@ -57,7 +60,7 @@ fun LicenseScreen(
                     .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = SettingsPalette.CardBackground
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
@@ -71,13 +74,13 @@ fun LicenseScreen(
                         text = "📦 感谢开源社区",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = SettingsPalette.PrimaryText
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "本应用使用了多个优秀的开源库",
                         fontSize = 13.sp,
-                        color = SettingsPalette.SecondaryText
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -88,8 +91,8 @@ fun LicenseScreen(
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
                 colors = LibraryDefaults.libraryColors(
-                    backgroundColor = SettingsPalette.ScreenBackground,
-                    contentColor = SettingsPalette.PrimaryText,
+                    backgroundColor = MaterialTheme.colorScheme.background,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
                     badgeBackgroundColor = MaterialTheme.colorScheme.primary,
                     badgeContentColor = MaterialTheme.colorScheme.onPrimary,
                     dialogConfirmButtonColor = MaterialTheme.colorScheme.primary

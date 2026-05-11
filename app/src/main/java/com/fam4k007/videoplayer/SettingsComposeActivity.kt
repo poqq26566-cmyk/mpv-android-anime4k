@@ -4,16 +4,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.ui.graphics.Color
-import com.fam4k007.videoplayer.compose.SettingsScreen
-import com.fam4k007.videoplayer.ui.theme.getThemeColors
-import com.fam4k007.videoplayer.utils.ThemeManager
+import com.fam4k007.videoplayer.ui.screens.SettingsScreen
+import com.fam4k007.videoplayer.ui.theme.ThemeController
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import org.koin.androidx.compose.KoinAndroidContext
 
 /**
  * Compose 版本的设置 Activity
+ * 使用新的主题系统和组件库
  */
 class SettingsComposeActivity : ComponentActivity() {
     
@@ -25,27 +23,21 @@ class SettingsComposeActivity : ComponentActivity() {
         
         setContent {
             KoinAndroidContext {
-                val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this@SettingsComposeActivity).themeName)
-            
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = themeColors.primary,
-                    onPrimary = themeColors.onPrimary,
-                    primaryContainer = themeColors.primaryVariant,
-                    secondary = themeColors.secondary,
-                    background = themeColors.background,
-                    onBackground = Color(0xFF212121),
-                    surface = themeColors.background,
-                    surfaceVariant = themeColors.surfaceVariant,
-                    onSurface = Color(0xFF212121)
-                )
-            ) {
-                SettingsScreen(
-                    onNavigateBack = {
-                        finish()
-                        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-                    }
-                )
-            }            }        }
+                val themeController = ThemeController.from(this@SettingsComposeActivity)
+                
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
+                ) {
+                    SettingsScreen(
+                        onNavigateBack = {
+                            finish()
+                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+                        }
+                    )
+                }
+            }
+        }
     }
 }

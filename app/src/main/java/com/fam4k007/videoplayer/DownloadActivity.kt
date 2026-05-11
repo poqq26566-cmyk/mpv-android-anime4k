@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,36 +37,27 @@ import com.fam4k007.videoplayer.download.DownloadItem
 import com.fam4k007.videoplayer.download.MediaParseResult
 import com.fam4k007.videoplayer.download.MediaType
 import com.fam4k007.videoplayer.download.EpisodeInfo
-import com.fam4k007.videoplayer.compose.ImmersiveTopAppBar
-import com.fam4k007.videoplayer.ui.theme.getThemeColors
-import com.fam4k007.videoplayer.utils.ThemeManager
+import com.fam4k007.videoplayer.ui.theme.ThemeController
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import kotlinx.coroutines.launch
 import android.util.Log
+import org.koin.androidx.compose.KoinAndroidContext
 
 class DownloadActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // 启用边到边显示
         enableEdgeToEdge()
         
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this).themeName)
-
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = themeColors.primary,
-                    onPrimary = themeColors.onPrimary,
-                    primaryContainer = themeColors.primaryVariant,
-                    secondary = themeColors.secondary,
-                    background = androidx.compose.ui.graphics.Color.White, // 固定白色背景
-                    onBackground = themeColors.onBackground,
-                    surface = themeColors.primary, // 使用主题主色调
-                    surfaceVariant = themeColors.primary, // 使用主题主色调
-                    onSurface = themeColors.onSurface
-                )
-            ) {
-                DownloadScreen()
+            KoinAndroidContext {
+                val themeController = ThemeController.from(this@DownloadActivity)
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
+                ) {
+                    DownloadScreen()
+                }
             }
         }
     }
@@ -116,11 +108,11 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
 
     Scaffold(
         topBar = {
-            ImmersiveTopAppBar(
+            TopAppBar(
                 title = { 
                     Text(
                         "哔哩哔哩视频下载",
-                        color = androidx.compose.ui.graphics.Color.White
+                        fontWeight = FontWeight.Bold
                     )
                 },
                 navigationIcon = {
@@ -129,12 +121,14 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                         activity?.overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                     }) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "返回",
-                            tint = androidx.compose.ui.graphics.Color.White
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "返回"
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         }
     ) { padding ->

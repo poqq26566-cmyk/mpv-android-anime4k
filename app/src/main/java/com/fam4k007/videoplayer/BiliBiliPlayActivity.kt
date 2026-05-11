@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,11 +35,12 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fam4k007.videoplayer.bilibili.auth.BiliBiliAuthManager
 import com.fam4k007.videoplayer.bilibili.model.BiliApiResponse
-import com.fam4k007.videoplayer.compose.ImmersiveTopAppBar
 import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
 import com.fam4k007.videoplayer.remote.RemotePlaybackLauncher
 import com.fam4k007.videoplayer.remote.RemotePlaybackRequest
 import com.fanchen.fam4k007.manager.compose.BiliBiliLoginActivity
+import com.fam4k007.videoplayer.ui.theme.ThemeController
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -72,7 +74,12 @@ class BiliBiliPlayActivity : ComponentActivity() {
         
         setContent {
             KoinAndroidContext {
-                MaterialTheme {
+                val themeController = ThemeController.from(this@BiliBiliPlayActivity)
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
+                ) {
                     BiliBiliPlayScreen(
                         authManager = authManager,
                         onBack = { 
@@ -325,14 +332,13 @@ fun BiliBiliPlayScreen(
     
     Scaffold(
         topBar = {
-            ImmersiveTopAppBar(
-                title = { Text("B站番剧播放") },
+            TopAppBar(
+                title = { Text("B站番剧播放", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "返回",
-                            tint = Color.White
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "返回"
                         )
                     }
                 },
@@ -341,7 +347,7 @@ fun BiliBiliPlayScreen(
                         TextButton(onClick = {
                             context.startActivity(Intent(context, BiliBiliLoginActivity::class.java))
                         }) {
-                            Text("登录", color = Color.White)
+                            Text("登录")
                         }
                     } else {
                         val userInfo = authManager.getUserInfo()
@@ -355,15 +361,16 @@ fun BiliBiliPlayScreen(
                             ) {
                                 Text(
                                     text = userInfo?.uname ?: "已登录",
-                                    color = Color.White,
                                     fontSize = 14.sp
                                 )
-                                Text("⚙", fontSize = 16.sp, color = Color.White)  // 添加设置图标提示
+                                Text("⚙", fontSize = 16.sp)  // 添加设置图标提示
                             }
                         }
                     }
                 },
-                gradientColors = Color(0xFFFF6699) to Color(0xFFFF6699)  // 纯B站粉色，不渐变
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         }
     ) { padding ->

@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,7 +29,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fam4k007.videoplayer.PlaybackHistoryManager
-import com.fam4k007.videoplayer.compose.SettingsColors as SettingsPalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -48,11 +48,11 @@ fun PlaybackHistoryScreen(
 
     Scaffold(
         topBar = {
-            ImmersiveTopAppBar(
+            TopAppBar(
                 title = { Text("播放历史", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
                 },
                 actions = {
@@ -61,14 +61,17 @@ fun PlaybackHistoryScreen(
                             Icon(Icons.Default.Delete, contentDescription = "清空全部")
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         }
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(SettingsPalette.ScreenBackground)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
             if (historyList.isEmpty()) {
@@ -87,7 +90,7 @@ fun PlaybackHistoryScreen(
                     Text(
                         text = "暂无播放历史",
                         fontSize = 16.sp,
-                        color = SettingsPalette.SecondaryText
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             } else {
@@ -116,9 +119,9 @@ fun PlaybackHistoryScreen(
     if (showClearDialog) {
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
-            title = { Text("清空历史", color = SettingsPalette.PrimaryText) },
+            title = { Text("清空历史", color = MaterialTheme.colorScheme.onSurface) },
             text = { Text("确定要清空所有播放历史吗？此操作不可恢复。", 
-                         color = SettingsPalette.SecondaryText) },
+                         color = MaterialTheme.colorScheme.onSurfaceVariant) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -127,15 +130,15 @@ fun PlaybackHistoryScreen(
                         showClearDialog = false
                     }
                 ) {
-                    Text("清空", color = SettingsPalette.WarningText)
+                    Text("清空", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showClearDialog = false }) {
-                    Text("取消", color = SettingsPalette.SecondaryText)
+                    Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
-            containerColor = SettingsPalette.DialogSurface
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
@@ -143,9 +146,9 @@ fun PlaybackHistoryScreen(
     itemToDelete?.let { item ->
         AlertDialog(
             onDismissRequest = { itemToDelete = null },
-            title = { Text("删除记录", color = SettingsPalette.PrimaryText) },
+            title = { Text("删除记录", color = MaterialTheme.colorScheme.onSurface) },
             text = { Text("确定要删除《${item.fileName}》的播放记录吗？", 
-                         color = SettingsPalette.SecondaryText) },
+                         color = MaterialTheme.colorScheme.onSurfaceVariant) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -154,15 +157,15 @@ fun PlaybackHistoryScreen(
                         itemToDelete = null
                     }
                 ) {
-                    Text("删除", color = SettingsPalette.WarningText)
+                    Text("删除", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { itemToDelete = null }) {
-                    Text("取消", color = SettingsPalette.SecondaryText)
+                    Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
-            containerColor = SettingsPalette.DialogSurface
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 }
@@ -181,7 +184,7 @@ private fun HistoryCard(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = SettingsPalette.CardBackground
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -196,7 +199,7 @@ private fun HistoryCard(
                 modifier = Modifier
                     .size(90.dp, 60.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(SettingsPalette.IconContainer),
+                    .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 // 直接从视频 URI 提取缩略图，传入播放位置
@@ -218,7 +221,7 @@ private fun HistoryCard(
                     text = item.fileName,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
-                    color = SettingsPalette.PrimaryText,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     lineHeight = 20.sp
@@ -235,7 +238,7 @@ private fun HistoryCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
-                            .background(SettingsPalette.IconContainer)
+                            .background(MaterialTheme.colorScheme.primaryContainer)
                             .padding(horizontal = 6.dp, vertical = 3.dp)
                     ) {
                         Text(
@@ -250,13 +253,13 @@ private fun HistoryCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
-                            .background(SettingsPalette.IconContainer)
+                            .background(MaterialTheme.colorScheme.primaryContainer)
                             .padding(horizontal = 6.dp, vertical = 3.dp)
                     ) {
                         Text(
                             text = formatTimestamp(item.lastPlayed),
                             fontSize = 11.sp,
-                            color = SettingsPalette.SecondaryText,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Medium
                         )
                     }

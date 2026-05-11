@@ -6,8 +6,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.core.view.WindowCompat
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -17,11 +15,12 @@ import com.fam4k007.videoplayer.subtitle.SearchOptions
 import com.fam4k007.videoplayer.subtitle.SubtitleDownloadManager
 import com.fam4k007.videoplayer.subtitle.SubtitleInfo
 import com.fam4k007.videoplayer.subtitle.TmdbMediaResult
-import com.fam4k007.videoplayer.ui.theme.getThemeColors
-import com.fam4k007.videoplayer.utils.ThemeManager
+import com.fam4k007.videoplayer.ui.theme.ThemeController
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.androidx.compose.KoinAndroidContext
 
 /**
  * 字幕搜索下载Activity
@@ -59,40 +58,33 @@ class SubtitleSearchActivity : BaseActivity() {
         loadSavedPreferences()
 
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this).themeName)
-            
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = themeColors.primary,
-                    onPrimary = themeColors.onPrimary,
-                    primaryContainer = themeColors.primaryVariant,
-                    secondary = themeColors.secondary,
-                    background = themeColors.background,
-                    onBackground = themeColors.onBackground,
-                    surface = themeColors.surface,
-                    surfaceVariant = themeColors.surfaceVariant,
-                    onSurface = themeColors.onSurface
-                )
-            ) {
-                SubtitleSearchScreen(
-                    savedFolderUri = savedFolderUri,
-                    mediaResults = mediaResults,
-                    searchResults = searchResults,
-                    isSearchingMedia = isSearchingMedia,
-                    isSearching = isSearching,
-                    searchOptions = searchOptions,
-                    selectedMedia = selectedMedia,
-                    onBack = {
-                        finish()
-                        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-                    },
-                    onFolderSelected = { uri -> handleFolderSelected(uri) },
-                    onSearchOptionsChanged = { options -> handleSearchOptionsChanged(options) },
-                    onSearchMedia = { query -> startMediaSearch(query) },
-                    onSelectMedia = { media -> handleMediaSelected(media) },
-                    onDownload = { subtitle -> startDownload(subtitle) },
-                    onClearSelection = { handleClearSelection() }
-                )
+            KoinAndroidContext {
+                val themeController = ThemeController.from(this@SubtitleSearchActivity)
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
+                ) {
+                    SubtitleSearchScreen(
+                        savedFolderUri = savedFolderUri,
+                        mediaResults = mediaResults,
+                        searchResults = searchResults,
+                        isSearchingMedia = isSearchingMedia,
+                        isSearching = isSearching,
+                        searchOptions = searchOptions,
+                        selectedMedia = selectedMedia,
+                        onBack = {
+                            finish()
+                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+                        },
+                        onFolderSelected = { uri -> handleFolderSelected(uri) },
+                        onSearchOptionsChanged = { options -> handleSearchOptionsChanged(options) },
+                        onSearchMedia = { query -> startMediaSearch(query) },
+                        onSelectMedia = { media -> handleMediaSelected(media) },
+                        onDownload = { subtitle -> startDownload(subtitle) },
+                        onClearSelection = { handleClearSelection() }
+                    )
+                }
             }
         }
     }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,7 +31,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.fam4k007.videoplayer.compose.ImmersiveTopAppBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -60,13 +60,16 @@ fun WebDavAccountListScreen(
     
     Scaffold(
         topBar = {
-            ImmersiveTopAppBar(
+            TopAppBar(
                 title = { Text("WebDAV 账户管理", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         },
         floatingActionButton = {
@@ -677,21 +680,19 @@ fun WebDavBrowserScreen(
     Scaffold(
         topBar = {
             Column {
-                ImmersiveTopAppBar(
+                TopAppBar(
                     title = { 
                         Text(
                             account.displayName, 
                             fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            fontWeight = FontWeight.Bold
                         ) 
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(
-                                Icons.Default.ArrowBack, 
-                                contentDescription = "返回",
-                                tint = Color.White
+                                Icons.AutoMirrored.Filled.ArrowBack, 
+                                contentDescription = "返回"
                             )
                         }
                     },
@@ -699,11 +700,13 @@ fun WebDavBrowserScreen(
                         IconButton(onClick = { showSortDialog = true }) {
                             Icon(
                                 Icons.Default.Sort, 
-                                contentDescription = "排序",
-                                tint = Color.White
+                                contentDescription = "排序"
                             )
                         }
-                    }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
                 )
                 
                 // 当前路径显示
