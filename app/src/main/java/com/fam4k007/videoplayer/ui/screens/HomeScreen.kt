@@ -57,7 +57,6 @@ import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
 import com.fam4k007.videoplayer.remote.RemotePlaybackLauncher
 import com.fam4k007.videoplayer.remote.RemotePlaybackRequest
 import com.fam4k007.videoplayer.remote.RemoteUrlParser
-import com.fam4k007.videoplayer.webdav.WebDavComposeActivity
 import com.fanchen.fam4k007.manager.compose.BiliBiliLoginActivity
 import org.koin.compose.koinInject
 
@@ -67,7 +66,8 @@ import org.koin.compose.koinInject
 @Composable
 fun HomeScreen(
     historyManager: PlaybackHistoryManager,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onNavigateToWebDav: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val preferencesManager: PreferencesManager = koinInject()
@@ -165,11 +165,7 @@ fun HomeScreen(
             },
             onWebDavClick = {
                 isExpanded = false  // 点击后自动收起
-                context.startActivity(Intent(context, WebDavComposeActivity::class.java))
-                (context as? android.app.Activity)?.overridePendingTransition(
-                    R.anim.slide_in_right,
-                    R.anim.slide_out_left
-                )
+                onNavigateToWebDav()
             },
             onNetworkLinkClick = {
                 isExpanded = false
@@ -684,7 +680,7 @@ fun ExpandableActionButton(
 }
 
 /**
- * 功能项（图标 + 文字）
+ * 功能项（纯图标 + 文字，无背景容器）
  */
 @Composable
 fun ActionItem(
@@ -699,28 +695,12 @@ fun ActionItem(
             .clickable(onClick = onClick)
             .padding(8.dp)
     ) {
-        // 图标背景（参考设置页样式）
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-                        )
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
-            )
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(32.dp)
+        )
         
         Spacer(modifier = Modifier.height(8.dp))
         
@@ -733,7 +713,7 @@ fun ActionItem(
 }
 
 /**
- * 带背景的图标按钮（参考设置页样式）
+ * 纯图标按钮（无背景容器）
  */
 @Composable
 fun IconWithBackground(
@@ -741,32 +721,14 @@ fun IconWithBackground(
     contentDescription: String,
     onClick: () -> Unit
 ) {
-    Box(
+    Icon(
+        imageVector = icon,
+        contentDescription = contentDescription,
+        tint = MaterialTheme.colorScheme.primary,
         modifier = Modifier
-            .size(40.dp)
-            .shadow(
-                elevation = 4.dp,
-                shape = RoundedCornerShape(10.dp)
-            )
-            .clip(RoundedCornerShape(10.dp))
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primaryContainer,
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-                    )
-                )
-            )
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(22.dp)
-        )
-    }
+            .size(34.dp)
+            .clickable(onClick = onClick)
+    )
 }
 
 /**

@@ -1,6 +1,7 @@
 package com.fam4k007.videoplayer.di
 
 import com.fam4k007.videoplayer.PlaybackHistoryManager
+import com.fam4k007.videoplayer.data.preferences.WebDavAccountDataSource
 import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.repository.BilibiliRepository
 import com.fam4k007.videoplayer.repository.PlayerRepository
@@ -40,10 +41,15 @@ val repositoryModule = module {
         )
     }
     
+    // WebDAV DataSource - 账户数据持久化
+    single { 
+        WebDavAccountDataSource(context = androidContext())
+    }
+    
     // WebDavRepository - WebDAV文件操作
     single { 
         WebDavRepository(
-            accountManager = get()
+            accountDataSource = get()
         )
     }
     

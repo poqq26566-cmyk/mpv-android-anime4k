@@ -1,67 +1,58 @@
 package com.fam4k007.videoplayer.repository
 
-import com.fam4k007.videoplayer.webdav.WebDavAccount
-import com.fam4k007.videoplayer.webdav.WebDavAccountManager
-import com.fam4k007.videoplayer.webdav.WebDavClient
-import com.fam4k007.videoplayer.webdav.WebDavConfig
+import com.fam4k007.videoplayer.data.model.WebDavAccount
+import com.fam4k007.videoplayer.data.preferences.WebDavAccountDataSource
+import com.fam4k007.videoplayer.domain.webdav.WebDavClient
+import com.fam4k007.videoplayer.domain.webdav.WebDavConfig
 import com.fam4k007.videoplayer.utils.Logger
 
 /**
- * WebDAV数据仓库
- * 封装WebDAV文件操作、账户管理等数据访问逻辑
- * 
- * 职责：
- * - WebDAV账户管理（增删改查）
- * - WebDAV文件浏览（列出文件/文件夹）
- * - WebDAV文件操作（通过Client实例）
- * - 连接测试
+ * WebDAV 仓储层
+ * Repository Layer - 封装数据访问逻辑
  */
 class WebDavRepository(
-    private val accountManager: WebDavAccountManager
+    private val accountDataSource: WebDavAccountDataSource
 ) {
     
     companion object {
         private const val TAG = "WebDavRepository"
     }
     
-    // ==================== 账户管理 ====================
-    
     /**
-     * 获取所有WebDAV账户
+     * 获取所有账户
      */
     fun getAllAccounts(): List<WebDavAccount> {
-        return try {
-            accountManager.getAllAccounts()
-        } catch (e: Exception) {
-            Logger.e(TAG, "Failed to get all accounts: ${e.message}", e)
-            emptyList()
-        }
-    }
-    
-    /**
-     * 根据ID获取账户
-     */
-    fun getAccountById(id: String): WebDavAccount? {
-        return try {
-            accountManager.getAccountById(id)
-        } catch (e: Exception) {
-            Logger.e(TAG, "Failed to get account by ID: ${e.message}", e)
-            null
-        }
+        return accountDataSource.getAllAccounts()
     }
     
     /**
      * 添加账户
+     * @return true: 添加成功, false: 账户已存在
      */
     fun addAccount(account: WebDavAccount): Boolean {
+        val accounts = accountDataSource.getAllAccounts().toMutableList()
+        
+        // 检查是否已存在相同服务器的账户
+        if (accounts.any { it.serverUrl == account.serverUrl && it.account == account.account }) {
+            return false
+        }
+        
+        accounts.add(account)
+        accountDataSource.saveAllAccounts(accounts)
+        return true
+    }
+    
+    /**
+     * 删除账户
+     */
+    fun deleteAccount(accountId: String): Boolean {
         return try {
-            val result = accountManager.addAccount(account)
-            if (result) {
-                Logger.d(TAG, "Account added: ${account.displayName}")
-            }
-            result
+            val accounts = accountDataSource.getAllAccounts().toMutableList()
+            accounts.removeAll { it.id == accountId }
+            accountDataSource.saveAllAccounts(accounts)
+            true
         } catch (e: Exception) {
-            Logger.e(TAG, "Failed to add account: ${e.message}", e)
+            e.printStackTrace()
             false
         }
     }
@@ -71,31 +62,33 @@ class WebDavRepository(
      */
     fun updateAccount(account: WebDavAccount): Boolean {
         return try {
-            val result = accountManager.updateAccount(account)
-            if (result) {
-                Logger.d(TAG, "Account updated: ${account.displayName}")
+            val accounts = accountDataSource.getAllAccounts().toMutableList()
+            val index = accounts.indexOfFirst { it.id == account.id }
+            if (index >= 0) {
+                accounts[index] = account
+                accountDataSource.saveAllAccounts(accounts)
+                true
+            } else {
+                false
             }
-            result
         } catch (e: Exception) {
-            Logger.e(TAG, "Failed to update account: ${e.message}", e)
+            e.printStackTrace()
             false
         }
     }
     
     /**
-     * 删除账户
+     * 根据 ID 获取账户
      */
-    fun deleteAccount(id: String): Boolean {
-        return try {
-            val result = accountManager.deleteAccount(id)
-            if (result) {
-                Logger.d(TAG, "Account deleted: $id")
-            }
-            result
-        } catch (e: Exception) {
-            Logger.e(TAG, "Failed to delete account: ${e.message}", e)
-            false
-        }
+    fun getAccountById(accountId: String): WebDavAccount? {
+        return accountDataSource.getAccountById(accountId)
+    }
+    
+    /**
+     * 清除所有账户
+     */
+    fun clearAllAccounts() {
+        accountDataSource.clearAllAccounts()
     }
     
     /**
@@ -105,7 +98,7 @@ class WebDavRepository(
      */
     fun getCurrentAccount(): WebDavAccount? {
         return try {
-            val accounts = accountManager.getAllAccounts()
+            val accounts = accountDataSource.getAllAccounts()
             accounts.firstOrNull().also {
                 Logger.d(TAG, "getCurrentAccount: ${it?.displayName ?: "none"}")
             }
@@ -121,7 +114,7 @@ class WebDavRepository(
      */
     fun setCurrentAccount(id: String): Boolean {
         return try {
-            val account = accountManager.getAccountById(id)
+            val account = accountDataSource.getAccountById(id)
             if (account != null) {
                 Logger.d(TAG, "Current account set to: ${account.displayName}")
                 true

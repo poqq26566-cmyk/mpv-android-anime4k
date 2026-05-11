@@ -6,7 +6,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -31,14 +30,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.VideoFolder
-import com.fam4k007.videoplayer.preferences.PreferencesManager
+import com.fam4k007.videoplayer.presentation.LibraryViewModel
 import com.fam4k007.videoplayer.ui.components.BatchDeleteConfirmDialog
 import com.fam4k007.videoplayer.ui.components.DeleteConfirmDialog
-import com.fam4k007.videoplayer.ui.components.FileOperationMenu
 import com.fam4k007.videoplayer.ui.components.MultiSelectActionBar
 import com.fam4k007.videoplayer.ui.components.RenameDialog
 import com.fam4k007.videoplayer.utils.FileOperationManager
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -46,24 +45,20 @@ import java.io.File
 fun FolderBrowserScreen(
     hasPermission: Boolean,
     onRequestPermission: () -> Unit,
-    onScanVideos: ((List<VideoFolder>) -> Unit) -> Unit,
     onNavigateBack: () -> Unit,
     onOpenFolder: (VideoFolder) -> Unit,
-    preferencesManager: PreferencesManager
+    viewModel: LibraryViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     
-    var folders by remember { mutableStateOf<List<VideoFolder>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(false) }
-    var isRefreshing by remember { mutableStateOf(false) }
-    var sortType by remember { mutableStateOf(preferencesManager.getFolderSortType()) }
-    var sortOrder by remember { mutableStateOf(preferencesManager.getFolderSortOrder()) }
+    // 观察 ViewModel 状态
+    val folderListState by viewModel.folderListState.collectAsState()
+    
     var showSortDialog by remember { mutableStateOf(false) }
     
     // 文件操作菜单相关状态
     var selectedFolder by remember { mutableStateOf<VideoFolder?>(null) }
-    var showOperationMenu by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     
@@ -71,22 +66,11 @@ fun FolderBrowserScreen(
     var isEditMode by remember { mutableStateOf(false) }
     var selectedFolders by remember { mutableStateOf<Set<VideoFolder>>(emptySet()) }
     var showBatchDeleteDialog by remember { mutableStateOf(false) }
-    
-    fun refreshFolders() {
-        isRefreshing = true
-        onScanVideos { scannedFolders ->
-            folders = sortFolders(scannedFolders, sortType, sortOrder)
-            isRefreshing = false
-        }
-    }
 
+    // 初始化加载
     LaunchedEffect(hasPermission) {
-        if (hasPermission) {
-            isLoading = true
-            onScanVideos { scannedFolders ->
-                folders = sortFolders(scannedFolders, sortType, sortOrder)
-                isLoading = false
-            }
+        if (hasPermission && folderListState.folders.isEmpty()) {
+            viewModel.scanVideoFolders()
         }
     }
 
@@ -145,7 +129,7 @@ fun FolderBrowserScreen(
                 !hasPermission -> {
                     PermissionPrompt(onRequestPermission)
                 }
-                isLoading -> {
+                folderListState.isLoading -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -153,7 +137,7 @@ fun FolderBrowserScreen(
                         CircularProgressIndicator()
                     }
                 }
-                folders.isEmpty() -> {
+                folderListState.folders.isEmpty() -> {
                     EmptyState("未找到视频文件夹")
                 }
                 else -> {
@@ -164,7 +148,7 @@ fun FolderBrowserScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             item {
-                                if (isRefreshing) {
+                                if (folderListState.isRefreshing) {
                                     Box(
                                         modifier = Modifier.fillMaxWidth().padding(16.dp),
                                         contentAlignment = Alignment.Center
@@ -173,7 +157,7 @@ fun FolderBrowserScreen(
                                     }
                                 }
                             }
-                            items(folders) { folder ->
+                            items(folderListState.folders) { folder ->
                                 FolderItem(
                                     folder = folder,
                                     isSelected = folder == selectedFolder,
@@ -191,48 +175,23 @@ fun FolderBrowserScreen(
                                             // 正常模式下打开文件夹
                                             onOpenFolder(folder)
                                         }
-                                    },
-                                    onLongClick = {
-                                        if (!isEditMode) {
-                                            selectedFolder = folder
-                                            showOperationMenu = true
-                                        }
                                     }
                                 )
                             }
                         }
                         
-                        // 文件操作菜单（全屏显示）
-                        FileOperationMenu(
-                            visible = showOperationMenu && selectedFolder != null && !isEditMode,
-                            fileName = selectedFolder?.folderName ?: "",
-                            onDismiss = { 
-                                showOperationMenu = false
-                                selectedFolder = null
-                            },
-                            onRename = { 
-                                showRenameDialog = true
-                                showOperationMenu = false  // 关闭菜单
-                            },
-                            onDelete = { 
-                                showDeleteDialog = true
-                                showOperationMenu = false  // 关闭菜单
-                            },
-                            onCopy = null  // 文件夹不提供复制功能
-                        )
-                        
                         // 多选操作栏
                         MultiSelectActionBar(
                             visible = isEditMode && selectedFolders.isNotEmpty(),
                             selectedCount = selectedFolders.size,
-                            totalCount = folders.size,
+                            totalCount = folderListState.folders.size,
                             onSelectAll = {
-                                if (selectedFolders.size == folders.size) {
+                                if (selectedFolders.size == folderListState.folders.size) {
                                     // 取消全选
                                     selectedFolders = emptySet()
                                 } else {
                                     // 全选
-                                    selectedFolders = folders.toSet()
+                                    selectedFolders = folderListState.folders.toSet()
                                 }
                             },
                             onRename = {
@@ -273,7 +232,7 @@ fun FolderBrowserScreen(
                                 .padding(16.dp)
                         ) {
                             FloatingActionButton(
-                                onClick = { refreshFolders() }
+                                onClick = { viewModel.refreshFolders() }
                             ) {
                                 Icon(Icons.Default.Refresh, "刷新", tint = MaterialTheme.colorScheme.onPrimary)
                             }
@@ -286,15 +245,11 @@ fun FolderBrowserScreen(
 
     if (showSortDialog) {
         SortDialog(
-            currentSortType = sortType,
-            currentSortOrder = sortOrder,
+            currentSortType = folderListState.sortType.toString(),
+            currentSortOrder = folderListState.sortOrder.toString(),
             onDismiss = { showSortDialog = false },
-            onSortSelected = { newType, newOrder ->
-                sortType = newType
-                sortOrder = newOrder
-                preferencesManager.setFolderSortType(newType)
-                preferencesManager.setFolderSortOrder(newOrder)
-                folders = sortFolders(folders, newType, newOrder)
+            onSortSelected = { newType: String, newOrder: String ->
+                viewModel.sortFolders(newType.toInt(), newOrder.toInt())
                 showSortDialog = false
             }
         )
@@ -315,15 +270,10 @@ fun FolderBrowserScreen(
                     val newPath = FileOperationManager.rename(context, oldPath, newName)
                     if (newPath != null) {
                         // 刷新列表
-                        refreshFolders()
+                        viewModel.refreshFolders()
                     }
                     showRenameDialog = false
                     selectedFolder = null
-                    // 退出编辑模式
-                    if (isEditMode) {
-                        selectedFolders = emptySet()
-                        isEditMode = false
-                    }
                 }
             }
         )
@@ -348,7 +298,7 @@ fun FolderBrowserScreen(
                     )
                     if (success) {
                         // 刷新列表
-                        refreshFolders()
+                        viewModel.refreshFolders()
                     }
                     showDeleteDialog = false
                     selectedFolder = null
@@ -374,7 +324,7 @@ fun FolderBrowserScreen(
                         )
                     }
                     // 刷新列表
-                    refreshFolders()
+                    viewModel.refreshFolders()
                     selectedFolders = emptySet()
                     isEditMode = false
                     showBatchDeleteDialog = false
@@ -391,23 +341,19 @@ private fun FolderItem(
     isSelected: Boolean,
     isEditMode: Boolean,
     isChecked: Boolean,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            ),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(28.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected && !isEditMode) 
                 MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) 
             else 
-                MaterialTheme.colorScheme.surface
+                MaterialTheme.colorScheme.surfaceContainer
         ),
         border = if (isSelected && !isEditMode) 
             androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) 

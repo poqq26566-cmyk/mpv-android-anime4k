@@ -47,6 +47,8 @@ import kotlinx.coroutines.withContext
  */
 class MediaInfoActivity : ComponentActivity() {
 
+    private var themeRevision by mutableStateOf(0)
+
     companion object {
         private const val TAG = "MediaInfoActivity"
         const val EXTRA_VIDEO_URI = "extra_video_uri"
@@ -72,6 +74,7 @@ class MediaInfoActivity : ComponentActivity() {
         val videoName = intent.getStringExtra(EXTRA_VIDEO_NAME) ?: "未知视频"
 
         setContent {
+            val revision = themeRevision
             KoinAndroidContext {
                 val themeController = ThemeController.from(this@MediaInfoActivity)
                 VideoPlayerTheme(
@@ -92,6 +95,11 @@ class MediaInfoActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        themeRevision++
     }
 }
 

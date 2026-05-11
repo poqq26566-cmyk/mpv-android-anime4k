@@ -39,11 +39,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.androidx.compose.KoinAndroidContext
+import androidx.compose.runtime.mutableIntStateOf
 
 /**
  * B站登录界面
  */
 class BiliBiliLoginActivity : ComponentActivity() {
+
+    private var themeRevision by mutableIntStateOf(0)
     
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -52,6 +55,7 @@ class BiliBiliLoginActivity : ComponentActivity() {
         val authManager = BiliBiliAuthManager.getInstance(this)
         
         setContent {
+            val revision = themeRevision
             KoinAndroidContext {
                 val themeController = ThemeController.from(this@BiliBiliLoginActivity)
                 VideoPlayerTheme(
@@ -68,6 +72,11 @@ class BiliBiliLoginActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        themeRevision++
     }
 }
 

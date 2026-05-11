@@ -1,10 +1,11 @@
 package com.fam4k007.videoplayer.di
 
 import com.fam4k007.videoplayer.domain.player.Anime4KManager
+import com.fam4k007.videoplayer.domain.webdav.WebDavClient
+import com.fam4k007.videoplayer.domain.webdav.WebDavConfig
 import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.manager.ThemeManager
 import com.fam4k007.videoplayer.utils.ThumbnailCacheManager
-import com.fam4k007.videoplayer.webdav.WebDavAccountManager
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -24,9 +25,9 @@ val domainModule = module {
         Anime4KManager(androidContext())
     }
     
-    // WebDavAccountManager单例
-    single { 
-        WebDavAccountManager.getInstance(androidContext())
+    // WebDavClient - WebDAV客户端（按需创建，使用factory）
+    factory { (config: WebDavConfig) -> 
+        WebDavClient(config)
     }
     
     // ThumbnailCacheManager单例

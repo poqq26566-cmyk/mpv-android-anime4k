@@ -1,9 +1,12 @@
 package com.fam4k007.videoplayer.di
 
+import com.fam4k007.videoplayer.presentation.BiliBiliPlayViewModel
 import com.fam4k007.videoplayer.presentation.BilibiliViewModel
 import com.fam4k007.videoplayer.presentation.LibraryViewModel
 import com.fam4k007.videoplayer.presentation.PlayerViewModel
 import com.fam4k007.videoplayer.presentation.SettingsViewModel
+import com.fam4k007.videoplayer.presentation.TVBrowserViewModel
+import com.fam4k007.videoplayer.presentation.WebDavViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
@@ -24,4 +27,13 @@ val presentationModule = module {
     
     // 设置ViewModel
     viewModel { SettingsViewModel(get()) }
+    
+    // TV浏览器ViewModel
+    viewModel { TVBrowserViewModel() }
+    
+    // B站番剧播放ViewModel
+    viewModel { BiliBiliPlayViewModel(get()) }
+
+    // WebDAV ViewModel
+    viewModel { WebDavViewModel(get(), get()) }
 }

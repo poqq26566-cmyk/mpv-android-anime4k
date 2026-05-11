@@ -12,9 +12,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.fam4k007.videoplayer.PlaybackHistoryManager
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.VideoPlayerActivity
+import com.fam4k007.videoplayer.domain.webdav.WebDavClient
+import com.fam4k007.videoplayer.domain.webdav.WebDavConfig
+import com.fam4k007.videoplayer.repository.WebDavRepository
 import com.fam4k007.videoplayer.ui.screens.AboutScreen
 import com.fam4k007.videoplayer.ui.screens.HomeScreen
 import com.fam4k007.videoplayer.ui.screens.PlaybackHistoryScreen
@@ -22,6 +26,9 @@ import com.fam4k007.videoplayer.ui.screens.PlaybackSettingsScreen
 import com.fam4k007.videoplayer.LicenseActivity
 import com.fam4k007.videoplayer.FeedbackActivity
 import com.fam4k007.videoplayer.ui.screens.SettingsScreen
+import com.fam4k007.videoplayer.ui.webdav.WebDavAccountListScreen
+import com.fam4k007.videoplayer.ui.webdav.WebDavBrowserScreen
+import org.koin.compose.koinInject
 
 /**
  * 应用主导航图
@@ -67,6 +74,9 @@ fun AppNavGraph(
                 historyManager = historyManager,
                 onNavigateToSettings = {
                     navController.navigate(AppScreen.Settings)
+                },
+                onNavigateToWebDav = {
+                    navController.navigate(AppScreen.WebDavAccounts)
                 }
             )
         }
@@ -110,6 +120,59 @@ fun AppNavGraph(
                     )
                 }
             )
+        }
+
+        composable<AppScreen.WebDavAccounts> {
+            WebDavAccountListScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onAccountSelected = { account ->
+                    navController.navigate(AppScreen.WebDavBrowser(accountId = account.id))
+                }
+            )
+        }
+
+        composable<AppScreen.WebDavBrowser> { backStackEntry ->
+            val context = LocalContext.current
+            val repository: WebDavRepository = koinInject()
+            val args = backStackEntry.toRoute<AppScreen.WebDavBrowser>()
+            val account = repository.getAccountById(args.accountId)
+
+            if (account == null) {
+                // 账户不存在，返回
+                navController.popBackStack()
+            } else {
+                WebDavBrowserScreen(
+                    account = account,
+                    onNavigateBack = { navController.popBackStack() },
+                    onPlayVideo = { file, client ->
+                        // 构建包含认证信息的 URL
+                        val fileUrl = if (client.config.isAnonymous || client.config.account.isEmpty()) {
+                            client.getFileUrl(file.path)
+                        } else {
+                            val uri = Uri.parse(client.config.serverUrl)
+                            val scheme = uri.scheme
+                            val host = uri.host
+                            val port = if (uri.port != -1) ":${uri.port}" else ""
+                            val username = Uri.encode(client.config.account)
+                            val password = Uri.encode(client.config.password)
+                            val basePath = uri.path ?: "/"
+                            val encodedPath = file.path.split("/").joinToString("/") { Uri.encode(it) }
+                            "$scheme://$username:$password@$host$port$basePath$encodedPath"
+                        }
+
+                        val intent = Intent(context, VideoPlayerActivity::class.java).apply {
+                            data = Uri.parse(fileUrl)
+                            putExtra("video_title", file.name)
+                            putExtra("is_webdav", true)
+                        }
+                        context.startActivity(intent)
+                        (context as? android.app.Activity)?.overridePendingTransition(
+                            R.anim.slide_in_right,
+                            R.anim.slide_out_left
+                        )
+                    }
+                )
+            }
         }
 
         composable<AppScreen.About> {

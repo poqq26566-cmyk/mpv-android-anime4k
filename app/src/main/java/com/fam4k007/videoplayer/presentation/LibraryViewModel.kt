@@ -24,24 +24,37 @@ class LibraryViewModel(
         private const val TAG = "LibraryViewModel"
     }
     
-    // ==================== UI State ====================
+    // ==================== 文件夹列表状态 ====================
     
-    private val _uiState = MutableStateFlow<LibraryUiState>(LibraryUiState.Loading)
-    val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
+    data class FolderListState(
+        val folders: List<VideoFolder> = emptyList(),
+        val isLoading: Boolean = false,
+        val isRefreshing: Boolean = false,
+        val error: String? = null,
+        val sortType: Int = 0,  // 0: 名称升序, 1: 名称降序, 2: 视频数量
+        val sortOrder: Int = 0   // 0: 升序, 1: 降序
+    )
     
-    private val _folders = MutableStateFlow<List<VideoFolder>>(emptyList())
-    val folders: StateFlow<List<VideoFolder>> = _folders.asStateFlow()
+    private val _folderListState = MutableStateFlow(FolderListState())
+    val folderListState: StateFlow<FolderListState> = _folderListState.asStateFlow()
     
-    private val _videos = MutableStateFlow<List<VideoFileParcelable>>(emptyList())
-    val videos: StateFlow<List<VideoFileParcelable>> = _videos.asStateFlow()
+    // ==================== 视频列表状态 ====================
     
-    private val _sortOrder = MutableStateFlow(VideoSortOrder.NAME_ASC)
-    val sortOrder: StateFlow<VideoSortOrder> = _sortOrder.asStateFlow()
+    data class VideoListState(
+        val videos: List<VideoFileParcelable> = emptyList(),
+        val filteredVideos: List<VideoFileParcelable> = emptyList(),
+        val isLoading: Boolean = false,
+        val isRefreshing: Boolean = false,
+        val error: String? = null,
+        val sortType: Int = 0,  // 0: 名称, 1: 时间, 2: 大小
+        val sortOrder: Int = 0,  // 0: 升序, 1: 降序
+        val searchQuery: String = ""
+    )
     
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+    private val _videoListState = MutableStateFlow(VideoListState())
+    val videoListState: StateFlow<VideoListState> = _videoListState.asStateFlow()
     
-    // ==================== 视频扫描 ====================
+    // ==================== 文件夹扫描 ====================
     
     /**
      * 扫描所有本地视频文件夹
@@ -49,21 +62,69 @@ class LibraryViewModel(
     fun scanVideoFolders() {
         viewModelScope.launch {
             try {
-                _uiState.value = LibraryUiState.Loading
+                _folderListState.value = _folderListState.value.copy(isLoading = true, error = null)
                 val folders = videoRepository.scanAllVideoFolders()
-                _folders.value = folders
-                _uiState.value = if (folders.isEmpty()) {
-                    LibraryUiState.Empty
-                } else {
-                    LibraryUiState.Success
-                }
+                val sortedFolders = sortFolders(folders, _folderListState.value.sortType, _folderListState.value.sortOrder)
+                _folderListState.value = _folderListState.value.copy(
+                    folders = sortedFolders,
+                    isLoading = false
+                )
                 Logger.d(TAG, "Scanned ${folders.size} video folders")
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to scan video folders", e)
-                _uiState.value = LibraryUiState.Error(e.message ?: "Unknown error")
+                _folderListState.value = _folderListState.value.copy(
+                    isLoading = false,
+                    error = e.message ?: "Unknown error"
+                )
             }
         }
     }
+    
+    /**
+     * 刷新文件夹列表
+     */
+    fun refreshFolders() {
+        viewModelScope.launch {
+            try {
+                _folderListState.value = _folderListState.value.copy(isRefreshing = true, error = null)
+                val folders = videoRepository.scanAllVideoFolders()
+                val sortedFolders = sortFolders(folders, _folderListState.value.sortType, _folderListState.value.sortOrder)
+                _folderListState.value = _folderListState.value.copy(
+                    folders = sortedFolders,
+                    isRefreshing = false
+                )
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to refresh folders", e)
+                _folderListState.value = _folderListState.value.copy(
+                    isRefreshing = false,
+                    error = e.message ?: "Unknown error"
+                )
+            }
+        }
+    }
+    
+    /**
+     * 文件夹排序
+     */
+    fun sortFolders(sortType: Int, sortOrder: Int) {
+        val sorted = sortFolders(_folderListState.value.folders, sortType, sortOrder)
+        _folderListState.value = _folderListState.value.copy(
+            folders = sorted,
+            sortType = sortType,
+            sortOrder = sortOrder
+        )
+    }
+    
+    private fun sortFolders(folders: List<VideoFolder>, sortType: Int, sortOrder: Int): List<VideoFolder> {
+        return when (sortType) {
+            0 -> if (sortOrder == 0) folders.sortedBy { it.folderName } else folders.sortedByDescending { it.folderName }
+            1 -> if (sortOrder == 0) folders.sortedByDescending { it.folderName } else folders.sortedBy { it.folderName }
+            2 -> if (sortOrder == 0) folders.sortedBy { it.videoCount } else folders.sortedByDescending { it.videoCount }
+            else -> folders
+        }
+    }
+    
+    // ==================== 视频扫描 ====================
     
     /**
      * 扫描指定文件夹的视频
@@ -71,18 +132,21 @@ class LibraryViewModel(
     fun scanVideosInFolder(folderPath: String) {
         viewModelScope.launch {
             try {
-                _uiState.value = LibraryUiState.Loading
-                val videos = videoRepository.scanVideosInFolder(folderPath, _sortOrder.value)
-                _videos.value = videos
-                _uiState.value = if (videos.isEmpty()) {
-                    LibraryUiState.Empty
-                } else {
-                    LibraryUiState.Success
-                }
+                _videoListState.value = _videoListState.value.copy(isLoading = true, error = null)
+                val videos = videoRepository.scanVideosInFolder(folderPath, VideoSortOrder.NAME_ASC)
+                val sortedVideos = sortVideos(videos, _videoListState.value.sortType, _videoListState.value.sortOrder)
+                _videoListState.value = _videoListState.value.copy(
+                    videos = sortedVideos,
+                    filteredVideos = filterVideos(sortedVideos, _videoListState.value.searchQuery),
+                    isLoading = false
+                )
                 Logger.d(TAG, "Scanned ${videos.size} videos in folder: $folderPath")
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to scan videos in folder", e)
-                _uiState.value = LibraryUiState.Error(e.message ?: "Unknown error")
+                _videoListState.value = _videoListState.value.copy(
+                    isLoading = false,
+                    error = e.message ?: "Unknown error"
+                )
             }
         }
     }
@@ -91,17 +155,48 @@ class LibraryViewModel(
      * 刷新当前文件夹的视频列表
      */
     fun refreshVideos(folderPath: String) {
-        scanVideosInFolder(folderPath)
+        viewModelScope.launch {
+            try {
+                _videoListState.value = _videoListState.value.copy(isRefreshing = true, error = null)
+                val videos = videoRepository.scanVideosInFolder(folderPath, VideoSortOrder.NAME_ASC)
+                val sortedVideos = sortVideos(videos, _videoListState.value.sortType, _videoListState.value.sortOrder)
+                _videoListState.value = _videoListState.value.copy(
+                    videos = sortedVideos,
+                    filteredVideos = filterVideos(sortedVideos, _videoListState.value.searchQuery),
+                    isRefreshing = false
+                )
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to refresh videos", e)
+                _videoListState.value = _videoListState.value.copy(
+                    isRefreshing = false,
+                    error = e.message ?: "Unknown error"
+                )
+            }
+        }
     }
     
     // ==================== 视频排序 ====================
     
     /**
-     * 更改排序方式并重新加载
+     * 视频排序
      */
-    fun changeSortOrder(sortOrder: VideoSortOrder, folderPath: String?) {
-        _sortOrder.value = sortOrder
-        folderPath?.let { scanVideosInFolder(it) }
+    fun sortVideos(sortType: Int, sortOrder: Int) {
+        val sorted = sortVideos(_videoListState.value.videos, sortType, sortOrder)
+        _videoListState.value = _videoListState.value.copy(
+            videos = sorted,
+            filteredVideos = filterVideos(sorted, _videoListState.value.searchQuery),
+            sortType = sortType,
+            sortOrder = sortOrder
+        )
+    }
+    
+    private fun sortVideos(videos: List<VideoFileParcelable>, sortType: Int, sortOrder: Int): List<VideoFileParcelable> {
+        return when (sortType) {
+            0 -> if (sortOrder == 0) videos.sortedBy { it.name } else videos.sortedByDescending { it.name }
+            1 -> if (sortOrder == 0) videos.sortedBy { it.dateAdded } else videos.sortedByDescending { it.dateAdded }
+            2 -> if (sortOrder == 0) videos.sortedBy { it.size } else videos.sortedByDescending { it.size }
+            else -> videos
+        }
     }
     
     // ==================== 视频搜索 ====================
@@ -110,120 +205,25 @@ class LibraryViewModel(
      * 搜索视频
      */
     fun searchVideos(query: String) {
-        _searchQuery.value = query
-        viewModelScope.launch {
-            try {
-                if (query.isBlank()) {
-                    // 清空搜索，显示所有视频
-                    _uiState.value = LibraryUiState.Success
-                    return@launch
-                }
-                
-                _uiState.value = LibraryUiState.Loading
-                val searchResults = videoRepository.searchVideos(query)
-                _videos.value = searchResults
-                _uiState.value = if (searchResults.isEmpty()) {
-                    LibraryUiState.Empty
-                } else {
-                    LibraryUiState.Success
-                }
-                Logger.d(TAG, "Search results for '$query': ${searchResults.size} videos")
-            } catch (e: Exception) {
-                Logger.e(TAG, "Failed to search videos", e)
-                _uiState.value = LibraryUiState.Error(e.message ?: "Unknown error")
-            }
-        }
+        val filtered = filterVideos(_videoListState.value.videos, query)
+        _videoListState.value = _videoListState.value.copy(
+            searchQuery = query,
+            filteredVideos = filtered
+        )
+    }
+    
+    private fun filterVideos(videos: List<VideoFileParcelable>, query: String): List<VideoFileParcelable> {
+        if (query.isBlank()) return videos
+        return videos.filter { it.name.contains(query, ignoreCase = true) }
     }
     
     /**
      * 清空搜索
      */
     fun clearSearch() {
-        _searchQuery.value = ""
+        _videoListState.value = _videoListState.value.copy(
+            searchQuery = "",
+            filteredVideos = _videoListState.value.videos
+        )
     }
-    
-    // ==================== 缓存管理 ====================
-    
-    /**
-     * 从数据库加载缓存的视频
-     */
-    fun loadCachedVideos(folderPath: String) {
-        viewModelScope.launch {
-            try {
-                _uiState.value = LibraryUiState.Loading
-                val cachedVideos = videoRepository.getCachedVideos(folderPath)
-                if (cachedVideos.isNotEmpty()) {
-                    _videos.value = cachedVideos
-                    _uiState.value = LibraryUiState.Success
-                    Logger.d(TAG, "Loaded ${cachedVideos.size} cached videos")
-                } else {
-                    // 没有缓存，触发扫描
-                    scanVideosInFolder(folderPath)
-                }
-            } catch (e: Exception) {
-                Logger.e(TAG, "Failed to load cached videos", e)
-                // 加载失败，回退到扫描
-                scanVideosInFolder(folderPath)
-            }
-        }
-    }
-    
-    /**
-     * 清除视频缓存
-     */
-    fun clearVideoCache() {
-        viewModelScope.launch {
-            try {
-                videoRepository.clearVideoCache()
-                _videos.value = emptyList()
-                Logger.d(TAG, "Cleared video cache")
-            } catch (e: Exception) {
-                Logger.e(TAG, "Failed to clear video cache", e)
-            }
-        }
-    }
-    
-    // ==================== 文件夹管理 ====================
-    
-    /**
-     * 隐藏文件夹
-     */
-    fun hideFolder(folderPath: String) {
-        viewModelScope.launch {
-            try {
-                videoRepository.hideFolder(folderPath)
-                // 刷新文件夹列表
-                scanVideoFolders()
-                Logger.d(TAG, "Hidden folder: $folderPath")
-            } catch (e: Exception) {
-                Logger.e(TAG, "Failed to hide folder", e)
-            }
-        }
-    }
-    
-    /**
-     * 显示文件夹
-     */
-    fun showFolder(folderPath: String) {
-        viewModelScope.launch {
-            try {
-                videoRepository.showFolder(folderPath)
-                // 刷新文件夹列表
-                scanVideoFolders()
-                Logger.d(TAG, "Shown folder: $folderPath")
-            } catch (e: Exception) {
-                Logger.e(TAG, "Failed to show folder", e)
-            }
-        }
-    }
-}
-
-/**
- * 视频库UI状态
- */
-sealed class LibraryUiState {
-    object Loading : LibraryUiState()
-    object Success : LibraryUiState()
-    object Empty : LibraryUiState()
-    data class Error(val message: String) : LibraryUiState()
 }

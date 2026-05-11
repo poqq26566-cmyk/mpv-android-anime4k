@@ -44,11 +44,14 @@ import android.util.Log
 import org.koin.androidx.compose.KoinAndroidContext
 
 class DownloadActivity : ComponentActivity() {
+    private var themeRevision by mutableStateOf(0)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
         setContent {
+            val revision = themeRevision
             KoinAndroidContext {
                 val themeController = ThemeController.from(this@DownloadActivity)
                 VideoPlayerTheme(
@@ -60,6 +63,11 @@ class DownloadActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        themeRevision++
     }
 }
 

@@ -6,6 +6,9 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import com.fam4k007.videoplayer.ui.screens.FeedbackScreen
 import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
@@ -15,6 +18,8 @@ import org.koin.androidx.compose.KoinAndroidContext
  * 建议反馈页面
  */
 class FeedbackActivity : BaseActivity() {
+
+    private var themeRevision by mutableIntStateOf(0)
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,6 +30,7 @@ class FeedbackActivity : BaseActivity() {
         val githubUrl = AppConstants.URLs.GITHUB_ISSUES_URL
 
         setContent {
+            val revision = themeRevision
             KoinAndroidContext {
                 val themeController = ThemeController.from(this@FeedbackActivity)
                 VideoPlayerTheme(
@@ -78,5 +84,10 @@ class FeedbackActivity : BaseActivity() {
                 Toast.LENGTH_SHORT
             ).show()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        themeRevision++
     }
 }

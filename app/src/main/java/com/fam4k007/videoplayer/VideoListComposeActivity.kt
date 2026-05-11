@@ -23,6 +23,9 @@ import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 import org.koin.android.ext.android.get
 import org.koin.androidx.compose.KoinAndroidContext
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 
 class VideoListComposeActivity : ComponentActivity() {
 
@@ -33,6 +36,7 @@ class VideoListComposeActivity : ComponentActivity() {
     private val preferencesManager: com.fam4k007.videoplayer.preferences.PreferencesManager by inject()
     private var folderPath: String = ""
     private var usePaging: Boolean = false  // 是否使用Paging3模式
+    private var themeRevision by mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,50 +50,15 @@ class VideoListComposeActivity : ComponentActivity() {
 
         val folderName = intent.getStringExtra("folder_name") ?: "视频列表"
         folderPath = intent.getStringExtra("folder_path") ?: ""
-        val videos = intent.getParcelableArrayListExtra<VideoFileParcelable>("video_list") ?: arrayListOf()
-        
-        // 如果视频数量超过100个，使用Paging3模式
-        usePaging = videos.size > 100
-        Logger.d(TAG, "视频数量: ${videos.size}, 使用Paging3: $usePaging")
 
-        setupContent(folderName, videos)
+        setupContent(folderName)
     }
 
-    private fun setupContent(folderName: String, videos: ArrayList<VideoFileParcelable>) {
+    private fun setupContent(folderName: String) {
         val activity = this
         
-        // 如果使用Paging3模式，需要先将视频保存到数据库
-        if (usePaging && folderPath.isNotEmpty()) {
-            lifecycleScope.launch {
-                withContext(Dispatchers.IO) {
-                    try {
-                        Logger.d(TAG, "开始将视频保存到数据库...")
-                        val database: VideoDatabase = activity.get()
-                        val entities = videos.map { video ->
-                            com.fam4k007.videoplayer.database.VideoCacheEntity(
-                                uri = video.uri,
-                                name = video.name,
-                                nameSortKey = com.fam4k007.videoplayer.database.VideoCacheEntity.generateSortKey(video.name),
-                                path = video.path,
-                                folderPath = folderPath,
-                                folderName = folderName,
-                                size = video.size,
-                                duration = video.duration,
-                                dateModified = video.dateAdded,
-                                dateAdded = video.dateAdded,
-                                lastScanned = System.currentTimeMillis()
-                            )
-                        }
-                        database.videoCacheDao().insertVideos(entities)
-                        Logger.d(TAG, "已保存 ${entities.size} 个视频到数据库")
-                    } catch (e: Exception) {
-                        Logger.e(TAG, "保存视频到数据库失败", e)
-                    }
-                }
-            }
-        }
-        
         setContent {
+            val revision = themeRevision
             KoinAndroidContext {
                 val themeController = ThemeController.from(activity)
                 VideoPlayerTheme(
@@ -97,42 +66,18 @@ class VideoListComposeActivity : ComponentActivity() {
                     darkMode = themeController.getDarkMode(),
                     amoledMode = themeController.getAmoledMode()
                 ) {
-                // 根据视频数量选择不同的加载模式
-                if (usePaging && folderPath.isNotEmpty()) {
-                    // 大量视频使用Paging3防止OOM
-                    VideoListScreenPaging(
+                    VideoListScreen(
                         folderName = folderName,
                         folderPath = folderPath,
                         onNavigateBack = { 
                             finish()
                             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                         },
-                        onOpenVideo = { video, allVideos -> 
-                            openVideoPlayer(video, 0, folderName, allVideos)
-                        },
-                        onRescanFolder = { callback -> 
-                            rescanFolderToDatabase { callback() }
-                        },
-                        preferencesManager = preferencesManager,
-                        coroutineScope = lifecycleScope
-                    )
-                } else {
-                    // 少量视频使用传统模式
-                    VideoListScreen(
-                        folderName = folderName,
-                        initialVideos = videos,
-                        onNavigateBack = { 
-                            finish()
-                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-                        },
                         onOpenVideo = { video, index, allVideos -> 
                             openVideoPlayer(video, index, folderName, allVideos)
-                        },
-                        onRescanFolder = { callback -> rescanFolder(callback) },
-                        preferencesManager = preferencesManager
+                        }
                     )
                 }
-            }
             }
         }
     }
@@ -272,5 +217,10 @@ class VideoListComposeActivity : ComponentActivity() {
             }
             callback()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        themeRevision++
     }
 }

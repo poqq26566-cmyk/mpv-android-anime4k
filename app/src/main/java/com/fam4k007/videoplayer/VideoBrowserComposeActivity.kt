@@ -26,6 +26,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 import org.koin.androidx.compose.KoinAndroidContext
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 
 class VideoBrowserComposeActivity : ComponentActivity() {
 
@@ -35,6 +38,7 @@ class VideoBrowserComposeActivity : ComponentActivity() {
     }
 
     private val preferencesManager: com.fam4k007.videoplayer.preferences.PreferencesManager by inject()
+    private var themeRevision by mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +57,7 @@ class VideoBrowserComposeActivity : ComponentActivity() {
         val activity = this
         
         setContent {
+            val revision = themeRevision
             KoinAndroidContext {
                 val themeController = ThemeController.from(activity)
                 VideoPlayerTheme(
@@ -63,13 +68,11 @@ class VideoBrowserComposeActivity : ComponentActivity() {
                     FolderBrowserScreen(
                         hasPermission = checkPermissions(),
                         onRequestPermission = { requestStoragePermission() },
-                        onScanVideos = { callback -> scanVideoFiles(callback) },
                         onNavigateBack = { 
                             finish()
                             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                         },
-                        onOpenFolder = { folder -> openVideoList(folder) },
-                        preferencesManager = preferencesManager
+                        onOpenFolder = { folder -> openVideoList(folder) }
                     )
                 }
             }
@@ -117,6 +120,7 @@ class VideoBrowserComposeActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        themeRevision++
         setupContent()
     }
 
@@ -223,9 +227,6 @@ class VideoBrowserComposeActivity : ComponentActivity() {
         val intent = Intent(this, VideoListComposeActivity::class.java)
         intent.putExtra("folder_name", folder.folderName)
         intent.putExtra("folder_path", folder.folderPath)
-        intent.putParcelableArrayListExtra("video_list", ArrayList(folder.videos.map {
-            VideoFileParcelable(it.uri, it.name, it.path, it.size, it.duration, it.dateAdded)
-        }))
         startActivity(intent)
         overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
     }

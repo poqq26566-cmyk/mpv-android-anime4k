@@ -7,7 +7,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -39,17 +38,18 @@ import coil.request.ImageRequest
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.VideoFileParcelable
 import com.fam4k007.videoplayer.mediainfo.MediaInfoActivity
+import com.fam4k007.videoplayer.presentation.LibraryViewModel
 import com.fam4k007.videoplayer.utils.ThumbnailCacheManager
 import com.fam4k007.videoplayer.utils.FileOperationManager
 import com.fam4k007.videoplayer.ui.components.BatchDeleteConfirmDialog
 import com.fam4k007.videoplayer.ui.components.CopyDestinationDialog
 import com.fam4k007.videoplayer.ui.components.DeleteConfirmDialog
-import com.fam4k007.videoplayer.ui.components.FileOperationMenu
 import com.fam4k007.videoplayer.ui.components.MultiSelectActionBar
 import com.fam4k007.videoplayer.ui.components.RenameDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.androidx.compose.koinViewModel
 import java.util.concurrent.TimeUnit
 import java.io.File
 
@@ -57,28 +57,23 @@ import java.io.File
 @Composable
 fun VideoListScreen(
     folderName: String,
-    initialVideos: List<VideoFileParcelable>,
+    folderPath: String,
     onNavigateBack: () -> Unit,
     onOpenVideo: (VideoFileParcelable, Int, List<VideoFileParcelable>) -> Unit,
-    onRescanFolder: ((List<VideoFileParcelable>) -> Unit) -> Unit,
-    preferencesManager: com.fam4k007.videoplayer.preferences.PreferencesManager
+    viewModel: LibraryViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     
-    var videos by remember { mutableStateOf(initialVideos) }
-    var filteredVideos by remember { mutableStateOf(initialVideos) }
-    var sortType by remember { mutableStateOf(preferencesManager.getVideoSortType()) }
-    var sortOrder by remember { mutableStateOf(preferencesManager.getVideoSortOrder()) }
-    var searchQuery by remember { mutableStateOf("") }
+    // 观察 ViewModel 状态
+    val videoListState by viewModel.videoListState.collectAsState()
+    
     var showSearch by remember { mutableStateOf(false) }
     var showSortDialog by remember { mutableStateOf(false) }
     var selectedVideo by remember { mutableStateOf<VideoFileParcelable?>(null) }
-    var isRefreshing by remember { mutableStateOf(false) }
     
     // 文件操作菜单相关状态
     var selectedVideoForOperation by remember { mutableStateOf<VideoFileParcelable?>(null) }
-    var showOperationMenu by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showCopyDialog by remember { mutableStateOf(false) }
@@ -88,41 +83,29 @@ fun VideoListScreen(
     var selectedVideos by remember { mutableStateOf<Set<VideoFileParcelable>>(emptySet()) }
     var showBatchDeleteDialog by remember { mutableStateOf(false) }
     
-    fun refreshVideos() {
-        isRefreshing = true
-        onRescanFolder { newVideos ->
-            val sorted = sortVideos(newVideos, sortType, sortOrder)
-            videos = sorted
-            filteredVideos = filterVideos(sorted, searchQuery)
-            isRefreshing = false
+    // 初始化加载
+    LaunchedEffect(folderPath) {
+        if (videoListState.videos.isEmpty()) {
+            viewModel.scanVideosInFolder(folderPath)
         }
-    }
-
-    LaunchedEffect(sortType, sortOrder) {
-        videos = sortVideos(videos, sortType, sortOrder)
-        filteredVideos = filterVideos(videos, searchQuery)
-    }
-
-    LaunchedEffect(searchQuery) {
-        filteredVideos = filterVideos(videos, searchQuery)
     }
 
     Scaffold(
         topBar = {
             if (showSearch) {
                 SearchTopBar(
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = { searchQuery = it },
+                    searchQuery = videoListState.searchQuery,
+                    onSearchQueryChange = { viewModel.searchVideos(it) },
                     onCloseSearch = {
                         showSearch = false
-                        searchQuery = ""
+                        viewModel.clearSearch()
                     }
                 )
             } else {
                 TopAppBar(
                     title = {
                         Text(
-                            folderName,
+                            text = folderPath.substringAfterLast('/'),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
@@ -175,8 +158,8 @@ fun VideoListScreen(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            if (filteredVideos.isEmpty()) {
-                EmptyState(if (searchQuery.isEmpty()) "此文件夹中没有视频" else "未找到匹配的视频")
+            if (videoListState.filteredVideos.isEmpty()) {
+                EmptyState(if (videoListState.searchQuery.isEmpty()) "此文件夹中没有视频" else "未找到匹配的视频")
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -184,7 +167,7 @@ fun VideoListScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     item {
-                        if (isRefreshing) {
+                        if (videoListState.isRefreshing) {
                             Box(
                                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                                 contentAlignment = Alignment.Center
@@ -193,7 +176,7 @@ fun VideoListScreen(
                             }
                         }
                     }
-                    itemsIndexed(filteredVideos) { index, video ->
+                    itemsIndexed(videoListState.filteredVideos) { index, video ->
                         VideoItem(
                             video = video,
                             isSelected = video == selectedVideoForOperation,
@@ -209,56 +192,28 @@ fun VideoListScreen(
                                     }
                                 } else {
                                     // 正常模式下打开视频
-                                    onOpenVideo(video, index, filteredVideos)
+                                    onOpenVideo(video, index, videoListState.filteredVideos)
                                 }
                             },
                             onMoreClick = { 
                                 if (!isEditMode) selectedVideo = video 
-                            },
-                            onLongClick = {
-                                if (!isEditMode) {
-                                    selectedVideoForOperation = video
-                                    showOperationMenu = true
-                                }
                             }
                         )
                     }
                 }
                 
-                // 文件操作菜单（全屏显示）
-                FileOperationMenu(
-                    visible = showOperationMenu && selectedVideoForOperation != null && !isEditMode,
-                    fileName = selectedVideoForOperation?.name ?: "",
-                    onDismiss = { 
-                        showOperationMenu = false
-                        selectedVideoForOperation = null
-                    },
-                    onRename = { 
-                        showRenameDialog = true
-                        showOperationMenu = false  // 关闭菜单
-                    },
-                    onDelete = { 
-                        showDeleteDialog = true
-                        showOperationMenu = false  // 关闭菜单
-                    },
-                    onCopy = { 
-                        showCopyDialog = true
-                        showOperationMenu = false  // 关闭菜单
-                    }
-                )
-                
                 // 多选操作栏
                 MultiSelectActionBar(
                     visible = isEditMode && selectedVideos.isNotEmpty(),
                     selectedCount = selectedVideos.size,
-                    totalCount = filteredVideos.size,
+                    totalCount = videoListState.filteredVideos.size,
                     onSelectAll = {
-                        if (selectedVideos.size == filteredVideos.size) {
+                        if (selectedVideos.size == videoListState.filteredVideos.size) {
                             // 取消全选
                             selectedVideos = emptySet()
                         } else {
                             // 全选
-                            selectedVideos = filteredVideos.toSet()
+                            selectedVideos = videoListState.filteredVideos.toSet()
                         }
                     },
                     onRename = {
@@ -301,7 +256,7 @@ fun VideoListScreen(
                         .padding(16.dp)
                 ) {
                     FloatingActionButton(
-                        onClick = { refreshVideos() }
+                        onClick = { viewModel.refreshVideos(folderPath) }
                     ) {
                         Icon(Icons.Default.Refresh, "刷新", tint = MaterialTheme.colorScheme.onPrimary)
                     }
@@ -312,14 +267,11 @@ fun VideoListScreen(
 
     if (showSortDialog) {
         VideoSortDialog(
-            currentSortType = sortType,
-            currentSortOrder = sortOrder,
+            currentSortType = videoListState.sortType.toString(),
+            currentSortOrder = videoListState.sortOrder.toString(),
             onDismiss = { showSortDialog = false },
-            onSortSelected = { newType, newOrder ->
-                sortType = newType
-                sortOrder = newOrder
-                preferencesManager.setVideoSortType(newType)
-                preferencesManager.setVideoSortOrder(newOrder)
+            onSortSelected = { newType: String, newOrder: String ->
+                viewModel.sortVideos(newType.toInt(), newOrder.toInt())
                 showSortDialog = false
             }
         )
@@ -348,15 +300,10 @@ fun VideoListScreen(
                     val newPath = FileOperationManager.rename(context, videoPath, newName)
                     if (newPath != null) {
                         // 刷新列表
-                        refreshVideos()
+                        viewModel.refreshVideos(folderPath)
                     }
                     showRenameDialog = false
                     selectedVideoForOperation = null
-                    // 退出编辑模式
-                    if (isEditMode) {
-                        selectedVideos = emptySet()
-                        isEditMode = false
-                    }
                 }
             }
         )
@@ -382,7 +329,7 @@ fun VideoListScreen(
                     )
                     if (success) {
                         // 刷新列表
-                        refreshVideos()
+                        viewModel.refreshVideos(folderPath)
                     }
                     showDeleteDialog = false
                     selectedVideoForOperation = null
@@ -413,7 +360,7 @@ fun VideoListScreen(
                     )
                     if (success) {
                         // 刷新列表
-                        refreshVideos()
+                        viewModel.refreshVideos(folderPath)
                     }
                     showCopyDialog = false
                     selectedVideoForOperation = null
@@ -439,7 +386,7 @@ fun VideoListScreen(
                         )
                     }
                     // 刷新列表
-                    refreshVideos()
+                    viewModel.refreshVideos(folderPath)
                     selectedVideos = emptySet()
                     isEditMode = false
                     showBatchDeleteDialog = false
@@ -484,13 +431,11 @@ fun VideoListScreen(
                     }
                     
                     // 刷新列表
-                    refreshVideos()
+                    viewModel.refreshVideos(folderPath)
                     showCopyDialog = false
                     selectedVideoForOperation = null
-                    if (isEditMode) {
-                        selectedVideos = emptySet()
-                        isEditMode = false
-                    }
+                    selectedVideos = emptySet()
+                    isEditMode = false
                 }
             }
         )
@@ -505,8 +450,7 @@ private fun VideoItem(
     isEditMode: Boolean,
     isChecked: Boolean,
     onClick: () -> Unit,
-    onMoreClick: () -> Unit,
-    onLongClick: () -> Unit
+    onMoreClick: () -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -530,17 +474,14 @@ private fun VideoItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            ),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(28.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected && !isEditMode) 
                 MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) 
             else 
-                MaterialTheme.colorScheme.surface
+                MaterialTheme.colorScheme.surfaceContainer
         ),
         border = if (isSelected && !isEditMode) 
             androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) 

@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.core.view.WindowCompat
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
@@ -26,6 +27,7 @@ class BiliBiliDanmakuComposeActivity : BaseActivity() {
     private lateinit var downloadManager: BiliBiliDanmakuDownloadManager
     private var downloadProgress by mutableStateOf(DownloadProgress())
     private var isDownloading by mutableStateOf(false)
+    private var themeRevision by mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +43,7 @@ class BiliBiliDanmakuComposeActivity : BaseActivity() {
         savedFolderUri = savedUriString?.let { Uri.parse(it) }
 
         setContent {
+            val revision = themeRevision
             KoinAndroidContext {
                 val themeController = ThemeController.from(this@BiliBiliDanmakuComposeActivity)
                 VideoPlayerTheme(
@@ -136,5 +139,10 @@ class BiliBiliDanmakuComposeActivity : BaseActivity() {
                 ).show()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        themeRevision++
     }
 }

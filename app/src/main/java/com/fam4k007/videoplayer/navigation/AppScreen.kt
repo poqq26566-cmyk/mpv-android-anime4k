@@ -27,4 +27,12 @@ sealed interface AppScreen {
     /** 关于页 */
     @Serializable
     data object About : AppScreen
+
+    /** WebDAV 账户列表页 */
+    @Serializable
+    data object WebDavAccounts : AppScreen
+
+    /** WebDAV 文件浏览页 */
+    @Serializable
+    data class WebDavBrowser(val accountId: String) : AppScreen
 }
