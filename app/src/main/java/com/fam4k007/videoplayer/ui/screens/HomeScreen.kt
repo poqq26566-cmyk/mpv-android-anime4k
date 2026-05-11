@@ -1,4 +1,4 @@
-package com.fam4k007.videoplayer.compose
+package com.fam4k007.videoplayer.ui.screens
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -52,7 +52,7 @@ import com.fam4k007.videoplayer.PlaybackHistoryManager
 import com.fam4k007.videoplayer.VideoBrowserComposeActivity
 import com.fam4k007.videoplayer.VideoPlayerActivity
 import com.fam4k007.videoplayer.BiliBiliPlayActivity
-import com.fam4k007.videoplayer.manager.PreferencesManager
+import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
 import com.fam4k007.videoplayer.remote.RemotePlaybackLauncher
 import com.fam4k007.videoplayer.remote.RemotePlaybackRequest

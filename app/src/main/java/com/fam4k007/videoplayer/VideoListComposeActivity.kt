@@ -9,8 +9,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
-import com.fam4k007.videoplayer.compose.VideoListScreen
-import com.fam4k007.videoplayer.compose.VideoListScreenPaging
+import com.fam4k007.videoplayer.ui.screens.VideoListScreen
+import com.fam4k007.videoplayer.ui.screens.VideoListScreenPaging
 import com.fam4k007.videoplayer.database.VideoDatabase
 import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
@@ -30,7 +30,7 @@ class VideoListComposeActivity : ComponentActivity() {
         private const val TAG = "VideoListComposeActivity"
     }
 
-    private val preferencesManager: com.fam4k007.videoplayer.manager.PreferencesManager by inject()
+    private val preferencesManager: com.fam4k007.videoplayer.preferences.PreferencesManager by inject()
     private var folderPath: String = ""
     private var usePaging: Boolean = false  // 是否使用Paging3模式
 

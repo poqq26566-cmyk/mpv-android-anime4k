@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.fam4k007.videoplayer.compose.FeedbackScreen
+import com.fam4k007.videoplayer.ui.screens.FeedbackScreen
 import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import org.koin.androidx.compose.KoinAndroidContext

@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fam4k007.videoplayer.VideoFileParcelable
-import com.fam4k007.videoplayer.manager.PreferencesManager
+import com.fam4k007.videoplayer.preferences.PreferencesManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat

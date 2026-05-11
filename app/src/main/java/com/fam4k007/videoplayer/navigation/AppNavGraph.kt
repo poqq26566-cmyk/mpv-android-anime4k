@@ -15,10 +15,10 @@ import androidx.navigation.compose.composable
 import com.fam4k007.videoplayer.PlaybackHistoryManager
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.VideoPlayerActivity
-import com.fam4k007.videoplayer.compose.AboutScreen
-import com.fam4k007.videoplayer.compose.HomeScreen
-import com.fam4k007.videoplayer.compose.PlaybackHistoryScreen
-import com.fam4k007.videoplayer.compose.PlaybackSettingsScreen
+import com.fam4k007.videoplayer.ui.screens.AboutScreen
+import com.fam4k007.videoplayer.ui.screens.HomeScreen
+import com.fam4k007.videoplayer.ui.screens.PlaybackHistoryScreen
+import com.fam4k007.videoplayer.ui.screens.PlaybackSettingsScreen
 import com.fam4k007.videoplayer.LicenseActivity
 import com.fam4k007.videoplayer.FeedbackActivity
 import com.fam4k007.videoplayer.ui.screens.SettingsScreen

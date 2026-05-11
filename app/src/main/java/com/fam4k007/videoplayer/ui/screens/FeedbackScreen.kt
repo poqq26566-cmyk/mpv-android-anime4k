@@ -1,4 +1,4 @@
-package com.fam4k007.videoplayer.compose
+package com.fam4k007.videoplayer.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background

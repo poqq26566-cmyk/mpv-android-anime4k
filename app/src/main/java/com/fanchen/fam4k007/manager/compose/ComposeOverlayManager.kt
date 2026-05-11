@@ -179,7 +179,7 @@ class ComposeOverlayManager(
         onEpisodeSelected: (episodeId: Int, animeTitle: String, episodeTitle: String) -> Unit
     ) {
         setContent {
-            com.fam4k007.videoplayer.compose.DanDanPlaySearchDialog(
+            com.fam4k007.videoplayer.ui.components.DanDanPlaySearchDialog(
                 onDismiss = { clearContent() },
                 onEpisodeSelected = onEpisodeSelected
             )

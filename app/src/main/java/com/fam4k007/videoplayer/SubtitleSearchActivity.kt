@@ -10,7 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
-import com.fam4k007.videoplayer.compose.SubtitleSearchScreen
+import com.fam4k007.videoplayer.ui.screens.SubtitleSearchScreen
 import com.fam4k007.videoplayer.subtitle.SearchOptions
 import com.fam4k007.videoplayer.subtitle.SubtitleDownloadManager
 import com.fam4k007.videoplayer.subtitle.SubtitleInfo

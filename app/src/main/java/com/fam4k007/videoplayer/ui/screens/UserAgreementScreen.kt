@@ -1,4 +1,4 @@
-package com.fam4k007.videoplayer.compose
+package com.fam4k007.videoplayer.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing

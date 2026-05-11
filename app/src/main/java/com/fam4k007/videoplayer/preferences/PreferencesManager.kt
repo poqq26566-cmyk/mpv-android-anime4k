@@ -1,4 +1,4 @@
-package com.fam4k007.videoplayer.manager
+package com.fam4k007.videoplayer.preferences
 
 import android.content.Context
 import android.content.SharedPreferences

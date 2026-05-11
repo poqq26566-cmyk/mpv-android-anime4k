@@ -1,20 +1,19 @@
-package com.fam4k007.videoplayer.compose
+package com.fam4k007.videoplayer.ui.screens
 
 import android.net.Uri
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,38 +32,82 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.VideoFileParcelable
+import com.fam4k007.videoplayer.database.VideoDatabase
 import com.fam4k007.videoplayer.mediainfo.MediaInfoActivity
+import com.fam4k007.videoplayer.paging.VideoPagingSource
 import com.fam4k007.videoplayer.utils.ThumbnailCacheManager
 import com.fam4k007.videoplayer.utils.FileOperationManager
+import com.fam4k007.videoplayer.ui.components.BatchDeleteConfirmDialog
+import com.fam4k007.videoplayer.ui.components.CopyDestinationDialog
+import com.fam4k007.videoplayer.ui.components.DeleteConfirmDialog
+import com.fam4k007.videoplayer.ui.components.FileOperationMenu
+import com.fam4k007.videoplayer.ui.components.MultiSelectActionBar
+import com.fam4k007.videoplayer.ui.components.RenameDialog
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import java.io.File
 
+/**
+ * 使用Paging3的视频列表界面
+ * 防止大量视频导致OOM
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun VideoListScreen(
+fun VideoListScreenPaging(
     folderName: String,
-    initialVideos: List<VideoFileParcelable>,
+    folderPath: String,
     onNavigateBack: () -> Unit,
-    onOpenVideo: (VideoFileParcelable, Int, List<VideoFileParcelable>) -> Unit,
-    onRescanFolder: ((List<VideoFileParcelable>) -> Unit) -> Unit,
-    preferencesManager: com.fam4k007.videoplayer.manager.PreferencesManager
+    onOpenVideo: (VideoFileParcelable, List<VideoFileParcelable>) -> Unit,
+    onRescanFolder: (() -> Unit) -> Unit,
+    preferencesManager: com.fam4k007.videoplayer.preferences.PreferencesManager,
+    coroutineScope: CoroutineScope
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     
-    var videos by remember { mutableStateOf(initialVideos) }
-    var filteredVideos by remember { mutableStateOf(initialVideos) }
+    // 排序状态
     var sortType by remember { mutableStateOf(preferencesManager.getVideoSortType()) }
     var sortOrder by remember { mutableStateOf(preferencesManager.getVideoSortOrder()) }
-    var searchQuery by remember { mutableStateOf("") }
+    
+    // Paging数据流 - 依赖于sortType和sortOrder
+    val pager = remember(folderPath, sortType, sortOrder) {
+        Pager(
+            config = PagingConfig(
+                pageSize = VideoPagingSource.PAGE_SIZE,
+                prefetchDistance = 10,
+                enablePlaceholders = false,
+                initialLoadSize = VideoPagingSource.PAGE_SIZE
+            ),
+            pagingSourceFactory = {
+                VideoPagingSource(
+                    dao = VideoDatabase.getDatabase(context).videoCacheDao(),
+                    folderPath = folderPath,
+                    sortType = sortType,
+                    sortOrder = sortOrder
+                )
+            }
+        ).flow.cachedIn(coroutineScope)
+    }
+    
+    val lazyPagingItems = pager.collectAsLazyPagingItems()
+    
     var showSearch by remember { mutableStateOf(false) }
     var showSortDialog by remember { mutableStateOf(false) }
     var selectedVideo by remember { mutableStateOf<VideoFileParcelable?>(null) }
@@ -76,29 +119,20 @@ fun VideoListScreen(
     var showRenameDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showCopyDialog by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
     
     // 多选编辑模式
     var isEditMode by remember { mutableStateOf(false) }
     var selectedVideos by remember { mutableStateOf<Set<VideoFileParcelable>>(emptySet()) }
     var showBatchDeleteDialog by remember { mutableStateOf(false) }
     
+    // 当需要刷新时
     fun refreshVideos() {
         isRefreshing = true
-        onRescanFolder { newVideos ->
-            val sorted = sortVideos(newVideos, sortType, sortOrder)
-            videos = sorted
-            filteredVideos = filterVideos(sorted, searchQuery)
+        onRescanFolder {
+            lazyPagingItems.refresh()
             isRefreshing = false
         }
-    }
-
-    LaunchedEffect(sortType, sortOrder) {
-        videos = sortVideos(videos, sortType, sortOrder)
-        filteredVideos = filterVideos(videos, searchQuery)
-    }
-
-    LaunchedEffect(searchQuery) {
-        filteredVideos = filterVideos(videos, searchQuery)
     }
 
     Scaffold(
@@ -119,6 +153,7 @@ fun VideoListScreen(
                             folderName,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
+                            color = Color.White,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -126,8 +161,9 @@ fun VideoListScreen(
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "返回"
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "返回",
+                                tint = Color.White
                             )
                         }
                     },
@@ -140,24 +176,27 @@ fun VideoListScreen(
                         }) {
                             Icon(
                                 imageVector = if (isEditMode) Icons.Default.Close else Icons.Default.Edit,
-                                contentDescription = if (isEditMode) "退出编辑" else "编辑"
+                                contentDescription = if (isEditMode) "退出编辑" else "编辑",
+                                tint = Color.White
                             )
                         }
                         IconButton(onClick = { showSearch = true }) {
                             Icon(
                                 imageVector = Icons.Default.Search,
-                                contentDescription = "搜索"
+                                contentDescription = "搜索",
+                                tint = Color.White
                             )
                         }
                         IconButton(onClick = { showSortDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.Sort,
-                                contentDescription = "排序"
+                                contentDescription = "排序",
+                                tint = Color.White
                             )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = MaterialTheme.colorScheme.primary
                     )
                 )
             }
@@ -167,10 +206,20 @@ fun VideoListScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
+                .background(Color.White)
         ) {
-            if (filteredVideos.isEmpty()) {
-                EmptyState(if (searchQuery.isEmpty()) "此文件夹中没有视频" else "未找到匹配的视频")
+            // 根据搜索关键词过滤显示
+            val filteredItems = if (searchQuery.isEmpty()) {
+                lazyPagingItems
+            } else {
+                // 搜索时需要过滤，但Paging不支持直接过滤，这里显示提示
+                null
+            }
+            
+            if (filteredItems == null || (searchQuery.isNotEmpty() && lazyPagingItems.itemCount == 0)) {
+                EmptyState("搜索功能需要在数据库层面实现，请使用排序功能")
+            } else if (lazyPagingItems.itemCount == 0) {
+                EmptyState("此文件夹中没有视频")
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -187,35 +236,74 @@ fun VideoListScreen(
                             }
                         }
                     }
-                    itemsIndexed(filteredVideos) { index, video ->
-                        VideoItem(
-                            video = video,
-                            isSelected = video == selectedVideoForOperation,
-                            isEditMode = isEditMode,
-                            isChecked = selectedVideos.contains(video),
-                            onClick = { 
-                                if (isEditMode) {
-                                    // 编辑模式下切换选中状态
-                                    selectedVideos = if (selectedVideos.contains(video)) {
-                                        selectedVideos - video
-                                    } else {
-                                        selectedVideos + video
+                    
+                    // 使用Paging3的items扩展
+                    items(
+                        count = lazyPagingItems.itemCount,
+                        key = lazyPagingItems.itemKey { it.uri }
+                    ) { index ->
+                        val video = lazyPagingItems[index]
+                        if (video != null) {
+                            // 过滤搜索关键词
+                            if (searchQuery.isEmpty() || video.name.contains(searchQuery, ignoreCase = true)) {
+                                VideoItem(
+                                    video = video,
+                                    isSelected = video == selectedVideoForOperation,
+                                    isEditMode = isEditMode,
+                                    isChecked = selectedVideos.contains(video),
+                                    onClick = { 
+                                        if (isEditMode) {
+                                            // 编辑模式下切换选中状态
+                                            selectedVideos = if (selectedVideos.contains(video)) {
+                                                selectedVideos - video
+                                            } else {
+                                                selectedVideos + video
+                                            }
+                                        } else {
+                                            // 正常模式下打开视频
+                                            // 从数据库查询该文件夹的所有视频（使用当前排序方式）
+                                            coroutineScope.launch {
+                                                val allVideos = withContext(Dispatchers.IO) {
+                                                    val dao = VideoDatabase.getDatabase(context).videoCacheDao()
+                                                    val entities = when {
+                                                        sortType == "NAME" && sortOrder == "ASCENDING" -> 
+                                                            dao.getVideosByFolderSortedByNameAsc(folderPath)
+                                                        sortType == "NAME" && sortOrder == "DESCENDING" -> 
+                                                            dao.getVideosByFolderSortedByNameDesc(folderPath)
+                                                        sortType == "DATE" && sortOrder == "ASCENDING" -> 
+                                                            dao.getVideosByFolderSortedByDateAsc(folderPath)
+                                                        sortType == "DATE" && sortOrder == "DESCENDING" -> 
+                                                            dao.getVideosByFolderSortedByDateDesc(folderPath)
+                                                        else -> 
+                                                            dao.getVideosByFolderSortedByNameAsc(folderPath)
+                                                    }
+                                                    entities.map { entity ->
+                                                        VideoFileParcelable(
+                                                            uri = entity.uri,
+                                                            name = entity.name,
+                                                            path = entity.path,
+                                                            size = entity.size,
+                                                            duration = entity.duration,
+                                                            dateAdded = entity.dateAdded
+                                                        )
+                                                    }
+                                                }
+                                                onOpenVideo(video, allVideos)
+                                            }
+                                        }
+                                    },
+                                    onMoreClick = { 
+                                        if (!isEditMode) selectedVideo = video 
+                                    },
+                                    onLongClick = {
+                                        if (!isEditMode) {
+                                            selectedVideoForOperation = video
+                                            showOperationMenu = true
+                                        }
                                     }
-                                } else {
-                                    // 正常模式下打开视频
-                                    onOpenVideo(video, index, filteredVideos)
-                                }
-                            },
-                            onMoreClick = { 
-                                if (!isEditMode) selectedVideo = video 
-                            },
-                            onLongClick = {
-                                if (!isEditMode) {
-                                    selectedVideoForOperation = video
-                                    showOperationMenu = true
-                                }
+                                )
                             }
-                        )
+                        }
                     }
                 }
                 
@@ -245,14 +333,18 @@ fun VideoListScreen(
                 MultiSelectActionBar(
                     visible = isEditMode && selectedVideos.isNotEmpty(),
                     selectedCount = selectedVideos.size,
-                    totalCount = filteredVideos.size,
+                    totalCount = lazyPagingItems.itemCount,
                     onSelectAll = {
-                        if (selectedVideos.size == filteredVideos.size) {
+                        if (selectedVideos.size == lazyPagingItems.itemCount) {
                             // 取消全选
                             selectedVideos = emptySet()
                         } else {
-                            // 全选
-                            selectedVideos = filteredVideos.toSet()
+                            // 全选当前加载的所有项
+                            val allVideos = mutableSetOf<VideoFileParcelable>()
+                            for (i in 0 until lazyPagingItems.itemCount) {
+                                lazyPagingItems[i]?.let { allVideos.add(it) }
+                            }
+                            selectedVideos = allVideos
                         }
                     },
                     onRename = {
@@ -297,7 +389,7 @@ fun VideoListScreen(
                     FloatingActionButton(
                         onClick = { refreshVideos() }
                     ) {
-                        Icon(Icons.Default.Refresh, "刷新", tint = MaterialTheme.colorScheme.onPrimary)
+                        Icon(Icons.Default.Refresh, "刷新", tint = Color.White)
                     }
                 }
             }
@@ -342,7 +434,7 @@ fun VideoListScreen(
                     val newPath = FileOperationManager.rename(context, videoPath, newName)
                     if (newPath != null) {
                         // 刷新列表
-                        refreshVideos()
+                        lazyPagingItems.refresh()
                     }
                     showRenameDialog = false
                     selectedVideoForOperation = null
@@ -376,7 +468,7 @@ fun VideoListScreen(
                     )
                     if (success) {
                         // 刷新列表
-                        refreshVideos()
+                        lazyPagingItems.refresh()
                     }
                     showDeleteDialog = false
                     selectedVideoForOperation = null
@@ -407,7 +499,7 @@ fun VideoListScreen(
                     )
                     if (success) {
                         // 刷新列表
-                        refreshVideos()
+                        lazyPagingItems.refresh()
                     }
                     showCopyDialog = false
                     selectedVideoForOperation = null
@@ -433,7 +525,7 @@ fun VideoListScreen(
                         )
                     }
                     // 刷新列表
-                    refreshVideos()
+                    lazyPagingItems.refresh()
                     selectedVideos = emptySet()
                     isEditMode = false
                     showBatchDeleteDialog = false
@@ -478,7 +570,7 @@ fun VideoListScreen(
                     }
                     
                     // 刷新列表
-                    refreshVideos()
+                    lazyPagingItems.refresh()
                     showCopyDialog = false
                     selectedVideoForOperation = null
                     if (isEditMode) {
@@ -489,6 +581,65 @@ fun VideoListScreen(
             }
         )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SearchTopBar(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onCloseSearch: () -> Unit
+) {
+    TopAppBar(
+        title = {
+            BasicTextField(
+                value = searchQuery,
+                onValueChange = onSearchQueryChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                textStyle = TextStyle(
+                    color = Color.White,
+                    fontSize = 18.sp
+                ),
+                cursorBrush = SolidColor(Color.White),
+                decorationBox = { innerTextField ->
+                    if (searchQuery.isEmpty()) {
+                        Text(
+                            "搜索视频...",
+                            color = Color.White.copy(alpha = 0.6f),
+                            fontSize = 18.sp
+                        )
+                    }
+                    innerTextField()
+                },
+                singleLine = true
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onCloseSearch) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "关闭搜索",
+                    tint = Color.White
+                )
+            }
+        },
+        actions = {
+            if (searchQuery.isNotEmpty()) {
+                IconButton(onClick = { onSearchQueryChange("") }) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "清除",
+                        tint = Color.White
+                    )
+                }
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primary
+        )
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -503,12 +654,10 @@ private fun VideoItem(
     onLongClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    var thumbnailBitmap by remember(video.uri) { mutableStateOf<android.graphics.Bitmap?>(null) }
+    var thumbnailBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
 
     LaunchedEffect(video.uri) {
-        thumbnailBitmap = null // 立即清空旧缩略图
-        lifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+        withContext(Dispatchers.IO) {
             try {
                 val cacheManager = ThumbnailCacheManager.getInstance(context)
                 val bitmap = cacheManager.getThumbnail(context, Uri.parse(video.uri), video.duration)
@@ -534,7 +683,7 @@ private fun VideoItem(
             containerColor = if (isSelected && !isEditMode) 
                 MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) 
             else 
-                MaterialTheme.colorScheme.surface
+                Color.White
         ),
         border = if (isSelected && !isEditMode) 
             androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) 
@@ -578,7 +727,7 @@ private fun VideoItem(
                     .width(120.dp)
                     .height(68.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                    .background(Color(0xFFE0E0E0)),
                 contentAlignment = Alignment.Center
             ) {
                 if (thumbnailBitmap != null) {
@@ -592,7 +741,7 @@ private fun VideoItem(
                     Icon(
                         imageVector = Icons.Default.VideoLibrary,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = Color(0xFF9E9E9E),
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -623,12 +772,12 @@ private fun VideoItem(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = formatDuration(video.duration),
+                        text = formatFileSize(video.size),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = formatFileSize(video.size),
+                        text = formatDuration(video.duration),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -637,13 +786,10 @@ private fun VideoItem(
 
             // 更多按钮（非编辑模式）
             if (!isEditMode) {
-                IconButton(
-                    onClick = onMoreClick,
-                    modifier = Modifier.size(40.dp)
-                ) {
+                IconButton(onClick = onMoreClick) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = "更多信息",
+                        contentDescription = "更多",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -652,59 +798,51 @@ private fun VideoItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SearchTopBar(
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    onCloseSearch: () -> Unit
-) {
-    TopAppBar(
-        title = {
-            BasicTextField(
-                value = searchQuery,
-                onValueChange = onSearchQueryChange,
-                modifier = Modifier.fillMaxWidth(),
-                textStyle = TextStyle(
-                    fontSize = 18.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                decorationBox = { innerTextField ->
-                    if (searchQuery.isEmpty()) {
-                        Text(
-                            text = "搜索视频...",
-                            fontSize = 18.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                    }
-                    innerTextField()
-                },
-                singleLine = true
+private fun EmptyState(message: String) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Default.VideoLibrary,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
-        },
-        navigationIcon = {
-            IconButton(onClick = onCloseSearch) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "返回"
-                )
-            }
-        },
-        actions = {
-            if (searchQuery.isNotEmpty()) {
-                IconButton(onClick = { onSearchQueryChange("") }) {
-                    Icon(
-                        imageVector = Icons.Default.Clear,
-                        contentDescription = "清除"
-                    )
-                }
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+private fun formatFileSize(bytes: Long): String {
+    return when {
+        bytes < 1024 -> "$bytes B"
+        bytes < 1024 * 1024 -> String.format("%.1f KB", bytes / 1024.0)
+        bytes < 1024 * 1024 * 1024 -> String.format("%.1f MB", bytes / (1024.0 * 1024.0))
+        else -> String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0))
+    }
+}
+
+private fun formatDuration(millis: Long): String {
+    val hours = TimeUnit.MILLISECONDS.toHours(millis)
+    val minutes = TimeUnit.MILLISECONDS.toMinutes(millis) % 60
+    val seconds = TimeUnit.MILLISECONDS.toSeconds(millis) % 60
+
+    return when {
+        hours > 0 -> String.format("%d:%02d:%02d", hours, minutes, seconds)
+        else -> String.format("%d:%02d", minutes, seconds)
+    }
 }
 
 @Composable
@@ -767,7 +905,7 @@ private fun SortOption(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
+            .padding(vertical = 12.dp, horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         RadioButton(
@@ -783,144 +921,4 @@ private fun SortOption(
             color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
         )
     }
-}
-
-@Composable
-private fun EmptyState(message: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Default.VideoLibrary,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-private fun sortVideos(
-    videos: List<VideoFileParcelable>,
-    sortType: String,
-    sortOrder: String
-): List<VideoFileParcelable> {
-    return when (sortType) {
-        "NAME" -> {
-            if (sortOrder == "ASCENDING") {
-                videos.sortedWith(naturalComparator { it.name })
-            } else {
-                videos.sortedWith(naturalComparator<VideoFileParcelable> { it.name }.reversed())
-            }
-        }
-        "DATE" -> {
-            if (sortOrder == "ASCENDING") {
-                videos.sortedBy { it.dateAdded }
-            } else {
-                videos.sortedByDescending { it.dateAdded }
-            }
-        }
-        else -> videos
-    }
-}
-
-/**
- * 自然排序比较器 - 支持字符串中数字的正确排序
- * 例如：1, 2, 3, 10, 11, 12 而不是 1, 10, 11, 12, 2, 3
- */
-private fun <T> naturalComparator(selector: (T) -> String): Comparator<T> {
-    return Comparator { a, b ->
-        compareNatural(selector(a), selector(b))
-    }
-}
-
-/**
- * 自然排序字符串比较
- */
-private fun compareNatural(str1: String, str2: String): Int {
-    val s1 = str1.lowercase()
-    val s2 = str2.lowercase()
-    
-    var i1 = 0
-    var i2 = 0
-    
-    while (i1 < s1.length && i2 < s2.length) {
-        val c1 = s1[i1]
-        val c2 = s2[i2]
-        
-        // 如果两个字符都是数字，则提取完整的数字进行比较
-        if (c1.isDigit() && c2.isDigit()) {
-            // 提取第一个数字
-            var num1 = 0
-            while (i1 < s1.length && s1[i1].isDigit()) {
-                num1 = num1 * 10 + (s1[i1] - '0')
-                i1++
-            }
-            
-            // 提取第二个数字
-            var num2 = 0
-            while (i2 < s2.length && s2[i2].isDigit()) {
-                num2 = num2 * 10 + (s2[i2] - '0')
-                i2++
-            }
-            
-            // 比较数字大小
-            if (num1 != num2) {
-                return num1 - num2
-            }
-        } else {
-            // 普通字符比较
-            if (c1 != c2) {
-                return c1 - c2
-            }
-            i1++
-            i2++
-        }
-    }
-    
-    // 如果一个字符串是另一个的前缀，则较短的排在前面
-    return s1.length - s2.length
-}
-
-private fun filterVideos(
-    videos: List<VideoFileParcelable>,
-    query: String
-): List<VideoFileParcelable> {
-    if (query.isEmpty()) return videos
-    val lowerQuery = query.lowercase()
-    return videos.filter { it.name.lowercase().contains(lowerQuery) }
-}
-
-private fun formatDuration(milliseconds: Long): String {
-    val hours = TimeUnit.MILLISECONDS.toHours(milliseconds)
-    val minutes = TimeUnit.MILLISECONDS.toMinutes(milliseconds) % 60
-    val seconds = TimeUnit.MILLISECONDS.toSeconds(milliseconds) % 60
-
-    return if (hours > 0) {
-        String.format("%02d:%02d:%02d", hours, minutes, seconds)
-    } else {
-        String.format("%02d:%02d", minutes, seconds)
-    }
-}
-
-private fun formatFileSize(bytes: Long): String {
-    if (bytes < 1024) return "$bytes B"
-    val kb = bytes / 1024.0
-    if (kb < 1024) return String.format("%.1f KB", kb)
-    val mb = kb / 1024.0
-    if (mb < 1024) return String.format("%.1f MB", mb)
-    val gb = mb / 1024.0
-    return String.format("%.2f GB", gb)
 }

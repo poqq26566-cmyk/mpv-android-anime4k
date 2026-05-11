@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
+import com.fam4k007.videoplayer.preferences.PreferencesManager
 
 /**
  * 主题管理器 - 统一管理应用主题切换

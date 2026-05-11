@@ -1,7 +1,7 @@
 package com.fam4k007.videoplayer.danmaku
 
 import android.content.Context
-import com.fam4k007.videoplayer.manager.PreferencesManager
+import com.fam4k007.videoplayer.preferences.PreferencesManager
 
 /**
  * 弹幕配置管理

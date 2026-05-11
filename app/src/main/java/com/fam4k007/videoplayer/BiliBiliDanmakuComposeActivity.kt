@@ -10,8 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
-import com.fam4k007.videoplayer.compose.BiliBiliDanmakuScreen
-import com.fam4k007.videoplayer.compose.DownloadProgress
+import com.fam4k007.videoplayer.ui.screens.BiliBiliDanmakuScreen
+import com.fam4k007.videoplayer.ui.screens.DownloadProgress
 import com.fam4k007.videoplayer.danmaku.BiliBiliDanmakuDownloadManager
 import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme

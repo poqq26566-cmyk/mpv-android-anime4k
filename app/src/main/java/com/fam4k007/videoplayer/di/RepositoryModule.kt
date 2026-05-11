@@ -1,7 +1,7 @@
 package com.fam4k007.videoplayer.di
 
 import com.fam4k007.videoplayer.PlaybackHistoryManager
-import com.fam4k007.videoplayer.manager.PreferencesManager
+import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.repository.BilibiliRepository
 import com.fam4k007.videoplayer.repository.PlayerRepository
 import com.fam4k007.videoplayer.repository.VideoRepository

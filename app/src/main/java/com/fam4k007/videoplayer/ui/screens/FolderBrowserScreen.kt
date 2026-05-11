@@ -1,4 +1,4 @@
-package com.fam4k007.videoplayer.compose
+package com.fam4k007.videoplayer.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -31,6 +31,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.VideoFolder
+import com.fam4k007.videoplayer.preferences.PreferencesManager
+import com.fam4k007.videoplayer.ui.components.BatchDeleteConfirmDialog
+import com.fam4k007.videoplayer.ui.components.DeleteConfirmDialog
+import com.fam4k007.videoplayer.ui.components.FileOperationMenu
+import com.fam4k007.videoplayer.ui.components.MultiSelectActionBar
+import com.fam4k007.videoplayer.ui.components.RenameDialog
 import com.fam4k007.videoplayer.utils.FileOperationManager
 import kotlinx.coroutines.launch
 import java.io.File
@@ -43,7 +49,7 @@ fun FolderBrowserScreen(
     onScanVideos: ((List<VideoFolder>) -> Unit) -> Unit,
     onNavigateBack: () -> Unit,
     onOpenFolder: (VideoFolder) -> Unit,
-    preferencesManager: com.fam4k007.videoplayer.manager.PreferencesManager
+    preferencesManager: PreferencesManager
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current

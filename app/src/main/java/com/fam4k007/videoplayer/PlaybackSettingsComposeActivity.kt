@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.fam4k007.videoplayer.compose.PlaybackSettingsScreen
+import com.fam4k007.videoplayer.ui.screens.PlaybackSettingsScreen
 import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import org.koin.androidx.compose.KoinAndroidContext

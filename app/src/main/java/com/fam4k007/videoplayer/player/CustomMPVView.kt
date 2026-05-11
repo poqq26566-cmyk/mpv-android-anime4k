@@ -56,7 +56,7 @@ class CustomMPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context
         MPVLib.setOptionString("slang", "zh,chi,zho,chs,cht,zh-CN,zh-TW,en,eng")
         
         // libass 字体配置（使用系统字体）
-        val preferencesManager = com.fam4k007.videoplayer.manager.PreferencesManager.getInstance(context)
+        val preferencesManager = com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(context)
         val systemFontName = preferencesManager.getSystemFontName()
         
         MPVLib.setOptionString("sub-font-provider", "auto")

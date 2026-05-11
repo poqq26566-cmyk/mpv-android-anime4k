@@ -42,7 +42,7 @@ import kotlinx.coroutines.withContext
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.fam4k007.videoplayer.domain.player.Anime4KManager
-import com.fam4k007.videoplayer.manager.PreferencesManager
+import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.domain.subtitle.SubtitleManager
 import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
 import com.fam4k007.videoplayer.remote.RemotePlaybackLauncher

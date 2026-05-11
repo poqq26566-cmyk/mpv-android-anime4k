@@ -16,7 +16,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.fam4k007.videoplayer.compose.FolderBrowserScreen
+import com.fam4k007.videoplayer.ui.screens.FolderBrowserScreen
 import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import com.fam4k007.videoplayer.utils.NoMediaChecker
@@ -34,7 +34,7 @@ class VideoBrowserComposeActivity : ComponentActivity() {
         private const val PERMISSION_REQUEST_CODE = 1001
     }
 
-    private val preferencesManager: com.fam4k007.videoplayer.manager.PreferencesManager by inject()
+    private val preferencesManager: com.fam4k007.videoplayer.preferences.PreferencesManager by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

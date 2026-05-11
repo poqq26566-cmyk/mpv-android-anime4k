@@ -14,7 +14,7 @@ import com.fam4k007.videoplayer.domain.player.PlaybackEngine
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.danmaku.DanmakuConfig
 import com.fam4k007.videoplayer.domain.danmaku.DanmakuManager
-import com.fam4k007.videoplayer.manager.PreferencesManager
+import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.utils.DialogUtils
 import com.fam4k007.videoplayer.utils.ThemeManager
 import `is`.xyz.mpv.MPVLib

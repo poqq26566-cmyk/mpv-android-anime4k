@@ -1181,7 +1181,7 @@ fun QuickButton(text: String, onClick: () -> Unit) {
 fun SubtitleFontContent(composeOverlayManager: com.fanchen.fam4k007.manager.compose.ComposeOverlayManager) {
     val context = LocalContext.current
     val preferencesManager = remember { 
-        com.fam4k007.videoplayer.manager.PreferencesManager.getInstance(context)
+        com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(context)
     }
     
     var systemFontName by remember { mutableStateOf(preferencesManager.getSystemFontName()) }

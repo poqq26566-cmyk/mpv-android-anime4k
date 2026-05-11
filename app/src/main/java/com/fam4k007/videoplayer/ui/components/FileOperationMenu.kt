@@ -1,4 +1,4 @@
-package com.fam4k007.videoplayer.compose
+package com.fam4k007.videoplayer.ui.components
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*

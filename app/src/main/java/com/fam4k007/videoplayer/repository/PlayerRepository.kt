@@ -5,7 +5,7 @@ import android.net.Uri
 import com.fam4k007.videoplayer.AppConstants
 import com.fam4k007.videoplayer.database.VideoDatabase
 import com.fam4k007.videoplayer.database.PlaybackHistoryEntity
-import com.fam4k007.videoplayer.manager.PreferencesManager
+import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.utils.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

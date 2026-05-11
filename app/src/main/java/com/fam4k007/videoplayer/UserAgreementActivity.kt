@@ -7,7 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import com.fam4k007.videoplayer.compose.UserAgreementScreen
+import com.fam4k007.videoplayer.ui.screens.UserAgreementScreen
 
 /**
  * 用户协议 Activity - 使用 Compose 实现
