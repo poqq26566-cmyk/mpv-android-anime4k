@@ -167,7 +167,7 @@ fun VideoListScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             if (filteredVideos.isEmpty()) {
                 EmptyState(if (searchQuery.isEmpty()) "此文件夹中没有视频" else "未找到匹配的视频")
@@ -297,7 +297,7 @@ fun VideoListScreen(
                     FloatingActionButton(
                         onClick = { refreshVideos() }
                     ) {
-                        Icon(Icons.Default.Refresh, "刷新", tint = Color.White)
+                        Icon(Icons.Default.Refresh, "刷新", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             }
@@ -534,7 +534,7 @@ private fun VideoItem(
             containerColor = if (isSelected && !isEditMode) 
                 MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) 
             else 
-                Color.White
+                MaterialTheme.colorScheme.surface
         ),
         border = if (isSelected && !isEditMode) 
             androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) 
@@ -578,7 +578,7 @@ private fun VideoItem(
                     .width(120.dp)
                     .height(68.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFFE0E0E0)),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
                 if (thumbnailBitmap != null) {
@@ -592,7 +592,7 @@ private fun VideoItem(
                     Icon(
                         imageVector = Icons.Default.VideoLibrary,
                         contentDescription = null,
-                        tint = Color(0xFF9E9E9E),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -614,7 +614,7 @@ private fun VideoItem(
                     fontWeight = FontWeight.Medium,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
-                    color = Color(0xFF212121),
+                    color = MaterialTheme.colorScheme.onSurface,
                     lineHeight = 16.sp
                 )
 
@@ -625,12 +625,12 @@ private fun VideoItem(
                     Text(
                         text = formatDuration(video.duration),
                         fontSize = 12.sp,
-                        color = Color(0xFF757575)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = formatFileSize(video.size),
                         fontSize = 12.sp,
-                        color = Color(0xFF757575)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -644,7 +644,7 @@ private fun VideoItem(
                     Icon(
                         imageVector = Icons.Default.MoreVert,
                         contentDescription = "更多信息",
-                        tint = Color(0xFF757575)
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -717,7 +717,11 @@ private fun VideoSortDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("排序方式", fontWeight = FontWeight.Bold)
+            Text(
+                text = "排序方式",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold
+            )
         },
         text = {
             Column {
@@ -747,7 +751,9 @@ private fun VideoSortDialog(
             TextButton(onClick = onDismiss) {
                 Text("取消")
             }
-        }
+        },
+        shape = RoundedCornerShape(28.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
     )
 }
 
@@ -774,7 +780,7 @@ private fun SortOption(
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = text,
-            color = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFF212121)
+            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -791,16 +797,16 @@ private fun EmptyState(message: String) {
             Icon(
                 imageVector = Icons.Default.VideoLibrary,
                 contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = Color(0xFFBDBDBD)
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = message,
-                fontSize = 16.sp,
-                color = Color(0xFF757575)
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

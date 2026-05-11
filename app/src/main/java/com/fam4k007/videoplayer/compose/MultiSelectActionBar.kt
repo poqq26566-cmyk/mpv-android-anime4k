@@ -168,39 +168,46 @@ fun BatchDeleteConfirmDialog(
                 Icon(
                     imageVector = Icons.Default.Warning,
                     contentDescription = null,
-                    tint = Color(0xFFE53935),
+                    tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(48.dp)
                 )
             },
-            title = { Text("确认批量删除") },
+            title = {
+                Text(
+                    text = "确认批量删除",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
             text = {
                 Column {
                     Text(
                         "确定要删除选中的 $count 个${if (isFolder) "文件夹" else "文件"}吗？",
+                        style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold
                     )
                     if (isFolder) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             "注意：文件夹内的所有文件也将被删除",
-                            color = Color(0xFFE53935),
-                            fontSize = 13.sp
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "此操作不可撤销！",
-                        color = Color(0xFFE53935),
-                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Bold
                     )
                 }
             },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = onConfirm,
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = Color(0xFFE53935)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
                     Text("删除")
@@ -210,7 +217,9 @@ fun BatchDeleteConfirmDialog(
                 TextButton(onClick = onDismiss) {
                     Text("取消")
                 }
-            }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
         )
     }
 }

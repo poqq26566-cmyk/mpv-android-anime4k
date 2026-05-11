@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.aboutlibraries)
 }
@@ -140,6 +141,9 @@ dependencies {
     implementation(libs.bundles.compose)
     implementation(libs.androidx.navigation.compose)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    // Serialization (for type-safe navigation)
+    implementation(libs.kotlinx.serialization.json)
 
     // 本地 AAR 库（来自 libs 目录）
     implementation(mapOf("name" to "mpv-android-lib-v0.1.10", "ext" to "aar"))

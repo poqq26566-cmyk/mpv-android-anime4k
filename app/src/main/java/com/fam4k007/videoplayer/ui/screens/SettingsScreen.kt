@@ -38,11 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.fam4k007.videoplayer.AboutComposeActivity
 import com.fam4k007.videoplayer.BiliBiliDanmakuComposeActivity
 import com.fam4k007.videoplayer.DownloadActivity
-import com.fam4k007.videoplayer.PlaybackHistoryComposeActivity
-import com.fam4k007.videoplayer.PlaybackSettingsComposeActivity
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.SubtitleSearchActivity
 import com.fam4k007.videoplayer.bilibili.auth.BiliBiliAuthManager
@@ -66,7 +63,10 @@ import org.koin.compose.koinInject
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToPlaybackSettings: () -> Unit = {},
+    onNavigateToPlaybackHistory: () -> Unit = {},
+    onNavigateToAbout: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val authManager: BiliBiliAuthManager = koinInject()
@@ -150,26 +150,14 @@ fun SettingsScreen(
                         title = "播放设置",
                         subtitle = "调整播放相关参数",
                         icon = Icons.Default.Settings,
-                        onClick = {
-                            context.startActivity(Intent(context, PlaybackSettingsComposeActivity::class.java))
-                            (context as? android.app.Activity)?.overridePendingTransition(
-                                R.anim.slide_in_right,
-                                R.anim.slide_out_left
-                            )
-                        }
+                        onClick = onNavigateToPlaybackSettings
                     )
                     
                     ClickableItem(
                         title = "播放历史记录",
                         subtitle = "查看最近播放的视频",
                         icon = Icons.Default.History,
-                        onClick = {
-                            context.startActivity(Intent(context, PlaybackHistoryComposeActivity::class.java))
-                            (context as? android.app.Activity)?.overridePendingTransition(
-                                R.anim.slide_in_right,
-                                R.anim.slide_out_left
-                            )
-                        }
+                        onClick = onNavigateToPlaybackHistory
                     )
                     
                     ClickableItem(
@@ -300,13 +288,7 @@ fun SettingsScreen(
                         title = "关于",
                         subtitle = "应用信息与许可",
                         icon = Icons.Default.Info,
-                        onClick = {
-                            context.startActivity(Intent(context, AboutComposeActivity::class.java))
-                            (context as? android.app.Activity)?.overridePendingTransition(
-                                R.anim.slide_in_right,
-                                R.anim.slide_out_left
-                            )
-                        }
+                        onClick = onNavigateToAbout
                     )
                 }
             }

@@ -72,7 +72,7 @@ fun FileOperationMenu(
                     ),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surface
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
@@ -86,11 +86,11 @@ fun FileOperationMenu(
                         text = "文件操作",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF666666),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                     )
                     
-                    Divider(color = Color(0xFFEEEEEE))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     
                     // 重命名
                     FileOperationItem(
@@ -148,7 +148,7 @@ private fun FileOperationItem(
         Text(
             text = text,
             fontSize = 15.sp,
-            color = Color(0xFF333333)
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -181,7 +181,13 @@ fun RenameDialog(
         
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("重命名") },
+            title = {
+                Text(
+                    text = "重命名",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
             text = {
                 Column {
                     OutlinedTextField(
@@ -195,17 +201,16 @@ fun RenameDialog(
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             "扩展名：$extension",
-                            fontSize = 13.sp,
-                            color = Color(0xFF666666)
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         if (newName.isNotBlank() && newName != nameWithoutExt) {
-                            // 自动添加原扩展名
                             val finalName = newName + extension
                             onConfirm(finalName)
                         }
@@ -218,7 +223,9 @@ fun RenameDialog(
                 TextButton(onClick = onDismiss) {
                     Text("取消")
                 }
-            }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
         )
     }
 }
@@ -241,37 +248,45 @@ fun DeleteConfirmDialog(
                 Icon(
                     imageVector = Icons.Default.Warning,
                     contentDescription = null,
-                    tint = Color(0xFFE53935),
+                    tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(48.dp)
                 )
             },
-            title = { Text("确认删除") },
+            title = {
+                Text(
+                    text = "确认删除",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
             text = {
                 Column {
                     Text(
                         "确定要删除${if (isFolder) "文件夹" else "文件"}吗？",
+                        style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         fileName,
-                        color = Color(0xFF666666)
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (isFolder) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             "注意：文件夹内的所有文件也将被删除",
-                            color = Color(0xFFE53935),
-                            fontSize = 13.sp
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
                 }
             },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = onConfirm,
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = Color(0xFFE53935)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
                     Text("删除")
@@ -281,7 +296,9 @@ fun DeleteConfirmDialog(
                 TextButton(onClick = onDismiss) {
                     Text("取消")
                 }
-            }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
         )
     }
 }
@@ -319,8 +336,8 @@ fun CopyDestinationDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(0.8f),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize()
@@ -360,7 +377,7 @@ fun CopyDestinationDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFFAFAFA))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                             .padding(horizontal = 8.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -389,7 +406,7 @@ fun CopyDestinationDialog(
                         Text(
                             text = currentPath,
                             fontSize = 12.sp,
-                            color = Color(0xFF666666),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.weight(1f),
                             maxLines = 1
                         )
@@ -429,12 +446,12 @@ fun CopyDestinationDialog(
                                         imageVector = Icons.Default.FolderOff,
                                         contentDescription = null,
                                         modifier = Modifier.size(48.dp),
-                                        tint = Color(0xFFBDBDBD)
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
                                         "此文件夹为空",
-                                        color = Color(0xFF999999),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = 14.sp
                                     )
                                 }
@@ -461,7 +478,7 @@ fun CopyDestinationDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFFAFAFA))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                             .padding(12.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -498,7 +515,7 @@ private fun FolderPickerItem(
             .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(10.dp),
-        color = Color(0xFFF8F8F8),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         tonalElevation = 0.dp
     ) {
         Row(
@@ -517,7 +534,7 @@ private fun FolderPickerItem(
             Text(
                 text = folder.name,
                 fontSize = 15.sp,
-                color = Color(0xFF333333),
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -525,7 +542,7 @@ private fun FolderPickerItem(
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
-                tint = Color(0xFFCCCCCC),
+                tint = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.size(20.dp)
             )
         }

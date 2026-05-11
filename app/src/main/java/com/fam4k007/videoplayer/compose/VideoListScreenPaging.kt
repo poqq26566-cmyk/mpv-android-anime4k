@@ -757,7 +757,7 @@ private fun VideoItem(
                     fontWeight = FontWeight.Medium,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
-                    color = Color(0xFF212121),
+                    color = MaterialTheme.colorScheme.onSurface,
                     lineHeight = 16.sp
                 )
 
@@ -768,12 +768,12 @@ private fun VideoItem(
                     Text(
                         text = formatFileSize(video.size),
                         fontSize = 12.sp,
-                        color = Color(0xFF757575)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = formatDuration(video.duration),
                         fontSize = 12.sp,
-                        color = Color(0xFF757575)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -784,7 +784,7 @@ private fun VideoItem(
                     Icon(
                         imageVector = Icons.Default.MoreVert,
                         contentDescription = "更多",
-                        tint = Color(0xFF757575)
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -804,16 +804,16 @@ private fun EmptyState(message: String) {
             Icon(
                 imageVector = Icons.Default.VideoLibrary,
                 contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = Color(0xFFBDBDBD)
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = message,
-                fontSize = 16.sp,
-                color = Color(0xFF757575)
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -849,7 +849,11 @@ private fun VideoSortDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("排序方式", fontWeight = FontWeight.Bold)
+            Text(
+                text = "排序方式",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold
+            )
         },
         text = {
             Column {
@@ -879,7 +883,9 @@ private fun VideoSortDialog(
             TextButton(onClick = onDismiss) {
                 Text("取消")
             }
-        }
+        },
+        shape = RoundedCornerShape(28.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
     )
 }
 
@@ -898,13 +904,15 @@ private fun SortOption(
     ) {
         RadioButton(
             selected = isSelected,
-            onClick = onClick
+            onClick = onClick,
+            colors = RadioButtonDefaults.colors(
+                selectedColor = MaterialTheme.colorScheme.primary
+            )
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = text,
-            fontSize = 16.sp,
-            color = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFF212121)
+            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
         )
     }
 }

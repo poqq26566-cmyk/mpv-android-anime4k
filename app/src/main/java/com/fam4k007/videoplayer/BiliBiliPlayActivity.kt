@@ -308,10 +308,22 @@ fun BiliBiliPlayScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text("退出登录") },
-            text = { Text("确定要退出当前账号吗？") },
+            title = {
+                Text(
+                    text = "退出登录",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Text(
+                    text = "确定要退出当前账号吗？",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         authManager.logout()
                         isLoggedIn.value = false
@@ -319,14 +331,16 @@ fun BiliBiliPlayScreen(
                         Toast.makeText(context, "已退出登录", Toast.LENGTH_SHORT).show()
                     }
                 ) {
-                    Text("确定", color = Color(0xFFFF6699))
+                    Text("确定")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("取消", color = Color.Gray)
+                    Text("取消")
                 }
-            }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
         )
     }
     
@@ -378,14 +392,14 @@ fun BiliBiliPlayScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFFF5F5F5))
+                .background(MaterialTheme.colorScheme.background)
         ) {
             // 输入框区域
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("粘贴番剧链接", fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -407,7 +421,7 @@ fun BiliBiliPlayScreen(
                             viewModel.parseUrl(inputUrl)
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF6699))
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
                         Text("解析")
                     }
@@ -423,13 +437,14 @@ fun BiliBiliPlayScreen(
                             modifier = Modifier
                                 .align(Alignment.Center)
                                 .padding(32.dp),
-                            color = Color.Gray
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     is PlayUiState.Loading -> {
                         CircularProgressIndicator(
                             modifier = Modifier.align(Alignment.Center),
-                            color = Color(0xFFFF6699)
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                     is PlayUiState.Error -> {
@@ -439,7 +454,11 @@ fun BiliBiliPlayScreen(
                                 .padding(32.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(state.message, color = Color.Red)
+                            Text(
+                                text = state.message,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.error
+                            )
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(onClick = { viewModel.parseUrl(inputUrl) }) {
                                 Text("重试")
@@ -476,13 +495,13 @@ fun BangumiDetailView(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)  // 增加阴影
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(bangumi.title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("共 ${bangumi.episodes.size} 集", color = Color.Gray)
+                    Text("共 ${bangumi.episodes.size} 集", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -495,25 +514,25 @@ fun BangumiDetailView(
                     .clip(RoundedCornerShape(12.dp))  // 圆角裁剪
                     .clickable { onPlayEpisode(episode.epId, episode.cid, episode.title) }
                     .animateItemPlacement(),  // 添加item位置动画
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 2.dp,
-                    pressedElevation = 6.dp  // 点击时增加阴影
+                    pressedElevation = 6.dp
                 )
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 14.dp),  // 调整内边距
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         episode.title, 
                         fontWeight = FontWeight.Medium,
-                        modifier = Modifier.weight(1f)  // 让标题占据剩余空间
+                        modifier = Modifier.weight(1f)
                     )
-                    Text("▶", fontSize = 20.sp, color = Color(0xFFFF6699))
+                    Text("▶", fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
                 }
             }
         }

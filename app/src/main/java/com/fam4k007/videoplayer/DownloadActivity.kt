@@ -143,14 +143,14 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = androidx.compose.ui.graphics.Color(0xFFF5F5F5)
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         "添加下载任务",
                         style = MaterialTheme.typography.titleMedium,
-                        color = androidx.compose.ui.graphics.Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     
                     Spacer(modifier = Modifier.height(8.dp))
@@ -159,7 +159,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = androidx.compose.ui.graphics.Color(0xFFFFF3E0)
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
                         )
                     ) {
                         Row(
@@ -175,13 +175,13 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                                 Text(
                                     "免责声明",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = androidx.compose.ui.graphics.Color(0xFFFF6F00),
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                                 )
                                 Text(
                                     "下载内容仅供个人学习使用，请勿传播。\n使用本功能产生的法律责任由用户自行承担。",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = androidx.compose.ui.graphics.Color(0xFFE65100),
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                                     fontSize = 11.sp
                                 )
                             }
@@ -196,8 +196,8 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                         label = { Text("B站视频/番剧链接") },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = androidx.compose.ui.graphics.Color.Black,
-                            unfocusedTextColor = androidx.compose.ui.graphics.Color.Black
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                         )
                     )
 
@@ -274,7 +274,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                             if (isParsing) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(20.dp),
-                                    color = androidx.compose.ui.graphics.Color.White
+                                    color = MaterialTheme.colorScheme.onPrimary
                                 )
                             } else {
                                 Text(if (parseResult == null) "解析链接" else "重新解析")
@@ -326,7 +326,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                         Text(
                             text = "存储路径: $downloadPathDisplay",
                             style = MaterialTheme.typography.bodySmall,
-                            color = androidx.compose.ui.graphics.Color.Gray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.weight(1f),
                             maxLines = 1
                         )
@@ -342,7 +342,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "✓ ${result.title}",
-                            color = androidx.compose.ui.graphics.Color(0xFF4CAF50),
+                            color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -355,7 +355,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                                 .fillMaxWidth()
                                 .clickable { isEpisodeListExpanded = !isEpisodeListExpanded }
                                 .background(
-                                    androidx.compose.ui.graphics.Color(0xFFE3F2FD),
+                                    MaterialTheme.colorScheme.primaryContainer,
                                     shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
                                 )
                                 .padding(12.dp),
@@ -364,7 +364,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                             Text(
                                 "选择集数（共${episodeList.size}集）",
                                 style = MaterialTheme.typography.titleSmall,
-                                color = androidx.compose.ui.graphics.Color(0xFF1976D2),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
                                 modifier = Modifier.weight(1f)
                             )
@@ -372,13 +372,13 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                                 Text(
                                     if (isEpisodeListExpanded) "收起" else "展开",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = androidx.compose.ui.graphics.Color(0xFF1976D2),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                                     modifier = Modifier.padding(end = 4.dp)
                                 )
                                 Text(
                                     if (isEpisodeListExpanded) "▼" else "▶",
                                     style = MaterialTheme.typography.titleSmall,
-                                    color = androidx.compose.ui.graphics.Color(0xFF1976D2)
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                             }
                         }
@@ -427,16 +427,16 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                                                 Text(
                                                     text = "第${episode.index}集 ${episode.longTitle}",
                                                     style = MaterialTheme.typography.bodyMedium,
-                                                    color = androidx.compose.ui.graphics.Color.Black
+                                                    color = MaterialTheme.colorScheme.onSurface
                                                 )
                                                 if (episode.badge.isNotEmpty()) {
                                                     Text(
                                                         text = episode.badge,
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = if (episode.badgeType == 1) {
-                                                            androidx.compose.ui.graphics.Color(0xFFFB7299)
+                                                            MaterialTheme.colorScheme.error
                                                         } else {
-                                                            androidx.compose.ui.graphics.Color.Gray
+                                                            MaterialTheme.colorScheme.onSurfaceVariant
                                                         }
                                                     )
                                                 }
@@ -467,7 +467,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                         Text(
                             "下载历史",
                             style = MaterialTheme.typography.titleMedium,
-                            color = androidx.compose.ui.graphics.Color.Black
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         TextButton(onClick = { viewModel.clearCompletedDownloads() }) {
                             Text("清除已完成")
@@ -507,14 +507,14 @@ fun DownloadItemCard(item: DownloadItem, viewModel: BilibiliDownloadViewModel) {
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = androidx.compose.ui.graphics.Color(0xFFF5F5F5)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = item.title,
                 style = MaterialTheme.typography.titleMedium,
-                color = androidx.compose.ui.graphics.Color.Black
+                color = MaterialTheme.colorScheme.onSurface
             )
             
             Spacer(modifier = Modifier.height(4.dp))
@@ -531,11 +531,11 @@ fun DownloadItemCard(item: DownloadItem, viewModel: BilibiliDownloadViewModel) {
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = when (item.status) {
-                    "completed" -> androidx.compose.ui.graphics.Color(0xFF4CAF50)
-                    "failed" -> androidx.compose.ui.graphics.Color(0xFFF44336)
-                    "downloading" -> androidx.compose.ui.graphics.Color(0xFF2196F3)
-                    "merging" -> androidx.compose.ui.graphics.Color(0xFFFF9800)
-                    else -> androidx.compose.ui.graphics.Color.Gray
+                    "completed" -> MaterialTheme.colorScheme.primary
+                    "failed" -> MaterialTheme.colorScheme.error
+                    "downloading" -> MaterialTheme.colorScheme.tertiary
+                    "merging" -> MaterialTheme.colorScheme.secondary
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
                 }
             )
             
@@ -556,7 +556,7 @@ fun DownloadItemCard(item: DownloadItem, viewModel: BilibiliDownloadViewModel) {
                 Text(
                     text = "${item.progress}%",
                     style = MaterialTheme.typography.bodySmall,
-                    color = androidx.compose.ui.graphics.Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             
@@ -570,7 +570,7 @@ fun DownloadItemCard(item: DownloadItem, viewModel: BilibiliDownloadViewModel) {
                         Button(
                             onClick = { viewModel.pauseDownload(item) },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = androidx.compose.ui.graphics.Color(0xFFFF9800)
+                                containerColor = MaterialTheme.colorScheme.secondary
                             )
                         ) {
                             Text("暂停")
@@ -579,7 +579,7 @@ fun DownloadItemCard(item: DownloadItem, viewModel: BilibiliDownloadViewModel) {
                         Button(
                             onClick = { viewModel.resumeDownload(item) },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = androidx.compose.ui.graphics.Color(0xFF4CAF50)
+                                containerColor = MaterialTheme.colorScheme.primary
                             )
                         ) {
                             Text("恢复")
@@ -591,7 +591,7 @@ fun DownloadItemCard(item: DownloadItem, viewModel: BilibiliDownloadViewModel) {
                     Button(
                         onClick = { viewModel.cancelDownload(item) },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = androidx.compose.ui.graphics.Color(0xFFF44336)
+                            containerColor = MaterialTheme.colorScheme.error
                         )
                     ) {
                         Text("取消")

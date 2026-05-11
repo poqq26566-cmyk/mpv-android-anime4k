@@ -269,7 +269,7 @@ fun FolderBrowserScreen(
                             FloatingActionButton(
                                 onClick = { refreshFolders() }
                             ) {
-                                Icon(Icons.Default.Refresh, "刷新", tint = Color.White)
+                                Icon(Icons.Default.Refresh, "刷新", tint = MaterialTheme.colorScheme.onPrimary)
                             }
                         }
                     }
@@ -401,7 +401,7 @@ private fun FolderItem(
             containerColor = if (isSelected && !isEditMode) 
                 MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) 
             else 
-                Color.White
+                MaterialTheme.colorScheme.surface
         ),
         border = if (isSelected && !isEditMode) 
             androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) 
@@ -459,7 +459,7 @@ private fun FolderItem(
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    color = Color(0xFF212121)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -467,7 +467,7 @@ private fun FolderItem(
                 Text(
                     text = "${folder.videoCount} 个视频",
                     fontSize = 14.sp,
-                    color = Color(0xFF757575)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -476,7 +476,7 @@ private fun FolderItem(
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = null,
-                    tint = Color(0xFFBDBDBD)
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -497,7 +497,7 @@ private fun PermissionPrompt(onRequestPermission: () -> Unit) {
                 imageVector = Icons.Default.FolderOff,
                 contentDescription = null,
                 modifier = Modifier.size(80.dp),
-                tint = Color(0xFFBDBDBD)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -506,7 +506,7 @@ private fun PermissionPrompt(onRequestPermission: () -> Unit) {
                 text = "需要存储权限",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF212121)
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -514,7 +514,7 @@ private fun PermissionPrompt(onRequestPermission: () -> Unit) {
             Text(
                 text = "请授予存储权限以浏览视频文件",
                 fontSize = 14.sp,
-                color = Color(0xFF757575)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -543,16 +543,16 @@ private fun EmptyState(message: String) {
             Icon(
                 imageVector = Icons.Default.FolderOff,
                 contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = Color(0xFFBDBDBD)
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = message,
-                fontSize = 16.sp,
-                color = Color(0xFF757575)
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -568,7 +568,11 @@ private fun SortDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("排序方式", fontWeight = FontWeight.Bold)
+            Text(
+                text = "排序方式",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold
+            )
         },
         text = {
             Column {
@@ -598,7 +602,9 @@ private fun SortDialog(
             TextButton(onClick = onDismiss) {
                 Text("取消")
             }
-        }
+        },
+        shape = RoundedCornerShape(28.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
     )
 }
 
@@ -625,7 +631,7 @@ private fun SortOption(
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = text,
-            color = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFF212121)
+            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
         )
     }
 }

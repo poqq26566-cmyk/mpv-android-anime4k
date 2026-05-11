@@ -91,7 +91,7 @@ fun HomeScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -221,7 +221,7 @@ fun TopBar(
             text = "小喵Player",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF222222)
+            color = MaterialTheme.colorScheme.onBackground
         )
         
         // 右上角设置按钮
@@ -284,7 +284,7 @@ fun LogoSection(
                     text = "继续播放: ${lastVideo.fileName}",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF666666),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier
                         .widthIn(max = 280.dp)
@@ -351,9 +351,9 @@ fun RemoteUrlDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White
+                containerColor = MaterialTheme.colorScheme.surface
             )
         ) {
             LazyColumn(
@@ -365,9 +365,9 @@ fun RemoteUrlDialog(
                 item {
                     Text(
                         text = "播放网络视频",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF212121)
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 
@@ -381,8 +381,8 @@ fun RemoteUrlDialog(
                         minLines = 1,
                         maxLines = 3,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                         )
                     )
                 }
@@ -519,8 +519,8 @@ fun RemoteUrlDialog(
                             enabled = url.isNotBlank(),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
-                                disabledContainerColor = Color(0xFFE0E0E0),
-                                disabledContentColor = Color(0xFF757575)
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         ) {
                             Text("播放")
@@ -579,7 +579,7 @@ fun ExpandableActionButton(
                         .wrapContentSize(),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
@@ -624,7 +624,7 @@ fun ExpandableActionButton(
                         .wrapContentSize(),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
@@ -660,7 +660,7 @@ fun ExpandableActionButton(
             FloatingActionButton(
                 onClick = onToggle,
                 containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(60.dp)
             ) {
                 // 旋转动画
@@ -673,7 +673,7 @@ fun ExpandableActionButton(
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = if (isExpanded) "收起" else "展开",
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier
                         .size(32.dp)
                         .rotate(rotation)
@@ -707,8 +707,8 @@ fun ActionItem(
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            Color(0xFFE3F2FD),
-                            Color(0xFFBBDEFB)
+                            MaterialTheme.colorScheme.primaryContainer,
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
                         )
                     )
                 ),
@@ -727,7 +727,7 @@ fun ActionItem(
         Text(
             text = label,
             fontSize = 12.sp,
-            color = Color(0xFF666666)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -752,8 +752,8 @@ fun IconWithBackground(
             .background(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color(0xFFE3F2FD),
-                        Color(0xFFBBDEFB)
+                        MaterialTheme.colorScheme.primaryContainer,
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
                     )
                 )
             )

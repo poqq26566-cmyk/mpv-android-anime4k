@@ -30,12 +30,15 @@ import com.fam4k007.videoplayer.bilibili.auth.BiliBiliAuthManager
 import com.fam4k007.videoplayer.bilibili.model.LoginResult
 import com.fam4k007.videoplayer.bilibili.model.QRCodeInfo
 import com.fam4k007.videoplayer.bilibili.model.UserInfo
+import com.fam4k007.videoplayer.ui.theme.ThemeController
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.koin.androidx.compose.KoinAndroidContext
 
 /**
  * B站登录界面
@@ -49,13 +52,20 @@ class BiliBiliLoginActivity : ComponentActivity() {
         val authManager = BiliBiliAuthManager.getInstance(this)
         
         setContent {
-            MaterialTheme {
-                BiliBiliLoginScreen(
-                    authManager = authManager,
-                    onClose = {
-                        finish()
-                    }
-                )
+            KoinAndroidContext {
+                val themeController = ThemeController.from(this@BiliBiliLoginActivity)
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
+                ) {
+                    BiliBiliLoginScreen(
+                        authManager = authManager,
+                        onClose = {
+                            finish()
+                        }
+                    )
+                }
             }
         }
     }
@@ -90,18 +100,17 @@ fun BiliBiliLoginScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("登录 Bilibili", color = Color.White) },
+                title = { Text("登录 Bilibili") },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "返回",
-                            tint = Color.White
+                            contentDescription = "返回"
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFFFF6699)
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         },
@@ -111,7 +120,7 @@ fun BiliBiliLoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFFF5F5F5)),
+                .background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
             when (val state = uiState) {
@@ -154,10 +163,10 @@ private fun LoadingContent() {
     ) {
         CircularProgressIndicator(
             modifier = Modifier.size(48.dp),
-            color = Color(0xFFFF6699)
+            color = MaterialTheme.colorScheme.primary
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Text("正在生成二维码...", fontSize = 16.sp, color = Color.Gray)
+        Text("正在生成二维码...", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -214,10 +223,10 @@ private fun QRCodeContent(
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
                 color = when (currentStatus) {
-                    "等待扫码..." -> Color.Gray
-                    "已扫码，等待确认..." -> Color(0xFFFF6699)
-                    "二维码已过期" -> Color.Red
-                    else -> Color.Black
+                    "等待扫码..." -> MaterialTheme.colorScheme.onSurfaceVariant
+                    "已扫码，等待确认..." -> MaterialTheme.colorScheme.primary
+                    "二维码已过期" -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onSurface
                 },
                 textAlign = TextAlign.Center
             )
@@ -228,7 +237,7 @@ private fun QRCodeContent(
         Text(
             text = "1.扫描以后不要马上点确认！\n2.等二维码下方等待扫码变为已扫码以后，再点确定！\n3.点确定以后不要急！本页面会自动返回到上一级，在此期间请不要进行任何操作！",
             fontSize = 14.sp,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Start,
             lineHeight = 20.sp,
             modifier = Modifier.fillMaxWidth()
@@ -239,7 +248,7 @@ private fun QRCodeContent(
             Button(
                 onClick = onRefresh,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFF6699)
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
                 Text("刷新二维码")
@@ -263,7 +272,7 @@ private fun LoggedInContent(
             text = "✓ 登录成功",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF00C853)
+            color = MaterialTheme.colorScheme.primary
         )
         
         Spacer(modifier = Modifier.height(16.dp))
@@ -279,14 +288,14 @@ private fun LoggedInContent(
             ) {
                 Text("用户名: ${userInfo.uname}", fontSize = 16.sp)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("UID: ${userInfo.mid}", fontSize = 14.sp, color = Color.Gray)
+                Text("UID: ${userInfo.mid}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 
                 if (userInfo.vipStatus == 1) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "大会员 ✨",
                         fontSize = 14.sp,
-                        color = Color(0xFFFF6699),
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -298,7 +307,7 @@ private fun LoggedInContent(
         Button(
             onClick = onLogout,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Gray
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
             Text("退出登录")
@@ -320,7 +329,7 @@ private fun ErrorContent(
         Text(
             text = "✕",
             fontSize = 48.sp,
-            color = Color.Red
+            color = MaterialTheme.colorScheme.error
         )
         
         Spacer(modifier = Modifier.height(16.dp))
@@ -328,7 +337,7 @@ private fun ErrorContent(
         Text(
             text = message,
             fontSize = 16.sp,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
         
@@ -337,7 +346,7 @@ private fun ErrorContent(
         Button(
             onClick = onRetry,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFFF6699)
+                containerColor = MaterialTheme.colorScheme.primary
             )
         ) {
             Text("重试")

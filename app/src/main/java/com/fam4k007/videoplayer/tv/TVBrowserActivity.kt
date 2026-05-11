@@ -149,7 +149,7 @@ fun TVBrowserScreen(
     Scaffold(
         topBar = {
             Column(
-                modifier = Modifier.background(Color.White)
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
             ) {
                 TopAppBar(
                     title = { 
@@ -196,7 +196,7 @@ fun TVBrowserScreen(
                                         .size(8.dp)
                                         .align(Alignment.TopEnd)
                                         .offset(x = (-8).dp, y = 8.dp)
-                                        .background(Color.Red, CircleShape)
+                                        .background(MaterialTheme.colorScheme.error, CircleShape)
                                 )
                             }
                         }
@@ -213,7 +213,7 @@ fun TVBrowserScreen(
                     exit = shrinkVertically() + fadeOut()
                 ) {
                     Surface(
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.surface,
                         tonalElevation = 0.dp
                     ) {
                         Column(
@@ -226,7 +226,7 @@ fun TVBrowserScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFFF5F5F5)
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                                 ),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                             ) {
@@ -237,12 +237,12 @@ fun TVBrowserScreen(
                                     placeholder = { Text("输入网址，例如：bilibili.com") },
                                     singleLine = true,
                                     leadingIcon = {
-                                        Icon(Icons.Default.Language, "网址", tint = Color(0xFF666666))
+                                        Icon(Icons.Default.Language, "网址", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                                     },
                                     trailingIcon = {
                                         if (urlInput.isNotEmpty()) {
                                             IconButton(onClick = { urlInput = "" }) {
-                                                Icon(Icons.Default.Clear, "清除", tint = Color(0xFF666666))
+                                                Icon(Icons.Default.Clear, "清除", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                                             }
                                         }
                                     },
@@ -251,8 +251,8 @@ fun TVBrowserScreen(
                                         focusedContainerColor = Color.Transparent,
                                         unfocusedBorderColor = Color.Transparent,
                                         focusedBorderColor = Color.Transparent,
-                                        unfocusedTextColor = Color.Black,
-                                        focusedTextColor = Color.Black
+                                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                        focusedTextColor = MaterialTheme.colorScheme.onSurface
                                     )
                                 )
                             }
@@ -299,7 +299,7 @@ fun TVBrowserScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
             if (urlToLoad.isNotEmpty()) {

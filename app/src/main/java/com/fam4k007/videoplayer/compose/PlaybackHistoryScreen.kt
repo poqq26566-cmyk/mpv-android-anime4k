@@ -119,26 +119,41 @@ fun PlaybackHistoryScreen(
     if (showClearDialog) {
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
-            title = { Text("清空历史", color = MaterialTheme.colorScheme.onSurface) },
-            text = { Text("确定要清空所有播放历史吗？此操作不可恢复。", 
-                         color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            title = {
+                Text(
+                    text = "清空历史",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+                )
+            },
+            text = {
+                Text(
+                    text = "确定要清空所有播放历史吗？此操作不可恢复。",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         historyManager.clearHistory()
                         historyList = emptyList()
                         showClearDialog = false
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
                 ) {
-                    Text("清空", color = MaterialTheme.colorScheme.error)
+                    Text("清空")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showClearDialog = false }) {
-                    Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("取消")
                 }
             },
-            containerColor = MaterialTheme.colorScheme.surface
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
         )
     }
 
@@ -146,26 +161,41 @@ fun PlaybackHistoryScreen(
     itemToDelete?.let { item ->
         AlertDialog(
             onDismissRequest = { itemToDelete = null },
-            title = { Text("删除记录", color = MaterialTheme.colorScheme.onSurface) },
-            text = { Text("确定要删除《${item.fileName}》的播放记录吗？", 
-                         color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            title = {
+                Text(
+                    text = "删除记录",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+                )
+            },
+            text = {
+                Text(
+                    text = "确定要删除《${item.fileName}》的播放记录吗？",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         historyManager.removeHistory(item.uri)
                         historyList = historyManager.getHistory()
                         itemToDelete = null
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
                 ) {
-                    Text("删除", color = MaterialTheme.colorScheme.error)
+                    Text("删除")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { itemToDelete = null }) {
-                    Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("取消")
                 }
             },
-            containerColor = MaterialTheme.colorScheme.surface
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
         )
     }
 }

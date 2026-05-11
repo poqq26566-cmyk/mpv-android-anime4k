@@ -254,11 +254,16 @@ private fun DownloadDialog(
 ) {
     var url by remember { mutableStateOf("") }
     var downloadWholeSeason by remember { mutableStateOf(true) }
-    val accentColor = MaterialTheme.colorScheme.primary
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("下载B站弹幕", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) },
+        title = {
+            Text(
+                text = "下载B站弹幕",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+        },
         text = {
             Column {
                 OutlinedTextField(
@@ -268,25 +273,16 @@ private fun DownloadDialog(
                     placeholder = { Text("输入B站视频或番剧链接") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = false,
-                    maxLines = 3,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                        cursorColor = MaterialTheme.colorScheme.primary,
-                        focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        focusedPlaceholderColor = MaterialTheme.colorScheme.outline,
-                        unfocusedPlaceholderColor = MaterialTheme.colorScheme.outline,
-                        focusedContainerColor = MaterialTheme.colorScheme.surface,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                    )
+                    maxLines = 3
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text("下载模式", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    "下载模式",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
@@ -299,7 +295,7 @@ private fun DownloadDialog(
                     RadioButton(
                         selected = downloadWholeSeason,
                         onClick = { downloadWholeSeason = true },
-                        colors = RadioButtonDefaults.colors(selectedColor = accentColor)
+                        colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary)
                     )
                     Text("整季下载", modifier = Modifier.padding(start = 8.dp), color = MaterialTheme.colorScheme.onSurface)
                 }
@@ -314,14 +310,14 @@ private fun DownloadDialog(
                     RadioButton(
                         selected = !downloadWholeSeason,
                         onClick = { downloadWholeSeason = false },
-                        colors = RadioButtonDefaults.colors(selectedColor = accentColor)
+                        colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary)
                     )
                     Text("单集下载", modifier = Modifier.padding(start = 8.dp), color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = {
                     if (url.isNotBlank()) {
                         onDownload(url.trim(), downloadWholeSeason)
@@ -329,15 +325,16 @@ private fun DownloadDialog(
                 },
                 enabled = url.isNotBlank()
             ) {
-                Text("下载", color = MaterialTheme.colorScheme.primary)
+                Text("下载")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("取消")
             }
         },
-        containerColor = MaterialTheme.colorScheme.surface
+        shape = RoundedCornerShape(28.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
     )
 }
 
@@ -355,13 +352,12 @@ private fun DownloadProgressDialog(
             if (!isDownloading) {
                 onDismiss()
             }
-        }, // 下载过程中不允许手动关闭，完成后可以关闭
+        },
         title = { 
             Text(
-                "正在下载弹幕", 
-                fontSize = 16.sp, 
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                text = "正在下载弹幕",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold
             ) 
         },
         text = {
@@ -374,7 +370,7 @@ private fun DownloadProgressDialog(
                 if (progress.total > 0) {
                     Text(
                         text = "进度: ${progress.current} / ${progress.total}",
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
@@ -395,7 +391,7 @@ private fun DownloadProgressDialog(
                     // 准备中
                     Text(
                         text = "准备下载中...",
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     
@@ -417,7 +413,7 @@ private fun DownloadProgressDialog(
                 if (progress.currentTitle.isNotEmpty()) {
                     Text(
                         text = "当前: ${progress.currentTitle}",
-                        fontSize = 13.sp,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
@@ -441,7 +437,7 @@ private fun DownloadProgressDialog(
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "成功: ${progress.successCount}",
-                            fontSize = 13.sp,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -456,7 +452,7 @@ private fun DownloadProgressDialog(
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "失败: ${progress.failedCount}",
-                            fontSize = 13.sp,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -465,13 +461,13 @@ private fun DownloadProgressDialog(
         },
         confirmButton = {
             if (isCompleted) {
-                TextButton(onClick = onDismiss) {
-                    Text("完成", color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
+                Button(onClick = onDismiss) {
+                    Text("完成")
                 }
             }
         },
-        shape = RoundedCornerShape(12.dp),
-        containerColor = MaterialTheme.colorScheme.surface
+        shape = RoundedCornerShape(28.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
     )
 }
 
