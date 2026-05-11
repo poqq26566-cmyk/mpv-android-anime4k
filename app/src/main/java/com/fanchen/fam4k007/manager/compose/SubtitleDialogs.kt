@@ -700,7 +700,7 @@ fun ColorPickerSection(
                             )
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
-                                indication = rememberRipple(bounded = false, radius = 18.dp)
+                                indication = null
                             ) {
                                 onSelectedIndexChange(index)
                                 onColorSelected(color)

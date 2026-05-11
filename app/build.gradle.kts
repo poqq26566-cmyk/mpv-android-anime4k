@@ -1,0 +1,183 @@
+import com.android.build.api.variant.FilterConfiguration.FilterType
+import java.util.Properties
+
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.parcelize)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.aboutlibraries)
+}
+
+// 读取本地配置
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
+}
+
+android {
+    namespace = "com.fam4k007.videoplayer"
+    compileSdk = libs.versions.compileSdk.get().toInt()
+    ndkVersion = libs.versions.ndk.get()
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a")
+            isUniversalApk = false
+        }
+    }
+
+    defaultConfig {
+        applicationId = "com.fam4k007.videoplayer"
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
+        versionCode = 24
+        versionName = "1.2.4"
+
+        buildConfigField(
+            "String",
+            "DANDANPLAY_APP_ID",
+            "\"${localProperties.getProperty("dandanplay.appId", "")}\""
+        )
+        buildConfigField(
+            "String",
+            "DANDANPLAY_APP_SECRET",
+            "\"${localProperties.getProperty("dandanplay.appSecret", "")}\""
+        )
+        buildConfigField(
+            "String",
+            "WYZIE_API_KEY",
+            "\"${localProperties.getProperty("wyzie.apiKey", "")}\""
+        )
+
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas")
+        }
+    }
+
+    buildTypes {
+        debug {
+            isMinifyEnabled = false
+            isDebuggable = true
+        }
+
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
+    androidResources {
+        ignoreAssetsPattern = "!subfont.ttf"
+    }
+
+    packaging {
+        resources {
+            excludes += listOf(
+                "DebugProbesKt.bin",
+                "META-INF/kotlinx_coroutines_core.version",
+                "META-INF/CHANGES",
+                "META-INF/README.md",
+                "kotlin-tooling-metadata.json"
+            )
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+        freeCompilerArgs += listOf("-opt-in=kotlin.RequiresOptIn")
+    }
+
+    buildFeatures {
+        viewBinding = true
+        compose = true
+        buildConfig = true
+    }
+}
+
+// ABI 版本码配置
+val abiVersionCodes = mapOf(
+    "arm64-v8a" to 2,
+    "armeabi-v7a" to 1
+)
+
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            val abiName = output.filters.find { it.filterType == FilterType.ABI }?.identifier
+            if (abiName != null) {
+                output.versionCode.set((variant.outputs.first().versionCode.get() ?: 0) * 10 + (abiVersionCodes[abiName] ?: 0))
+            }
+        }
+    }
+}
+
+dependencies {
+    // AndroidX Core
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.material)
+    implementation(libs.androidx.cardview)
+    implementation(libs.androidx.core.ktx)
+
+    // Compose
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.bundles.compose)
+    implementation(libs.androidx.navigation.compose)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+
+    // 本地 AAR 库（来自 libs 目录）
+    implementation(mapOf("name" to "mpv-android-lib-v0.1.10", "ext" to "aar"))
+    implementation(mapOf("name" to "DanmakuFlameMaster", "ext" to "aar"))
+    implementation(mapOf("name" to "mediainfoAndroid-v1.0.0-fix", "ext" to "aar"))
+    implementation(files("libs/sardine-1.0.2.jar"))
+    implementation(files("libs/simple-xml-2.7.1.jar"))
+
+    // Image Loading
+    implementation(libs.glide)
+    implementation(libs.bundles.coil)
+
+    // Lifecycle
+    implementation(libs.bundles.lifecycle)
+
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.android)
+
+    // Network
+    implementation(libs.okhttp)
+    implementation(libs.jsoup)
+
+    // Database
+    implementation(libs.bundles.room)
+    ksp(libs.androidx.room.compiler)
+
+    // Work Manager
+    implementation(libs.androidx.work.runtime.ktx)
+
+    // Paging
+    implementation(libs.bundles.paging)
+
+    // Other
+    implementation(libs.zxing.core)
+    implementation(libs.gson)
+    implementation(libs.androidx.security.crypto)
+    implementation(libs.bundles.aboutlibraries)
+
+    // Test
+    testImplementation(libs.junit)
+}

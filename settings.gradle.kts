@@ -1,9 +1,9 @@
 pluginManagement {
     repositories {
         // 使用阿里云镜像加速
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
-        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
         google()
         mavenCentral()
         gradlePluginPortal()
@@ -15,13 +15,13 @@ dependencyResolutionManagement {
     repositories {
         // 本地库目录（用于 .aar 文件）
         flatDir {
-            dirs 'app/libs'
+            dirs("app/libs")
         }
         // 使用阿里云镜像加速
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
         // JitPack 仓库（用于 MediaInfo 库）
-        maven { url 'https://jitpack.io' }
+        maven { url = uri("https://jitpack.io") }
         google()
         mavenCentral()
     }
