@@ -6,9 +6,10 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.fam4k007.videoplayer.PlaybackHistoryManager
-import com.fam4k007.videoplayer.danmaku.DanmakuManager
+import com.fam4k007.videoplayer.domain.danmaku.DanmakuManager
+import com.fam4k007.videoplayer.domain.player.PlaybackEngine
 import com.fam4k007.videoplayer.manager.PreferencesManager
-import com.fam4k007.videoplayer.manager.SubtitleManager
+import com.fam4k007.videoplayer.domain.subtitle.SubtitleManager
 import com.fam4k007.videoplayer.utils.DialogUtils
 import com.fanchen.fam4k007.manager.compose.ComposeOverlayManager
 import kotlinx.coroutines.CoroutineScope

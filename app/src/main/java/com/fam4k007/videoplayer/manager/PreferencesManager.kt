@@ -453,6 +453,39 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putString("theme_mode", mode).apply()
     }
     
+    /**
+     * 获取应用主题名称
+     * @return 主题名称，默认 "Default"
+     */
+    fun getAppTheme(): String {
+        return sharedPreferences.getString(
+            "app_theme",
+            "Default"  // 默认主题
+        ) ?: "Default"
+    }
+    
+    /**
+     * 保存应用主题
+     */
+    fun setAppTheme(themeName: String) {
+        sharedPreferences.edit().putString("app_theme", themeName).apply()
+    }
+    
+    /**
+     * 获取是否启用 AMOLED 纯黑模式
+     * @return true = 启用，false = 不启用
+     */
+    fun getAmoledMode(): Boolean {
+        return sharedPreferences.getBoolean("amoled_mode", false)
+    }
+    
+    /**
+     * 保存 AMOLED 纯黑模式设置
+     */
+    fun setAmoledMode(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("amoled_mode", enabled).apply()
+    }
+    
     // ==================== 弹幕设置 ====================
     
     fun getDanmakuEnabled(): Boolean {
@@ -899,5 +932,172 @@ class PreferencesManager private constructor(context: Context) {
      */
     fun getAll(): Map<String, *> {
         return sharedPreferences.all ?: emptyMap<String, Any>()
+    }
+    
+    // ==================== PlayerRepository 兼容方法 ====================
+    
+    /**
+     * 是否启用记忆播放位置
+     */
+    fun isRememberPositionEnabled(): Boolean {
+        return sharedPreferences.getBoolean("remember_position_enabled", true)
+    }
+    
+    fun setRememberPositionEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("remember_position_enabled", enabled).apply()
+    }
+    
+    /**
+     * 是否启用记忆亮度
+     */
+    fun isRememberBrightnessEnabled(): Boolean {
+        return sharedPreferences.getBoolean("remember_brightness_enabled", false)
+    }
+    
+    fun setRememberBrightnessEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("remember_brightness_enabled", enabled).apply()
+    }
+    
+    /**
+     * 是否启用自动加载弹幕
+     */
+    fun isAutoLoadDanmakuEnabled(): Boolean {
+        return sharedPreferences.getBoolean("auto_load_danmaku_enabled", true)
+    }
+    
+    fun setAutoLoadDanmakuEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("auto_load_danmaku_enabled", enabled).apply()
+    }
+    
+    /**
+     * 是否启用硬件解码（兼容方法）
+     */
+    fun isHardwareDecodingEnabled(): Boolean {
+        return getHardwareDecoder()
+    }
+    
+    fun setHardwareDecodingEnabled(enabled: Boolean) {
+        setHardwareDecoder(enabled)
+    }
+    
+    /**
+     * 是否启用手势控制
+     */
+    fun isGestureControlEnabled(): Boolean {
+        return sharedPreferences.getBoolean("gesture_control_enabled", true)
+    }
+    
+    fun setGestureControlEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("gesture_control_enabled", enabled).apply()
+    }
+    
+    /**
+     * 是否启用Anime4K
+     */
+    fun isAnime4KEnabled(): Boolean {
+        return sharedPreferences.getBoolean("anime4k_enabled", false)
+    }
+    
+    fun setAnime4KEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("anime4k_enabled", enabled).apply()
+    }
+    
+    /**
+     * 获取Anime4K模式（兼容方法，使用已有的LastAnime4KMode）
+     */
+    fun getAnime4KMode(): String {
+        return getLastAnime4KMode()
+    }
+    
+    fun setAnime4KMode(mode: String) {
+        setLastAnime4KMode(mode)
+    }
+    
+    /**
+     * 获取Anime4K强度
+     */
+    fun getAnime4KStrength(): Float {
+        return sharedPreferences.getFloat("anime4k_strength", 1.0f)
+    }
+    
+    fun setAnime4KStrength(strength: Float) {
+        sharedPreferences.edit().putFloat("anime4k_strength", strength).apply()
+    }
+    
+    /**
+     * 获取弹幕字体大小（Float版本）
+     */
+    fun getDanmakuFontSize(): Float {
+        return getDanmakuSize().toFloat()
+    }
+    
+    fun setDanmakuFontSize(size: Float) {
+        setDanmakuSize(size.toInt())
+    }
+    
+    /**
+     * 是否启用弹幕描边
+     */
+    fun isDanmakuStrokeEnabled(): Boolean {
+        return sharedPreferences.getBoolean("danmaku_stroke_enabled", true)
+    }
+    
+    fun setDanmakuStrokeEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("danmaku_stroke_enabled", enabled).apply()
+    }
+    
+    /**
+     * 获取弹幕最大行数
+     */
+    fun getDanmakuMaxLines(): Int {
+        return sharedPreferences.getInt("danmaku_max_lines", 5)
+    }
+    
+    fun setDanmakuMaxLines(maxLines: Int) {
+        sharedPreferences.edit().putInt("danmaku_max_lines", maxLines).apply()
+    }
+    
+    /**
+     * 获取字幕字体大小（全局设置，Float版本）
+     */
+    fun getSubtitleFontSize(): Float {
+        return sharedPreferences.getFloat("subtitle_font_size", 20f)
+    }
+    
+    fun setSubtitleFontSize(size: Float) {
+        sharedPreferences.edit().putFloat("subtitle_font_size", size).apply()
+    }
+    
+    /**
+     * 获取字幕位置（全局设置）
+     */
+    fun getSubtitlePosition(): Int {
+        return sharedPreferences.getInt("subtitle_position", 100)
+    }
+    
+    fun setSubtitlePosition(position: Int) {
+        sharedPreferences.edit().putInt("subtitle_position", position).apply()
+    }
+    
+    /**
+     * 是否启用自动旋转
+     */
+    fun isAutoRotateEnabled(): Boolean {
+        return sharedPreferences.getBoolean("auto_rotate_enabled", false)
+    }
+    
+    fun setAutoRotateEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("auto_rotate_enabled", enabled).apply()
+    }
+    
+    /**
+     * 是否启用竖屏UI
+     */
+    fun isPortraitUIEnabled(): Boolean {
+        return sharedPreferences.getBoolean("portrait_ui_enabled", false)
+    }
+    
+    fun setPortraitUIEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("portrait_ui_enabled", enabled).apply()
     }
 }

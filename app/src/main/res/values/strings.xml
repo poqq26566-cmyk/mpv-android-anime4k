@@ -15,4 +15,14 @@
     
     <!-- 视频播放器 -->
     <string name="video_thumbnail">视频缩略图</string>
+    
+    <!-- 主题 -->
+    <string name="theme_default">默认</string>
+    <string name="theme_dynamic">动态颜色</string>
+    <string name="theme_mocha">摩卡</string>
+    <string name="theme_ocean">海洋</string>
+    <string name="theme_forest">森林</string>
+    <string name="theme_midnight">午夜</string>
+    <string name="theme_sunset">日落</string>
+    <string name="theme_rose_gold">玫瑰金</string>
 </resources>

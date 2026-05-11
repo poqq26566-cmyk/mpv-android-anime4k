@@ -1,6 +1,6 @@
 package com.fam4k007.videoplayer.di
 
-import com.fam4k007.videoplayer.Anime4KManager
+import com.fam4k007.videoplayer.domain.player.Anime4KManager
 import com.fam4k007.videoplayer.manager.PreferencesManager
 import com.fam4k007.videoplayer.manager.ThemeManager
 import com.fam4k007.videoplayer.utils.ThumbnailCacheManager

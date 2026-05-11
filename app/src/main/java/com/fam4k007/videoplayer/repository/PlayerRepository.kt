@@ -1,0 +1,501 @@
+package com.fam4k007.videoplayer.repository
+
+import android.content.Context
+import android.net.Uri
+import com.fam4k007.videoplayer.AppConstants
+import com.fam4k007.videoplayer.database.VideoDatabase
+import com.fam4k007.videoplayer.database.PlaybackHistoryEntity
+import com.fam4k007.videoplayer.manager.PreferencesManager
+import com.fam4k007.videoplayer.utils.Logger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+/**
+ * 播放器数据仓库
+ * 封装播放历史、播放器设置等数据访问逻辑
+ * 
+ * 职责：
+ * - 播放历史管理（增删改查）
+ * - 播放器设置读写（快进时长、倍速、记忆功能等）
+ * - 弹幕和字幕信息更新
+ */
+class PlayerRepository(
+    private val context: Context,
+    private val database: VideoDatabase,
+    private val preferencesManager: PreferencesManager
+) {
+    
+    companion object {
+        private const val TAG = "PlayerRepository"
+    }
+    
+    private val historyDao = database.playbackHistoryDao()
+    
+    // ==================== 播放历史管理 ====================
+    
+    /**
+     * 添加或更新播放历史
+     */
+    suspend fun savePlaybackHistory(
+        uri: Uri,
+        fileName: String,
+        position: Long,
+        duration: Long,
+        folderName: String,
+        danmuPath: String? = null,
+        danmuVisible: Boolean = true,
+        danmuOffsetTime: Long = 0L,
+        thumbnailPath: String? = null
+    ) = withContext(Dispatchers.IO) {
+        try {
+            val entity = PlaybackHistoryEntity(
+                uri = uri.toString(),
+                fileName = fileName,
+                position = position,
+                duration = duration,
+                lastPlayed = System.currentTimeMillis(),
+                folderName = folderName,
+                danmuPath = danmuPath,
+                danmuVisible = danmuVisible,
+                danmuOffsetTime = danmuOffsetTime,
+                thumbnailPath = thumbnailPath
+            )
+            
+            historyDao.insertOrUpdate(entity)
+            
+            // 限制历史记录数量
+            val count = historyDao.getCount()
+            if (count > AppConstants.Defaults.MAX_HISTORY_SIZE) {
+                historyDao.deleteOldRecords(AppConstants.Defaults.MAX_HISTORY_SIZE)
+            }
+            
+            Logger.d(TAG, "Playback history saved: $fileName")
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to save playback history: ${e.message}", e)
+        }
+    }
+    
+    /**
+     * 获取所有播放历史（按播放时间倒序）
+     */
+    suspend fun getAllHistory(): List<PlaybackHistoryEntity> = withContext(Dispatchers.IO) {
+        try {
+            historyDao.getAllHistory()
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to get all history: ${e.message}", e)
+            emptyList()
+        }
+    }
+    
+    /**
+     * 根据URI获取播放历史
+     */
+    suspend fun getHistoryByUri(uri: Uri): PlaybackHistoryEntity? = withContext(Dispatchers.IO) {
+        try {
+            historyDao.getHistoryByUri(uri.toString())
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to get history by URI: ${e.message}", e)
+            null
+        }
+    }
+    
+    /**
+     * 获取最后播放的本地视频
+     */
+    suspend fun getLastPlayedLocalVideo(): PlaybackHistoryEntity? = withContext(Dispatchers.IO) {
+        try {
+            historyDao.getLastPlayedLocalVideo()
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to get last played local video: ${e.message}", e)
+            null
+        }
+    }
+    
+    /**
+     * 删除指定URI的播放历史
+     */
+    suspend fun deleteHistory(uri: Uri) = withContext(Dispatchers.IO) {
+        try {
+            historyDao.deleteByUri(uri.toString())
+            Logger.d(TAG, "History deleted: $uri")
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to delete history: ${e.message}", e)
+        }
+    }
+    
+    /**
+     * 清空所有播放历史
+     */
+    suspend fun clearAllHistory() = withContext(Dispatchers.IO) {
+        try {
+            historyDao.clearAll()
+            Logger.d(TAG, "All history cleared")
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to clear history: ${e.message}", e)
+        }
+    }
+    
+    /**
+     * 获取播放历史总数
+     */
+    suspend fun getHistoryCount(): Int = withContext(Dispatchers.IO) {
+        try {
+            historyDao.getCount()
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to get history count: ${e.message}", e)
+            0
+        }
+    }
+    
+    /**
+     * 更新弹幕信息
+     */
+    suspend fun updateDanmu(
+        uri: Uri,
+        danmuPath: String?,
+        danmuVisible: Boolean,
+        danmuOffsetTime: Long
+    ) = withContext(Dispatchers.IO) {
+        try {
+            historyDao.updateDanmu(uri.toString(), danmuPath, danmuVisible, danmuOffsetTime)
+            Logger.d(TAG, "Danmu info updated for: $uri")
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to update danmu info: ${e.message}", e)
+        }
+    }
+    
+    /**
+     * 更新缩略图路径
+     */
+    suspend fun updateThumbnail(uri: Uri, thumbnailPath: String?) = withContext(Dispatchers.IO) {
+        try {
+            historyDao.updateThumbnail(uri.toString(), thumbnailPath)
+            Logger.d(TAG, "Thumbnail updated for: $uri")
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to update thumbnail: ${e.message}", e)
+        }
+    }
+    
+    // ==================== 播放器设置 ====================
+    
+    // ==================== 播放器设置 ====================
+    
+    /**
+     * 获取快进/快退时长（秒）
+     */
+    fun getSeekTime(): Int {
+        return preferencesManager.getSeekTime()
+    }
+    
+    /**
+     * 获取快进/快退时长（秒）- 别名方法
+     */
+    fun getSeekTimeSeconds(): Int = getSeekTime()
+    
+    /**
+     * 设置快进/快退时长（秒）
+     */
+    fun setSeekTime(seconds: Int) {
+        preferencesManager.setSeekTime(seconds)
+    }
+    
+    /**
+     * 设置快进/快退时长（秒）- 别名方法
+     */
+    fun setSeekTimeSeconds(seconds: Int) = setSeekTime(seconds)
+    
+    /**
+     * 获取播放历史 - 别名方法
+     */
+    suspend fun getPlaybackHistory(uri: Uri) = getHistoryByUri(uri)
+    
+    /**
+     * 删除播放历史 - 别名方法
+     */
+    suspend fun deletePlaybackHistory(uri: Uri) = deleteHistory(uri)
+    
+    /**
+     * 清除所有播放历史 - 别名方法
+     */
+    suspend fun clearAllPlaybackHistory() = clearAllHistory()
+    
+    /**
+     * 是否启用记忆播放位置
+     */
+    fun isRememberPositionEnabled(): Boolean {
+        return preferencesManager.isRememberPositionEnabled()
+    }
+    
+    /**
+     * 设置记忆播放位置开关
+     */
+    fun setRememberPositionEnabled(enabled: Boolean) {
+        preferencesManager.setRememberPositionEnabled(enabled)
+    }
+    
+    /**
+     * 是否启用记忆亮度
+     */
+    fun isRememberBrightnessEnabled(): Boolean {
+        return preferencesManager.isRememberBrightnessEnabled()
+    }
+    
+    /**
+     * 设置记忆亮度开关
+     */
+    fun setRememberBrightnessEnabled(enabled: Boolean) {
+        preferencesManager.setRememberBrightnessEnabled(enabled)
+    }
+    
+    /**
+     * 是否启用自动加载弹幕
+     */
+    fun isAutoLoadDanmakuEnabled(): Boolean {
+        return preferencesManager.isAutoLoadDanmakuEnabled()
+    }
+    
+    /**
+     * 设置自动加载弹幕开关
+     */
+    fun setAutoLoadDanmakuEnabled(enabled: Boolean) {
+        preferencesManager.setAutoLoadDanmakuEnabled(enabled)
+    }
+    
+    /**
+     * 是否启用硬件解码
+     */
+    fun isHardwareDecodingEnabled(): Boolean {
+        return preferencesManager.isHardwareDecodingEnabled()
+    }
+    
+    /**
+     * 设置硬件解码开关
+     */
+    fun setHardwareDecodingEnabled(enabled: Boolean) {
+        preferencesManager.setHardwareDecodingEnabled(enabled)
+    }
+    
+    /**
+     * 是否启用手势控制
+     */
+    fun isGestureControlEnabled(): Boolean {
+        return preferencesManager.isGestureControlEnabled()
+    }
+    
+    /**
+     * 设置手势控制开关
+     */
+    fun setGestureControlEnabled(enabled: Boolean) {
+        preferencesManager.setGestureControlEnabled(enabled)
+    }
+    
+    /**
+     * 是否启用Anime4K
+     */
+    fun isAnime4KEnabled(): Boolean {
+        return preferencesManager.isAnime4KEnabled()
+    }
+    
+    /**
+     * 设置Anime4K开关
+     */
+    fun setAnime4KEnabled(enabled: Boolean) {
+        preferencesManager.setAnime4KEnabled(enabled)
+    }
+    
+    /**
+     * 获取Anime4K模式
+     */
+    fun getAnime4KMode(): String {
+        return preferencesManager.getAnime4KMode()
+    }
+    
+    /**
+     * 设置Anime4K模式
+     */
+    fun setAnime4KMode(mode: String) {
+        preferencesManager.setAnime4KMode(mode)
+    }
+    
+    /**
+     * 获取Anime4K强度
+     */
+    fun getAnime4KStrength(): Float {
+        return preferencesManager.getAnime4KStrength()
+    }
+    
+    /**
+     * 设置Anime4K强度
+     */
+    fun setAnime4KStrength(strength: Float) {
+        preferencesManager.setAnime4KStrength(strength)
+    }
+    
+    /**
+     * 获取弹幕速度（转换为 0.0-1.0 的 Float）
+     */
+    fun getDanmakuSpeed(): Float {
+        return preferencesManager.getDanmakuSpeed().toFloat() / 100f
+    }
+    
+    /**
+     * 设置弹幕速度（从 0.0-1.0 的 Float 转换为 0-100 的 Int）
+     */
+    fun setDanmakuSpeed(speed: Float) {
+        preferencesManager.setDanmakuSpeed((speed * 100).toInt())
+    }
+    
+    /**
+     * 获取弹幕字体大小
+     */
+    fun getDanmakuFontSize(): Float {
+        return preferencesManager.getDanmakuFontSize()
+    }
+    
+    /**
+     * 设置弹幕字体大小
+     */
+    fun setDanmakuFontSize(size: Float) {
+        preferencesManager.setDanmakuFontSize(size)
+    }
+    
+    /**
+     * 获取弹幕透明度（转换为 0.0-1.0 的 Float）
+     */
+    fun getDanmakuAlpha(): Float {
+        return preferencesManager.getDanmakuAlpha().toFloat() / 100f
+    }
+    
+    /**
+     * 设置弹幕透明度（从 0.0-1.0 的 Float 转换为 0-100 的 Int）
+     */
+    fun setDanmakuAlpha(alpha: Float) {
+        preferencesManager.setDanmakuAlpha((alpha * 100).toInt())
+    }
+    
+    /**
+     * 是否启用弹幕描边
+     */
+    fun isDanmakuStrokeEnabled(): Boolean {
+        return preferencesManager.isDanmakuStrokeEnabled()
+    }
+    
+    /**
+     * 设置弹幕描边开关
+     */
+    fun setDanmakuStrokeEnabled(enabled: Boolean) {
+        preferencesManager.setDanmakuStrokeEnabled(enabled)
+    }
+    
+    /**
+     * 获取弹幕最大行数
+     */
+    fun getDanmakuMaxLines(): Int {
+        return preferencesManager.getDanmakuMaxLines()
+    }
+    
+    /**
+     * 设置弹幕最大行数
+     */
+    fun setDanmakuMaxLines(maxLines: Int) {
+        preferencesManager.setDanmakuMaxLines(maxLines)
+    }
+    
+    /**
+     * 获取字幕字体大小
+     */
+    fun getSubtitleFontSize(): Float {
+        return preferencesManager.getSubtitleFontSize()
+    }
+    
+    /**
+     * 设置字幕字体大小
+     */
+    fun setSubtitleFontSize(size: Float) {
+        preferencesManager.setSubtitleFontSize(size)
+    }
+    
+    /**
+     * 获取字幕位置
+     */
+    fun getSubtitlePosition(): Int {
+        return preferencesManager.getSubtitlePosition()
+    }
+    
+    /**
+     * 设置字幕位置
+     */
+    fun setSubtitlePosition(position: Int) {
+        preferencesManager.setSubtitlePosition(position)
+    }
+    
+    /**
+     * 是否启用自动旋转
+     */
+    fun isAutoRotateEnabled(): Boolean {
+        return preferencesManager.isAutoRotateEnabled()
+    }
+    
+    /**
+     * 设置自动旋转开关
+     */
+    fun setAutoRotateEnabled(enabled: Boolean) {
+        preferencesManager.setAutoRotateEnabled(enabled)
+    }
+    
+    /**
+     * 是否启用竖屏UI
+     */
+    fun isPortraitUIEnabled(): Boolean {
+        return preferencesManager.isPortraitUIEnabled()
+    }
+    
+    /**
+     * 设置竖屏UI开关
+     */
+    fun setPortraitUIEnabled(enabled: Boolean) {
+        preferencesManager.setPortraitUIEnabled(enabled)
+    }
+    
+    /**
+     * 获取长按倍速
+     */
+    fun getLongPressSpeed(): Float {
+        return preferencesManager.getLongPressSpeed()
+    }
+    
+    /**
+     * 设置长按倍速
+     */
+    fun setLongPressSpeed(speed: Float) {
+        preferencesManager.setLongPressSpeed(speed)
+    }
+    
+    /**
+     * 是否启用播放倍速记忆
+     */
+    fun isRememberSpeedEnabled(): Boolean {
+        return preferencesManager.isRememberSpeedEnabled()
+    }
+    
+    /**
+     * 设置播放倍速记忆开关
+     */
+    fun setRememberSpeedEnabled(enabled: Boolean) {
+        preferencesManager.setRememberSpeedEnabled(enabled)
+    }
+    
+    /**
+     * 获取上次播放倍速
+     */
+    fun getLastPlaybackSpeed(): Float {
+        return preferencesManager.getLastPlaybackSpeed()
+    }
+    
+    /**
+     * 保存上次播放倍速
+     */
+    fun setLastPlaybackSpeed(speed: Float) {
+        preferencesManager.setLastPlaybackSpeed(speed)
+    }
+}

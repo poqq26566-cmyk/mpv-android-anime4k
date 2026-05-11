@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.fam4k007.videoplayer.domain.player.GestureHandler
 import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.*

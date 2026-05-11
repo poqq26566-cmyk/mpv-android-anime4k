@@ -1,8 +1,10 @@
-package com.fam4k007.videoplayer.danmaku
+package com.fam4k007.videoplayer.domain.danmaku
 
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.fam4k007.videoplayer.danmaku.DanmakuConfig
+import com.fam4k007.videoplayer.danmaku.DanmakuPlayerView
 import com.fam4k007.videoplayer.utils.DialogUtils
 import java.io.File
 

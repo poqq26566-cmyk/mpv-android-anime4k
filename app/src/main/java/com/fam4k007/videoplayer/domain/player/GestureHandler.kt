@@ -1,4 +1,4 @@
-package com.fam4k007.videoplayer.player
+package com.fam4k007.videoplayer.domain.player
 
 import android.content.Context
 import android.media.AudioManager
@@ -9,8 +9,13 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.fam4k007.videoplayer.player.DoubleTapSeekIndicator
+import com.fam4k007.videoplayer.player.PlayerControlsManager
 import `is`.xyz.mpv.MPVLib
 import java.lang.ref.WeakReference
+
+// TODO: 阶段3重构 - 移除对UI层的依赖，使用接口代替
+// 当前依赖：PlayerControlsManager, DoubleTapSeekIndicator
 
 /**
  * 手势处理管理器

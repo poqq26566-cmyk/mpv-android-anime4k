@@ -41,16 +41,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.fam4k007.videoplayer.Anime4KManager
+import com.fam4k007.videoplayer.domain.player.Anime4KManager
 import com.fam4k007.videoplayer.manager.PreferencesManager
-import com.fam4k007.videoplayer.manager.SubtitleManager
+import com.fam4k007.videoplayer.domain.subtitle.SubtitleManager
 import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
 import com.fam4k007.videoplayer.remote.RemotePlaybackLauncher
 import com.fam4k007.videoplayer.remote.RemotePlaybackRequest
 import com.fam4k007.videoplayer.remote.RemotePlaybackResolver
 import com.fam4k007.videoplayer.remote.RemoteUrlParser
-import com.fam4k007.videoplayer.player.GestureHandler
-import com.fam4k007.videoplayer.player.PlaybackEngine
+import com.fam4k007.videoplayer.domain.player.GestureHandler
+import com.fam4k007.videoplayer.domain.player.PlaybackEngine
 import com.fam4k007.videoplayer.player.PlayerControlsManager
 import com.fam4k007.videoplayer.player.SeriesManager
 import com.fam4k007.videoplayer.utils.FormatUtils
@@ -93,7 +93,7 @@ class VideoPlayerActivity : AppCompatActivity(),
     private lateinit var gestureHandler: GestureHandler
     private lateinit var seriesManager: SeriesManager
     private lateinit var anime4KManager: Anime4KManager
-    private lateinit var danmakuManager: com.fam4k007.videoplayer.danmaku.DanmakuManager
+    private lateinit var danmakuManager: com.fam4k007.videoplayer.domain.danmaku.DanmakuManager
     private lateinit var dialogManager: com.fam4k007.videoplayer.player.PlayerDialogManager
     private lateinit var filePickerManager: com.fam4k007.videoplayer.player.FilePickerManager
     private lateinit var composeOverlayManager: com.fanchen.fam4k007.manager.compose.ComposeOverlayManager
@@ -379,7 +379,7 @@ class VideoPlayerActivity : AppCompatActivity(),
         speedHint = findViewById(R.id.speedHint)
         speedHintText = findViewById(R.id.speedHintText)
         
-        danmakuManager = com.fam4k007.videoplayer.danmaku.DanmakuManager(this, danmakuView)
+        danmakuManager = com.fam4k007.videoplayer.domain.danmaku.DanmakuManager(this, danmakuView)
         danmakuManager.initialize()
         
         initializeManagers()
@@ -1043,8 +1043,8 @@ class VideoPlayerActivity : AppCompatActivity(),
         
         // 绑定双击跳转指示器
         gestureHandler.bindDoubleTapSeekIndicators(
-            left = findViewById(R.id.doubleTapSeekLeft),
-            right = findViewById(R.id.doubleTapSeekRight)
+            left = findViewById<DoubleTapSeekIndicator>(R.id.doubleTapSeekLeft),
+            right = findViewById<DoubleTapSeekIndicator>(R.id.doubleTapSeekRight)
         )
         
         // 设置controlsManager引用到gestureHandler，用于检查锁定状态

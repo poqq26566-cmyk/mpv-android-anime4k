@@ -8,5 +8,6 @@ val appModules = listOf(
     databaseModule,
     networkModule,
     repositoryModule,
-    domainModule
+    domainModule,
+    presentationModule
 )

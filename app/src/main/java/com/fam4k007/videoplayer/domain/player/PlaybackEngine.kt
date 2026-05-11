@@ -1,14 +1,18 @@
-
-package com.fam4k007.videoplayer.player
+package com.fam4k007.videoplayer.domain.player
 
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.fam4k007.videoplayer.player.CustomMPVView
+import com.fam4k007.videoplayer.player.VideoAspect
 import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
 import com.fam4k007.videoplayer.remote.RemotePlaybackRequest
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVNode
 import java.lang.ref.WeakReference
+
+// TODO: 阶段3重构 - 移除对UI层的依赖，使用接口代替
+// 当前依赖：CustomMPVView, VideoAspect
 
 /**
  * 播放引擎管理器

@@ -8,7 +8,7 @@ import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.fam4k007.videoplayer.R
-import com.fam4k007.videoplayer.Anime4KManager
+import com.fam4k007.videoplayer.domain.player.Anime4KManager
 
 class Anime4KModeAdapter(
     private val modes: List<Anime4KManager.Mode>,

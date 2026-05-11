@@ -9,10 +9,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.fam4k007.videoplayer.Anime4KManager
+import com.fam4k007.videoplayer.domain.player.Anime4KManager
+import com.fam4k007.videoplayer.domain.player.PlaybackEngine
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.danmaku.DanmakuConfig
-import com.fam4k007.videoplayer.danmaku.DanmakuManager
+import com.fam4k007.videoplayer.domain.danmaku.DanmakuManager
 import com.fam4k007.videoplayer.manager.PreferencesManager
 import com.fam4k007.videoplayer.utils.DialogUtils
 import com.fam4k007.videoplayer.utils.ThemeManager

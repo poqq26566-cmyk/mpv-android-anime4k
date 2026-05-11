@@ -1,0 +1,482 @@
+package com.fam4k007.videoplayer.repository
+
+import android.content.Context
+import android.net.Uri
+import android.provider.MediaStore
+import com.fam4k007.videoplayer.VideoFileParcelable
+import com.fam4k007.videoplayer.database.VideoDatabase
+import com.fam4k007.videoplayer.database.VideoCacheEntity
+import com.fam4k007.videoplayer.utils.Logger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
+
+/**
+ * 视频数据仓库
+ * 封装视频扫描、缓存、数据库操作等数据访问逻辑
+ */
+class VideoRepository(
+    private val context: Context,
+    private val database: VideoDatabase
+) {
+    
+    companion object {
+        private const val TAG = "VideoRepository"
+    }
+    
+    private val videoCacheDao = database.videoCacheDao()
+    
+    /**
+     * 扫描指定文件夹的所有视频文件（通过MediaStore）
+     * @param folderPath 文件夹路径
+     * @param sortOrder 排序方式（NAME_ASC, NAME_DESC, DATE_ASC, DATE_DESC）
+     * @return 视频列表
+     */
+    suspend fun scanVideosInFolder(
+        folderPath: String,
+        sortOrder: VideoSortOrder = VideoSortOrder.NAME_ASC
+    ): List<VideoFileParcelable> = withContext(Dispatchers.IO) {
+        try {
+            val projection = arrayOf(
+                MediaStore.Video.Media._ID,
+                MediaStore.Video.Media.DISPLAY_NAME,
+                MediaStore.Video.Media.DATA,
+                MediaStore.Video.Media.DURATION,
+                MediaStore.Video.Media.SIZE,
+                MediaStore.Video.Media.DATE_ADDED,
+                MediaStore.Video.Media.DATE_MODIFIED
+            )
+            
+            val selection = "${MediaStore.Video.Media.DATA} LIKE ?"
+            val selectionArgs = arrayOf("$folderPath/%")
+            val orderBy = when (sortOrder) {
+                VideoSortOrder.NAME_ASC -> "${MediaStore.Video.Media.DISPLAY_NAME} ASC"
+                VideoSortOrder.NAME_DESC -> "${MediaStore.Video.Media.DISPLAY_NAME} DESC"
+                VideoSortOrder.DATE_ASC -> "${MediaStore.Video.Media.DATE_ADDED} ASC"
+                VideoSortOrder.DATE_DESC -> "${MediaStore.Video.Media.DATE_ADDED} DESC"
+            }
+            
+            val videos = mutableListOf<VideoFileParcelable>()
+            
+            context.contentResolver.query(
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                projection,
+                selection,
+                selectionArgs,
+                orderBy
+            )?.use { cursor ->
+                val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
+                val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
+                val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
+                val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
+                val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
+                val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
+                
+                while (cursor.moveToNext()) {
+                    val id = cursor.getLong(idColumn)
+                    val name = cursor.getString(nameColumn)
+                    val path = cursor.getString(dataColumn)
+                    val duration = cursor.getLong(durationColumn)
+                    val size = cursor.getLong(sizeColumn)
+                    val dateAdded = cursor.getLong(dateColumn)
+                    
+                    // 确保文件真的在该文件夹下（排除子文件夹）
+                    val file = File(path)
+                    if (file.parent == folderPath) {
+                        val uri = Uri.withAppendedPath(
+                            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                            id.toString()
+                        )
+                        
+                        videos.add(
+                            VideoFileParcelable(
+                                uri = uri.toString(),
+                                name = name,
+                                path = path,
+                                size = size,
+                                duration = duration,
+                                dateAdded = dateAdded
+                            )
+                        )
+                    }
+                }
+            }
+            
+            Logger.d(TAG, "Scanned ${videos.size} videos in folder: $folderPath")
+            videos
+            
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to scan videos in folder: ${e.message}", e)
+            emptyList()
+        }
+    }
+    
+    /**
+     * 从缓存获取视频列表（支持排序）
+     * @param folderPath 文件夹路径
+     * @param sortOrder 排序方式
+     * @return 视频缓存列表
+     */
+    suspend fun getVideosFromCache(
+        folderPath: String,
+        sortOrder: VideoSortOrder = VideoSortOrder.NAME_ASC
+    ): List<VideoCacheEntity> = withContext(Dispatchers.IO) {
+        try {
+            when (sortOrder) {
+                VideoSortOrder.NAME_ASC -> videoCacheDao.getVideosByFolderSortedByNameAsc(folderPath)
+                VideoSortOrder.NAME_DESC -> videoCacheDao.getVideosByFolderSortedByNameDesc(folderPath)
+                VideoSortOrder.DATE_ASC -> videoCacheDao.getVideosByFolderSortedByDateAsc(folderPath)
+                VideoSortOrder.DATE_DESC -> videoCacheDao.getVideosByFolderSortedByDateDesc(folderPath)
+            }
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to get videos from cache: ${e.message}", e)
+            emptyList()
+        }
+    }
+    
+    /**
+     * 分页获取视频列表（支持大量视频）
+     * @param folderPath 文件夹路径
+     * @param sortOrder 排序方式
+     * @param limit 每页数量
+     * @param offset 偏移量
+     * @return 视频缓存列表
+     */
+    suspend fun getVideosPaged(
+        folderPath: String,
+        sortOrder: VideoSortOrder,
+        limit: Int,
+        offset: Int
+    ): List<VideoCacheEntity> = withContext(Dispatchers.IO) {
+        try {
+            when (sortOrder) {
+                VideoSortOrder.NAME_ASC -> videoCacheDao.getVideosByFolderPagedByNameAsc(folderPath, limit, offset)
+                VideoSortOrder.NAME_DESC -> videoCacheDao.getVideosByFolderPagedByNameDesc(folderPath, limit, offset)
+                VideoSortOrder.DATE_ASC -> videoCacheDao.getVideosByFolderPagedByDateAsc(folderPath, limit, offset)
+                VideoSortOrder.DATE_DESC -> videoCacheDao.getVideosByFolderPagedByDateDesc(folderPath, limit, offset)
+            }
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to get videos paged: ${e.message}", e)
+            emptyList()
+        }
+    }
+    
+    /**
+     * 获取文件夹中的视频总数
+     */
+    suspend fun getVideoCount(folderPath: String): Int = withContext(Dispatchers.IO) {
+        try {
+            videoCacheDao.getVideoCountByFolder(folderPath)
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to get video count: ${e.message}", e)
+            0
+        }
+    }
+    
+    /**
+     * 缓存视频列表到数据库
+     * @param videos 视频列表
+     */
+    suspend fun cacheVideos(videos: List<VideoCacheEntity>) = withContext(Dispatchers.IO) {
+        try {
+            videoCacheDao.insertVideos(videos)
+            Logger.d(TAG, "Cached ${videos.size} videos to database")
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to cache videos: ${e.message}", e)
+        }
+    }
+    
+    /**
+     * 删除过期的缓存（清理扫描时间早于指定时间戳的记录）
+     * @param timestamp 时间戳
+     * @return 删除的记录数
+     */
+    suspend fun deleteOldCache(timestamp: Long): Int = withContext(Dispatchers.IO) {
+        try {
+            val count = videoCacheDao.deleteOldEntries(timestamp)
+            Logger.d(TAG, "Deleted $count old cache entries")
+            count
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to delete old cache: ${e.message}", e)
+            0
+        }
+    }
+    
+    /**
+     * 清空所有缓存
+     */
+    suspend fun clearAllCache(): Int = withContext(Dispatchers.IO) {
+        try {
+            val count = videoCacheDao.clearAll()
+            Logger.d(TAG, "Cleared all cache entries: $count")
+            count
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to clear cache: ${e.message}", e)
+            0
+        }
+    }
+    
+    /**
+     * 获取缓存总数
+     */
+    suspend fun getCacheCount(): Int = withContext(Dispatchers.IO) {
+        try {
+            videoCacheDao.getVideoCount()
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to get cache count: ${e.message}", e)
+            0
+        }
+    }
+    
+    /**
+     * 扫描所有包含视频的文件夹
+     * @return 视频文件夹列表
+     */
+    suspend fun scanAllVideoFolders(): List<com.fam4k007.videoplayer.VideoFolder> = withContext(Dispatchers.IO) {
+        try {
+            val projection = arrayOf(
+                MediaStore.Video.Media.DATA,
+                MediaStore.Video.Media.DISPLAY_NAME,
+                MediaStore.Video.Media._ID,
+                MediaStore.Video.Media.SIZE,
+                MediaStore.Video.Media.DURATION,
+                MediaStore.Video.Media.DATE_ADDED
+            )
+            
+            val folderMap = mutableMapOf<String, MutableList<com.fam4k007.videoplayer.VideoFile>>()
+            
+            context.contentResolver.query(
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                projection,
+                null,
+                null,
+                "${MediaStore.Video.Media.DATE_ADDED} DESC"
+            )?.use { cursor ->
+                val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
+                val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
+                val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
+                val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
+                val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
+                val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
+                
+                while (cursor.moveToNext()) {
+                    val path = cursor.getString(dataColumn)
+                    val name = cursor.getString(nameColumn)
+                    val id = cursor.getLong(idColumn)
+                    val size = cursor.getLong(sizeColumn)
+                    val duration = cursor.getLong(durationColumn)
+                    val dateAdded = cursor.getLong(dateColumn)
+                    
+                    val file = File(path)
+                    val folderPath = file.parent ?: continue
+                    
+                    val uri = Uri.withAppendedPath(
+                        MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                        id.toString()
+                    ).toString()
+                    
+                    val videoFile = com.fam4k007.videoplayer.VideoFile(
+                        uri = uri,
+                        name = name,
+                        path = path,
+                        size = size,
+                        duration = duration,
+                        dateAdded = dateAdded
+                    )
+                    
+                    folderMap.getOrPut(folderPath) { mutableListOf() }.add(videoFile)
+                }
+            }
+            
+            val folders = folderMap.map { (folderPath, videos) ->
+                val folderName = File(folderPath).name
+                com.fam4k007.videoplayer.VideoFolder(
+                    folderPath = folderPath,
+                    folderName = folderName,
+                    videoCount = videos.size,
+                    videos = videos
+                )
+            }.sortedByDescending { it.videoCount }
+            
+            Logger.d(TAG, "Scanned ${folders.size} video folders")
+            folders
+            
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to scan video folders: ${e.message}", e)
+            emptyList()
+        }
+    }
+    
+    /**
+     * 搜索视频
+     * @param query 搜索关键词
+     * @return 匹配的视频列表
+     */
+    suspend fun searchVideos(query: String): List<VideoFileParcelable> = withContext(Dispatchers.IO) {
+        try {
+            if (query.isBlank()) {
+                return@withContext emptyList()
+            }
+            
+            val projection = arrayOf(
+                MediaStore.Video.Media._ID,
+                MediaStore.Video.Media.DISPLAY_NAME,
+                MediaStore.Video.Media.DATA,
+                MediaStore.Video.Media.DURATION,
+                MediaStore.Video.Media.SIZE,
+                MediaStore.Video.Media.DATE_ADDED
+            )
+            
+            val selection = "${MediaStore.Video.Media.DISPLAY_NAME} LIKE ?"
+            val selectionArgs = arrayOf("%$query%")
+            
+            val videos = mutableListOf<VideoFileParcelable>()
+            
+            context.contentResolver.query(
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                projection,
+                selection,
+                selectionArgs,
+                "${MediaStore.Video.Media.DATE_ADDED} DESC"
+            )?.use { cursor ->
+                val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
+                val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
+                val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
+                val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
+                val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
+                val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
+                
+                while (cursor.moveToNext()) {
+                    val id = cursor.getLong(idColumn)
+                    val name = cursor.getString(nameColumn)
+                    val path = cursor.getString(dataColumn)
+                    val duration = cursor.getLong(durationColumn)
+                    val size = cursor.getLong(sizeColumn)
+                    val dateAdded = cursor.getLong(dateColumn)
+                    
+                    val file = File(path)
+                    val folderPath = file.parent ?: ""
+                    val uri = Uri.withAppendedPath(
+                        MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                        id.toString()
+                    )
+                    
+                    videos.add(
+                        VideoFileParcelable(
+                            uri = uri.toString(),
+                            name = name,
+                            path = path,
+                            size = size,
+                            duration = duration,
+                            dateAdded = dateAdded
+                        )
+                    )
+                }
+            }
+            
+            Logger.d(TAG, "Search results for '$query': ${videos.size} videos")
+            videos
+            
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to search videos: ${e.message}", e)
+            emptyList()
+        }
+    }
+    
+    /**
+     * 从缓存获取视频列表
+     * @param folderPath 文件夹路径
+     * @return 缓存的视频列表
+     */
+    suspend fun getCachedVideos(folderPath: String): List<VideoFileParcelable> = withContext(Dispatchers.IO) {
+        try {
+            val cachedVideos = videoCacheDao.getVideosByFolder(folderPath)
+            val result = cachedVideos.map { entity ->
+                VideoFileParcelable(
+                    uri = entity.uri,
+                    name = entity.name,
+                    path = entity.path,
+                    size = entity.size,
+                    duration = entity.duration,
+                    dateAdded = entity.dateAdded
+                )
+            }
+            Logger.d(TAG, "Loaded ${result.size} cached videos from folder: $folderPath")
+            result
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to get cached videos: ${e.message}", e)
+            emptyList()
+        }
+    }
+    
+    /**
+     * 清除视频缓存（别名方法）
+     */
+    suspend fun clearVideoCache() = clearAllCache()
+    
+    /**
+     * 隐藏文件夹（添加.nomedia文件）
+     * @param folderPath 文件夹路径
+     */
+    suspend fun hideFolder(folderPath: String) = withContext(Dispatchers.IO) {
+        try {
+            val folder = File(folderPath)
+            if (folder.exists() && folder.isDirectory) {
+                val nomediaFile = File(folder, ".nomedia")
+                if (!nomediaFile.exists()) {
+                    nomediaFile.createNewFile()
+                    Logger.d(TAG, "Hidden folder: $folderPath")
+                }
+            }
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to hide folder: ${e.message}", e)
+        }
+    }
+    
+    /**
+     * 显示文件夹（删除.nomedia文件）
+     * @param folderPath 文件夹路径
+     */
+    suspend fun showFolder(folderPath: String) = withContext(Dispatchers.IO) {
+        try {
+            val folder = File(folderPath)
+            if (folder.exists() && folder.isDirectory) {
+                val nomediaFile = File(folder, ".nomedia")
+                if (nomediaFile.exists()) {
+                    nomediaFile.delete()
+                    Logger.d(TAG, "Shown folder: $folderPath")
+                }
+            }
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to show folder: ${e.message}", e)
+        }
+    }
+    
+    /**
+     * 从URI获取文件路径
+     */
+    fun getPathFromUri(uri: Uri): String? {
+        return try {
+            val projection = arrayOf(MediaStore.Video.Media.DATA)
+            context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
+                    cursor.getString(dataColumn)
+                } else null
+            }
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to get path from URI: ${e.message}", e)
+            null
+        }
+    }
+}
+
+/**
+ * 视频排序方式
+ */
+enum class VideoSortOrder {
+    NAME_ASC,      // 名称升序（自然排序）
+    NAME_DESC,     // 名称降序
+    DATE_ASC,      // 日期升序（旧→新）
+    DATE_DESC      // 日期降序（新→旧）
+}
