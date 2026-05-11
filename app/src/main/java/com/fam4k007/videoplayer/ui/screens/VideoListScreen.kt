@@ -256,9 +256,11 @@ fun VideoListScreen(
                         .padding(16.dp)
                 ) {
                     FloatingActionButton(
-                        onClick = { viewModel.refreshVideos(folderPath) }
+                        onClick = { viewModel.refreshVideos(folderPath) },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     ) {
-                        Icon(Icons.Default.Refresh, "刷新", tint = MaterialTheme.colorScheme.onPrimary)
+                        Icon(Icons.Default.Refresh, "刷新")
                     }
                 }
             }
@@ -267,11 +269,32 @@ fun VideoListScreen(
 
     if (showSortDialog) {
         VideoSortDialog(
-            currentSortType = videoListState.sortType.toString(),
-            currentSortOrder = videoListState.sortOrder.toString(),
+            currentSortType = when (videoListState.sortType) {
+                0 -> "NAME"
+                1 -> "DATE"
+                2 -> "SIZE"
+                else -> "NAME"
+            },
+            currentSortOrder = when (videoListState.sortOrder) {
+                0 -> "ASCENDING"
+                1 -> "DESCENDING"
+                else -> "ASCENDING"
+            },
             onDismiss = { showSortDialog = false },
             onSortSelected = { newType: String, newOrder: String ->
-                viewModel.sortVideos(newType.toInt(), newOrder.toInt())
+                // 将字符串类型映射为整数
+                val sortType = when (newType) {
+                    "NAME" -> 0
+                    "DATE" -> 1
+                    "SIZE" -> 2
+                    else -> 0
+                }
+                val sortOrder = when (newOrder) {
+                    "ASCENDING" -> 0
+                    "DESCENDING" -> 1
+                    else -> 0
+                }
+                viewModel.sortVideos(sortType, sortOrder)
                 showSortDialog = false
             }
         )
@@ -524,7 +547,7 @@ private fun VideoItem(
                 modifier = Modifier
                     .width(120.dp)
                     .height(68.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {

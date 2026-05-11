@@ -33,6 +33,25 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
     )
     val downloadPathDisplay: StateFlow<String> = _downloadPathDisplay
 
+    // 解析相关状态
+    private val _isParsing = MutableStateFlow(false)
+    val isParsing: StateFlow<Boolean> = _isParsing
+
+    private val _parseError = MutableStateFlow<String?>(null)
+    val parseError: StateFlow<String?> = _parseError
+
+    private val _parseResult = MutableStateFlow<MediaParseResult?>(null)
+    val parseResult: StateFlow<MediaParseResult?> = _parseResult
+
+    private val _episodeList = MutableStateFlow<List<EpisodeInfo>>(emptyList())
+    val episodeList: StateFlow<List<EpisodeInfo>> = _episodeList
+
+    private val _selectedEpisodes = MutableStateFlow<Set<String>>(emptySet())
+    val selectedEpisodes: StateFlow<Set<String>> = _selectedEpisodes
+
+    private val _isEpisodeListExpanded = MutableStateFlow(true)
+    val isEpisodeListExpanded: StateFlow<Boolean> = _isEpisodeListExpanded
+
     // 存储每个下载任务的Job，用于暂停/取消
     private val downloadJobs = mutableMapOf<String, Job>()
 
@@ -155,6 +174,131 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
             it.status != "completed" && it.status != "cancelled" 
         }
         Log.d(TAG, "已清除完成的下载记录")
+    }
+
+    /**
+     * 解析视频URL
+     */
+    fun parseVideoUrl(inputUrl: String) {
+        if (inputUrl.isBlank()) {
+            _parseError.value = "请输入视频链接"
+            return
+        }
+
+        // 提取URL（支持带文本的链接）
+        val extractedUrl = inputUrl.trim().let { text ->
+            // 尝试匹配 b23.tv 短链
+            val shortUrlRegex = """https?://b23\.tv/\w+""".toRegex()
+            val shortUrlMatch = shortUrlRegex.find(text)
+            if (shortUrlMatch != null) {
+                return@let shortUrlMatch.value
+            }
+            
+            // 尝试匹配 bilibili.com 链接
+            val biliUrlRegex = """https?://(?:www\.)?bilibili\.com/[^\s\u3011\]\)]+""".toRegex()
+            val biliUrlMatch = biliUrlRegex.find(text)
+            if (biliUrlMatch != null) {
+                return@let biliUrlMatch.value
+            }
+            
+            // 如果没有匹配到URL，返回原文本
+            text
+        }
+
+        _isParsing.value = true
+        _parseError.value = null
+        _parseResult.value = null
+        _episodeList.value = emptyList()
+        _selectedEpisodes.value = emptySet()
+
+        viewModelScope.launch {
+            try {
+                val result = parseMediaUrlSync(extractedUrl)
+                _parseResult.value = result
+
+                // 如果是番剧，获取所有集数
+                if (result.type == MediaType.Bangumi) {
+                    val queryId = result.seasonId ?: result.epId
+                    if (queryId != null) {
+                        Log.d(TAG, "获取番剧集数，ID: $queryId")
+                        val episodesResult = getBangumiEpisodesSync(queryId)
+                        if (episodesResult.isSuccess) {
+                            _episodeList.value = episodesResult.getOrNull() ?: emptyList()
+                            Log.d(TAG, "获取到${_episodeList.value.size}集")
+                        } else {
+                            _parseError.value = "获取集数失败: ${episodesResult.exceptionOrNull()?.message}"
+                            Log.e(TAG, "获取集数失败", episodesResult.exceptionOrNull())
+                        }
+                    } else {
+                        _parseError.value = "番剧ID解析失败"
+                    }
+                }
+            } catch (e: Exception) {
+                _parseError.value = e.message ?: "解析失败"
+                Log.e(TAG, "解析失败", e)
+            } finally {
+                _isParsing.value = false
+            }
+        }
+    }
+
+    /**
+     * 切换剧集选择
+     */
+    fun toggleEpisodeSelection(episodeId: String) {
+        _selectedEpisodes.value = if (_selectedEpisodes.value.contains(episodeId)) {
+            _selectedEpisodes.value - episodeId
+        } else {
+            _selectedEpisodes.value + episodeId
+        }
+    }
+
+    /**
+     * 全选/取消全选剧集
+     */
+    fun toggleAllEpisodes() {
+        _selectedEpisodes.value = if (_selectedEpisodes.value.size == _episodeList.value.size) {
+            emptySet()
+        } else {
+            _episodeList.value.map { it.episodeId }.toSet()
+        }
+    }
+
+    /**
+     * 切换剧集列表展开状态
+     */
+    fun toggleEpisodeListExpanded() {
+        _isEpisodeListExpanded.value = !_isEpisodeListExpanded.value
+    }
+
+    /**
+     * 开始下载选中的剧集或视频
+     */
+    fun startSelectedDownloads() {
+        val result = _parseResult.value ?: return
+
+        if (_episodeList.value.isNotEmpty() && _selectedEpisodes.value.isNotEmpty()) {
+            // 下载选中的集数
+            _episodeList.value.filter { _selectedEpisodes.value.contains(it.episodeId) }
+                .forEach { episode ->
+                    addDownloadByEpisode(episode, result.seasonId ?: "")
+                }
+            // 清空选择
+            _selectedEpisodes.value = emptySet()
+        } else if (_episodeList.value.isEmpty()) {
+            // 普通视频，直接下载
+            addDownloadByMediaParse(result)
+        }
+    }
+
+    /**
+     * 清除解析结果
+     */
+    fun clearParseResult() {
+        _parseResult.value = null
+        _episodeList.value = emptyList()
+        _selectedEpisodes.value = emptySet()
+        _parseError.value = null
     }
 
     fun addDownload(aid: String, cid: String, title: String) {

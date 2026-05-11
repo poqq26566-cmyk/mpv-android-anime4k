@@ -2,6 +2,7 @@ package com.fam4k007.videoplayer.ui.webdav
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -106,7 +107,7 @@ fun WebDavAccountListScreen(
         AlertDialog(
             onDismissRequest = { viewModel.cancelDeleteAccount() },
             shape = RoundedCornerShape(28.dp),
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("删除账户") },
             text = { Text("确定要删除账户 \"${deleteAccount.displayName}\" 吗？") },
             confirmButton = {
@@ -247,163 +248,153 @@ private fun WebDavAddAccountDialog(
     val state by viewModel.addAccountState.collectAsState()
 
     AlertDialog(
-        onDismissRequest = { viewModel.dismissAddDialog() }
-    ) {
-        Card(
-            shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+        onDismissRequest = { viewModel.dismissAddDialog() },
+        title = {
             Text(
                 text = "添加 WebDAV 账户",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                fontWeight = FontWeight.Bold
             )
-
-            OutlinedTextField(
-                value = state.displayName,
-                onValueChange = { viewModel.updateDisplayName(it) },
-                label = { Text("显示名称") },
-                placeholder = { Text("如: 我的网盘") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(20.dp)
-            )
-
-            OutlinedTextField(
-                value = state.serverUrl,
-                onValueChange = { viewModel.updateServerUrl(it) },
-                label = { Text("服务器地址") },
-                placeholder = { Text("http://example.com/dav/") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                shape = RoundedCornerShape(20.dp)
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = !state.isAnonymous,
-                    onClick = { viewModel.setAnonymous(false) },
-                    label = { Text("账号登录") },
-                    modifier = Modifier.weight(1f)
-                )
-                FilterChip(
-                    selected = state.isAnonymous,
-                    onClick = { viewModel.setAnonymous(true) },
-                    label = { Text("匿名访问") },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            if (!state.isAnonymous) {
-                OutlinedTextField(
-                    value = state.account,
-                    onValueChange = { viewModel.updateAccount(it) },
-                    label = { Text("账号") },
-                    placeholder = { Text("用户名") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = RoundedCornerShape(20.dp)
-                )
-                OutlinedTextField(
-                    value = state.password,
-                    onValueChange = { viewModel.updatePassword(it) },
-                    label = { Text("密码") },
-                    placeholder = { Text("密码") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    visualTransformation = if (state.passwordVisible)
-                        VisualTransformation.None
-                    else
-                        PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    shape = RoundedCornerShape(20.dp),
-                    trailingIcon = {
-                        IconButton(onClick = { viewModel.togglePasswordVisible() }) {
-                            Icon(
-                                imageVector = if (state.passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                contentDescription = if (state.passwordVisible) "隐藏密码" else "显示密码"
-                            )
-                        }
-                    }
-                )
-            }
-
+        },
+        text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Button(
-                    onClick = { viewModel.testConnection() },
+                OutlinedTextField(
+                    value = state.displayName,
+                    onValueChange = { viewModel.updateDisplayName(it) },
+                    label = { Text("显示名称") },
+                    placeholder = { Text("如: 我的网盘") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    enabled = !state.isTesting
+                    singleLine = true,
+                    shape = RoundedCornerShape(20.dp)
+                )
+
+                OutlinedTextField(
+                    value = state.serverUrl,
+                    onValueChange = { viewModel.updateServerUrl(it) },
+                    label = { Text("服务器地址") },
+                    placeholder = { Text("http://example.com/dav/") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                    shape = RoundedCornerShape(20.dp)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (state.isTesting) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
+                    FilterChip(
+                        selected = !state.isAnonymous,
+                        onClick = { viewModel.setAnonymous(false) },
+                        label = { Text("账号登录") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    FilterChip(
+                        selected = state.isAnonymous,
+                        onClick = { viewModel.setAnonymous(true) },
+                        label = { Text("匿名访问") },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                if (!state.isAnonymous) {
+                    OutlinedTextField(
+                        value = state.account,
+                        onValueChange = { viewModel.updateAccount(it) },
+                        label = { Text("账号") },
+                        placeholder = { Text("用户名") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    OutlinedTextField(
+                        value = state.password,
+                        onValueChange = { viewModel.updatePassword(it) },
+                        label = { Text("密码") },
+                        placeholder = { Text("密码") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        visualTransformation = if (state.passwordVisible)
+                            VisualTransformation.None
+                        else
+                            PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        shape = RoundedCornerShape(20.dp),
+                        trailingIcon = {
+                            IconButton(onClick = { viewModel.togglePasswordVisible() }) {
+                                Icon(
+                                    imageVector = if (state.passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = if (state.passwordVisible) "隐藏密码" else "显示密码"
+                                )
+                            }
+                        }
+                    )
+                }
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { viewModel.testConnection() },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        enabled = !state.isTesting
+                    ) {
+                        if (state.isTesting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("测试中...")
+                        } else {
+                            Icon(Icons.Default.Wifi, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("测试连接")
+                        }
+                    }
+                    state.testResult?.let { result ->
+                        Text(
+                            text = result,
+                            fontSize = 14.sp,
+                            color = if (result.startsWith("✅")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                            modifier = Modifier.fillMaxWidth()
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("测试中...")
-                    } else {
-                        Icon(Icons.Default.Wifi, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("测试连接")
+                    }
+                    state.saveError?.let { error ->
+                        Text(
+                            text = error,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
-                state.testResult?.let { result ->
-                    Text(
-                        text = result,
-                        fontSize = 14.sp,
-                        color = if (result.startsWith("✅")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-                state.saveError?.let { error ->
-                    Text(
-                        text = error,
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
             }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+        },
+        confirmButton = {
+            Button(
+                onClick = { viewModel.saveAccount() },
+                shape = RoundedCornerShape(20.dp)
             ) {
-                OutlinedButton(
-                    onClick = { viewModel.dismissAddDialog() },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Text("取消")
-                }
-                Button(
-                    onClick = { viewModel.saveAccount() },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Text("保存")
-                }
+                Text("保存")
             }
-        }
-    }
-    }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = { viewModel.dismissAddDialog() },
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Text("取消")
+            }
+        },
+        shape = RoundedCornerShape(28.dp),
+        containerColor = MaterialTheme.colorScheme.surface
+    )
 }
 
 /**
@@ -618,7 +609,7 @@ private fun WebDavSortDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(28.dp),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        containerColor = MaterialTheme.colorScheme.surface,
         title = { Text("排序方式") },
         text = {
             Column {
@@ -632,12 +623,13 @@ private fun WebDavSortDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clickable { onSortSelected(type) }
                             .padding(vertical = 12.dp, horizontal = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
                             selected = currentSortType == type,
-                            onClick = { onSortSelected(type) }
+                            onClick = null  // 由 Row 的 clickable 处理
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(text = label)

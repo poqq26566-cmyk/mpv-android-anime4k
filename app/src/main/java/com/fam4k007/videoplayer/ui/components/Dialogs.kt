@@ -224,7 +224,7 @@ fun CustomDialog(
             modifier = modifier,
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp
+            tonalElevation = 0.dp
         ) {
             Column(
                 modifier = Modifier.padding(MaterialTheme.spacing.large)

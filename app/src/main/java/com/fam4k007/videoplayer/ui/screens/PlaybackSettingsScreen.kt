@@ -561,6 +561,7 @@ private fun SpeedPresetsDialog(
                 .fillMaxWidth()
                 .padding(MaterialTheme.spacing.medium),
             shape = RoundedCornerShape(28.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             )

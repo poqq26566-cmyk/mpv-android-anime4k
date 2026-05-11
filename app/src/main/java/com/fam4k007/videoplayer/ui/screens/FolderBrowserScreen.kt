@@ -232,9 +232,11 @@ fun FolderBrowserScreen(
                                 .padding(16.dp)
                         ) {
                             FloatingActionButton(
-                                onClick = { viewModel.refreshFolders() }
+                                onClick = { viewModel.refreshFolders() },
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
                             ) {
-                                Icon(Icons.Default.Refresh, "刷新", tint = MaterialTheme.colorScheme.onPrimary)
+                                Icon(Icons.Default.Refresh, "刷新")
                             }
                         }
                     }
@@ -245,11 +247,30 @@ fun FolderBrowserScreen(
 
     if (showSortDialog) {
         SortDialog(
-            currentSortType = folderListState.sortType.toString(),
-            currentSortOrder = folderListState.sortOrder.toString(),
+            currentSortType = when (folderListState.sortType) {
+                0 -> "NAME"
+                2 -> "VIDEO_COUNT"
+                else -> "NAME"
+            },
+            currentSortOrder = when (folderListState.sortOrder) {
+                0 -> "ASCENDING"
+                1 -> "DESCENDING"
+                else -> "ASCENDING"
+            },
             onDismiss = { showSortDialog = false },
             onSortSelected = { newType: String, newOrder: String ->
-                viewModel.sortFolders(newType.toInt(), newOrder.toInt())
+                // 将字符串类型映射为整数
+                val sortType = when (newType) {
+                    "NAME" -> 0
+                    "VIDEO_COUNT" -> 2
+                    else -> 0
+                }
+                val sortOrder = when (newOrder) {
+                    "ASCENDING" -> 0
+                    "DESCENDING" -> 1
+                    else -> 0
+                }
+                viewModel.sortFolders(sortType, sortOrder)
                 showSortDialog = false
             }
         )

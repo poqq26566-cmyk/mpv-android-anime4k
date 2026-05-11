@@ -387,9 +387,11 @@ fun VideoListScreenPaging(
                         .padding(16.dp)
                 ) {
                     FloatingActionButton(
-                        onClick = { refreshVideos() }
+                        onClick = { refreshVideos() },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     ) {
-                        Icon(Icons.Default.Refresh, "刷新", tint = Color.White)
+                        Icon(Icons.Default.Refresh, "刷新")
                     }
                 }
             }
@@ -726,7 +728,7 @@ private fun VideoItem(
                 modifier = Modifier
                     .width(120.dp)
                     .height(68.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(Color(0xFFE0E0E0)),
                 contentAlignment = Alignment.Center
             ) {

@@ -8,8 +8,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -50,7 +52,7 @@ fun SubtitleSearchScreen(
     onClearSelection: () -> Unit
 ) {
     var currentFolderUri by remember { mutableStateOf(savedFolderUri) }
-    var showSearchDialog by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
     var showOptionsDialog by remember { mutableStateOf(false) }
     val primaryColor = MaterialTheme.colorScheme.primary
 
@@ -83,127 +85,170 @@ fun SubtitleSearchScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
+                .padding(horizontal = 16.dp)
         ) {
-        // 顶部搜索区域
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // 搜索输入框卡片
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-            // 主搜索卡片
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    placeholder = { 
+                        Text(
+                            if (currentFolderUri != null) "输入影片名称搜索字幕..." else "请先设置保存文件夹",
+                            fontSize = 14.sp
+                        ) 
+                    },
+                    enabled = currentFolderUri != null,
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = null,
+                            tint = if (currentFolderUri != null) primaryColor else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingIcon = {
+                        Row {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "清除",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            IconButton(
+                                onClick = {
+                                    if (searchQuery.isNotBlank()) {
+                                        onSearchMedia(searchQuery.trim())
+                                    }
+                                },
+                                enabled = currentFolderUri != null && searchQuery.isNotBlank()
+                            ) {
+                                Icon(
+                                    Icons.Default.Send,
+                                    contentDescription = "搜索",
+                                    tint = if (currentFolderUri != null && searchQuery.isNotBlank()) 
+                                        primaryColor 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = androidx.compose.ui.graphics.Color.Transparent,
+                        unfocusedBorderColor = androidx.compose.ui.graphics.Color.Transparent,
+                        disabledBorderColor = androidx.compose.ui.graphics.Color.Transparent,
+                        focusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
+                        unfocusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
+                        disabledContainerColor = androidx.compose.ui.graphics.Color.Transparent
+                    ),
+                    shape = RoundedCornerShape(28.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // 功能按钮行
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // 设置文件夹按钮
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { folderPickerLauncher.launch(currentFolderUri) },
+                    shape = RoundedCornerShape(28.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainer
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                    // 搜索字幕 - 独占一行
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (currentFolderUri != null) primaryColor else primaryColor.copy(alpha = 0.3f))
-                                .clickable(enabled = currentFolderUri != null) {
-                                    showSearchDialog = true
-                                }
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(28.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "搜索字幕",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimary
-                                )
-                                Text(
-                                    text = if (currentFolderUri != null) 
-                                        "点击输入影片名称" 
-                                    else 
-                                        "请先设置保存文件夹",
-                                    fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                                )
-                            }
-                            Icon(
-                                imageVector = Icons.Default.ChevronRight,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // 附属功能按钮行
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                    // 保存文件夹按钮
-                            OutlinedButton(
-                                onClick = { folderPickerLauncher.launch(currentFolderUri) },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = primaryColor
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Folder,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = if (currentFolderUri != null) "已设置" else "设置文件夹",
-                                    fontSize = 13.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-
-                            // 搜索选项按钮
-                            OutlinedButton(
-                                onClick = { showOptionsDialog = true },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = primaryColor
-                                ),
-                                enabled = currentFolderUri != null
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Settings,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "搜索选项",
-                                    fontSize = 13.sp
-                                )
-                            }
-                        }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Folder,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = primaryColor
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (currentFolderUri != null) "已设置文件夹" else "设置文件夹",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+                
+                // 搜索选项按钮
+                Card(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(enabled = currentFolderUri != null) { showOptionsDialog = true },
+                    shape = RoundedCornerShape(28.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (currentFolderUri != null) 
+                            MaterialTheme.colorScheme.surfaceContainer 
+                        else 
+                            MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.5f)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = if (currentFolderUri != null) primaryColor else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "搜索选项",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (currentFolderUri != null) 
+                                MaterialTheme.colorScheme.onSurface 
+                            else 
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
 
-            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // 内容区域
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp)
+                modifier = Modifier.fillMaxSize()
             ) {
                 when {
                     // 媒体搜索中
@@ -228,20 +273,19 @@ fun SubtitleSearchScreen(
                     // 已选择媒体，显示字幕搜索结果
                     selectedMedia != null -> {
                         Column(modifier = Modifier.fillMaxSize()) {
-                        // 已选择的媒体信息
+                            // 已选择的媒体信息卡片
                             Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(28.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = primaryColor.copy(alpha = 0.1f)
-                                )
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                             ) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(12.dp),
+                                        .padding(16.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
@@ -250,9 +294,10 @@ fun SubtitleSearchScreen(
                                             fontSize = 12.sp,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
+                                        Spacer(modifier = Modifier.height(4.dp))
                                         Text(
                                             text = selectedMedia.displayTitle,
-                                            fontSize = 15.sp,
+                                            fontSize = 16.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = primaryColor
                                         )
@@ -266,6 +311,8 @@ fun SubtitleSearchScreen(
                                     }
                                 }
                             }
+
+                            Spacer(modifier = Modifier.height(12.dp))
 
                             // 字幕搜索结果
                             if (isSearching) {
@@ -320,7 +367,7 @@ fun SubtitleSearchScreen(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                "请开始搜索",
+                                "输入影片名称开始搜索",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 16.sp
                             )
@@ -331,18 +378,7 @@ fun SubtitleSearchScreen(
         }
     }
 
-// 搜索对话框
-    if (showSearchDialog) {
-        SubtitleSearchDialog(
-            onDismiss = { showSearchDialog = false },
-            onSearch = { query ->
-                showSearchDialog = false
-                onSearchMedia(query)
-            }
-        )
-    }
-
-// 搜索选项对话框
+    // 搜索选项对话框
     if (showOptionsDialog) {
         SearchOptionsDialog(
             currentOptions = searchOptions,
@@ -392,16 +428,16 @@ private fun MediaItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 类型图标
@@ -420,6 +456,7 @@ private fun MediaItem(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 media.overview?.let { overview ->
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = overview,
                         fontSize = 13.sp,
@@ -429,6 +466,7 @@ private fun MediaItem(
                     )
                 }
             }
+            Spacer(modifier = Modifier.width(8.dp))
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
@@ -475,16 +513,16 @@ private fun SubtitleItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onDownload),
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -496,7 +534,7 @@ private fun SubtitleItem(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -506,8 +544,7 @@ private fun SubtitleItem(
                         label = { 
                             Text(
                                 subtitle.displayLanguage, 
-                                fontSize = 12.sp, 
-                                color = androidx.compose.ui.graphics.Color.Black,
+                                fontSize = 12.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             ) 
@@ -522,8 +559,7 @@ private fun SubtitleItem(
                             label = { 
                                 Text(
                                     it.uppercase(), 
-                                    fontSize = 12.sp, 
-                                    color = androidx.compose.ui.graphics.Color.Black,
+                                    fontSize = 12.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 ) 
@@ -539,8 +575,7 @@ private fun SubtitleItem(
                             label = { 
                                 Text(
                                     it, 
-                                    fontSize = 12.sp, 
-                                    color = androidx.compose.ui.graphics.Color.Black,
+                                    fontSize = 12.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 ) 
@@ -552,84 +587,15 @@ private fun SubtitleItem(
                     }
                 }
             }
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             Icon(
                 imageVector = Icons.Default.Download,
                 contentDescription = "下载",
-                tint = MaterialTheme.colorScheme.primary
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
             )
         }
     }
-}
-
-@Composable
-private fun SubtitleSearchDialog(
-    onDismiss: () -> Unit,
-    onSearch: (String) -> Unit
-) {
-    var searchQuery by remember { mutableStateOf("") }
-    val primaryColor = MaterialTheme.colorScheme.primary
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        title = {
-            Text(
-                "搜索字幕",
-                color = primaryColor,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column {
-                Text(
-                    "请输入影片名称",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    label = { Text("影片名称") },
-                    placeholder =  { Text("例如：疾速追杀") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = primaryColor,
-                        focusedLabelColor = primaryColor,
-                        focusedTextColor = androidx.compose.ui.graphics.Color.Black,
-                        unfocusedTextColor = androidx.compose.ui.graphics.Color.Black
-                    )
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (searchQuery.isNotBlank()) {
-                        onSearch(searchQuery.trim())
-                    }
-                },
-                enabled = searchQuery.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = primaryColor
-                )
-            ) {
-                Text("搜索")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = primaryColor
-                )
-            ) {
-                Text("取消")
-            }
-        }
-    )
 }
 
 @Composable
@@ -641,190 +607,164 @@ private fun SearchOptionsDialog(
     var selectedLanguages by remember { mutableStateOf(currentOptions.languages) }
     var selectedSources by remember { mutableStateOf(currentOptions.sources) }
     var selectedFormats by remember { mutableStateOf(currentOptions.formats) }
-    val primaryColor = MaterialTheme.colorScheme.primary
 
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.8f),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                "搜索选项",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold
             )
-        ) {
+        },
+        text = {
             Column(
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
+                // 语言选项
                 Text(
-                    "搜索选项",
-                    fontSize = 20.sp,
+                    "字幕语言",
                     fontWeight = FontWeight.Bold,
-                    color = primaryColor
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // 语言选项
-                    item {
+                Spacer(modifier = Modifier.height(8.dp))
+                SubtitleLanguages.ALL.forEach { (code, name) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                selectedLanguages = if (code == "all") {
+                                    setOf("all")
+                                } else {
+                                    val newSet = selectedLanguages.toMutableSet()
+                                    newSet.remove("all")
+                                    if (code in newSet) newSet.remove(code) else newSet.add(code)
+                                    if (newSet.isEmpty()) setOf("all") else newSet
+                                }
+                            }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = code in selectedLanguages,
+                            onCheckedChange = null,
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.primary
+                            )
+                        )
                         Text(
-                            "字幕语言",
-                            fontWeight = FontWeight.Bold,
+                            name,
+                            modifier = Modifier.padding(start = 8.dp),
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        SubtitleLanguages.ALL.forEach { (code, name) ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        selectedLanguages = if (code == "all") {
-                                            setOf("all")
-                                        } else {
-                                            val newSet = selectedLanguages.toMutableSet()
-                                            newSet.remove("all")
-                                            if (code in newSet) newSet.remove(code) else newSet.add(code)
-                                            if (newSet.isEmpty()) setOf("all") else newSet
-                                        }
-                                    }
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = code in selectedLanguages,
-                                    onCheckedChange = null,
-                                    colors = CheckboxDefaults.colors(
-                                        checkedColor = primaryColor
-                                    )
-                                )
-                                Text(
-                                    name,
-                                    modifier = Modifier.padding(start = 8.dp),
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
-                    }
-
-                    // 来源选项
-                    item {
-                        Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "字幕来源",
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        SubtitleSources.ALL.forEach { (code, name) ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        selectedSources = if (code == "all") {
-                                            setOf("all")
-                                        } else {
-                                            val newSet = selectedSources.toMutableSet()
-                                            newSet.remove("all")
-                                            if (code in newSet) newSet.remove(code) else newSet.add(code)
-                                            if (newSet.isEmpty()) setOf("all") else newSet
-                                        }
-                                    }
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = code in selectedSources,
-                                    onCheckedChange = null,
-                                    colors = CheckboxDefaults.colors(
-                                        checkedColor = primaryColor
-                                    )
-                                )
-                                Text(
-                                    name,
-                                    modifier = Modifier.padding(start = 8.dp),
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
-                    }
-
-                    // 格式选项
-                    item {
-                        Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "字幕格式",
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        SubtitleFormats.ALL.forEach { (code, name) ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        val newSet = selectedFormats.toMutableSet()
-                                        if (code in newSet) newSet.remove(code) else newSet.add(code)
-                                        if (newSet.isNotEmpty()) {
-                                            selectedFormats = newSet
-                                        }
-                                    }
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = code in selectedFormats,
-                                    onCheckedChange = null,
-                                    colors = CheckboxDefaults.colors(
-                                        checkedColor = primaryColor
-                                    )
-                                )
-                                Text(
-                                    name,
-                                    modifier = Modifier.padding(start = 8.dp),
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(
-                        onClick = onDismiss,
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = primaryColor
-                        )
+                // 来源选项
+                Divider(
+                    modifier = Modifier.padding(vertical = 16.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
+                )
+                Text(
+                    "字幕来源",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                SubtitleSources.ALL.forEach { (code, name) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                selectedSources = if (code == "all") {
+                                    setOf("all")
+                                } else {
+                                    val newSet = selectedSources.toMutableSet()
+                                    newSet.remove("all")
+                                    if (code in newSet) newSet.remove(code) else newSet.add(code)
+                                    if (newSet.isEmpty()) setOf("all") else newSet
+                                }
+                            }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("取消")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            onConfirm(
-                                SearchOptions(
-                                    languages = selectedLanguages,
-                                    sources = selectedSources,
-                                    formats = selectedFormats
-                                )
+                        Checkbox(
+                            checked = code in selectedSources,
+                            onCheckedChange = null,
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.primary
                             )
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = primaryColor
                         )
+                        Text(
+                            name,
+                            modifier = Modifier.padding(start = 8.dp),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+
+                // 格式选项
+                Divider(
+                    modifier = Modifier.padding(vertical = 16.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
+                )
+                Text(
+                    "字幕格式",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                SubtitleFormats.ALL.forEach { (code, name) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val newSet = selectedFormats.toMutableSet()
+                                if (code in newSet) newSet.remove(code) else newSet.add(code)
+                                if (newSet.isNotEmpty()) {
+                                    selectedFormats = newSet
+                                }
+                            }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("确定")
+                        Checkbox(
+                            checked = code in selectedFormats,
+                            onCheckedChange = null,
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.primary
+                            )
+                        )
+                        Text(
+                            name,
+                            modifier = Modifier.padding(start = 8.dp),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             }
-        }
-    }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onConfirm(
+                        SearchOptions(
+                            languages = selectedLanguages,
+                            sources = selectedSources,
+                            formats = selectedFormats
+                        )
+                    )
+                }
+            ) {
+                Text("确定")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消")
+            }
+        },
+        shape = RoundedCornerShape(28.dp),
+        containerColor = MaterialTheme.colorScheme.surface
+    )
 }

@@ -337,6 +337,7 @@ fun CopyDestinationDialog(
                     .fillMaxWidth()
                     .fillMaxHeight(0.8f),
                 shape = RoundedCornerShape(28.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(

@@ -5,8 +5,10 @@ import com.fam4k007.videoplayer.presentation.BilibiliViewModel
 import com.fam4k007.videoplayer.presentation.LibraryViewModel
 import com.fam4k007.videoplayer.presentation.PlayerViewModel
 import com.fam4k007.videoplayer.presentation.SettingsViewModel
+import com.fam4k007.videoplayer.presentation.SubtitleSearchViewModel
 import com.fam4k007.videoplayer.presentation.TVBrowserViewModel
 import com.fam4k007.videoplayer.presentation.WebDavViewModel
+import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
@@ -36,4 +38,7 @@ val presentationModule = module {
 
     // WebDAV ViewModel
     viewModel { WebDavViewModel(get(), get()) }
+    
+    // 字幕搜索ViewModel
+    viewModel { SubtitleSearchViewModel(get(), androidContext()) }
 }

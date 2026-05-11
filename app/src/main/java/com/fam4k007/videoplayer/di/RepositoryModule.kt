@@ -5,6 +5,7 @@ import com.fam4k007.videoplayer.data.preferences.WebDavAccountDataSource
 import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.repository.BilibiliRepository
 import com.fam4k007.videoplayer.repository.PlayerRepository
+import com.fam4k007.videoplayer.repository.SubtitleRepository
 import com.fam4k007.videoplayer.repository.VideoRepository
 import com.fam4k007.videoplayer.repository.WebDavRepository
 import org.koin.android.ext.koin.androidContext
@@ -50,6 +51,13 @@ val repositoryModule = module {
     single { 
         WebDavRepository(
             accountDataSource = get()
+        )
+    }
+    
+    // SubtitleRepository - 字幕搜索和下载
+    single { 
+        SubtitleRepository(
+            context = androidContext()
         )
     }
     
