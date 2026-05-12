@@ -32,7 +32,7 @@ fun AboutScreen(
     versionName: String,
     onBack: () -> Unit,
     onNavigateToLicense: () -> Unit,
-    onNavigateToFeedback: () -> Unit
+    onSendEmail: () -> Unit
 ) {
     val context = LocalContext.current
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -61,7 +61,7 @@ fun AboutScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // App 信息卡片 - 精简版
+            // App 信息卡片 - 紧凑版
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
@@ -73,31 +73,31 @@ fun AboutScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
+                        .padding(24.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // App 图标 - 左侧
+                    // App 图标
                     Image(
                         painter = painterResource(id = R.drawable.ic_app_icon),
                         contentDescription = null,
-                        modifier = Modifier.size(64.dp)
+                        modifier = Modifier.size(80.dp)
                     )
 
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(20.dp))
 
-                    // 右侧文字信息
+                    // 中间文字信息
                     Column(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
                             text = "小喵Player",
-                            fontSize = 20.sp,
+                            fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
 
                         Text(
                             text = "Version $versionName",
@@ -105,18 +105,40 @@ fun AboutScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    
-                    // GitHub 图标按钮
-                    IconButton(
-                        onClick = {
-                            openUrl(context, "https://github.com/azxcvn/mpv-android-anime4k")
-                        }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    // 右侧图标竖向排列
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_github),
-                            contentDescription = "GitHub",
-                            modifier = Modifier.size(28.dp)
-                        )
+                        // 邮件图标
+                        IconButton(
+                            onClick = onSendEmail,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = "发送邮件",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+
+                        // GitHub 图标
+                        IconButton(
+                            onClick = {
+                                openUrl(context, "https://github.com/azxcvn/mpv-android-anime4k")
+                            },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_github),
+                                contentDescription = "GitHub",
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -169,53 +191,7 @@ fun AboutScreen(
                 }
             }
 
-            // 意见反馈卡片
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = onNavigateToFeedback)
-                        .padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.BugReport,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(32.dp)
-                    )
 
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "意见反馈",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "报告问题或建议",
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.outline
-                    )
-                }
-            }
         }
     }
 }

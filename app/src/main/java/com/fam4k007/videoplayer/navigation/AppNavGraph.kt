@@ -24,7 +24,6 @@ import com.fam4k007.videoplayer.ui.screens.HomeScreen
 import com.fam4k007.videoplayer.ui.screens.PlaybackHistoryScreen
 import com.fam4k007.videoplayer.ui.screens.PlaybackSettingsScreen
 import com.fam4k007.videoplayer.LicenseActivity
-import com.fam4k007.videoplayer.FeedbackActivity
 import com.fam4k007.videoplayer.ui.screens.SettingsScreen
 import com.fam4k007.videoplayer.ui.webdav.WebDavAccountListScreen
 import com.fam4k007.videoplayer.ui.webdav.WebDavBrowserScreen
@@ -194,12 +193,22 @@ fun AppNavGraph(
                         R.anim.slide_out_left
                     )
                 },
-                onNavigateToFeedback = {
-                    context.startActivity(Intent(context, FeedbackActivity::class.java))
-                    (context as? android.app.Activity)?.overridePendingTransition(
-                        R.anim.slide_in_right,
-                        R.anim.slide_out_left
-                    )
+                onSendEmail = {
+                    try {
+                        val email = "2297065843@qq.com"
+                        val intent = Intent(Intent.ACTION_SENDTO).apply {
+                            data = android.net.Uri.parse("mailto:$email")
+                            putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
+                            putExtra(Intent.EXTRA_SUBJECT, "小喵player使用反馈")
+                        }
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        android.widget.Toast.makeText(
+                            context,
+                            "未找到可用的邮件应用",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             )
         }

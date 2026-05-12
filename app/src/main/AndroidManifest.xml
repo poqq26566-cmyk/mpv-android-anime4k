@@ -38,7 +38,6 @@
         <activity android:name=".SubtitleSearchActivity" />
         <activity android:name=".AboutComposeActivity" />
         <activity android:name=".LicenseActivity" />
-        <activity android:name=".FeedbackActivity" />
         <activity 
             android:name="com.fanchen.fam4k007.manager.compose.BiliBiliLoginActivity"
             android:exported="false"

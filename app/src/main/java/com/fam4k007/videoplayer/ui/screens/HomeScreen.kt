@@ -562,93 +562,82 @@ fun ExpandableActionButton(
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.Bottom
         ) {
-            // 二级菜单 - 网络功能
+            // 功能区（使用 AnimatedContent 避免卡片切换时的错位）
             AnimatedVisibility(
-                visible = isExpanded && showNetworkSubmenu,
-                enter = fadeIn(animationSpec = tween(300)) + 
-                        expandVertically(animationSpec = tween(300)),
-                exit = fadeOut(animationSpec = tween(300)) + 
-                       shrinkVertically(animationSpec = tween(300))
+                visible = isExpanded,
+                enter = fadeIn(animationSpec = tween(200)) + 
+                        scaleIn(
+                            initialScale = 0.8f,
+                            animationSpec = tween(200)
+                        ),
+                exit = fadeOut(animationSpec = tween(200)) + 
+                       scaleOut(
+                           targetScale = 0.8f,
+                           animationSpec = tween(200)
+                       )
             ) {
-                Card(
-                    modifier = Modifier
-                        .padding(bottom = 16.dp)
-                        .wrapContentSize(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(24.dp)
+                AnimatedContent(
+                    targetState = showNetworkSubmenu,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(150)) togetherWith
+                                fadeOut(animationSpec = tween(150))
+                    },
+                    label = "menu_content"
+                ) { isNetworkSubmenu ->
+                    Card(
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .wrapContentSize(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        // TV浏览器（视频嗅探）
-                        ActionItem(
-                            icon = Icons.Default.Tv,
-                            label = "TV",
-                            onClick = {
-                                showNetworkSubmenu = false
-                                onTVClick()
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(24.dp)
+                        ) {
+                            if (isNetworkSubmenu) {
+                                // 二级菜单 - 网络功能
+                                ActionItem(
+                                    icon = Icons.Default.Tv,
+                                    label = "TV",
+                                    onClick = {
+                                        showNetworkSubmenu = false
+                                        onTVClick()
+                                    }
+                                )
+                                
+                                ActionItem(
+                                    icon = Icons.Default.Link,
+                                    label = "链接",
+                                    onClick = {
+                                        showNetworkSubmenu = false
+                                        onNetworkLinkClick()
+                                    }
+                                )
+                            } else {
+                                // 主菜单
+                                ActionItem(
+                                    icon = Icons.Default.Public,
+                                    label = "网络",
+                                    onClick = { showNetworkSubmenu = true }
+                                )
+                                
+                                ActionItem(
+                                    icon = Icons.Default.VideoLibrary,
+                                    label = "哔哩哔哩番剧",
+                                    onClick = onBiliBiliClick
+                                )
+                                
+                                ActionItem(
+                                    icon = Icons.Default.Cloud,
+                                    label = "WebDAV",
+                                    onClick = onWebDavClick
+                                )
                             }
-                        )
-                        
-                        // 网络链接
-                        ActionItem(
-                            icon = Icons.Default.Link,
-                            label = "链接",
-                            onClick = {
-                                showNetworkSubmenu = false
-                                onNetworkLinkClick()
-                            }
-                        )
-                    }
-                }
-            }
-            
-            // 展开的功能区
-            AnimatedVisibility(
-                visible = isExpanded && !showNetworkSubmenu,
-                enter = fadeIn(animationSpec = tween(300)) + 
-                        expandVertically(animationSpec = tween(300)),
-                exit = fadeOut(animationSpec = tween(300)) + 
-                       shrinkVertically(animationSpec = tween(300))
-            ) {
-                Card(
-                    modifier = Modifier
-                        .padding(bottom = 16.dp)
-                        .wrapContentSize(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(24.dp)
-                    ) {
-                        // 网络（原TV，添加二级菜单）
-                        ActionItem(
-                            icon = Icons.Default.Public,
-                            label = "网络",
-                            onClick = { showNetworkSubmenu = true }
-                        )
-                        
-                        // 哔哩哔哩番剧
-                        ActionItem(
-                            icon = Icons.Default.VideoLibrary,
-                            label = "哔哩哔哩番剧",
-                            onClick = onBiliBiliClick
-                        )
-                        
-                        // WebDAV
-                        ActionItem(
-                            icon = Icons.Default.Cloud,
-                            label = "WebDAV",
-                            onClick = onWebDavClick
-                        )
+                        }
                     }
                 }
             }
@@ -722,14 +711,17 @@ fun IconWithBackground(
     contentDescription: String,
     onClick: () -> Unit
 ) {
-    Icon(
-        imageVector = icon,
-        contentDescription = contentDescription,
-        tint = MaterialTheme.colorScheme.primary,
-        modifier = Modifier
-            .size(34.dp)
-            .clickable(onClick = onClick)
-    )
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.size(48.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(28.dp)
+        )
+    }
 }
 
 /**

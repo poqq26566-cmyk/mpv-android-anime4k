@@ -1,7 +1,9 @@
 package com.fam4k007.videoplayer
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
@@ -45,13 +47,30 @@ class AboutComposeActivity : BaseActivity() {
                             startActivity(Intent(this@AboutComposeActivity, LicenseActivity::class.java))
                             startActivityWithDefaultTransition()
                         },
-                        onNavigateToFeedback = {
-                            startActivity(Intent(this@AboutComposeActivity, FeedbackActivity::class.java))
-                            startActivityWithDefaultTransition()
+                        onSendEmail = {
+                            sendEmail()
                         }
                     )
                 }
             }
+        }
+    }
+
+    private fun sendEmail() {
+        try {
+            val email = "2297065843@qq.com"
+            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                data = Uri.parse("mailto:$email")
+                putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
+                putExtra(Intent.EXTRA_SUBJECT, "小喵player使用反馈")
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(
+                this,
+                "未找到可用的邮件应用",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
