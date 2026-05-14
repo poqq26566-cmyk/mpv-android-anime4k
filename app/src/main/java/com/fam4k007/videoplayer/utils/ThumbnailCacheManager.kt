@@ -42,10 +42,17 @@ class ThumbnailCacheManager private constructor(private val context: Context) {
         }
     }
 
-    private val cacheDir: File = File(context.cacheDir, CACHE_DIR_NAME).apply {
-        if (!exists()) {
-            mkdirs()
+    private val cacheDir: File = run {
+        // 优先使用外部缓存目录（Android/data/包名/cache/），用户可访问
+        // 降级到内部缓存目录（data/data/包名/cache/），需要root
+        val dir = (context.externalCacheDir ?: context.cacheDir).let { baseDir ->
+            File(baseDir, CACHE_DIR_NAME)
         }
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        Logger.d(TAG, "Thumbnail cache directory: ${dir.absolutePath}")
+        dir
     }
     
     private val workManager = WorkManager.getInstance(context)
@@ -91,6 +98,55 @@ class ThumbnailCacheManager private constructor(private val context: Context) {
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to get thumbnail: ${e.message}", e)
                 null
+            }
+        }
+    }
+    
+    /**
+     * 获取指定播放位置的缩略图（带缓存）- 专为播放历史设计
+     * @param uri 视频URI
+     * @param positionMs 播放位置（毫秒）
+     * @return 缩略图 Bitmap，缓存文件路径通过返回值传递
+     */
+    suspend fun getThumbnailAtPosition(
+        context: Context, 
+        uri: Uri, 
+        positionMs: Long
+    ): Pair<Bitmap?, String?> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val cacheKey = generateCacheKeyWithPosition(uri, positionMs)
+                val cacheFile = File(cacheDir, cacheKey)
+
+                // 1. 尝试从缓存读取
+                if (cacheFile.exists()) {
+                    Logger.d(TAG, "✓ Loading thumbnail from cache: $cacheKey")
+                    val bitmap = BitmapFactory.decodeFile(cacheFile.absolutePath)
+                    if (bitmap != null) {
+                        return@withContext Pair(bitmap, cacheFile.absolutePath)
+                    } else {
+                        // 缓存文件损坏，删除
+                        cacheFile.delete()
+                    }
+                }
+
+                // 2. 缓存未命中，立即生成指定位置的缩略图
+                Logger.d(TAG, "✗ Cache miss, extracting frame at ${positionMs}ms: $uri")
+                val bitmap = extractThumbnailAtPosition(context, uri, positionMs)
+                
+                // 3. 保存到缓存
+                if (bitmap != null) {
+                    saveThumbnailToCache(bitmap, cacheFile)
+                    checkCacheSize()
+                    Logger.d(TAG, "✓ Thumbnail cached: ${cacheFile.name}")
+                    return@withContext Pair(bitmap, cacheFile.absolutePath)
+                }
+                
+                Pair(null, null)
+                
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to get thumbnail at position: ${e.message}", e)
+                Pair(null, null)
             }
         }
     }
@@ -197,6 +253,78 @@ class ThumbnailCacheManager private constructor(private val context: Context) {
             }
         }
     }
+    
+    /**
+     * 提取指定播放位置的视频缩略图
+     * @param positionMs 播放位置（毫秒）
+     */
+    private fun extractThumbnailAtPosition(context: Context, uri: Uri, positionMs: Long): Bitmap? {
+        var retriever: MediaMetadataRetriever? = null
+        try {
+            retriever = MediaMetadataRetriever()
+            
+            // 设置数据源
+            when {
+                uri.scheme == "content" -> {
+                    retriever.setDataSource(context, uri)
+                }
+                uri.scheme == "file" -> {
+                    retriever.setDataSource(uri.path)
+                }
+                else -> {
+                    retriever.setDataSource(uri.toString())
+                }
+            }
+
+            // 转换为微秒，使用 OPTION_CLOSEST 获得精确帧
+            val frameTimeMicros = positionMs * 1000L
+            val bitmap = retriever.getFrameAtTime(
+                frameTimeMicros,
+                MediaMetadataRetriever.OPTION_CLOSEST
+            ) ?: return null
+
+            // 缩放和裁剪（与extractThumbnail使用相同的逻辑）
+            val srcWidth = bitmap.width
+            val srcHeight = bitmap.height
+            
+            val targetRatio = THUMBNAIL_WIDTH.toFloat() / THUMBNAIL_HEIGHT
+            val srcRatio = if (srcHeight != 0) srcWidth.toFloat() / srcHeight else 1f
+            
+            val scale: Float
+            val scaledWidth: Int
+            val scaledHeight: Int
+            
+            if (srcRatio > targetRatio) {
+                scale = THUMBNAIL_HEIGHT.toFloat() / srcHeight
+                scaledWidth = (srcWidth * scale).toInt()
+                scaledHeight = THUMBNAIL_HEIGHT
+            } else {
+                scale = THUMBNAIL_WIDTH.toFloat() / srcWidth
+                scaledWidth = THUMBNAIL_WIDTH
+                scaledHeight = (srcHeight * scale).toInt()
+            }
+            
+            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true)
+            val x = ((scaledWidth - THUMBNAIL_WIDTH) / 2).coerceAtLeast(0)
+            val y = ((scaledHeight - THUMBNAIL_HEIGHT) / 2).coerceAtLeast(0)
+            val finalBitmap = Bitmap.createBitmap(scaledBitmap, x, y, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
+            
+            // 释放中间bitmap
+            if (bitmap != finalBitmap) bitmap.recycle()
+            if (scaledBitmap != finalBitmap) scaledBitmap.recycle()
+            
+            return finalBitmap
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to extract thumbnail at position ${positionMs}ms", e)
+            return null
+        } finally {
+            try {
+                retriever?.release()
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to release retriever", e)
+            }
+        }
+    }
 
     /**
      * 保存缩略图到缓存
@@ -223,6 +351,23 @@ class ThumbnailCacheManager private constructor(private val context: Context) {
         } catch (e: Exception) {
             // 降级方案：使用URI的哈希码
             uri.toString().hashCode().toString()
+        }
+    }
+    
+    /**
+     * 生成带播放位置的缓存键（基于URI+Position的MD5）
+     */
+    private fun generateCacheKeyWithPosition(uri: Uri, positionMs: Long): String {
+        return try {
+            // 将位置四舍五入到最近的30秒，减少缓存数量
+            val roundedPosition = (positionMs / 30000) * 30000
+            val key = "${uri}_$roundedPosition"
+            val digest = MessageDigest.getInstance("MD5")
+            val hash = digest.digest(key.toByteArray())
+            hash.joinToString("") { "%02x".format(it) }
+        } catch (e: Exception) {
+            // 降级方案：使用组合哈希码
+            "${uri.toString().hashCode()}_${positionMs / 30000}"
         }
     }
 

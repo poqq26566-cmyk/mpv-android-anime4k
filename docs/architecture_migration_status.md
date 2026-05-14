@@ -32,6 +32,7 @@ Data (Room/Network/Prefs)
 | B站播放 | BiliBiliPlayActivity | BiliBiliPlayViewModel | BiliBiliPlayScreen | ✅ 完整 |
 | 字幕搜索 | SubtitleSearchActivity | SubtitleSearchViewModel | SubtitleSearchScreen | ✅ 完整 |
 | B站弹幕下载 | BiliBiliDanmakuComposeActivity | BiliBiliDanmakuViewModel | BiliBiliDanmakuScreen | ✅ 完整 |
+| 播放历史 | PlaybackHistoryComposeActivity | PlaybackHistoryViewModel | PlaybackHistoryScreen | ✅ 完整（2026-05-14 新重构） |
 | 主页 | MainActivity | - | HomeScreen | ✅ 简单页面 |
 | 关于 | AboutComposeActivity | - | AboutScreen | ✅ 简单页面 |
 | 开源许可 | LicenseActivity | - | LicenseScreen | ✅ 简单页面 |
@@ -39,6 +40,7 @@ Data (Room/Network/Prefs)
 | 反馈 | FeedbackActivity | - | FeedbackScreen | ✅ 简单页面 |
 
 **最近重构：**
+- **播放历史**（2026-05-14）：完成架构迁移，创建PlaybackHistoryViewModel，通过PlayerRepository访问数据，状态管理从Activity移至ViewModel，符合Clean Architecture + MVVM架构规范。
 - **下载管理**（2026-05-11）：已完全重构，所有解析逻辑、状态管理（isParsing、parseError、parseResult、episodeList等）从UI层移至ViewModel，符合MVVM架构规范。
 
 ---
@@ -79,21 +81,7 @@ Data (Room/Network/Prefs)
 
 ---
 
-### 3. PlaybackHistoryComposeActivity
-
-**当前问题：**
-- 无 ViewModel（状态在 Activity）
-- 直接访问 Database
-
-**需要做：**
-- 创建 PlaybackHistoryViewModel
-- 通过 Repository 访问历史数据
-
-**优先级：** 🔥 中
-
----
-
-### 4. PlaybackSettingsComposeActivity
+### 3. PlaybackSettingsComposeActivity
 
 **当前问题：**
 - 无 ViewModel
@@ -145,14 +133,14 @@ Data (Room/Network/Prefs)
 
 ```
 目标架构：Clean Architecture + MVVM + 全Compose + Koin + Navigation3
-当前状态：阶段2（代码分层）进行中，68%完成
-```
-
+当前状态：阶段2（代码分层）4 ✅
+- **需要迁移**: 3 🔄
+- **进度**: 74
 ---
 
 ## 🎯 剩余工作清单（按优先级）
 
-### 📌 **一、页面层迁移（4个待迁移）** - 优先级：🔥🔥🔥
+### 📌 **一、页面层迁移（3个待迁移）** - 优先级：🔥🔥🔥
 
 #### 1. **VideoPlayerActivity** - 最重要！
 - **工作量**：⏱️ 10-15天
@@ -168,17 +156,7 @@ Data (Room/Network/Prefs)
   4. 重构弹幕同步逻辑
   5. 删除30+个XML对话框，改为Compose Dialog
 
-#### 2. **PlaybackHistoryComposeActivity**
-- **工作量**：⏱️ 1-2天
-- **当前状态**：
-  - ❌ 无ViewModel，状态在Activity中
-  - ❌ 直接访问Database
-- **需要完成**：
-  1. 创建 `PlaybackHistoryViewModel`
-  2. 通过 `PlayerRepository` 访问历史数据
-  3. UI已是Compose，只需状态管理迁移
-
-#### 3. **PlaybackSettingsComposeActivity**
+#### 2. **PlaybackSettingsComposeActivity**
 - **工作量**：⏱️ 0.5-1天
 - **当前状态**：
   - ❌ 无ViewModel
@@ -187,7 +165,7 @@ Data (Room/Network/Prefs)
   1. 复用 `SettingsViewModel` 或创建独立ViewModel
   2. 状态管理迁移
 
-#### 4. **MediaInfoActivity**
+#### 3. **MediaInfoActivity**
 - **工作量**：⏱️ 1天
 - **当前状态**：
   - ❌ 逻辑在Activity中
@@ -317,52 +295,51 @@ Data (Room/Network/Prefs)
 | **总计** | **~25-40天** | - |
 
 ---
-
-## 🎯 关键路径（建议顺序）
-
-```
-1. MediaInfoActivity（1天）          ← 最简单，热身
+2个简单页面迁移 | 1.5-2天 | 🔥🔥 |
+| XML Dialog → Compose | 3-5天 | 🔥🔥 |
+| Navigation3迁移 | 2-3天 | 🔥 |
+| Repository/Domain完善 | 3-5天 | 🔥 |
+| 主题系统升级 | 2-3天 | 🔥（可选） |
+| 工具类整理 | 1天 | 低 |
+| 测试优化 | 持续Settings（0.5-1天）      ← 简单
    ↓
-2. PlaybackHistory（1-2天）         ← 中等难度
+3. Repository/Domain完善（3-5天）   ← 为核心播放器打基础
    ↓
-3. PlaybackSettings（0.5-1天）      ← 简单
-   ↓
-4. Repository/Domain完善（3-5天）   ← 为核心播放器打基础
-   ↓
-5. VideoPlayerActivity（10-15天）   ← 🔥 最重要！
+4. VideoPlayerActivity（10-15天）   ← 🔥 最重要！
    ├─ ViewModel完善
    ├─ UI Compose化
    ├─ XML Dialog迁移
    └─ 功能验证
    ↓
-6. Navigation3迁移（2-3天）         ← 统一导航
+5. Navigation3迁移（2-3天）         ← 统一导航
    ↓
-7. 主题系统（2-3天，可选）          ← 提升体验
+6. 主题系统（2-3天，可选）          ← 提升体验
    ↓
-8. 工具类整理（1天）                ← 清理
+7. 工具类整理（1天）                ← 清理
    ↓
-9. 测试优化（持续）                 ← 保证质量
+8. 测试优化（持续）                 ← 保证质量
 ```
 
 ---
 
 ## ✅ 已完成的工作（68%）
 
+1. ✅ Koin依赖注74%）
+
 1. ✅ Koin依赖注入引入
-2. ✅ 13个页面架构迁移（MVVM + Compose）
-3. ✅ 部分Repository创建（Video、Bilibili、WebDav）
+2. ✅ 14个页面架构迁移（MVVM + Compose）
+3. ✅ 部分Repository创建（Video、Bilibili、WebDav、Player）
 4. ✅ Version Catalog依赖管理
 5. ✅ 基础Material 3主题
-
----
+6. ✅ PlaybackHistoryViewModel创建并集成（2026-05-14）
 
 ## 🎯 总结
 
 **核心关键**：VideoPlayerActivity（2200+行）是最大的挑战  
 **剩余工作**：约25-40天工作量  
-**进度**：68% → 100%（还需32%）  
-**建议**：优先完成3个简单页面迁移（3天），积累经验后再攻克VideoPlayerActivity（10-15天）
-
+**进度**：68% 3-38天工作量  
+**进度**：74% → 100%（还需26%）  
+**建议**：优先完成2个简单页面迁移（2
 **核心业务代码位置**（已梳理）：
 - 视频下载：`download/BilibiliDownloadManager.kt`
 - 弹幕下载：`danmaku/BiliBiliDanmakuDownloadManager.kt`

@@ -28,6 +28,14 @@ sealed interface AppScreen {
     @Serializable
     data object About : AppScreen
 
+    /** 错误日志页 */
+    @Serializable
+    data object LogViewer : AppScreen
+
+    /** 缓存管理页 */
+    @Serializable
+    data object CacheManagement : AppScreen
+
     /** WebDAV 账户列表页 */
     @Serializable
     data object WebDavAccounts : AppScreen

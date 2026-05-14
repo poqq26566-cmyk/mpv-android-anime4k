@@ -18,9 +18,12 @@ import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.VideoPlayerActivity
 import com.fam4k007.videoplayer.domain.webdav.WebDavClient
 import com.fam4k007.videoplayer.domain.webdav.WebDavConfig
+import com.fam4k007.videoplayer.presentation.PlaybackHistoryViewModel
 import com.fam4k007.videoplayer.repository.WebDavRepository
 import com.fam4k007.videoplayer.ui.screens.AboutScreen
+import com.fam4k007.videoplayer.ui.screens.CacheManagementScreen
 import com.fam4k007.videoplayer.ui.screens.HomeScreen
+import com.fam4k007.videoplayer.ui.screens.LogViewerScreen
 import com.fam4k007.videoplayer.ui.screens.PlaybackHistoryScreen
 import com.fam4k007.videoplayer.ui.screens.PlaybackSettingsScreen
 import com.fam4k007.videoplayer.LicenseActivity
@@ -28,6 +31,7 @@ import com.fam4k007.videoplayer.ui.screens.SettingsScreen
 import com.fam4k007.videoplayer.ui.webdav.WebDavAccountListScreen
 import com.fam4k007.videoplayer.ui.webdav.WebDavBrowserScreen
 import org.koin.compose.koinInject
+import org.koin.androidx.compose.koinViewModel
 
 /**
  * 应用主导航图
@@ -103,9 +107,9 @@ fun AppNavGraph(
 
         composable<AppScreen.PlaybackHistory> {
             val context = LocalContext.current
-            val localHistoryManager = remember { PlaybackHistoryManager(context) }
+            val viewModel = koinViewModel<PlaybackHistoryViewModel>()
             PlaybackHistoryScreen(
-                historyManager = localHistoryManager,
+                viewModel = viewModel,
                 onBack = { navController.popBackStack() },
                 onPlayVideo = { uri, startPosition ->
                     val intent = Intent(context, VideoPlayerActivity::class.java).apply {
@@ -193,6 +197,12 @@ fun AppNavGraph(
                         R.anim.slide_out_left
                     )
                 },
+                onNavigateToLogs = {
+                    navController.navigate(AppScreen.LogViewer)
+                },
+                onNavigateToCache = {
+                    navController.navigate(AppScreen.CacheManagement)
+                },
                 onSendEmail = {
                     try {
                         val email = "2297065843@qq.com"
@@ -210,6 +220,22 @@ fun AppNavGraph(
                         ).show()
                     }
                 }
+            )
+        }
+        
+        composable<AppScreen.LogViewer> {
+            val viewModel = koinViewModel<com.fam4k007.videoplayer.presentation.LogViewerViewModel>()
+            LogViewerScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        
+        composable<AppScreen.CacheManagement> {
+            val viewModel = koinViewModel<com.fam4k007.videoplayer.presentation.CacheManagementViewModel>()
+            CacheManagementScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
             )
         }
     }

@@ -28,7 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fam4k007.videoplayer.PlaybackHistoryManager
+import com.fam4k007.videoplayer.database.PlaybackHistoryEntity
+import com.fam4k007.videoplayer.presentation.PlaybackHistoryViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -36,15 +37,24 @@ import java.io.File
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaybackHistoryScreen(
-    historyManager: PlaybackHistoryManager,
+    viewModel: PlaybackHistoryViewModel,
     onBack: () -> Unit,
     onPlayVideo: (Uri, Long) -> Unit
 ) {
-    var historyList by remember { mutableStateOf(historyManager.getHistory()) }
+    val uiState by viewModel.uiState.collectAsState()
     var showClearDialog by remember { mutableStateOf(false) }
-    var itemToDelete by remember { mutableStateOf<PlaybackHistoryManager.HistoryItem?>(null) }
+    var itemToDelete by remember { mutableStateOf<PlaybackHistoryEntity?>(null) }
 
     val primaryColor = MaterialTheme.colorScheme.primary
+
+    // 显示错误信息
+    uiState.error?.let { error ->
+        LaunchedEffect(error) {
+            // 显示错误后自动清除
+            kotlinx.coroutines.delay(3000)
+            viewModel.clearError()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -56,7 +66,7 @@ fun PlaybackHistoryScreen(
                     }
                 },
                 actions = {
-                    if (historyList.isNotEmpty()) {
+                    if (uiState.historyList.isNotEmpty()) {
                         IconButton(onClick = { showClearDialog = true }) {
                             Icon(Icons.Default.Delete, contentDescription = "清空全部")
                         }
@@ -74,42 +84,64 @@ fun PlaybackHistoryScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
-            if (historyList.isEmpty()) {
-                // 空状态
-                Column(
-                    modifier = Modifier.align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.History,
-                        contentDescription = null,
-                        modifier = Modifier.size(80.dp),
-                        tint = primaryColor.copy(alpha = 0.3f)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "暂无播放历史",
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+            when {
+                uiState.isLoading -> {
+                    // 加载状态
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
                     )
                 }
-            } else {
-                // 历史列表
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(
-                        items = historyList,
-                        key = { it.uri }
-                    ) { item ->
-                        HistoryCard(
-                            item = item,
-                            onClick = { onPlayVideo(Uri.parse(item.uri), item.position) },
-                            onDeleteClick = { itemToDelete = item }
+                uiState.historyList.isEmpty() -> {
+                    // 空状态
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = null,
+                            modifier = Modifier.size(80.dp),
+                            tint = primaryColor.copy(alpha = 0.3f)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "暂无播放历史",
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                }
+                else -> {
+                    // 历史列表
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(
+                            items = uiState.historyList,
+                            key = { it.uri }
+                        ) { item ->
+                            HistoryCard(
+                                item = item,
+                                onClick = { onPlayVideo(Uri.parse(item.uri), item.position) },
+                                onDeleteClick = { itemToDelete = item }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 错误提示 Snackbar
+            uiState.error?.let { error ->
+                Snackbar(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp),
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                ) {
+                    Text(error)
                 }
             }
         }
@@ -136,8 +168,7 @@ fun PlaybackHistoryScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        historyManager.clearHistory()
-                        historyList = emptyList()
+                        viewModel.clearAllHistory()
                         showClearDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -178,8 +209,7 @@ fun PlaybackHistoryScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        historyManager.removeHistory(item.uri)
-                        historyList = historyManager.getHistory()
+                        viewModel.deleteHistory(item.uri)
                         itemToDelete = null
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -202,7 +232,7 @@ fun PlaybackHistoryScreen(
 
 @Composable
 private fun HistoryCard(
-    item: PlaybackHistoryManager.HistoryItem,
+    item: PlaybackHistoryEntity,
     onClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
@@ -212,11 +242,11 @@ private fun HistoryCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
@@ -228,7 +258,7 @@ private fun HistoryCard(
             Box(
                 modifier = Modifier
                     .size(90.dp, 60.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
@@ -242,56 +272,63 @@ private fun HistoryCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // 中间信息
-            Column(
-                modifier = Modifier.weight(1f)
+            // 中间信息 - 使用 Box 实现精确对齐
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(60.dp) // 与缩略图同高
             ) {
-                // 上方三分之二：视频标题
-                Text(
-                    text = item.fileName,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    lineHeight = 20.sp
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // 下方三分之一：小标签显示播放进度和最后播放日期
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // 播放进度标签
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer)
-                            .padding(horizontal = 6.dp, vertical = 3.dp)
-                    ) {
-                        Text(
-                            text = formatDuration(item.position),
-                            fontSize = 11.sp,
-                            color = primaryColor,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                    // 顶部：视频标题，与缩略图顶部对齐
+                    Text(
+                        text = item.fileName,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 16.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     
-                    // 最后播放日期标签
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer)
-                            .padding(horizontal = 6.dp, vertical = 3.dp)
+                    // 底部：标签，与缩略图底部对齐
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = formatTimestamp(item.lastPlayed),
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Medium
-                        )
+                        // 播放进度标签
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.primaryContainer)
+                                .padding(horizontal = 5.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = formatDuration(item.position),
+                                fontSize = 9.sp,
+                                color = primaryColor,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        
+                        // 最后播放日期标签
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.primaryContainer)
+                                .padding(horizontal = 5.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = formatTimestamp(item.lastPlayed),
+                                fontSize = 9.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }
@@ -335,8 +372,8 @@ private fun formatTimestamp(timestampMs: Long): String {
 }
 
 /**
- * 视频缩略图组件 - 使用 MediaMetadataRetriever 手动提取视频帧
- * 更可靠，支持所有视频格式
+ * 视频缩略图组件 - 使用缓存管理器优化
+ * 优化版：磁盘缓存，避免重复提取，大幅提升性能
  */
 @Composable
 private fun VideoThumbnail(
@@ -345,53 +382,24 @@ private fun VideoThumbnail(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val thumbnailManager = remember { com.fam4k007.videoplayer.utils.ThumbnailCacheManager.getInstance(context) }
     
-    // 使用 produceState 异步加载视频帧
+    // 使用 produceState 异步加载缓存的缩略图
     val bitmap by produceState<android.graphics.Bitmap?>(initialValue = null, videoUri, positionMs) {
         value = withContext(Dispatchers.IO) {
             try {
-                val retriever = android.media.MediaMetadataRetriever()
-                
-                // 解析并设置数据源
                 val uri = Uri.parse(videoUri)
-                when {
-                    uri.scheme == "content" -> {
-                        retriever.setDataSource(context, uri)
-                    }
-                    uri.scheme == "file" -> {
-                        retriever.setDataSource(uri.path)
-                    }
-                    else -> {
-                        retriever.setDataSource(videoUri)
-                    }
-                }
-                
-                // ⭐ 提取指定位置的视频帧（微秒）
-                val frameTimeMicros = positionMs * 1000L
-                android.util.Log.d("VideoThumbnail", "提取视频帧: URI=$videoUri, 位置=${positionMs}ms, 微秒=$frameTimeMicros")
-                
-                val frame = retriever.getFrameAtTime(
-                    frameTimeMicros,
-                    android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC
-                )
-                
-                retriever.release()
-                
-                if (frame != null) {
-                    android.util.Log.d("VideoThumbnail", "视频帧提取成功: ${frame.width}x${frame.height}")
-                } else {
-                    android.util.Log.e("VideoThumbnail", "视频帧提取失败: getFrameAtTime返回null")
-                }
-                
-                frame
+                // 使用缓存管理器获取缩略图（带磁盘缓存）
+                val (thumbnail, _) = thumbnailManager.getThumbnailAtPosition(context, uri, positionMs)
+                thumbnail
             } catch (e: Exception) {
-                android.util.Log.e("VideoThumbnail", "视频帧提取异常: ${e.message}", e)
+                android.util.Log.e("VideoThumbnail", "加载缩略图失败: ${e.message}", e)
                 null
             }
         }
     }
     
-    // 显示提取的帧或占位图
+    // 显示缓存的缩略图或占位图
     if (bitmap != null) {
         Image(
             bitmap = bitmap!!.asImageBitmap(),

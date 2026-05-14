@@ -2,7 +2,10 @@ package com.fam4k007.videoplayer.di
 
 import com.fam4k007.videoplayer.presentation.BiliBiliPlayViewModel
 import com.fam4k007.videoplayer.presentation.BilibiliViewModel
+import com.fam4k007.videoplayer.presentation.CacheManagementViewModel
 import com.fam4k007.videoplayer.presentation.LibraryViewModel
+import com.fam4k007.videoplayer.presentation.LogViewerViewModel
+import com.fam4k007.videoplayer.presentation.PlaybackHistoryViewModel
 import com.fam4k007.videoplayer.presentation.PlayerViewModel
 import com.fam4k007.videoplayer.presentation.SettingsViewModel
 import com.fam4k007.videoplayer.presentation.SubtitleSearchViewModel
@@ -41,4 +44,13 @@ val presentationModule = module {
     
     // 字幕搜索ViewModel
     viewModel { SubtitleSearchViewModel(get(), androidContext()) }
+    
+    // 播放历史ViewModel
+    viewModel { PlaybackHistoryViewModel(get()) }
+    
+    // 日志查看ViewModel
+    viewModel { LogViewerViewModel(androidContext()) }
+    
+    // 缓存管理ViewModel
+    viewModel { CacheManagementViewModel(androidContext()) }
 }
