@@ -103,10 +103,29 @@ class SeriesManager {
             videoList.add(currentUri)
         }
 
+        // 若系列只匹配到当前视频 1 个，回退到文件夹内全部视频，避免导航失效
+        if (videoList.size <= 1 && videosInFolder.size > 1) {
+            Log.w(TAG, "Only 1 series match, falling back to all ${videosInFolder.size} folder videos")
+            videoList.clear()
+            videoList.addAll(videosInFolder)
+        }
+
         // 按文件名自然排序
         videoList.sortWith(Comparator { uri1, uri2 ->
             compareNatural(getFileNameCallback(uri1), getFileNameCallback(uri2))
         })
+
+        // 去重（相同文件名的 URI 只保留一个，避免导航时切换到同一文件）
+        val seen = mutableSetOf<String>()
+        val deduped = videoList.filter { uri ->
+            val name = getFileNameCallback(uri)
+            seen.add(name)
+        }
+        if (deduped.size < videoList.size) {
+            Log.w(TAG, "Deduplicated series: ${videoList.size} -> ${deduped.size}")
+            videoList.clear()
+            videoList.addAll(deduped)
+        }
 
         // 找到当前视频位置
         currentIndex = videoList.indexOfFirst { it.toString() == currentUri.toString() }
@@ -138,6 +157,16 @@ class SeriesManager {
     fun switchToVideo(uri: Uri) {
         currentIndex = videoList.indexOfFirst { it.toString() == uri.toString() }
         Log.d(TAG, "Switched to video at index: $currentIndex")
+    }
+
+    /**
+     * 直接同步索引（由 ViewModel 的 currentIndex 驱动，避免 URI 字符串比较不匹配）
+     */
+    fun syncIndex(index: Int) {
+        if (index in 0 until videoList.size) {
+            currentIndex = index
+            Log.d(TAG, "syncIndex: $currentIndex")
+        }
     }
 
     /**

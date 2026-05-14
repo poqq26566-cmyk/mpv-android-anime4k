@@ -9,22 +9,16 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.os.Handler
-import android.os.Looper
 import android.provider.MediaStore
 import android.text.TextUtils
 import android.util.Log
 import android.content.pm.ActivityInfo
 import android.view.MotionEvent
-import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup
-import android.widget.FrameLayout
 import com.fam4k007.videoplayer.player.CustomMPVView
 import com.fam4k007.videoplayer.player.VideoAspect
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
@@ -119,9 +113,6 @@ class VideoPlayerActivity : AppCompatActivity(),
     internal lateinit var danmakuView: com.fam4k007.videoplayer.danmaku.DanmakuPlayerView
     internal lateinit var clickArea: View
     internal lateinit var loadingIndicator: android.widget.ProgressBar
-    internal lateinit var pauseIndicator: android.widget.ImageView
-    internal val pauseIndicatorHandler = Handler(Looper.getMainLooper())
-    internal var pauseIndicatorHideRunnable: Runnable? = null
     
     @Deprecated("Use viewModel.currentVideoUri instead", ReplaceWith("viewModel.currentVideoUri.value"))
     internal var videoUri: Uri? = null
@@ -352,24 +343,6 @@ class VideoPlayerActivity : AppCompatActivity(),
             loadingIndicator.visibility = View.GONE
         }
         
-        // 初始化暂停指示器（方案A：屏幕中央大图标）
-        pauseIndicator = ImageView(this).apply {
-            setImageResource(R.drawable.media)  // 使用提供的media.png图标
-            visibility = View.GONE
-            alpha = 0f
-            scaleX = 0.8f
-            scaleY = 0.8f
-            setColorFilter(android.graphics.Color.WHITE)  // 设置图标为白色
-        }
-        // 添加到根布局正中央
-        val iconSizeDp = 90  // 图标大小90dp
-        val iconSizePx = (iconSizeDp * resources.displayMetrics.density).toInt()
-        (findViewById(android.R.id.content) as ViewGroup)?.addView(pauseIndicator, FrameLayout.LayoutParams(
-            iconSizePx,
-            iconSizePx,
-            Gravity.CENTER  // 屏幕正中央
-        ))
-        
         com.fam4k007.videoplayer.utils.Logger.d(TAG, "Initializing MPV in Activity...")
         try {
             // 总是调用 initialize，CustomMPVView 内部会处理重复初始化的保护
@@ -558,6 +531,10 @@ class VideoPlayerActivity : AppCompatActivity(),
         
         // 清除自动旋转设置，避免影响下次播放
         intent.removeExtra(EXTRA_AUTO_ROTATE)
+        intent.removeExtra(EXTRA_PORTRAIT_UI)
+        
+        // 重置屏幕方向，防止影响其他Activity
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         

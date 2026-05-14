@@ -17,13 +17,6 @@ internal fun VideoPlayerActivity.setupViewModelObservers() {
             val isPlaying = paused != true
             this@setupViewModelObservers.isPlaying = isPlaying
 
-            // 暂停指示器显示/隐藏
-            if (paused == true && !controlsManager!!.isVisible) {
-                showPauseIndicator()
-            } else {
-                hidePauseIndicator()
-            }
-
             // 弹幕同步（保持原有逻辑）
             if (danmakuManager.isPrepared()) {
                 if (isPlaying) {
@@ -95,10 +88,10 @@ internal fun VideoPlayerActivity.setupViewModelObservers() {
         }
     }
 
-    // 监听控制栏锁定状态（示例）
+    // 监听控制栏锁定状态 — 同步到 controlsManager 使 XML GestureHandler 能正确判断
     lifecycleScope.launch {
         viewModel.areControlsLocked.collect { locked ->
-            // 【示例】锁定状态变化时的处理
+            controlsManager.setLocked(locked)
             com.fam4k007.videoplayer.utils.Logger.v(TAG, "【ViewModel】Controls locked: $locked")
         }
     }

@@ -33,48 +33,14 @@ internal fun VideoPlayerActivity.applyPortraitSizing(enabled: Boolean) {
 }
 
 internal fun VideoPlayerActivity.updatePortraitFloatingButtonsVisibility(controlsVisible: Boolean) {
-    val portraitEnabled = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
-    val shouldShowPortraitButtons = portraitEnabled && controlsVisible
-    val shouldShowLandscapeRotate = !portraitEnabled && controlsVisible
-
-    // 竖屏超分辨率按钮：淡入淡出动画
+    // 竖屏超分辨率和旋转按钮已移至 Compose 控制面板层，不再使用老布局悬浮按钮
     findViewById<View>(R.id.btnAnime4KFloat)?.let { btn ->
-        if (shouldShowPortraitButtons && btn.visibility != View.VISIBLE) {
-            btn.visibility = View.VISIBLE
-            btn.alpha = 0f
-            btn.animate()
-                .alpha(1f)
-                .setDuration(250)
-                .setInterpolator(android.view.animation.DecelerateInterpolator())
-                .start()
-        } else if (!shouldShowPortraitButtons && btn.visibility == View.VISIBLE) {
-            btn.animate()
-                .alpha(0f)
-                .setDuration(200)
-                .setInterpolator(android.view.animation.AccelerateInterpolator())
-                .withEndAction { btn.visibility = View.GONE }
-                .start()
-        }
+        btn.animate().cancel()
+        btn.visibility = View.GONE
     }
-
-    // 竖屏旋转按钮：淡入淡出动画
     findViewById<View>(R.id.btnRotateFloat)?.let { btn ->
-        if (shouldShowPortraitButtons && btn.visibility != View.VISIBLE) {
-            btn.visibility = View.VISIBLE
-            btn.alpha = 0f
-            btn.animate()
-                .alpha(1f)
-                .setDuration(250)
-                .setInterpolator(android.view.animation.DecelerateInterpolator())
-                .start()
-        } else if (!shouldShowPortraitButtons && btn.visibility == View.VISIBLE) {
-            btn.animate()
-                .alpha(0f)
-                .setDuration(200)
-                .setInterpolator(android.view.animation.AccelerateInterpolator())
-                .withEndAction { btn.visibility = View.GONE }
-                .start()
-        }
+        btn.animate().cancel()
+        btn.visibility = View.GONE
     }
 }
 

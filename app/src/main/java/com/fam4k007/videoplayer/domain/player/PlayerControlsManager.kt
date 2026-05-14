@@ -235,6 +235,20 @@ class PlayerControlsManager(
     }
     
     /**
+     * 设置锁定状态（由外部直接同步时使用）
+     */
+    fun setLocked(locked: Boolean) {
+        if (isLocked == locked) return
+        isLocked = locked
+        if (isLocked) {
+            handler.removeCallbacks(hideControlsRunnable)
+        } else {
+            resetAutoHideTimer()
+        }
+        notifyControlsVisibilityChanged()
+    }
+
+    /**
      * 获取锁定状态
      */
     fun isControlsLocked(): Boolean {

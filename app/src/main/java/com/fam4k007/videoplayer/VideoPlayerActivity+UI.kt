@@ -1,6 +1,7 @@
 package com.fam4k007.videoplayer
 
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.util.Log
 import android.view.View
 import com.fam4k007.videoplayer.domain.player.Anime4KManager
@@ -35,56 +36,6 @@ internal fun VideoPlayerActivity.loadUserSettings() {
         anime4KMode = Anime4KManager.Mode.OFF
         viewModel.setAnime4K(false, Anime4KManager.Mode.OFF, viewModel.anime4KQuality.value)
     }
-}
-
-/**
- * 显示暂停指示器（方案A：缩放+透明度动画，2秒后自动隐藏）
- */
-internal fun VideoPlayerActivity.showPauseIndicator() {
-    // 取消之前的自动隐藏任务
-    pauseIndicatorHideRunnable?.let { pauseIndicatorHandler.removeCallbacks(it) }
-
-    pauseIndicator.apply {
-        visibility = View.VISIBLE
-        alpha = 0f
-        scaleX = 0.8f
-        scaleY = 0.8f
-
-        // 入场动画：缩放（0.8x→1.0x）+ 透明度（0→0.9）
-        animate()
-            .alpha(0.9f)  // 半透明，不完全不透明
-            .scaleX(1.0f)
-            .scaleY(1.0f)
-            .setDuration(300)  // 300ms动画
-            .setInterpolator(android.view.animation.DecelerateInterpolator())
-            .start()
-    }
-
-    // 2秒后自动隐藏
-    pauseIndicatorHideRunnable = Runnable {
-        hidePauseIndicator()
-    }
-    pauseIndicatorHandler.postDelayed(pauseIndicatorHideRunnable!!, 2000)
-}
-
-/**
- * 隐藏暂停指示器（淡出动画）
- */
-internal fun VideoPlayerActivity.hidePauseIndicator() {
-    // 取消自动隐藏任务
-    pauseIndicatorHideRunnable?.let { pauseIndicatorHandler.removeCallbacks(it) }
-
-    pauseIndicator.animate()
-        .alpha(0f)
-        .setDuration(300)  // 淡出300ms
-        .setInterpolator(android.view.animation.AccelerateInterpolator())
-        .withEndAction {
-            pauseIndicator.visibility = View.GONE
-            // 重置状态
-            pauseIndicator.scaleX = 0.8f
-            pauseIndicator.scaleY = 0.8f
-        }
-        .start()
 }
 
 /**
@@ -159,6 +110,9 @@ internal fun VideoPlayerActivity.showVideoListDrawer() {
  */
 internal fun VideoPlayerActivity.handleBackNavigation() {
     gestureHandler?.restoreOriginalSettings()
+
+    // 重置屏幕方向为默认值，避免影响其他Activity
+    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
     if (viewModel.isFromHomeContinue.value) {
         // 从主页继续播放进入，直接返回到主页（MainActivity）

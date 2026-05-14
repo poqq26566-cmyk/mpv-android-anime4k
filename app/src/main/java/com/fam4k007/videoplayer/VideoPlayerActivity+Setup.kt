@@ -45,7 +45,8 @@ internal fun VideoPlayerActivity.setupComposeTestLayer() {
                     PlayerControls(
                         viewModel = viewModel,
                         onBackPress = { finish() },
-                        onAnime4KClick = {
+                        onAnime4KClick = { x, y, w, h ->
+                            dialogManager.setLastAnchor(x, y, w, h)
                             dialogManager.showAnime4KModeDialog(anime4KMode)
                         },
                         onDanmakuToggle = {
@@ -93,6 +94,9 @@ internal fun VideoPlayerActivity.setupComposeTestLayer() {
                                     preferencesManager.clearPlaybackPosition(uri.toString())
                                 }.start()
                             }
+                        },
+                        onRotateClick = {
+                            onTogglePortraitUi()
                         }
                     )
                 }
@@ -277,9 +281,11 @@ internal fun VideoPlayerActivity.initializeManagers() {
             }
 
             override fun onSingleTap() {
-                // 锁定状态下点击由 Compose 解锁按钮处理
+                // 锁定状态下单击屏幕触发解锁按钮重新显示
                 if (controlsManager?.isLocked != true) {
                     controlsManager?.toggleControls()
+                } else {
+                    viewModel.triggerUnlockButtons()
                 }
             }
 
@@ -458,8 +464,7 @@ internal fun VideoPlayerActivity.initializeManagers() {
             }
 
             override fun onControlsShown() {
-                // 显示控制栏时立即隐藏暂停指示器
-                hidePauseIndicator()
+                // Compose PauseIndicator 会在控制栏显示时自动隐藏（通过 ViewModel 状态）
             }
         },
         WeakReference(gestureHandler)  // 传入GestureHandler引用

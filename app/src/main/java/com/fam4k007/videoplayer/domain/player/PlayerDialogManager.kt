@@ -53,6 +53,100 @@ class PlayerDialogManager(
     /** 由 VideoPlayerActivity 在 Compose 按钮点击时调用，设置锚点位置 */
     fun setLastAnchor(x: Int, y: Int, w: Int, h: Int) {
         lastAnchorX = x; lastAnchorY = y; lastAnchorW = w; lastAnchorH = h
+        Log.d(TAG, "setLastAnchor: x=$x, y=$y, w=$w, h=$h")
+    }
+
+    /**
+     * 为Compose按钮显示对话框（直接使用lastAnchor坐标）
+     */
+    private fun showPopupDialogAtLastAnchor(
+        items: List<String>,
+        selectedPosition: Int = -1,
+        title: String = "",
+        showAbove: Boolean = false,
+        useFixedHeight: Boolean = false,
+        showScrollHint: Boolean = false,
+        onItemClick: (Int) -> Unit
+    ) {
+        val activity = activityRef.get() ?: return
+
+        val dialog = Dialog(activity, android.R.style.Theme_Translucent_NoTitleBar)
+        
+        val layoutRes = if (useFixedHeight) R.layout.dialog_popup_menu_fixed else R.layout.dialog_popup_menu
+        val dialogView = activity.layoutInflater.inflate(layoutRes, null)
+        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.recyclerViewPopup)
+
+        recyclerView.layoutManager = LinearLayoutManager(activity)
+        recyclerView.isVerticalScrollBarEnabled = false
+        
+        if (useFixedHeight && showScrollHint && items.size > 3) {
+            val scrollHint = dialogView.findViewById<TextView>(R.id.scrollHint)
+            scrollHint?.visibility = View.VISIBLE
+        }
+
+        val adapter = PopupMenuAdapter(items, selectedPosition) { position ->
+            onItemClick(position)
+            dialog.dismiss()
+        }
+        recyclerView.adapter = adapter
+
+        dialog.setContentView(dialogView)
+        dialog.setCanceledOnTouchOutside(true)
+
+        // 直接使用lastAnchor坐标
+        val anchorX = lastAnchorX
+        val anchorY = lastAnchorY
+        val anchorW = lastAnchorW
+        val anchorH = lastAnchorH
+
+        // 测量对话框尺寸
+        dialogView.measure(
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        )
+        val dialogWidth = dialogView.measuredWidth.coerceAtLeast(anchorW)
+        val dialogHeight = dialogView.measuredHeight
+
+        // 计算对话框位置，防止超出屏幕左右边缘
+        val screenWidth = activity.resources.displayMetrics.widthPixels
+        val rawX = anchorX + (anchorW - dialogWidth) / 2
+        val margin = 8.dpToPx()
+
+        val window = dialog.window
+        val layoutParams = window?.attributes
+        layoutParams?.gravity = android.view.Gravity.TOP or android.view.Gravity.START
+        layoutParams?.x = rawX.coerceIn(margin, (screenWidth - dialogWidth - margin).coerceAtLeast(margin))
+
+        layoutParams?.y = if (showAbove) {
+            anchorY - dialogHeight - 10
+        } else {
+            anchorY + anchorH + 10
+        }
+
+        layoutParams?.width = dialogWidth
+        layoutParams?.height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        window?.attributes = layoutParams
+
+        window?.setWindowAnimations(R.style.PopupAnimation)
+        
+        controlsManagerRef.get()?.setPopupVisible(true)
+        
+        dialog.show()
+        
+        activeDialogs.add(dialog)
+        dialog.setOnDismissListener {
+            activeDialogs.remove(dialog)
+            controlsManagerRef.get()?.setPopupVisible(false)
+        }
+        
+        if (selectedPosition >= 0 && useFixedHeight) {
+            val nestedScrollView = dialogView.findViewById<androidx.core.widget.NestedScrollView>(R.id.nestedScrollViewPopup)
+            nestedScrollView?.post {
+                val itemHeight = 40.dpToPx()
+                val targetScroll = selectedPosition * itemHeight - itemHeight
+                nestedScrollView.scrollTo(0, targetScroll.coerceAtLeast(0))
+            }
+        }
     }
     
     // 追踪所有活动的Dialog，防止内存泄漏
@@ -220,14 +314,7 @@ class PlayerDialogManager(
         val dialogView = activity.layoutInflater.inflate(layoutRes, null)
         val recyclerView = dialogView.findViewById<RecyclerView>(R.id.recyclerViewPopup)
 
-        // 设置标题
-        val tvTitle = dialogView.findViewById<TextView>(R.id.tvDialogTitle)
-        val titleDivider = dialogView.findViewById<View>(R.id.titleDivider)
-        if (title.isNotEmpty()) {
-            tvTitle?.text = title
-            tvTitle?.visibility = View.VISIBLE
-            titleDivider?.visibility = View.VISIBLE
-        }
+        // 标题已从布局中移除，不再设置标题
 
         recyclerView.layoutManager = LinearLayoutManager(activity)
         recyclerView.isVerticalScrollBarEnabled = false
@@ -343,8 +430,8 @@ class PlayerDialogManager(
             selectedPosition = -1,
             title = "字幕",
             showAbove = false,
-            useFixedHeight = true,
-            showScrollHint = true
+            useFixedHeight = false,
+            showScrollHint = false
         ) { position ->
             when (position) {
                 0 -> showSubtitleTrackDialog()
@@ -613,11 +700,8 @@ class PlayerDialogManager(
         
         val currentSelection = modes.indexOf(currentMode)
         
-        // btnAnime4K 已移至 Compose UI，两种方向均使用 btnAnime4KFloat
-        val btnAnime4K = activity.findViewById<android.widget.Button>(R.id.btnAnime4KFloat)
-
-        showPopupDialog(
-            btnAnime4K,
+        // 使用专门为Compose按钮设计的对话框显示方法
+        showPopupDialogAtLastAnchor(
             modeNames,
             currentSelection,
             title = "Anime4K 模式",
@@ -661,10 +745,8 @@ class PlayerDialogManager(
         }
         items.addAll(listOf("截图", "音轨", "解码", "片头片尾", assOverrideText, autoRotateText))
         
-        val btnMore = activity.findViewById<ImageView>(R.id.btnMore)
-
-        showPopupDialog(
-            btnMore,
+        // 使用专门为Compose按钮设计的对话框显示方法
+        showPopupDialogAtLastAnchor(
             items,
             selectedPosition = -1,
             title = "更多选项",
@@ -736,10 +818,9 @@ class PlayerDialogManager(
             }
 
             val currentChapter = MPVLib.getPropertyInt("chapter") ?: 0
-            val btnMore = activity.findViewById<ImageView>(R.id.btnMore)
 
-            showPopupDialog(
-                btnMore,
+            // 使用专门为Compose按钮设计的对话框显示方法
+            showPopupDialogAtLastAnchor(
                 chapters,
                 currentChapter,
                 title = "章节",
@@ -991,40 +1072,25 @@ class PlayerDialogManager(
         inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
             val itemText: TextView = view.findViewById(R.id.itemText)
             val innerLayout: LinearLayout = view.findViewById(R.id.innerLayout)
-            val radioButton: RadioButton = view.findViewById(R.id.radioButton)
-            val itemDivider: View = view.findViewById(R.id.itemDivider)
 
             fun bind(position: Int) {
                 val activity = activityRef.get() ?: return
                 
                 itemText.text = items[position]
 
-                // 最后一项隐藏分隔线
-                itemDivider.visibility = if (position == items.size - 1) View.INVISIBLE else View.VISIBLE
-
-                if (selectedPosition == -1) {
-                    // 无选中项：隐藏 RadioButton，使用普通文字色
-                    radioButton.visibility = View.GONE
-                    itemText.setTextColor(android.graphics.Color.parseColor("#212121"))
-                    itemText.setTypeface(null, android.graphics.Typeface.NORMAL)
-                } else {
-                    // 有选中项：显示 RadioButton，选中项高亮
-                    radioButton.visibility = View.VISIBLE
-                    val isSelected = position == selectedPosition
+                val isSelected = selectedPosition >= 0 && position == selectedPosition
+                if (isSelected) {
                     val primaryColor = ThemeManager.getThemeColor(
                         activity,
                         com.google.android.material.R.attr.colorPrimary
                     )
-                    radioButton.isChecked = isSelected
-                    radioButton.buttonTintList = android.content.res.ColorStateList.valueOf(primaryColor)
-
-                    if (isSelected) {
-                        itemText.setTextColor(primaryColor)
-                        itemText.setTypeface(null, android.graphics.Typeface.BOLD)
-                    } else {
-                        itemText.setTextColor(android.graphics.Color.parseColor("#757575"))
-                        itemText.setTypeface(null, android.graphics.Typeface.NORMAL)
-                    }
+                    itemText.setTextColor(primaryColor)
+                    itemText.setTypeface(null, android.graphics.Typeface.BOLD)
+                } else {
+                    val typedValue = android.util.TypedValue()
+                    activity.theme.resolveAttribute(R.attr.colorDialogText, typedValue, true)
+                    itemText.setTextColor(typedValue.data)
+                    itemText.setTypeface(null, android.graphics.Typeface.NORMAL)
                 }
 
                 innerLayout.setOnClickListener {

@@ -677,6 +677,16 @@ class PlayerViewModel(
     }
     
     /**
+     * 触发解锁按钮重新显示（锁定状态下单击屏幕时调用）
+     */
+    private val _unlockTrigger = MutableStateFlow(0L)
+    val unlockTrigger: StateFlow<Long> = _unlockTrigger.asStateFlow()
+    
+    fun triggerUnlockButtons() {
+        _unlockTrigger.value = System.currentTimeMillis()
+    }
+    
+    /**
      * 设置控制栏锁定状态
      */
     fun setControlsLocked(locked: Boolean) {

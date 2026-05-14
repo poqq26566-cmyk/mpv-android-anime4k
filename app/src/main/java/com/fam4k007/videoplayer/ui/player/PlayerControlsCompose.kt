@@ -39,7 +39,7 @@ import kotlinx.coroutines.delay
 fun PlayerControls(
     viewModel: PlayerViewModel,
     onBackPress: () -> Unit,
-    onAnime4KClick: () -> Unit = {},
+    onAnime4KClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
     onDanmakuToggle: () -> Unit = {},
     onSubtitleClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
     onDanmakuClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
@@ -47,6 +47,7 @@ fun PlayerControls(
     onMoreClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
     onVideoTitleClick: () -> Unit = {},
     onRestartFromBeginning: () -> Unit = {},
+    onRotateClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // 收集ViewModel状态
@@ -98,6 +99,7 @@ fun PlayerControls(
                 viewModel = viewModel,
                 onAnime4KClick = onAnime4KClick,
                 onDanmakuToggle = onDanmakuToggle,
+                onRotateClick = onRotateClick,
                 modifier = Modifier
             )
         }
@@ -126,6 +128,9 @@ fun PlayerControls(
             viewModel = viewModel,
             onRestartFromBeginning = onRestartFromBeginning
         )
+
+        // 暂停指示器（暂停时在屏幕中央短暂显示后淡出）
+        PauseIndicator(viewModel = viewModel)
     }
 }
 
@@ -147,8 +152,9 @@ fun PlayerControls(
 @Composable
 fun BottomControlPanel(
     viewModel: PlayerViewModel,
-    onAnime4KClick: () -> Unit = {},
+    onAnime4KClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
     onDanmakuToggle: () -> Unit = {},
+    onRotateClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // 收集状态
@@ -162,6 +168,10 @@ fun BottomControlPanel(
     val anime4KMode by viewModel.anime4KMode.collectAsState()
     val seekTimeSeconds by viewModel.seekTimeSeconds.collectAsState()
     val customSpeedPresets by viewModel.customSpeedPresets.collectAsState()
+
+    // 检测屏幕方向
+    val configuration = LocalContext.current.resources.configuration
+    val isPortrait = configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
 
     // 用户拖动进度条时的临时位置
     var sliderPosition by remember { mutableStateOf<Float?>(null) }
@@ -253,21 +263,24 @@ fun BottomControlPanel(
 
         // 控制按钮行
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = if (isPortrait) 12.dp else 24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 左侧按钮组（超分辨率 + 弹幕开关 + 快退 + 上一集）
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // 超分辨率（Anime4K）按钮
+            // 超分辨率（Anime4K）按钮 — 最左侧（横屏和竖屏都显示）
+            run {
+                Spacer(modifier = Modifier.width(8.dp))
+                var anime4KBounds by remember { mutableStateOf(android.graphics.Rect()) }
                 Box(
                     modifier = Modifier
                         .height(36.dp)
+                        .onGloballyPositioned { coords ->
+                            val r = coords.boundsInWindow()
+                            anime4KBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
+                        }
                         .clickable {
-                            onAnime4KClick()
+                            anime4KBounds.let { b -> onAnime4KClick(b.left, b.top, b.width(), b.height()) }
                             viewModel.resetAutoHideTimer()
                         }
                         .padding(horizontal = 6.dp),
@@ -280,9 +293,14 @@ fun BottomControlPanel(
                         fontWeight = if (anime4KActive) FontWeight.Bold else FontWeight.Normal
                     )
                 }
+            }
 
-                Spacer(modifier = Modifier.width(4.dp))
-
+            // 左侧按钮组（弹幕开关 + 快退 + 上一集）
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 // 弹幕显示/隐藏按钮
                 IconButton(
                     onClick = {
@@ -423,7 +441,7 @@ fun BottomControlPanel(
                             painter = painterResource(R.drawable.top_speed_24_regular),
                             contentDescription = "倍速",
                             tint = if (speed != 1.0f) Color.Yellow else Color.White,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(28.dp)
                         )
                         if (speed != 1.0f) {
                             Text(
@@ -435,6 +453,22 @@ fun BottomControlPanel(
                         }
                     }
                 }
+            }
+
+            // 旋转按钮 — 最右侧（横屏和竖屏都显示）
+            IconButton(
+                onClick = {
+                    onRotateClick()
+                    viewModel.resetAutoHideTimer()
+                },
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.crop_arrow_rotate_24_filled),
+                    contentDescription = "旋转",
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
             }
         }
     }
@@ -593,19 +627,19 @@ fun TopControlPanel(
                 )
             )
             .statusBarsPadding()
-            .padding(start = 4.dp, top = 20.dp, end = 4.dp, bottom = 4.dp),
+            .padding(start = 4.dp, top = 18.dp, end = 16.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 返回按钮
         IconButton(
             onClick = onBackPress,
-            modifier = Modifier.size(40.dp)
+            modifier = Modifier.size(44.dp)
         ) {
             Icon(
                 painter = painterResource(R.drawable.arrow_left_48_regular),
                 contentDescription = "返回",
                 tint = Color.White,
-                modifier = Modifier.size(22.dp)
+                modifier = Modifier.size(26.dp)
             )
         }
 
@@ -616,7 +650,7 @@ fun TopControlPanel(
             modifier = Modifier
                 .weight(1f)
                 .clickable(onClick = onVideoTitleClick)
-                .padding(vertical = 4.dp),
+                .padding(vertical = 14.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
@@ -655,7 +689,7 @@ fun TopControlPanel(
             )
         }
 
-        Spacer(modifier = Modifier.width(2.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
         // 字幕按钮
         IconButton(
@@ -664,7 +698,7 @@ fun TopControlPanel(
                 viewModel.resetAutoHideTimer()
             },
             modifier = Modifier
-                .size(32.dp)
+                .size(38.dp)
                 .onGloballyPositioned { coords ->
                     val r = coords.boundsInWindow()
                     subtitleBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
@@ -674,11 +708,11 @@ fun TopControlPanel(
                 painter = painterResource(R.drawable.subtitles_24_filled),
                 contentDescription = "字幕",
                 tint = Color.White,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
 
-        Spacer(modifier = Modifier.width(6.dp))
+        Spacer(modifier = Modifier.width(10.dp))
 
         // 弹幕按钮
         IconButton(
@@ -687,7 +721,7 @@ fun TopControlPanel(
                 viewModel.resetAutoHideTimer()
             },
             modifier = Modifier
-                .size(32.dp)
+                .size(38.dp)
                 .onGloballyPositioned { coords ->
                     val r = coords.boundsInWindow()
                     danmakuBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
@@ -697,11 +731,11 @@ fun TopControlPanel(
                 painter = painterResource(R.drawable.comment_note_24_filled),
                 contentDescription = "弹幕",
                 tint = Color.White,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
 
-        Spacer(modifier = Modifier.width(6.dp))
+        Spacer(modifier = Modifier.width(10.dp))
 
         // 画面比例按钮
         IconButton(
@@ -710,7 +744,7 @@ fun TopControlPanel(
                 viewModel.resetAutoHideTimer()
             },
             modifier = Modifier
-                .size(32.dp)
+                .size(38.dp)
                 .onGloballyPositioned { coords ->
                     val r = coords.boundsInWindow()
                     ratioBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
@@ -720,26 +754,26 @@ fun TopControlPanel(
                 painter = painterResource(R.drawable.ratio_one_to_one_24_filled),
                 contentDescription = "画面比例",
                 tint = Color.White,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
 
-        Spacer(modifier = Modifier.width(6.dp))
+        Spacer(modifier = Modifier.width(10.dp))
 
         // 锁定按钮
         IconButton(
             onClick = { viewModel.toggleLock() },
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier.size(38.dp)
         ) {
             Icon(
                 painter = painterResource(R.drawable.lock_closed_48_filled),
                 contentDescription = "锁定",
                 tint = Color.White,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
 
-        Spacer(modifier = Modifier.width(6.dp))
+        Spacer(modifier = Modifier.width(10.dp))
 
         // 更多选项按钮
         IconButton(
@@ -748,7 +782,7 @@ fun TopControlPanel(
                 viewModel.resetAutoHideTimer()
             },
             modifier = Modifier
-                .size(32.dp)
+                .size(38.dp)
                 .onGloballyPositioned { coords ->
                     val r = coords.boundsInWindow()
                     moreBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
@@ -758,7 +792,7 @@ fun TopControlPanel(
                 painter = painterResource(R.drawable.more_vertical_48_regular),
                 contentDescription = "更多",
                 tint = Color.White,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
     }
@@ -781,11 +815,12 @@ fun UnlockButtons(
     modifier: Modifier = Modifier
 ) {
     val areControlsLocked by viewModel.areControlsLocked.collectAsState()
+    val unlockTrigger by viewModel.unlockTrigger.collectAsState()
 
-    // 用于触发自动隐藏的 key：每次进入锁定状态重新计时
+    // 用于触发自动隐藏的 key：每次进入锁定状态或单击屏幕时重新计时
     var visible by remember { mutableStateOf(true) }
 
-    LaunchedEffect(areControlsLocked) {
+    LaunchedEffect(areControlsLocked, unlockTrigger) {
         if (areControlsLocked) {
             visible = true
             delay(3_000L)
@@ -967,6 +1002,50 @@ fun ResumeProgressToast(
                         .padding(4.dp)
                 )
             }
+        }
+    }
+}
+
+/**
+ * 暂停指示器
+ * 进入暂停状态时在屏幕中央短暂出现后淡出
+ */
+@Composable
+fun PauseIndicator(
+    viewModel: PlayerViewModel,
+    modifier: Modifier = Modifier
+) {
+    val paused by viewModel.paused.collectAsState()
+    val controlsShown by viewModel.controlsShown.collectAsState()
+
+    var showIcon by remember { mutableStateOf(false) }
+
+    LaunchedEffect(paused) {
+        if (paused == true && controlsShown != true) {
+            showIcon = true
+            delay(800L)
+            showIcon = false
+        } else {
+            showIcon = false
+        }
+    }
+
+    androidx.compose.animation.AnimatedVisibility(
+        visible = showIcon,
+        enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(200)),
+        exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(500)),
+        modifier = modifier.fillMaxSize()
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_player_pause1),
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.8f),
+                modifier = Modifier.size(90.dp)
+            )
         }
     }
 }

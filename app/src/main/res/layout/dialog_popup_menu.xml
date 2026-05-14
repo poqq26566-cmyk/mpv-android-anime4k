@@ -1,30 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="240dp"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:minWidth="120dp"
     android:orientation="vertical"
     android:background="@drawable/bg_popup_menu"
-    android:paddingTop="16dp"
-    android:paddingBottom="8dp">
-
-    <TextView
-        android:id="@+id/tvDialogTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:paddingBottom="12dp"
-        android:textSize="17sp"
-        android:textStyle="bold"
-        android:textColor="?attr/colorDialogText"
-        android:visibility="gone" />
-
-    <View
-        android:id="@+id/titleDivider"
-        android:layout_width="match_parent"
-        android:layout_height="0.5dp"
-        android:background="@color/divider_light"
-        android:visibility="gone" />
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewPopup"
@@ -32,7 +14,6 @@
         android:layout_height="wrap_content"
         android:nestedScrollingEnabled="false"
         android:overScrollMode="never"
-        android:paddingTop="4dp"
         android:clipToPadding="false" />
 
 </LinearLayout>

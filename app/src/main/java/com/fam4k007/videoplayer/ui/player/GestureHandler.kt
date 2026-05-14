@@ -69,9 +69,38 @@ fun GestureHandler(
         modifier = modifier
             .fillMaxSize()
             // 控制面板显示时，排除底部控制面板区域（约 140dp），避免与按钮/Slider 冲突
-            .padding(bottom = if (controlsShown) 140.dp else 0.dp)
+            .padding(bottom = if (controlsShown && !areControlsLocked) 140.dp else 0.dp)
             .pointerInput(areControlsLocked) {
-                if (areControlsLocked) return@pointerInput
+                if (areControlsLocked) {
+                    // 锁定状态下，只处理单击事件（用于切换解锁按钮显示）
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        val downPosition = down.position
+                        var isDrag = false
+
+                        do {
+                            val event = awaitPointerEvent()
+                            val pointer = event.changes.firstOrNull { it.id == down.id } ?: break
+
+                            val dragDistance = sqrt(
+                                (pointer.position.x - downPosition.x).let { it * it } +
+                                (pointer.position.y - downPosition.y).let { it * it }
+                            )
+
+                            if (dragDistance > 10f) {
+                                isDrag = true
+                            }
+
+                            if (!pointer.pressed) {
+                                if (!isDrag) {
+                                    // 锁定状态下单击：触发解锁按钮重新显示
+                                    viewModel.triggerUnlockButtons()
+                                }
+                            }
+                        } while (event.changes.any { it.pressed })
+                    }
+                    return@pointerInput
+                }
 
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
@@ -187,8 +216,7 @@ fun GestureHandler(
                                     } else {
                                         viewModel.togglePlayPause()
                                     }
-                                    if (!controlsShown) viewModel.showControls()
-                                    else viewModel.resetAutoHideTimer()
+                                    if (controlsShown) viewModel.resetAutoHideTimer()
 
                                     Logger.d("GestureHandler", "Double tap detected")
                                 } else {

@@ -157,32 +157,16 @@ internal fun VideoPlayerActivity.handleVideoListIntent() {
  * 播放上一集
  */
 internal fun VideoPlayerActivity.playPreviousVideo() {
-    Logger.d(TAG, "playPreviousVideo - hasPrevious: ${seriesManager.hasPrevious}")
-    if (seriesManager.hasPrevious) {
-        val previousUri = seriesManager.previous()
-        if (previousUri != null) {
-            Logger.d(TAG, "Playing previous video: $previousUri")
-            playVideo(previousUri)
-        }
-    } else {
-        DialogUtils.showToastShort(this, "已经是第一集了")
-    }
+    Logger.d(TAG, "playPreviousVideo called")
+    viewModel.previousVideo()
 }
 
 /**
  * 播放下一集
  */
 internal fun VideoPlayerActivity.playNextVideo() {
-    Logger.d(TAG, "playNextVideo - hasNext: ${seriesManager.hasNext}")
-    if (seriesManager.hasNext) {
-        val nextUri = seriesManager.next()
-        if (nextUri != null) {
-            Logger.d(TAG, "Playing next video: $nextUri")
-            playVideo(nextUri)
-        }
-    } else {
-        DialogUtils.showToastShort(this, "已经是最后一集了")
-    }
+    Logger.d(TAG, "playNextVideo called")
+    viewModel.nextVideo()
 }
 
 /**
@@ -190,6 +174,15 @@ internal fun VideoPlayerActivity.playNextVideo() {
  */
 internal fun VideoPlayerActivity.playVideo(uri: Uri) {
     videoUri = uri
+
+    // 使用 ViewModel 的 currentIndex 同步 seriesManager（避免 URI 字符串比较不匹配）
+    val vmIndex = viewModel.currentIndex.value
+    if (vmIndex >= 0 && vmIndex < seriesManager.getVideoList().size) {
+        seriesManager.syncIndex(vmIndex)
+    } else {
+        // 回退到 URI 匹配
+        seriesManager.switchToVideo(uri)
+    }
 
     // 重置自动加载字幕标志（新视频开始播放）
     viewModel.setHasAutoLoadedSubtitle(false)
