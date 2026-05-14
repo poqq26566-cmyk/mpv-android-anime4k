@@ -58,6 +58,7 @@ import java.io.File
 fun VideoListScreen(
     folderName: String,
     folderPath: String,
+    preloadedVideos: List<VideoFileParcelable>? = null,  // 预加载的视频列表（flat模式）
     onNavigateBack: () -> Unit,
     onOpenVideo: (VideoFileParcelable, Int, List<VideoFileParcelable>) -> Unit,
     viewModel: LibraryViewModel = koinViewModel()
@@ -84,8 +85,12 @@ fun VideoListScreen(
     var showBatchDeleteDialog by remember { mutableStateOf(false) }
     
     // 初始化加载
-    LaunchedEffect(folderPath) {
-        if (videoListState.videos.isEmpty()) {
+    LaunchedEffect(folderPath, preloadedVideos) {
+        if (preloadedVideos != null) {
+            // 如果有预加载的视频列表（flat模式），直接使用
+            viewModel.setVideos(preloadedVideos)
+        } else if (videoListState.videos.isEmpty()) {
+            // 否则从文件夹扫描（folder模式）
             viewModel.scanVideosInFolder(folderPath)
         }
     }

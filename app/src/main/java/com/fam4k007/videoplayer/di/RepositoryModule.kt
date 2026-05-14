@@ -4,6 +4,7 @@ import com.fam4k007.videoplayer.PlaybackHistoryManager
 import com.fam4k007.videoplayer.data.preferences.WebDavAccountDataSource
 import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.repository.BilibiliRepository
+import com.fam4k007.videoplayer.repository.MediaInfoRepository
 import com.fam4k007.videoplayer.repository.PlayerRepository
 import com.fam4k007.videoplayer.repository.SubtitleRepository
 import com.fam4k007.videoplayer.repository.VideoRepository
@@ -57,6 +58,13 @@ val repositoryModule = module {
     // SubtitleRepository - 字幕搜索和下载
     single { 
         SubtitleRepository(
+            context = androidContext()
+        )
+    }
+    
+    // MediaInfoRepository - 媒体信息提取
+    single { 
+        MediaInfoRepository(
             context = androidContext()
         )
     }

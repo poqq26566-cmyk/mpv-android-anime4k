@@ -51,8 +51,10 @@ import com.fam4k007.videoplayer.ui.theme.DarkMode
 import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.spacing
 import com.fam4k007.videoplayer.ui.screens.dialogs.DarkModeSelectionDialog
+import com.fam4k007.videoplayer.ui.screens.dialogs.DisplayModeSelectionDialog
 import com.fam4k007.videoplayer.ui.screens.dialogs.ThemeSelectionDialog
 import com.fam4k007.videoplayer.utils.UpdateManager
+import com.fam4k007.videoplayer.preferences.PreferencesManager
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -70,6 +72,7 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val authManager: BiliBiliAuthManager = koinInject()
+    val preferencesManager: PreferencesManager = koinInject()
     val themeController = remember { ThemeController.from(context) }
     val scope = rememberCoroutineScope()
     
@@ -79,6 +82,9 @@ fun SettingsScreen(
     var showUpdateDialog by remember { mutableStateOf(false) }
     var updateInfo by remember { mutableStateOf<UpdateManager.UpdateInfo?>(null) }
     var isCheckingUpdate by remember { mutableStateOf(false) }
+    
+    // 获取当前显示模式
+    val currentDisplayMode = remember { mutableStateOf(preferencesManager.getVideoDisplayMode()) }
     
     Scaffold(
         topBar = {
@@ -162,7 +168,11 @@ fun SettingsScreen(
                     
                     ClickableItem(
                         title = "视频显示模式",
-                        subtitle = "切换显示方式",
+                        subtitle = when (currentDisplayMode.value) {
+                            "folder" -> "文件夹视图"
+                            "flat" -> "视频列表"
+                            else -> "文件夹视图"
+                        },
                         icon = Icons.Default.VideoLibrary,
                         onClick = { showDisplayModeDialog = true }
                     )
@@ -328,6 +338,23 @@ fun SettingsScreen(
         )
     }
     
-    // TODO: 实现显示模式对话框
+    // 显示模式选择对话框
+    if (showDisplayModeDialog) {
+        DisplayModeSelectionDialog(
+            currentMode = currentDisplayMode.value,
+            onDismiss = { showDisplayModeDialog = false },
+            onModeSelected = { mode ->
+                preferencesManager.setVideoDisplayMode(mode)
+                currentDisplayMode.value = mode
+                showDisplayModeDialog = false
+                android.widget.Toast.makeText(
+                    context,
+                    "已切换到${if (mode == "folder") "文件夹视图" else "视频列表"}模式",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        )
+    }
+    
     // TODO: 实现更新对话框
 }

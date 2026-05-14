@@ -31,8 +31,8 @@ class PlayerViewModel(
     private val _playbackHistory = MutableStateFlow<PlaybackHistoryEntity?>(null)
     val playbackHistory: StateFlow<PlaybackHistoryEntity?> = _playbackHistory.asStateFlow()
     
-    private val _playbackSettings = MutableStateFlow(PlaybackSettings())
-    val playbackSettings: StateFlow<PlaybackSettings> = _playbackSettings.asStateFlow()
+    private val _playerSettings = MutableStateFlow(PlayerSettings())
+    val playerSettings: StateFlow<PlayerSettings> = _playerSettings.asStateFlow()
     
     // ==================== 播放状态更新 ====================
     
@@ -149,7 +149,7 @@ class PlayerViewModel(
     fun loadSettings() {
         viewModelScope.launch {
             try {
-                val settings = PlaybackSettings(
+                val settings = PlayerSettings(
                     seekTimeSeconds = playerRepository.getSeekTimeSeconds(),
                     rememberPosition = playerRepository.isRememberPositionEnabled(),
                     rememberSpeed = playerRepository.isRememberSpeedEnabled(),
@@ -158,7 +158,7 @@ class PlayerViewModel(
                     hardwareDecoding = playerRepository.isHardwareDecodingEnabled(),
                     gestureControlEnabled = playerRepository.isGestureControlEnabled()
                 )
-                _playbackSettings.value = settings
+                _playerSettings.value = settings
                 Logger.d(TAG, "Loaded playback settings")
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to load settings", e)
@@ -173,7 +173,7 @@ class PlayerViewModel(
         viewModelScope.launch {
             try {
                 playerRepository.setSeekTimeSeconds(seconds)
-                _playbackSettings.value = _playbackSettings.value.copy(seekTimeSeconds = seconds)
+                _playerSettings.value = _playerSettings.value.copy(seekTimeSeconds = seconds)
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to update seek time", e)
             }
@@ -187,7 +187,7 @@ class PlayerViewModel(
         viewModelScope.launch {
             try {
                 playerRepository.setRememberPositionEnabled(enabled)
-                _playbackSettings.value = _playbackSettings.value.copy(rememberPosition = enabled)
+                _playerSettings.value = _playerSettings.value.copy(rememberPosition = enabled)
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to update remember position", e)
             }
@@ -201,7 +201,7 @@ class PlayerViewModel(
         viewModelScope.launch {
             try {
                 playerRepository.setRememberSpeedEnabled(enabled)
-                _playbackSettings.value = _playbackSettings.value.copy(rememberSpeed = enabled)
+                _playerSettings.value = _playerSettings.value.copy(rememberSpeed = enabled)
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to update remember speed", e)
             }
@@ -215,7 +215,7 @@ class PlayerViewModel(
         viewModelScope.launch {
             try {
                 playerRepository.setHardwareDecodingEnabled(enabled)
-                _playbackSettings.value = _playbackSettings.value.copy(hardwareDecoding = enabled)
+                _playerSettings.value = _playerSettings.value.copy(hardwareDecoding = enabled)
                 _playbackState.value = _playbackState.value.copy(isHardwareDecoding = enabled)
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to update hardware decoding", e)
@@ -230,7 +230,7 @@ class PlayerViewModel(
         viewModelScope.launch {
             try {
                 playerRepository.setGestureControlEnabled(enabled)
-                _playbackSettings.value = _playbackSettings.value.copy(gestureControlEnabled = enabled)
+                _playerSettings.value = _playerSettings.value.copy(gestureControlEnabled = enabled)
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to update gesture control", e)
             }
@@ -251,9 +251,9 @@ data class PlaybackState(
 )
 
 /**
- * 播放器设置
+ * 播放器设置（核心播放器配置）
  */
-data class PlaybackSettings(
+data class PlayerSettings(
     val seekTimeSeconds: Int = 5,
     val rememberPosition: Boolean = true,
     val rememberSpeed: Boolean = true,

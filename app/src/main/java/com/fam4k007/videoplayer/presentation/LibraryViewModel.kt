@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fam4k007.videoplayer.VideoFileParcelable
 import com.fam4k007.videoplayer.VideoFolder
+import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.repository.VideoRepository
 import com.fam4k007.videoplayer.repository.VideoSortOrder
 import com.fam4k007.videoplayer.utils.Logger
@@ -17,7 +18,8 @@ import kotlinx.coroutines.launch
  * 管理本地视频扫描、文件夹管理、视频列表等UI状态
  */
 class LibraryViewModel(
-    private val videoRepository: VideoRepository
+    private val videoRepository: VideoRepository,
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
     
     companion object {
@@ -53,6 +55,51 @@ class LibraryViewModel(
     
     private val _videoListState = MutableStateFlow(VideoListState())
     val videoListState: StateFlow<VideoListState> = _videoListState.asStateFlow()
+    
+    init {
+        // 从 PreferencesManager 恢复保存的排序设置
+        loadSavedSortSettings()
+    }
+    
+    /**
+     * 加载保存的排序设置
+     */
+    private fun loadSavedSortSettings() {
+        // 恢复文件夹排序设置
+        val folderSortType = when (preferencesManager.getFolderSortType()) {
+            "NAME" -> 0  // 名称
+            "VIDEO_COUNT" -> 2  // 视频数量
+            else -> 2  // 默认按视频数量
+        }
+        val folderSortOrder = when (preferencesManager.getFolderSortOrder()) {
+            "ASCENDING" -> 0
+            "DESCENDING" -> 1
+            else -> 1  // 默认降序
+        }
+        _folderListState.value = _folderListState.value.copy(
+            sortType = folderSortType,
+            sortOrder = folderSortOrder
+        )
+        
+        // 恢复视频列表排序设置
+        val videoSortType = when (preferencesManager.getVideoSortType()) {
+            "NAME" -> 0
+            "DATE" -> 1
+            "SIZE" -> 2
+            else -> 0  // 默认按名称
+        }
+        val videoSortOrder = when (preferencesManager.getVideoSortOrder()) {
+            "ASCENDING" -> 0
+            "DESCENDING" -> 1
+            else -> 0  // 默认升序
+        }
+        _videoListState.value = _videoListState.value.copy(
+            sortType = videoSortType,
+            sortOrder = videoSortOrder
+        )
+        
+        Logger.d(TAG, "Loaded sort settings - Folder: type=$folderSortType, order=$folderSortOrder; Video: type=$videoSortType, order=$videoSortOrder")
+    }
     
     // ==================== 文件夹扫描 ====================
     
@@ -113,14 +160,28 @@ class LibraryViewModel(
             sortType = sortType,
             sortOrder = sortOrder
         )
+        
+        // 保存排序设置
+        val sortTypeStr = when (sortType) {
+            0 -> "NAME"
+            2 -> "VIDEO_COUNT"
+            else -> "NAME"
+        }
+        val sortOrderStr = when (sortOrder) {
+            0 -> "ASCENDING"
+            1 -> "DESCENDING"
+            else -> "DESCENDING"
+        }
+        preferencesManager.setFolderSortType(sortTypeStr)
+        preferencesManager.setFolderSortOrder(sortOrderStr)
+        Logger.d(TAG, "Saved folder sort settings: type=$sortTypeStr, order=$sortOrderStr")
     }
     
     private fun sortFolders(folders: List<VideoFolder>, sortType: Int, sortOrder: Int): List<VideoFolder> {
         return when (sortType) {
             0 -> if (sortOrder == 0) folders.sortedBy { it.folderName } else folders.sortedByDescending { it.folderName }
-            1 -> if (sortOrder == 0) folders.sortedByDescending { it.folderName } else folders.sortedBy { it.folderName }
             2 -> if (sortOrder == 0) folders.sortedBy { it.videoCount } else folders.sortedByDescending { it.videoCount }
-            else -> folders
+            else -> folders  // 默认不排序
         }
     }
     
@@ -149,6 +210,19 @@ class LibraryViewModel(
                 )
             }
         }
+    }
+    
+    /**
+     * 直接设置视频列表（用于预加载的视频列表）
+     */
+    fun setVideos(videos: List<VideoFileParcelable>) {
+        val sortedVideos = sortVideos(videos, _videoListState.value.sortType, _videoListState.value.sortOrder)
+        _videoListState.value = _videoListState.value.copy(
+            videos = sortedVideos,
+            filteredVideos = filterVideos(sortedVideos, _videoListState.value.searchQuery),
+            isLoading = false
+        )
+        Logger.d(TAG, "Set ${videos.size} preloaded videos")
     }
     
     /**
@@ -188,6 +262,22 @@ class LibraryViewModel(
             sortType = sortType,
             sortOrder = sortOrder
         )
+        
+        // 保存排序设置
+        val sortTypeStr = when (sortType) {
+            0 -> "NAME"
+            1 -> "DATE"
+            2 -> "SIZE"
+            else -> "NAME"
+        }
+        val sortOrderStr = when (sortOrder) {
+            0 -> "ASCENDING"
+            1 -> "DESCENDING"
+            else -> "ASCENDING"
+        }
+        preferencesManager.setVideoSortType(sortTypeStr)
+        preferencesManager.setVideoSortOrder(sortOrderStr)
+        Logger.d(TAG, "Saved video sort settings: type=$sortTypeStr, order=$sortOrderStr")
     }
     
     private fun sortVideos(videos: List<VideoFileParcelable>, sortType: Int, sortOrder: Int): List<VideoFileParcelable> {

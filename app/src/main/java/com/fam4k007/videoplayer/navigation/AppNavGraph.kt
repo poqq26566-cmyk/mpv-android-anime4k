@@ -19,6 +19,7 @@ import com.fam4k007.videoplayer.VideoPlayerActivity
 import com.fam4k007.videoplayer.domain.webdav.WebDavClient
 import com.fam4k007.videoplayer.domain.webdav.WebDavConfig
 import com.fam4k007.videoplayer.presentation.PlaybackHistoryViewModel
+import com.fam4k007.videoplayer.presentation.PlaybackSettingsViewModel
 import com.fam4k007.videoplayer.repository.WebDavRepository
 import com.fam4k007.videoplayer.ui.screens.AboutScreen
 import com.fam4k007.videoplayer.ui.screens.CacheManagementScreen
@@ -100,7 +101,9 @@ fun AppNavGraph(
         }
 
         composable<AppScreen.PlaybackSettings> {
+            val viewModel = koinViewModel<PlaybackSettingsViewModel>()
             PlaybackSettingsScreen(
+                viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

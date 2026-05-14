@@ -5,7 +5,9 @@ import com.fam4k007.videoplayer.presentation.BilibiliViewModel
 import com.fam4k007.videoplayer.presentation.CacheManagementViewModel
 import com.fam4k007.videoplayer.presentation.LibraryViewModel
 import com.fam4k007.videoplayer.presentation.LogViewerViewModel
+import com.fam4k007.videoplayer.presentation.MediaInfoViewModel
 import com.fam4k007.videoplayer.presentation.PlaybackHistoryViewModel
+import com.fam4k007.videoplayer.presentation.PlaybackSettingsViewModel
 import com.fam4k007.videoplayer.presentation.PlayerViewModel
 import com.fam4k007.videoplayer.presentation.SettingsViewModel
 import com.fam4k007.videoplayer.presentation.SubtitleSearchViewModel
@@ -25,13 +27,16 @@ val presentationModule = module {
     viewModel { PlayerViewModel(get()) }
     
     // 视频库ViewModel
-    viewModel { LibraryViewModel(get()) }
+    viewModel { LibraryViewModel(get(), get()) }
     
     // B站功能ViewModel
     viewModel { BilibiliViewModel(get()) }
     
     // 设置ViewModel
     viewModel { SettingsViewModel(get()) }
+    
+    // 播放设置ViewModel
+    viewModel { PlaybackSettingsViewModel(get()) }
     
     // TV浏览器ViewModel
     viewModel { TVBrowserViewModel() }
@@ -53,4 +58,7 @@ val presentationModule = module {
     
     // 缓存管理ViewModel
     viewModel { CacheManagementViewModel(androidContext()) }
+    
+    // 媒体信息ViewModel
+    viewModel { MediaInfoViewModel(get()) }
 }

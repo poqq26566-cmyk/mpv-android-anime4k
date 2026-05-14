@@ -37,6 +37,7 @@ class VideoListComposeActivity : ComponentActivity() {
     private var folderPath: String = ""
     private var usePaging: Boolean = false  // 是否使用Paging3模式
     private var themeRevision by mutableIntStateOf(0)
+    private var preloadedVideos: List<VideoFileParcelable>? = null  // 预加载的视频列表（flat模式）
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +51,10 @@ class VideoListComposeActivity : ComponentActivity() {
 
         val folderName = intent.getStringExtra("folder_name") ?: "视频列表"
         folderPath = intent.getStringExtra("folder_path") ?: ""
+        
+        // 获取预加载的视频列表（如果有）
+        @Suppress("DEPRECATION")
+        preloadedVideos = intent.getParcelableArrayListExtra<VideoFileParcelable>("video_list")
 
         setupContent(folderName)
     }
@@ -69,6 +74,7 @@ class VideoListComposeActivity : ComponentActivity() {
                     VideoListScreen(
                         folderName = folderName,
                         folderPath = folderPath,
+                        preloadedVideos = preloadedVideos,  // 传递预加载的视频列表
                         onNavigateBack = { 
                             finish()
                             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)

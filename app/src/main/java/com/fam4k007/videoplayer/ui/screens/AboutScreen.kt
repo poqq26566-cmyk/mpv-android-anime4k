@@ -120,10 +120,9 @@ fun AboutScreen(
                             onClick = onSendEmail,
                             modifier = Modifier.size(48.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Email,
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_email),
                                 contentDescription = "发送邮件",
-                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(28.dp)
                             )
                         }

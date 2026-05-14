@@ -18,14 +18,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import android.widget.Toast
-import com.fam4k007.videoplayer.preferences.PreferencesManager
+import com.fam4k007.videoplayer.presentation.PlaybackSettingsViewModel
 import com.fam4k007.videoplayer.ui.components.PreferenceCard
 import com.fam4k007.videoplayer.ui.components.PreferenceDivider
 import com.fam4k007.videoplayer.ui.components.PreferenceSectionHeader
 import com.fam4k007.videoplayer.ui.components.SwitchItem
 import com.fam4k007.videoplayer.ui.components.TextItem
 import com.fam4k007.videoplayer.ui.theme.spacing
-import org.koin.compose.koinInject
 
 /**
  * Compose 版本的播放设置页面
@@ -33,26 +32,15 @@ import org.koin.compose.koinInject
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaybackSettingsScreen(
+    viewModel: PlaybackSettingsViewModel,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val preferencesManager: PreferencesManager = koinInject()
+    val settings by viewModel.playbackSettings.collectAsState()
 
-    var preciseSeeking by remember { mutableStateOf(preferencesManager.isPreciseSeekingEnabled()) }
-    var volumeBoost by remember { mutableStateOf(preferencesManager.isVolumeBoostEnabled()) }
-    var anime4KMemory by remember { mutableStateOf(preferencesManager.isAnime4KMemoryEnabled()) }
-    var seekTime by remember { mutableIntStateOf(preferencesManager.getSeekTime()) }
-    var longPressSpeed by remember { mutableFloatStateOf(preferencesManager.getLongPressSpeed()) }
     var showSeekTimeDialog by remember { mutableStateOf(false) }
     var showSpeedDialog by remember { mutableStateOf(false) }
-
-    // 双击手势设置
-    var doubleTapMode by remember { mutableIntStateOf(preferencesManager.getDoubleTapMode()) }
-    var doubleTapSeekSeconds by remember { mutableIntStateOf(preferencesManager.getDoubleTapSeekSeconds()) }
     var showDoubleTapSeekDialog by remember { mutableStateOf(false) }
-
-    // 倍速记忆和自定义倍速设置
-    var rememberSpeed by remember { mutableStateOf(preferencesManager.isRememberSpeedEnabled()) }
     var showSpeedPresetsDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -91,17 +79,13 @@ fun PlaybackSettingsScreen(
                 PreferenceCard {
                     SwitchItem(
                         title = "精确进度定位",
-                        subtitle = if (preciseSeeking) "定位更准确但可能较慢" else "定位更快但使用关键帧",
-                        checked = preciseSeeking,
-                        onCheckedChange = {
-                            preciseSeeking = it
-                            preferencesManager.setPreciseSeekingEnabled(it)
-                        }
+                        subtitle = if (settings.preciseSeeking) "定位更准确但可能较慢" else "定位更快但使用关键帧",
+                        checked = settings.preciseSeeking,
+                        onCheckedChange = { viewModel.setPreciseSeeking(it) }
                     )
-                    PreferenceDivider()
                     TextItem(
                         title = "快进/快退时长",
-                        value = "${seekTime}秒",
+                        value = "${settings.seekTime}秒",
                         onClick = { showSeekTimeDialog = true }
                     )
                 }
@@ -115,18 +99,14 @@ fun PlaybackSettingsScreen(
             item {
                 PreferenceCard {
                     DoubleTapModeCard(
-                        currentMode = doubleTapMode,
-                        onModeChange = {
-                            doubleTapMode = it
-                            preferencesManager.setDoubleTapMode(it)
-                        }
+                        currentMode = settings.doubleTapMode,
+                        onModeChange = { viewModel.setDoubleTapMode(it) }
                     )
                     // 只有在快进/快退模式时才显示秒数设置
-                    if (doubleTapMode == 1) {
-                        PreferenceDivider()
+                    if (settings.doubleTapMode == 1) {
                         TextItem(
                             title = "双击跳转时长",
-                            value = "${doubleTapSeekSeconds}秒",
+                            value = "${settings.doubleTapSeekSeconds}秒",
                             onClick = { showDoubleTapSeekDialog = true }
                         )
                     }
@@ -142,12 +122,9 @@ fun PlaybackSettingsScreen(
                 PreferenceCard {
                     SwitchItem(
                         title = "音量增强",
-                        subtitle = if (volumeBoost) "音量可超过100%,最高300%" else "音量范围限制在1-100%",
-                        checked = volumeBoost,
-                        onCheckedChange = {
-                            volumeBoost = it
-                            preferencesManager.setVolumeBoostEnabled(it)
-                        }
+                        subtitle = if (settings.volumeBoost) "音量可超过100%,最高300%" else "音量范围限制在1-100%",
+                        checked = settings.volumeBoost,
+                        onCheckedChange = { viewModel.setVolumeBoost(it) }
                     )
                 }
             }
@@ -161,23 +138,18 @@ fun PlaybackSettingsScreen(
                 PreferenceCard {
                     SwitchItem(
                         title = "记忆播放倍速",
-                        subtitle = if (rememberSpeed) "始终使用上次设置的播放倍速" else "每次切换视频恢复到1倍速",
-                        checked = rememberSpeed,
-                        onCheckedChange = {
-                            rememberSpeed = it
-                            preferencesManager.setRememberSpeedEnabled(it)
-                        }
+                        subtitle = if (settings.rememberSpeed) "始终使用上次设置的播放倍速" else "每次切换视频恢复到1倍速",
+                        checked = settings.rememberSpeed,
+                        onCheckedChange = { viewModel.setRememberSpeed(it) }
                     )
-                    PreferenceDivider()
                     TextItem(
                         title = "自定义倍速选项",
                         value = "点击设置",
                         onClick = { showSpeedPresetsDialog = true }
                     )
-                    PreferenceDivider()
                     TextItem(
                         title = "长按倍速",
-                        value = String.format("%.1fx", longPressSpeed),
+                        value = String.format("%.1fx", settings.longPressSpeed),
                         onClick = { showSpeedDialog = true }
                     )
                 }
@@ -192,12 +164,9 @@ fun PlaybackSettingsScreen(
                 PreferenceCard {
                     SwitchItem(
                         title = "记忆超分模式",
-                        subtitle = if (anime4KMemory) "记住上次使用的Anime4K模式" else "每次播放都从关闭状态开始",
-                        checked = anime4KMemory,
-                        onCheckedChange = {
-                            anime4KMemory = it
-                            preferencesManager.setAnime4KMemoryEnabled(it)
-                        }
+                        subtitle = if (settings.anime4KMemory) "记住上次使用的Anime4K模式" else "每次播放都从关闭状态开始",
+                        checked = settings.anime4KMemory,
+                        onCheckedChange = { viewModel.setAnime4KMemory(it) }
                     )
                 }
             }
@@ -209,11 +178,10 @@ fun PlaybackSettingsScreen(
     // 快进时长选择对话框
     if (showSeekTimeDialog) {
         SeekTimeDialog(
-            currentValue = seekTime,
+            currentValue = settings.seekTime,
             onDismiss = { showSeekTimeDialog = false },
             onConfirm = { newValue ->
-                seekTime = newValue
-                preferencesManager.setSeekTime(newValue)
+                viewModel.setSeekTime(newValue)
                 showSeekTimeDialog = false
             }
         )
@@ -222,11 +190,10 @@ fun PlaybackSettingsScreen(
     // 长按倍速选择对话框
     if (showSpeedDialog) {
         SpeedDialog(
-            currentValue = longPressSpeed,
+            currentValue = settings.longPressSpeed,
             onDismiss = { showSpeedDialog = false },
             onConfirm = { newValue ->
-                longPressSpeed = newValue
-                preferencesManager.setLongPressSpeed(newValue)
+                viewModel.setLongPressSpeed(newValue)
                 showSpeedDialog = false
             }
         )
@@ -235,11 +202,10 @@ fun PlaybackSettingsScreen(
     // 双击跳转时长选择对话框
     if (showDoubleTapSeekDialog) {
         DoubleTapSeekDialog(
-            currentValue = doubleTapSeekSeconds,
+            currentValue = settings.doubleTapSeekSeconds,
             onDismiss = { showDoubleTapSeekDialog = false },
             onConfirm = { newValue ->
-                doubleTapSeekSeconds = newValue
-                preferencesManager.setDoubleTapSeekSeconds(newValue)
+                viewModel.setDoubleTapSeekSeconds(newValue)
                 showDoubleTapSeekDialog = false
             }
         )
@@ -248,7 +214,8 @@ fun PlaybackSettingsScreen(
     // 自定义倍速选项对话框
     if (showSpeedPresetsDialog) {
         SpeedPresetsDialog(
-            preferencesManager = preferencesManager,
+            viewModel = viewModel,
+            currentPresets = settings.customSpeedPresets,
             onDismiss = { showSpeedPresetsDialog = false }
         )
     }
@@ -547,13 +514,14 @@ private fun SpeedDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SpeedPresetsDialog(
-    preferencesManager: PreferencesManager,
+    viewModel: PlaybackSettingsViewModel,
+    currentPresets: Set<String>,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
     val allSpeeds = (1..16).map { it * 0.25 }
-    val currentPresets = remember { mutableStateOf(preferencesManager.getCustomSpeedPresets()) }
-    val allSelected = currentPresets.value.size == allSpeeds.size
+    val selectedPresets = remember { mutableStateOf(currentPresets) }
+    val allSelected = selectedPresets.value.size == allSpeeds.size
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -583,9 +551,9 @@ private fun SpeedPresetsDialog(
                     TextButton(
                         onClick = {
                             if (allSelected) {
-                                currentPresets.value = setOf("1.0")
+                                selectedPresets.value = setOf("1.0")
                             } else {
-                                currentPresets.value = allSpeeds.map { it.toString() }.toSet()
+                                selectedPresets.value = allSpeeds.map { it.toString() }.toSet()
                             }
                         }
                     ) {
@@ -612,7 +580,7 @@ private fun SpeedPresetsDialog(
                 ) {
                     allSpeeds.forEach { speed ->
                         val speedStr = speed.toString()
-                        val isSelected = currentPresets.value.contains(speedStr)
+                        val isSelected = selectedPresets.value.contains(speedStr)
                         val isRequired = speed == 1.0
 
                         Row(
@@ -620,13 +588,13 @@ private fun SpeedPresetsDialog(
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
                                 .clickable(enabled = !isRequired) {
-                                    val newSet = currentPresets.value.toMutableSet()
+                                    val newSet = selectedPresets.value.toMutableSet()
                                     if (isSelected) {
                                         newSet.remove(speedStr)
                                     } else {
                                         newSet.add(speedStr)
                                     }
-                                    currentPresets.value = newSet
+                                    selectedPresets.value = newSet
                                 }
                                 .padding(vertical = 10.dp, horizontal = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -635,9 +603,9 @@ private fun SpeedPresetsDialog(
                                 checked = isSelected,
                                 onCheckedChange = if (!isRequired) {
                                     { checked ->
-                                        val newSet = currentPresets.value.toMutableSet()
+                                        val newSet = selectedPresets.value.toMutableSet()
                                         if (checked) newSet.add(speedStr) else newSet.remove(speedStr)
-                                        currentPresets.value = newSet
+                                        selectedPresets.value = newSet
                                     }
                                 } else {
                                     null
@@ -676,12 +644,12 @@ private fun SpeedPresetsDialog(
 
                     Button(
                         onClick = {
-                            preferencesManager.setCustomSpeedPresets(currentPresets.value)
+                            viewModel.setCustomSpeedPresets(selectedPresets.value)
                             Toast.makeText(context, "倍速选项已保存", Toast.LENGTH_SHORT).show()
                             onDismiss()
                         },
                         modifier = Modifier.weight(1f),
-                        enabled = currentPresets.value.contains("1.0")
+                        enabled = selectedPresets.value.contains("1.0")
                     ) {
                         Text("保存")
                     }

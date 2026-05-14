@@ -498,4 +498,113 @@ class PlayerRepository(
     fun setLastPlaybackSpeed(speed: Float) {
         preferencesManager.setLastPlaybackSpeed(speed)
     }
+    
+    // ==================== 精确进度定位 ====================
+    
+    /**
+     * 是否启用精确进度定位
+     */
+    fun isPreciseSeekingEnabled(): Boolean {
+        return preferencesManager.isPreciseSeekingEnabled()
+    }
+    
+    /**
+     * 设置精确进度定位开关
+     */
+    fun setPreciseSeekingEnabled(enabled: Boolean) {
+        preferencesManager.setPreciseSeekingEnabled(enabled)
+    }
+    
+    // ==================== 音量增强 ====================
+    
+    /**
+     * 是否启用音量增强
+     */
+    fun isVolumeBoostEnabled(): Boolean {
+        return preferencesManager.isVolumeBoostEnabled()
+    }
+    
+    /**
+     * 设置音量增强开关
+     */
+    fun setVolumeBoostEnabled(enabled: Boolean) {
+        preferencesManager.setVolumeBoostEnabled(enabled)
+    }
+    
+    // ==================== Anime4K 模式记忆 ====================
+    
+    /**
+     * 是否启用Anime4K模式记忆
+     */
+    fun isAnime4KMemoryEnabled(): Boolean {
+        return preferencesManager.isAnime4KMemoryEnabled()
+    }
+    
+    /**
+     * 设置Anime4K模式记忆开关
+     */
+    fun setAnime4KMemoryEnabled(enabled: Boolean) {
+        preferencesManager.setAnime4KMemoryEnabled(enabled)
+    }
+    
+    /**
+     * 获取上次使用的Anime4K模式
+     */
+    fun getLastAnime4KMode(): String {
+        return preferencesManager.getLastAnime4KMode()
+    }
+    
+    /**
+     * 设置上次使用的Anime4K模式
+     */
+    fun setLastAnime4KMode(mode: String) {
+        preferencesManager.setLastAnime4KMode(mode)
+    }
+    
+    // ==================== 双击手势设置 ====================
+    
+    /**
+     * 获取双击手势模式
+     * @return 0=暂停/播放, 1=快进/快退
+     */
+    fun getDoubleTapMode(): Int {
+        return preferencesManager.getDoubleTapMode()
+    }
+    
+    /**
+     * 设置双击手势模式
+     */
+    fun setDoubleTapMode(mode: Int) {
+        preferencesManager.setDoubleTapMode(mode)
+    }
+    
+    /**
+     * 获取双击跳转秒数
+     */
+    fun getDoubleTapSeekSeconds(): Int {
+        return preferencesManager.getDoubleTapSeekSeconds()
+    }
+    
+    /**
+     * 设置双击跳转秒数
+     */
+    fun setDoubleTapSeekSeconds(seconds: Int) {
+        preferencesManager.setDoubleTapSeekSeconds(seconds)
+    }
+    
+    // ==================== 自定义倍速选项 ====================
+    
+    /**
+     * 获取自定义倍速选项
+     */
+    fun getCustomSpeedPresets(): Set<String> {
+        return preferencesManager.getCustomSpeedPresets()
+    }
+    
+    /**
+     * 设置自定义倍速选项
+     */
+    fun setCustomSpeedPresets(presets: Set<String>) {
+        preferencesManager.setCustomSpeedPresets(presets)
+    }
 }

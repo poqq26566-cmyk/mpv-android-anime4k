@@ -33,6 +33,8 @@ Data (Room/Network/Prefs)
 | 字幕搜索 | SubtitleSearchActivity | SubtitleSearchViewModel | SubtitleSearchScreen | ✅ 完整 |
 | B站弹幕下载 | BiliBiliDanmakuComposeActivity | BiliBiliDanmakuViewModel | BiliBiliDanmakuScreen | ✅ 完整 |
 | 播放历史 | PlaybackHistoryComposeActivity | PlaybackHistoryViewModel | PlaybackHistoryScreen | ✅ 完整（2026-05-14 新重构） |
+| 播放设置 | PlaybackSettingsComposeActivity | PlaybackSettingsViewModel | PlaybackSettingsScreen | ✅ 完整（2026-05-14 新重构） |
+| 媒体信息 | MediaInfoActivity | MediaInfoViewModel | MediaInfoScreen | ✅ 完整（2026-05-14 新重构） |
 | 主页 | MainActivity | - | HomeScreen | ✅ 简单页面 |
 | 关于 | AboutComposeActivity | - | AboutScreen | ✅ 简单页面 |
 | 开源许可 | LicenseActivity | - | LicenseScreen | ✅ 简单页面 |
@@ -40,92 +42,14 @@ Data (Room/Network/Prefs)
 | 反馈 | FeedbackActivity | - | FeedbackScreen | ✅ 简单页面 |
 
 **最近重构：**
+- **媒体信息**（2026-05-14）：完成架构迁移，创建MediaInfoViewModel和MediaInfoRepository，通过Repository封装MediaInfoHelper调用，所有UI状态管理从Screen移至ViewModel，符合Clean Architecture + MVVM架构规范。
+- **播放设置**（2026-05-14）：完成架构迁移，创建PlaybackSettingsViewModel，通过PlayerRepository访问PreferencesManager，所有UI状态管理从Screen移至ViewModel，符合Clean Architecture + MVVM架构规范。
 - **播放历史**（2026-05-14）：完成架构迁移，创建PlaybackHistoryViewModel，通过PlayerRepository访问数据，状态管理从Activity移至ViewModel，符合Clean Architecture + MVVM架构规范。
 - **下载管理**（2026-05-11）：已完全重构，所有解析逻辑、状态管理（isParsing、parseError、parseResult、episodeList等）从UI层移至ViewModel，符合MVVM架构规范。
 
 ---
 
-## 需要迁移 🔄
 
-这些页面缺少 ViewModel 或逻辑未分层：
-
-### 1. VideoPlayerActivity ⚠️ 最复杂
-
-**当前问题：**
-- 使用传统 XML 布局（非 Compose）
-- 2200+ 行代码
-- 业务逻辑分散在多个 Manager 中
-- 虽有 PlayerViewModel 但未充分使用
-
-**需要做：**
-- 创建完整 PlayerViewModel（整合所有 Manager 状态）
-- 迁移到 Compose UI（PlayerScreen）
-- 重构手势/控制/弹幕等逻辑到 Domain/ViewModel
-
-**优先级：** 🔥🔥🔥 最高（核心功能）
-
----
-
-### 2. MediaInfoActivity
-
-**当前问题：**
-- 逻辑在 Activity 中
-- 无 ViewModel
-- 直接调用 MediaInfoHelper
-
-**需要做：**
-- 创建 MediaInfoViewModel
-- 封装 MediaInfoHelper 到 Domain/Repository
-
-**优先级：** 🔥 中低
-
----
-
-### 3. PlaybackSettingsComposeActivity
-
-**当前问题：**
-- 无 ViewModel
-- 可能直接访问 PreferencesManager
-
-**需要做：**
-- 可能复用 SettingsViewModel
-- 或创建独立 ViewModel
-
-**优先级：** 🔥 低
-
----
-
-
-## 迁移建议
-
-### 推荐顺序
-
-1. **MediaInfoActivity** → 最简单，练手
-2. **PlaybackHistoryComposeActivity** → 数据库操作
-3. **PlaybackSettingsComposeActivity** → 复用 Settings
-4. **VideoPlayerActivity** → 最后攻坚（最复杂）
-
-### 迁移步骤（每个页面）
-
-1. 创建 ViewModel（继承 ViewModel）
-2. 业务逻辑从 Activity 移到 ViewModel
-3. 使用 StateFlow 管理状态
-4. Activity/Screen 只负责 UI 展示
-5. 注入 Repository（不直接访问 Data 层）
-6. 测试功能正常
-
----
-
-## 统计
-
-- **总页面数**: 19
-- **已符合架构**: 13 ✅
-- **需要迁移**: 4 🔄
-- **进度**: 68%
-
-**目标**: 达到 80%+ 符合架构（核心功能页面全部迁移）
-
----
 
 ## 📊 剩余工作全景分析
 
@@ -133,14 +57,17 @@ Data (Room/Network/Prefs)
 
 ```
 目标架构：Clean Architecture + MVVM + 全Compose + Koin + Navigation3
-当前状态：阶段2（代码分层）4 ✅
-- **需要迁移**: 3 🔄
-- **进度**: 74
+当前状态：阶段2（代码分层）
+- **已完成**: 16/17 页面 ✅
+- **需要迁移**: 1 🔄
+- **进度**: 84% → 100%（还需16%）
+```
+
 ---
 
 ## 🎯 剩余工作清单（按优先级）
 
-### 📌 **一、页面层迁移（3个待迁移）** - 优先级：🔥🔥🔥
+### 📌 **一、页面层迁移（1个待迁移）** - 优先级：🔥🔥🔥
 
 #### 1. **VideoPlayerActivity** - 最重要！
 - **工作量**：⏱️ 10-15天
@@ -156,33 +83,13 @@ Data (Room/Network/Prefs)
   4. 重构弹幕同步逻辑
   5. 删除30+个XML对话框，改为Compose Dialog
 
-#### 2. **PlaybackSettingsComposeActivity**
-- **工作量**：⏱️ 0.5-1天
-- **当前状态**：
-  - ❌ 无ViewModel
-  - ❌ 可能直接访问PreferencesManager
-- **需要完成**：
-  1. 复用 `SettingsViewModel` 或创建独立ViewModel
-  2. 状态管理迁移
-
-#### 3. **MediaInfoActivity**
-- **工作量**：⏱️ 1天
-- **当前状态**：
-  - ❌ 逻辑在Activity中
-  - ❌ 无ViewModel
-  - ❌ 直接调用MediaInfoHelper
-- **需要完成**：
-  1. 创建 `MediaInfoViewModel`
-  2. 封装MediaInfoHelper到Domain/Repository
-  3. 可能需要Compose化UI
-
 ---
 
 ### 📌 **二、UI全Compose化** - 优先级：🔥🔥
 
 #### 当前残留XML布局（需清理）
 ```
-✅ 13个页面已Compose化
+✅ 16个页面已Compose化
 ❌ VideoPlayerActivity仍使用XML
 ❌ 30+个XML对话框需迁移为Compose Dialog：
    - dialog_more.xml
@@ -228,6 +135,7 @@ Data (Room/Network/Prefs)
    - ✅ VideoRepository（已完成）
    - ✅ BilibiliRepository（已完成）
    - ✅ WebDavRepository（已完成）
+   - ✅ MediaInfoRepository（已完成，2026-05-14）
    - ⚠️ PlayerRepository（可能需补充）
    - ⚠️ SubtitleRepository（可能需补充）
 
@@ -285,14 +193,13 @@ Data (Room/Network/Prefs)
 | 工作项 | 工作量 | 优先级 |
 |--------|--------|--------|
 | VideoPlayerActivity重构 | 10-15天 | 🔥🔥🔥 |
-| 3个简单页面迁移 | 2.5-4天 | 🔥🔥 |
 | XML Dialog → Compose | 3-5天 | 🔥🔥 |
 | Navigation3迁移 | 2-3天 | 🔥 |
 | Repository/Domain完善 | 3-5天 | 🔥 |
 | 主题系统升级 | 2-3天 | 🔥（可选） |
 | 工具类整理 | 1天 | 低 |
 | 测试优化 | 持续 | 持续 |
-| **总计** | **~25-40天** | - |
+| **总计** | **~21-35天** | - |
 
 ---
 2个简单页面迁移 | 1.5-2天 | 🔥🔥 |
@@ -322,24 +229,23 @@ Data (Room/Network/Prefs)
 
 ---
 
-## ✅ 已完成的工作（68%）
-
-1. ✅ Koin依赖注74%）
+## ✅ 已完成的工作（84%）
 
 1. ✅ Koin依赖注入引入
-2. ✅ 14个页面架构迁移（MVVM + Compose）
-3. ✅ 部分Repository创建（Video、Bilibili、WebDav、Player）
+2. ✅ 16个页面架构迁移（MVVM + Compose）
+3. ✅ Repository层创建（Video、Bilibili、WebDav、Player、MediaInfo）
 4. ✅ Version Catalog依赖管理
 5. ✅ 基础Material 3主题
 6. ✅ PlaybackHistoryViewModel创建并集成（2026-05-14）
+7. ✅ PlaybackSettingsViewModel创建并集成（2026-05-14）
+8. ✅ MediaInfoViewModel创建并集成（2026-05-14）
 
 ## 🎯 总结
 
 **核心关键**：VideoPlayerActivity（2200+行）是最大的挑战  
-**剩余工作**：约25-40天工作量  
-**进度**：68% 3-38天工作量  
-**进度**：74% → 100%（还需26%）  
-**建议**：优先完成2个简单页面迁移（2
+**剩余工作**：约21-35天工作量  
+**进度**：84% → 100%（还需16%）  
+**建议**：优先完成VideoPlayerActivity迁移，这是最后也是最重要的页面
 **核心业务代码位置**（已梳理）：
 - 视频下载：`download/BilibiliDownloadManager.kt`
 - 弹幕下载：`danmaku/BiliBiliDanmakuDownloadManager.kt`

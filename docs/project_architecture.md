@@ -38,13 +38,3 @@ com.fam4k007.videoplayer/
 - **数据库**: Room
 - **网络**: OkHttp + Sardine（WebDAV）
 
-## 当前状态
-
-正处于 **Stage 2（代码分层）** 阶段，已完成：
-- ✅ Koin依赖注入引入
-- ✅ Repository层创建
-- ✅ 部分ViewModel创建（LibraryViewModel等）
-- 🔄 正在完善剩余ViewModels
-- 🔄 UI层向完全架构合规迁移
-
-核心原则：**"100%保留逻辑，只改调用方式"** - 像房屋翻新，保留优质材料（核心算法、业务逻辑），只重新设计结构和布局。
