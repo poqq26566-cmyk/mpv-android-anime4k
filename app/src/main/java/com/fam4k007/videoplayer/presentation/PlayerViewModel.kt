@@ -270,6 +270,10 @@ class PlayerViewModel(
     // 保存的播放位置（用于恢复播放）
     private val _savedPosition = MutableStateFlow(0.0)
     val savedPosition: StateFlow<Double> = _savedPosition.asStateFlow()
+
+    // 恢复进度 Toast 显示状态
+    private val _resumeToastVisible = MutableStateFlow(false)
+    val resumeToastVisible: StateFlow<Boolean> = _resumeToastVisible.asStateFlow()
     
     // 长按前的速度（用于松开后恢复）
     private val _speedBeforeLongPress = MutableStateFlow(1.0)
@@ -937,6 +941,14 @@ class PlayerViewModel(
     fun setSavedPosition(position: Double) {
         _savedPosition.value = position
         Logger.d(TAG, "Saved position: ${position}s")
+    }
+
+    fun showResumeToast() {
+        _resumeToastVisible.value = true
+    }
+
+    fun hideResumeToast() {
+        _resumeToastVisible.value = false
     }
     
     /**

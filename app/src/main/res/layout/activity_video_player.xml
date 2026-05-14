@@ -273,65 +273,6 @@
         android:layout_marginBottom="122dp"
         android:visibility="gone" />
 
-    <!-- 进度恢复提示框（左下角，横向布局） -->
-    <LinearLayout
-        android:id="@+id/resumeProgressPrompt"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:minHeight="36dp"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="20dp"
-        android:layout_marginBottom="130dp"
-        android:orientation="horizontal"
-        android:background="@drawable/resume_prompt_background"
-        android:paddingVertical="6dp"
-        android:paddingHorizontal="10dp"
-        android:gravity="center_vertical"
-        android:visibility="gone"
-        android:elevation="8dp">
-
-        <!-- 关闭按钮 (X) -->
-        <TextView
-            android:id="@+id/btnResumePromptClose"
-            android:layout_width="18dp"
-            android:layout_height="18dp"
-            android:text="✕"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:gravity="center"
-            android:background="@drawable/resume_close_button_background"
-            android:clickable="true"
-            android:focusable="true"
-            android:layout_marginEnd="8dp" />
-
-        <!-- 提示文字 -->
-        <TextView
-            android:id="@+id/tvResumePromptText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="已为您恢复上次播放进度"
-            android:textColor="#FFFFFF"
-            android:textSize="12sp"
-            android:layout_marginEnd="10dp" />
-
-        <!-- 重新开始按钮 -->
-        <TextView
-            android:id="@+id/btnResumePromptConfirm"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="重新开始"
-            android:textColor="@color/primary"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="3dp"
-            android:background="@drawable/resume_button_background"
-            android:clickable="true"
-            android:focusable="true" />
-
-    </LinearLayout>
-
     <!-- 截图状态指示器 -->
     <include
         android:id="@+id/screenshotStatusContainer"

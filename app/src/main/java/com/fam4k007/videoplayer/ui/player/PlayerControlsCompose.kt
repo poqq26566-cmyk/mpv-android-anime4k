@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Slider
@@ -45,6 +46,7 @@ fun PlayerControls(
     onAspectRatioClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
     onMoreClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
     onVideoTitleClick: () -> Unit = {},
+    onRestartFromBeginning: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // 收集ViewModel状态
@@ -118,6 +120,12 @@ fun PlayerControls(
 
         // 长按倍速提示（正在长按时显示当前倍速）
         LongPressSpeedOverlay(viewModel = viewModel)
+
+        // 恢复播放进度提示
+        ResumeProgressToast(
+            viewModel = viewModel,
+            onRestartFromBeginning = onRestartFromBeginning
+        )
     }
 }
 
@@ -874,3 +882,91 @@ fun LongPressSpeedOverlay(
     }
 }
 
+/**
+ * 恢复播放进度提示（左下角小胶囊）
+ * 进入视频时自动显示，5秒后自动消失
+ */
+@Composable
+fun ResumeProgressToast(
+    viewModel: PlayerViewModel,
+    onRestartFromBeginning: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val visible by viewModel.resumeToastVisible.collectAsState()
+    val savedPosition by viewModel.savedPosition.collectAsState()
+
+    LaunchedEffect(visible) {
+        if (visible) {
+            delay(5_000L)
+            viewModel.hideResumeToast()
+        }
+    }
+
+    val positionText = remember(savedPosition) {
+        val totalSecs = savedPosition.toInt()
+        val h = totalSecs / 3600
+        val m = (totalSecs % 3600) / 60
+        val s = totalSecs % 60
+        if (h > 0) String.format("%d:%02d:%02d", h, m, s)
+        else String.format("%02d:%02d", m, s)
+    }
+
+    androidx.compose.animation.AnimatedVisibility(
+        visible = visible,
+        enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(250)) +
+                androidx.compose.animation.slideInHorizontally(
+                    animationSpec = androidx.compose.animation.core.tween(300),
+                    initialOffsetX = { -it }
+                ),
+        exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(250)) +
+               androidx.compose.animation.slideOutHorizontally(
+                   animationSpec = androidx.compose.animation.core.tween(300),
+                   targetOffsetX = { -it }
+               ),
+        modifier = modifier.fillMaxSize()
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.BottomStart
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(start = 20.dp, bottom = 130.dp)
+                    .background(
+                        color = Color.Black.copy(alpha = 0.72f),
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "已为您恢复至 $positionText",
+                    color = Color.White,
+                    fontSize = 13.sp
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "重新开始",
+                    color = Color(0xFF4FC3F7),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clickable {
+                            viewModel.hideResumeToast()
+                            onRestartFromBeginning()
+                        }
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "✕",
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .clickable { viewModel.hideResumeToast() }
+                        .padding(4.dp)
+                )
+            }
+        }
+    }
+}
