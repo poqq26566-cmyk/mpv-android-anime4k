@@ -1,74 +1,876 @@
 package com.fam4k007.videoplayer.ui.player
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
+import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.presentation.PlayerViewModel
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlinx.coroutines.delay
 
-/**
- * 阶段2.1：PlayerControls Compose组件（临时版本）
- * 
- * 目标：验证XML+ComposeView混合模式可行性
- * 当前版本：只显示基本信息，暂不实现完整控制面板
- * 下一步（阶段2.2）：迁移所有控制UI元素
- */
+
 @Composable
 fun PlayerControls(
     viewModel: PlayerViewModel,
     onBackPress: () -> Unit,
+    onAnime4KClick: () -> Unit = {},
+    onDanmakuToggle: () -> Unit = {},
+    onSubtitleClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
+    onDanmakuClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
+    onAspectRatioClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
+    onMoreClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
+    onVideoTitleClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // 收集ViewModel状态
     val paused by viewModel.paused.collectAsState()
-    val position by viewModel.position.collectAsState()
-    val duration by viewModel.duration.collectAsState()
-    val speed by viewModel.speed.collectAsState()
-    
+    val controlsShown by viewModel.controlsShown.collectAsState()
+    val areControlsLocked by viewModel.areControlsLocked.collectAsState()
+
+    // 当控制面板显示时，启动初始定时器
+    LaunchedEffect(controlsShown, paused) {
+        if (controlsShown && paused != true) {
+            viewModel.resetAutoHideTimer()
+        }
+    }
+
     Box(
         modifier = modifier.fillMaxSize()
     ) {
-        // 阶段2.1临时版本：只显示调试信息，证明Compose集成成功
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-                .background(Color.Black.copy(alpha = 0.5f))
-                .padding(8.dp),
-            horizontalAlignment = Alignment.End
+        // 手势层（处理点击、双击、滑动）
+        GestureHandler(
+            viewModel = viewModel
+        )
+
+        // 顶部控制面板（带显示/隐藏动画）
+        androidx.compose.animation.AnimatedVisibility(
+            visible = controlsShown && !areControlsLocked,
+            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { -it }),
+            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { -it }),
+            modifier = Modifier.align(Alignment.TopCenter)
         ) {
-            Text(
-                text = "Compose 控制面板",
-                color = Color.White,
-                fontSize = 12.sp
-            )
-            Text(
-                text = if (paused == true) "暂停" else "播放中",
-                color = Color.White,
-                fontSize = 10.sp
-            )
-            Text(
-                text = "${position}s / ${duration}s",
-                color = Color.White,
-                fontSize = 10.sp
-            )
-            Text(
-                text = "速度: ${speed}x",
-                color = Color.White,
-                fontSize = 10.sp
+            TopControlPanel(
+                viewModel = viewModel,
+                onBackPress = onBackPress,
+                onSubtitleClick = onSubtitleClick,
+                onDanmakuClick = onDanmakuClick,
+                onAspectRatioClick = onAspectRatioClick,
+                onMoreClick = onMoreClick,
+                onVideoTitleClick = onVideoTitleClick
             )
         }
-        
-        // TODO 阶段2.2：迁移完整控制面板
-        // - 顶部面板（返回按钮、标题、设置按钮等）
-        // - 底部面板（播放/暂停、进度条、时间显示等）
-        // - 手势层（点击、双击、滑动）
-        // - 锁定按钮
-        // - 加载/暂停指示器
+
+        // 底部控制面板（带显示/隐藏动画）
+        androidx.compose.animation.AnimatedVisibility(
+            visible = controlsShown && !areControlsLocked,
+            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it }),
+            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it }),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            BottomControlPanel(
+                viewModel = viewModel,
+                onAnime4KClick = onAnime4KClick,
+                onDanmakuToggle = onDanmakuToggle,
+                modifier = Modifier
+            )
+        }
+
+        // 锁定时：左右解锁按钮
+        UnlockButtons(viewModel = viewModel)
+
+        // 手势指示器（亮度/音量）
+        GestureIndicators(
+            viewModel = viewModel
+        )
+
+        // Seek指示器（快进/快退按钮点击提示）
+        SeekIndicator(
+            viewModel = viewModel
+        )
+
+        // 水平滑动 Seek 预览（正在滑动时显示目标时间 + 偏移量）
+        SwipeSeekOverlay(viewModel = viewModel)
+
+        // 长按倍速提示（正在长按时显示当前倍速）
+        LongPressSpeedOverlay(viewModel = viewModel)
     }
 }
+
+/**
+ * 底部控制面板组件
+ *
+ * 功能：
+ * - 进度条（拖动Seek，支持实时预览；拖动期间暂停自动隐藏计时器）
+ * - 时间显示（当前/总时长，支持 MM:SS 和 HH:MM:SS 格式）
+ * - 快退N秒按钮（时长从设置读取）
+ * - 上一集按钮
+ * - 播放/暂停按钮（中央大按钮，64dp）
+ * - 下一集按钮
+ * - 快进N秒按钮（时长从设置读取）
+ * - 倍速按钮（循环切换用户自定义倍速列表）
+ * - 弹幕显示/隐藏按钮
+ * - Anime4K 超分辨率入口按钮
+ */
+@Composable
+fun BottomControlPanel(
+    viewModel: PlayerViewModel,
+    onAnime4KClick: () -> Unit = {},
+    onDanmakuToggle: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    // 收集状态
+    val paused by viewModel.paused.collectAsState()
+    val duration by viewModel.duration.collectAsState()
+    val precisePosition by viewModel.precisePosition.collectAsState()
+    val speed by viewModel.speed.collectAsState()
+    val hasPrevious by viewModel.hasPrevious.collectAsState()
+    val hasNext by viewModel.hasNext.collectAsState()
+    val danmakuVisible by viewModel.danmakuVisible.collectAsState()
+    val anime4KMode by viewModel.anime4KMode.collectAsState()
+    val seekTimeSeconds by viewModel.seekTimeSeconds.collectAsState()
+    val customSpeedPresets by viewModel.customSpeedPresets.collectAsState()
+
+    // 用户拖动进度条时的临时位置
+    var sliderPosition by remember { mutableStateOf<Float?>(null) }
+    var isDragging by remember { mutableStateOf(false) }
+
+    // 计算当前显示的进度（拖动时显示临时位置，否则显示实际位置）
+    val displayPosition = if (isDragging) {
+        sliderPosition ?: precisePosition.toFloat()
+    } else {
+        precisePosition.toFloat()
+    }
+
+    // Anime4K 模式缩写文字
+    val anime4KLabel = when (anime4KMode) {
+        com.fam4k007.videoplayer.domain.player.Anime4KManager.Mode.OFF -> "关"
+        com.fam4k007.videoplayer.domain.player.Anime4KManager.Mode.A -> "A"
+        com.fam4k007.videoplayer.domain.player.Anime4KManager.Mode.B -> "B"
+        com.fam4k007.videoplayer.domain.player.Anime4KManager.Mode.C -> "C"
+        com.fam4k007.videoplayer.domain.player.Anime4KManager.Mode.A_PLUS -> "A+"
+        com.fam4k007.videoplayer.domain.player.Anime4KManager.Mode.B_PLUS -> "B+"
+        com.fam4k007.videoplayer.domain.player.Anime4KManager.Mode.C_PLUS -> "C+"
+    }
+    val anime4KActive = anime4KMode != com.fam4k007.videoplayer.domain.player.Anime4KManager.Mode.OFF
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                androidx.compose.ui.graphics.Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Transparent,
+                        Color.Black.copy(alpha = 0.4f),
+                        Color.Black.copy(alpha = 0.7f)
+                    )
+                )
+            )
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        // 进度条行
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 当前时间
+            Text(
+                text = formatTime(displayPosition.toInt()),
+                color = Color.White,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+
+            // 进度滑块
+            Slider(
+                value = if (duration > 0) displayPosition else 0f,
+                onValueChange = { newValue ->
+                    if (!isDragging) {
+                        isDragging = true
+                        viewModel.setSliderDragging(true)
+                    }
+                    sliderPosition = newValue
+                },
+                onValueChangeFinished = {
+                    sliderPosition?.let { pos ->
+                        viewModel.seekTo(pos.toInt())
+                    }
+                    isDragging = false
+                    sliderPosition = null
+                    viewModel.setSliderDragging(false)
+                },
+                valueRange = 0f..duration.toFloat().coerceAtLeast(1f),
+                modifier = Modifier.weight(1f),
+                colors = SliderDefaults.colors(
+                    thumbColor = Color.White,
+                    activeTrackColor = Color(0xFF1976D2),
+                    inactiveTrackColor = Color.Gray
+                )
+            )
+
+            // 总时长
+            Text(
+                text = formatTime(duration),
+                color = Color.White,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // 控制按钮行
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 左侧按钮组（超分辨率 + 弹幕开关 + 快退 + 上一集）
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 超分辨率（Anime4K）按钮
+                Box(
+                    modifier = Modifier
+                        .height(36.dp)
+                        .clickable {
+                            onAnime4KClick()
+                            viewModel.resetAutoHideTimer()
+                        }
+                        .padding(horizontal = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "超分辨率：$anime4KLabel",
+                        color = if (anime4KActive) Color.Yellow else Color.White.copy(alpha = 0.7f),
+                        fontSize = 12.sp,
+                        fontWeight = if (anime4KActive) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
+
+                // 弹幕显示/隐藏按钮
+                IconButton(
+                    onClick = {
+                        onDanmakuToggle()
+                        viewModel.resetAutoHideTimer()
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (danmakuVisible) R.drawable.ic_danmaku_visible
+                            else R.drawable.ic_danmaku_hidden
+                        ),
+                        contentDescription = if (danmakuVisible) "隐藏弹幕" else "显示弹幕",
+                        tint = if (danmakuVisible) Color.White else Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
+
+                // 快退N秒按钮
+                IconButton(
+                    onClick = {
+                        viewModel.seekRelative(-seekTimeSeconds)
+                        viewModel.resetAutoHideTimer()
+                    },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.rewind_28_filled),
+                        contentDescription = "快退${seekTimeSeconds}秒",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // 上一集按钮
+                IconButton(
+                    onClick = {
+                        viewModel.previousVideo()
+                        viewModel.resetAutoHideTimer()
+                    },
+                    enabled = hasPrevious,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_player_previous1),
+                        contentDescription = "上一集",
+                        tint = if (hasPrevious) Color.White else Color.White.copy(alpha = 0.3f),
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // 中央播放/暂停按钮
+            IconButton(
+                onClick = {
+                    viewModel.togglePlayPause()
+                    viewModel.resetAutoHideTimer()
+                },
+                modifier = Modifier.size(64.dp)
+            ) {
+                Icon(
+                    painter = painterResource(
+                        if (paused == true) R.drawable.ic_player_play1 else R.drawable.ic_player_pause1
+                    ),
+                    contentDescription = if (paused == true) "播放" else "暂停",
+                    tint = Color.White,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // 右侧按钮组（下一集 + 快进 + 倍速）
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 下一集按钮
+                IconButton(
+                    onClick = {
+                        viewModel.nextVideo()
+                        viewModel.resetAutoHideTimer()
+                    },
+                    enabled = hasNext,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_player_next1),
+                        contentDescription = "下一集",
+                        tint = if (hasNext) Color.White else Color.White.copy(alpha = 0.3f),
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // 快进N秒按钮
+                IconButton(
+                    onClick = {
+                        viewModel.seekRelative(seekTimeSeconds)
+                        viewModel.resetAutoHideTimer()
+                    },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.fast_forward_28_filled),
+                        contentDescription = "快进${seekTimeSeconds}秒",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // 倍速按钮（循环切换用户自定义倍速列表）
+                IconButton(
+                    onClick = {
+                        val presets = customSpeedPresets
+                        if (presets.isNotEmpty()) {
+                            val currentIdx = presets.indexOfFirst { kotlin.math.abs(it - speed) < 0.01f }
+                            val nextIdx = if (currentIdx < 0 || currentIdx >= presets.size - 1) 0 else currentIdx + 1
+                            viewModel.setSpeed(presets[nextIdx].toDouble())
+                        }
+                        viewModel.resetAutoHideTimer()
+                    },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            painter = painterResource(R.drawable.top_speed_24_regular),
+                            contentDescription = "倍速",
+                            tint = if (speed != 1.0f) Color.Yellow else Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        if (speed != 1.0f) {
+                            Text(
+                                text = formatSpeed(speed),
+                                color = Color.Yellow,
+                                fontSize = 7.sp,
+                                modifier = Modifier.offset(y = 13.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 格式化时间显示（秒 → MM:SS 或 HH:MM:SS）
+ */
+private fun formatTime(seconds: Int): String {
+    if (seconds < 0) return "00:00"
+    
+    val hours = seconds / 3600
+    val minutes = (seconds % 3600) / 60
+    val secs = seconds % 60
+    
+    return if (hours > 0) {
+        String.format("%d:%02d:%02d", hours, minutes, secs)
+    } else {
+        String.format("%02d:%02d", minutes, secs)
+    }
+}
+
+/**
+ * 格式化倍速显示（去除不必要的小数位）
+ * 例如：1.0 → "1x"，1.25 → "1.25x"，2.0 → "2x"
+ */
+private fun formatSpeed(speed: Float): String {
+    return if (speed == kotlin.math.floor(speed.toDouble()).toFloat()) {
+        "${speed.toInt()}x"
+    } else {
+        "${speed}x"
+    }
+}
+
+/**
+ * 水平滑动 Seek 预览覆盖层
+ * 正在滑动时居中显示：目标时间 + 偏移量（如 "01:23\n[+0:10]"）
+ */
+@Composable
+fun SwipeSeekOverlay(
+    viewModel: PlayerViewModel,
+    modifier: Modifier = Modifier
+) {
+    val swipeSeekPreview by viewModel.swipeSeekPreview.collectAsState()
+
+    androidx.compose.animation.AnimatedVisibility(
+        visible = swipeSeekPreview != null,
+        enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(150)),
+        exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(200)),
+        modifier = modifier.fillMaxSize()
+    ) {
+        val preview = swipeSeekPreview ?: return@AnimatedVisibility
+        val targetTime = formatTime(preview.targetSeconds)
+        val delta = preview.deltaSeconds
+        val sign = if (delta >= 0) "+" else ""
+        val deltaText = "$sign${formatTime(kotlin.math.abs(delta))}"
+
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = 0.75f))
+                    .padding(horizontal = 32.dp, vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = targetTime,
+                    color = Color.White,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "[$sign$deltaText]",
+                    color = if (delta >= 0) Color(0xFF4FC3F7) else Color(0xFFFF8A65),
+                    fontSize = 16.sp
+                )
+            }
+        }
+    }
+}
+
+// =====================================================================
+// 顶部控制面板
+// =====================================================================
+
+/**
+ * 顶部控制面板
+ *
+ * 功能：
+ * - 渐变背景（上深下透明）
+ * - 返回按钮
+ * - 视频标题（可点击，显示播放列表）
+ * - 电量百分比 + 当前时间
+ * - 字幕按钮
+ * - 画面比例按钮
+ * - 锁定按钮
+ * - 更多选项按钮
+ */
+@Composable
+fun TopControlPanel(
+    viewModel: PlayerViewModel,
+    onBackPress: () -> Unit,
+    onSubtitleClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
+    onDanmakuClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
+    onAspectRatioClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
+    onMoreClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
+    onVideoTitleClick: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val videoTitle by viewModel.videoTitle.collectAsState()
+    val context = LocalContext.current
+
+    // 电量（BroadcastReceiver，跟随 Composable 生命周期注册/注销）
+    val batteryLevel by produceState(initialValue = -1, context) {
+        val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: Context?, intent: Intent?) {
+                val level = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+                val scale = intent?.getIntExtra(BatteryManager.EXTRA_SCALE, 100) ?: 100
+                if (level >= 0 && scale > 0) value = level * 100 / scale
+            }
+        }
+        context.registerReceiver(receiver, filter)
+        awaitDispose { context.unregisterReceiver(receiver) }
+    }
+
+    // 时钟（每 30 秒刷新一次）
+    var clockTime by remember {
+        mutableStateOf(SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date()))
+    }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(30_000L)
+            clockTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+        }
+    }
+
+    // 追踪各按钮在屏幕中的位置，用于对话框定位
+    var subtitleBounds by remember { mutableStateOf(android.graphics.Rect()) }
+    var danmakuBounds by remember { mutableStateOf(android.graphics.Rect()) }
+    var ratioBounds by remember { mutableStateOf(android.graphics.Rect()) }
+    var moreBounds by remember { mutableStateOf(android.graphics.Rect()) }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Black.copy(alpha = 0.72f),
+                        Color.Black.copy(alpha = 0.45f),
+                        Color.Transparent
+                    )
+                )
+            )
+            .statusBarsPadding()
+            .padding(start = 4.dp, top = 20.dp, end = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // 返回按钮
+        IconButton(
+            onClick = onBackPress,
+            modifier = Modifier.size(40.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.arrow_left_48_regular),
+                contentDescription = "返回",
+                tint = Color.White,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(2.dp))
+
+        // 视频标题（占剩余空间，可点击展开视频列表）
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .clickable(onClick = onVideoTitleClick)
+                .padding(vertical = 4.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Text(
+                text = videoTitle,
+                color = Color.White,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                lineHeight = 17.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // 电量 + 时间（两行小字）
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(end = 2.dp)
+        ) {
+            if (batteryLevel >= 0) {
+                Text(
+                    text = "$batteryLevel%",
+                    color = Color.White,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 12.sp
+                )
+            }
+            Text(
+                text = clockTime,
+                color = Color.White,
+                fontSize = 10.sp,
+                lineHeight = 12.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.width(2.dp))
+
+        // 字幕按钮
+        IconButton(
+            onClick = {
+                subtitleBounds.let { b -> onSubtitleClick(b.left, b.top, b.width(), b.height()) }
+                viewModel.resetAutoHideTimer()
+            },
+            modifier = Modifier
+                .size(32.dp)
+                .onGloballyPositioned { coords ->
+                    val r = coords.boundsInWindow()
+                    subtitleBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
+                }
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.subtitles_24_filled),
+                contentDescription = "字幕",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(6.dp))
+
+        // 弹幕按钮
+        IconButton(
+            onClick = {
+                danmakuBounds.let { b -> onDanmakuClick(b.left, b.top, b.width(), b.height()) }
+                viewModel.resetAutoHideTimer()
+            },
+            modifier = Modifier
+                .size(32.dp)
+                .onGloballyPositioned { coords ->
+                    val r = coords.boundsInWindow()
+                    danmakuBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
+                }
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.comment_note_24_filled),
+                contentDescription = "弹幕",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(6.dp))
+
+        // 画面比例按钮
+        IconButton(
+            onClick = {
+                ratioBounds.let { b -> onAspectRatioClick(b.left, b.top, b.width(), b.height()) }
+                viewModel.resetAutoHideTimer()
+            },
+            modifier = Modifier
+                .size(32.dp)
+                .onGloballyPositioned { coords ->
+                    val r = coords.boundsInWindow()
+                    ratioBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
+                }
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ratio_one_to_one_24_filled),
+                contentDescription = "画面比例",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(6.dp))
+
+        // 锁定按钮
+        IconButton(
+            onClick = { viewModel.toggleLock() },
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.lock_closed_48_filled),
+                contentDescription = "锁定",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(6.dp))
+
+        // 更多选项按钮
+        IconButton(
+            onClick = {
+                moreBounds.let { b -> onMoreClick(b.left, b.top, b.width(), b.height()) }
+                viewModel.resetAutoHideTimer()
+            },
+            modifier = Modifier
+                .size(32.dp)
+                .onGloballyPositioned { coords ->
+                    val r = coords.boundsInWindow()
+                    moreBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
+                }
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.more_vertical_48_regular),
+                contentDescription = "更多",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+// =====================================================================
+// 解锁按钮（锁定模式下显示）
+// =====================================================================
+
+/**
+ * 锁定模式下显示的解锁按钮
+ *
+ * - 锁定后立即显示，3 秒无操作后自动淡出
+ * - 点击任意解锁按钮（左/右）均可解锁
+ * - 单击屏幕（手势层会通知 ViewModel showControls）时重新显示
+ */
+@Composable
+fun UnlockButtons(
+    viewModel: PlayerViewModel,
+    modifier: Modifier = Modifier
+) {
+    val areControlsLocked by viewModel.areControlsLocked.collectAsState()
+
+    // 用于触发自动隐藏的 key：每次进入锁定状态重新计时
+    var visible by remember { mutableStateOf(true) }
+
+    LaunchedEffect(areControlsLocked) {
+        if (areControlsLocked) {
+            visible = true
+            delay(3_000L)
+            visible = false
+        }
+    }
+
+    if (!areControlsLocked) return
+
+    Box(modifier = modifier.fillMaxSize()) {
+        // 左侧解锁按钮
+        androidx.compose.animation.AnimatedVisibility(
+            visible = visible,
+            enter = androidx.compose.animation.fadeIn(),
+            exit = androidx.compose.animation.fadeOut(),
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = 56.dp)
+        ) {
+            IconButton(
+                onClick = { viewModel.toggleLock() },
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(Color.Black.copy(alpha = 0.35f), shape = CircleShape)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.lock_open_48_filled),
+                    contentDescription = "解锁",
+                    tint = Color.White,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+        }
+
+        // 右侧解锁按钮
+        androidx.compose.animation.AnimatedVisibility(
+            visible = visible,
+            enter = androidx.compose.animation.fadeIn(),
+            exit = androidx.compose.animation.fadeOut(),
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 56.dp)
+        ) {
+            IconButton(
+                onClick = { viewModel.toggleLock() },
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(Color.Black.copy(alpha = 0.35f), shape = CircleShape)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.lock_open_48_filled),
+                    contentDescription = "解锁",
+                    tint = Color.White,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 长按倍速提示覆盖层
+ * 长按时顶部居中显示"正在X.Xx倍速播放"
+ */
+@Composable
+fun LongPressSpeedOverlay(
+    viewModel: PlayerViewModel,
+    modifier: Modifier = Modifier
+) {
+    val isLongPressing by viewModel.isLongPressing.collectAsState()
+    val speed by viewModel.speed.collectAsState()
+
+    androidx.compose.animation.AnimatedVisibility(
+        visible = isLongPressing,
+        enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(150)),
+        exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(300)),
+        modifier = modifier.fillMaxSize()
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            Text(
+                text = "正在${String.format("%.1f", speed)}倍速播放",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .padding(top = 48.dp)
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+            )
+        }
+    }
+}
+

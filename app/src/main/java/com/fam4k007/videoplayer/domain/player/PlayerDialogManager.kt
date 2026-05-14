@@ -43,6 +43,17 @@ class PlayerDialogManager(
 
     private val context: Context?
         get() = activityRef.get()
+
+    // 最后一次触发对话框的锚点位置（用于 Compose 按钮触发时定位）
+    private var lastAnchorX = 0
+    private var lastAnchorY = 0
+    private var lastAnchorW = 100
+    private var lastAnchorH = 50
+
+    /** 由 VideoPlayerActivity 在 Compose 按钮点击时调用，设置锚点位置 */
+    fun setLastAnchor(x: Int, y: Int, w: Int, h: Int) {
+        lastAnchorX = x; lastAnchorY = y; lastAnchorW = w; lastAnchorH = h
+    }
     
     // 追踪所有活动的Dialog，防止内存泄漏
     private val activeDialogs = mutableListOf<Dialog>()
@@ -107,6 +118,7 @@ class PlayerDialogManager(
                 btnMore,
                 items,
                 currentTrackIndex,
+                title = "音频轨道",
                 showAbove = false,
                 useFixedHeight = false,
                 showScrollHint = false
@@ -137,6 +149,7 @@ class PlayerDialogManager(
             btnMore,
             items,
             currentSelection,
+            title = "解码方式",
             showAbove = false,
             useFixedHeight = false,
             showScrollHint = false
@@ -167,6 +180,7 @@ class PlayerDialogManager(
             btnAspectRatio,
             items,
             currentSelection,
+            title = "画面比例",
             showAbove = false,
             useFixedHeight = false,
             showScrollHint = false
@@ -191,6 +205,7 @@ class PlayerDialogManager(
         anchorView: View,
         items: List<String>,
         selectedPosition: Int = -1,
+        title: String = "",
         showAbove: Boolean = false,
         useFixedHeight: Boolean = false,
         showScrollHint: Boolean = false,
@@ -204,6 +219,15 @@ class PlayerDialogManager(
         val layoutRes = if (useFixedHeight) R.layout.dialog_popup_menu_fixed else R.layout.dialog_popup_menu
         val dialogView = activity.layoutInflater.inflate(layoutRes, null)
         val recyclerView = dialogView.findViewById<RecyclerView>(R.id.recyclerViewPopup)
+
+        // 设置标题
+        val tvTitle = dialogView.findViewById<TextView>(R.id.tvDialogTitle)
+        val titleDivider = dialogView.findViewById<View>(R.id.titleDivider)
+        if (title.isNotEmpty()) {
+            tvTitle?.text = title
+            tvTitle?.visibility = View.VISIBLE
+            titleDivider?.visibility = View.VISIBLE
+        }
 
         recyclerView.layoutManager = LinearLayoutManager(activity)
         recyclerView.isVerticalScrollBarEnabled = false
@@ -223,9 +247,22 @@ class PlayerDialogManager(
         dialog.setContentView(dialogView)
         dialog.setCanceledOnTouchOutside(true)
 
-        // 获取锚点视图在屏幕上的位置
+        // 获取锚点位置：优先使用可见视图的实际坐标，否则用 lastAnchor
         val location = IntArray(2)
-        anchorView.getLocationOnScreen(location)
+        val anchorW: Int
+        val anchorH: Int
+        if (anchorView.isShown) {
+            anchorView.getLocationOnScreen(location)
+            anchorW = anchorView.width.coerceAtLeast(1)
+            anchorH = anchorView.height.coerceAtLeast(1)
+            // 更新 lastAnchor 供嵌套对话框使用
+            lastAnchorX = location[0]; lastAnchorY = location[1]
+            lastAnchorW = anchorW; lastAnchorH = anchorH
+        } else {
+            // View 不可见（GONE / 在 GONE 父容器内），使用存储的 lastAnchor
+            location[0] = lastAnchorX; location[1] = lastAnchorY
+            anchorW = lastAnchorW; anchorH = lastAnchorH
+        }
         val anchorX = location[0]
         val anchorY = location[1]
 
@@ -234,22 +271,24 @@ class PlayerDialogManager(
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
         )
-        val dialogWidth = dialogView.measuredWidth.coerceAtLeast(anchorView.width)
+        val dialogWidth = dialogView.measuredWidth.coerceAtLeast(anchorW)
         val dialogHeight = dialogView.measuredHeight
 
-        // 计算对话框位置
+        // 计算对话框位置，防止超出屏幕左右边缘
+        val screenWidth = activity.resources.displayMetrics.widthPixels
+        val rawX = anchorX + (anchorW - dialogWidth) / 2
+        val margin = 8.dpToPx()
+
         val window = dialog.window
         val layoutParams = window?.attributes
         layoutParams?.gravity = android.view.Gravity.TOP or android.view.Gravity.START
-        layoutParams?.x = anchorX + (anchorView.width - dialogWidth) / 2
+        layoutParams?.x = rawX.coerceIn(margin, (screenWidth - dialogWidth - margin).coerceAtLeast(margin))
 
         // 根据参数决定显示在上方还是下方
         layoutParams?.y = if (showAbove) {
-            // 显示在按钮上方，不遮挡按钮
             anchorY - dialogHeight - 10
         } else {
-            // 显示在按钮下方，不遮挡按钮
-            anchorY + anchorView.height + 10
+            anchorY + anchorH + 10
         }
 
         layoutParams?.width = dialogWidth
@@ -276,12 +315,9 @@ class PlayerDialogManager(
         if (selectedPosition >= 0 && useFixedHeight) {
             val nestedScrollView = dialogView.findViewById<androidx.core.widget.NestedScrollView>(R.id.nestedScrollViewPopup)
             nestedScrollView?.post {
-                // 计算选中项的位置
-                val itemHeight = 48.dpToPx() // 每个选项的高度
+                val itemHeight = 50.dpToPx()
                 val scrollViewHeight = nestedScrollView.height
                 val targetY = selectedPosition * itemHeight - (scrollViewHeight / 2) + (itemHeight / 2)
-
-                // 滚动到目标位置，让选中项居中
                 nestedScrollView.smoothScrollTo(0, targetY.coerceAtLeast(0))
             }
         }
@@ -305,6 +341,7 @@ class PlayerDialogManager(
             btnSubtitle,
             menuItems,
             selectedPosition = -1,
+            title = "字幕",
             showAbove = false,
             useFixedHeight = true,
             showScrollHint = true
@@ -371,6 +408,7 @@ class PlayerDialogManager(
                 btnSubtitle,
                 trackNames,
                 currentSelection,
+                title = "字幕轨道",
                 showAbove = false,
                 useFixedHeight = false,
                 showScrollHint = false
@@ -529,12 +567,14 @@ class PlayerDialogManager(
         val speeds = speedValues.map { "${it}x" }
         val currentSelection = speedValues.indexOf(currentSpeed)
 
-        val btnSpeed = activity.findViewById<ImageView>(R.id.btnSpeed)
+        // btnSpeed 已移至 Compose UI，使用 btnMore 作为对话框锚点
+        val anchor = activity.findViewById<android.view.View>(R.id.btnMore)
 
         showPopupDialog(
-            btnSpeed,
+            anchor,
             speeds,
             currentSelection,
+            title = "播放速度",
             showAbove = true,
             useFixedHeight = true,
             showScrollHint = true
@@ -573,18 +613,14 @@ class PlayerDialogManager(
         
         val currentSelection = modes.indexOf(currentMode)
         
-        // 根据当前屏幕方向选择锚点按钮
-        val isPortrait = activity.resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
-        val btnAnime4K = if (isPortrait) {
-            activity.findViewById<android.widget.Button>(R.id.btnAnime4KFloat)
-        } else {
-            activity.findViewById<android.widget.Button>(R.id.btnAnime4K)
-        }
+        // btnAnime4K 已移至 Compose UI，两种方向均使用 btnAnime4KFloat
+        val btnAnime4K = activity.findViewById<android.widget.Button>(R.id.btnAnime4KFloat)
 
         showPopupDialog(
             btnAnime4K,
             modeNames,
             currentSelection,
+            title = "Anime4K 模式",
             showAbove = true,  // 横屏和竖屏都显示在上方
             useFixedHeight = true,
             showScrollHint = true
@@ -631,6 +667,7 @@ class PlayerDialogManager(
             btnMore,
             items,
             selectedPosition = -1,
+            title = "更多选项",
             showAbove = false,
             useFixedHeight = true,  // 改为固定高度，最多显示3项
             showScrollHint = true   // 显示滚动提示
@@ -705,6 +742,7 @@ class PlayerDialogManager(
                 btnMore,
                 chapters,
                 currentChapter,
+                title = "章节",
                 showAbove = false,
                 useFixedHeight = true,
                 showScrollHint = true
@@ -747,6 +785,7 @@ class PlayerDialogManager(
             btnDanmaku,
             menuItems,
             selectedPosition = -1,
+            title = "弹幕",
             showAbove = false,
             useFixedHeight = false,
             showScrollHint = false
@@ -777,6 +816,7 @@ class PlayerDialogManager(
             btnDanmaku,
             sourceItems,
             selectedPosition = -1,
+            title = "弹幕来源",
             showAbove = false,
             useFixedHeight = false,
             showScrollHint = false
@@ -817,6 +857,7 @@ class PlayerDialogManager(
             btnDanmaku,
             menuItems,
             selectedPosition = selectedIndex,
+            title = "弹幕轨道",
             showAbove = false,
             useFixedHeight = false,
             showScrollHint = false
@@ -950,35 +991,43 @@ class PlayerDialogManager(
         inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
             val itemText: TextView = view.findViewById(R.id.itemText)
             val innerLayout: LinearLayout = view.findViewById(R.id.innerLayout)
+            val radioButton: RadioButton = view.findViewById(R.id.radioButton)
+            val itemDivider: View = view.findViewById(R.id.itemDivider)
 
             fun bind(position: Int) {
                 val activity = activityRef.get() ?: return
                 
                 itemText.text = items[position]
-                itemView.isClickable = true
-                itemView.isFocusable = true
-                itemView.background = null
-                innerLayout.background = null
+
+                // 最后一项隐藏分隔线
+                itemDivider.visibility = if (position == items.size - 1) View.INVISIBLE else View.VISIBLE
 
                 if (selectedPosition == -1) {
-                    itemText.setTextColor(android.graphics.Color.parseColor("#333333"))
+                    // 无选中项：隐藏 RadioButton，使用普通文字色
+                    radioButton.visibility = View.GONE
+                    itemText.setTextColor(android.graphics.Color.parseColor("#212121"))
+                    itemText.setTypeface(null, android.graphics.Typeface.NORMAL)
                 } else {
+                    // 有选中项：显示 RadioButton，选中项高亮
+                    radioButton.visibility = View.VISIBLE
                     val isSelected = position == selectedPosition
+                    val primaryColor = ThemeManager.getThemeColor(
+                        activity,
+                        com.google.android.material.R.attr.colorPrimary
+                    )
+                    radioButton.isChecked = isSelected
+                    radioButton.buttonTintList = android.content.res.ColorStateList.valueOf(primaryColor)
+
                     if (isSelected) {
-                        itemText.setTextColor(
-                            ThemeManager.getThemeColor(
-                                activity,
-                                com.google.android.material.R.attr.colorPrimary
-                            )
-                        )
+                        itemText.setTextColor(primaryColor)
                         itemText.setTypeface(null, android.graphics.Typeface.BOLD)
                     } else {
-                        itemText.setTextColor(android.graphics.Color.parseColor("#333333"))
+                        itemText.setTextColor(android.graphics.Color.parseColor("#757575"))
                         itemText.setTypeface(null, android.graphics.Typeface.NORMAL)
                     }
                 }
 
-                itemView.setOnClickListener {
+                innerLayout.setOnClickListener {
                     onItemClick(position)
                 }
             }

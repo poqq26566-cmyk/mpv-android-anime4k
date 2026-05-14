@@ -52,11 +52,9 @@ import com.fam4k007.videoplayer.remote.RemoteUrlParser
 import com.fam4k007.videoplayer.domain.player.GestureHandler
 import com.fam4k007.videoplayer.domain.player.PlaybackEngine
 import com.fam4k007.videoplayer.domain.player.PlayerControlsManager
-import com.fam4k007.videoplayer.player.DoubleTapSeekIndicator
 import com.fam4k007.videoplayer.domain.player.SeriesManager
 import com.fam4k007.videoplayer.domain.player.PlayerDialogManager
 import com.fam4k007.videoplayer.domain.player.FilePickerManager
-import com.fam4k007.videoplayer.domain.player.SeekBarThumbnailHelper
 import com.fam4k007.videoplayer.domain.player.SubtitleDialogCallback
 import com.fam4k007.videoplayer.domain.player.DanmakuDialogCallback
 import com.fam4k007.videoplayer.domain.player.MoreOptionsCallback
@@ -115,7 +113,6 @@ class VideoPlayerActivity : AppCompatActivity(),
     private lateinit var screenshotManager: com.fam4k007.videoplayer.manager.ScreenshotManager
     private lateinit var skipIntroOutroManager: com.fanchen.fam4k007.manager.SkipIntroOutroManager
     private lateinit var thumbnailManager: com.fam4k007.videoplayer.manager.VideoThumbnailManager
-    private var seekBarThumbnailHelper: SeekBarThumbnailHelper? = null
 
     private lateinit var mpvView: CustomMPVView
     private lateinit var danmakuView: com.fam4k007.videoplayer.danmaku.DanmakuPlayerView
@@ -237,9 +234,9 @@ class VideoPlayerActivity : AppCompatActivity(),
     @Deprecated("Use viewModel.isFromHomeContinue instead", ReplaceWith("viewModel.isFromHomeContinue.value"))
     private var isFromHomeContinue = false
     
-    private lateinit var seekHint: TextView
-    private lateinit var speedHint: LinearLayout
-    private lateinit var speedHintText: TextView
+    private var seekHint: TextView? = null
+    private var speedHint: LinearLayout? = null
+    private var speedHintText: TextView? = null
     
     private lateinit var subtitlePickerLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>
     
@@ -452,10 +449,6 @@ class VideoPlayerActivity : AppCompatActivity(),
             hideResumeProgressPrompt()
         }
         
-        seekHint = findViewById(R.id.seekHint)
-        speedHint = findViewById(R.id.speedHint)
-        speedHintText = findViewById(R.id.speedHintText)
-        
         danmakuManager = com.fam4k007.videoplayer.domain.danmaku.DanmakuManager(this, danmakuView)
         danmakuManager.initialize()
         
@@ -474,6 +467,22 @@ class VideoPlayerActivity : AppCompatActivity(),
         
         // 【阶段2.1】添加Compose测试层（不影响现有XML布局）
         setupComposeTestLayer()
+        
+        // 初始化当前系统亮度到ViewModel（用于手势调节）
+        val currentBrightness = window.attributes.screenBrightness
+        if (currentBrightness > 0) {
+            viewModel.setInitialBrightness(currentBrightness)
+        } else {
+            // 如果当前使用系统默认亮度，设置为0.5
+            viewModel.setInitialBrightness(0.5f)
+        }
+        
+        // 初始化当前音量到ViewModel（用于手势调节）
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+        val currentVolume = audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC)
+        val maxVolume = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC)
+        val volumePercent = ((currentVolume.toFloat() / maxVolume) * 100).toInt()
+        viewModel.setInitialVolume(volumePercent)
         
     }
     
@@ -496,7 +505,48 @@ class VideoPlayerActivity : AppCompatActivity(),
                     VideoPlayerTheme {
                         PlayerControls(
                             viewModel = viewModel,
-                            onBackPress = { finish() }
+                            onBackPress = { finish() },
+                            onAnime4KClick = {
+                                dialogManager.showAnime4KModeDialog(anime4KMode)
+                            },
+                            onDanmakuToggle = {
+                                val hasLoadedDanmaku = danmakuManager.getCurrentDanmakuPath() != null
+                                if (!hasLoadedDanmaku) {
+                                    com.fam4k007.videoplayer.utils.DialogUtils.showToastShort(
+                                        this@VideoPlayerActivity, "请先加载弹幕文件"
+                                    )
+                                } else {
+                                    val currentVisible = danmakuManager.isVisible()
+                                    val newSelected = !currentVisible
+                                    danmakuManager.setTrackSelected(newSelected)
+                                    if (newSelected && danmakuManager.isPrepared()) {
+                                        val currentPos = (playbackEngine.currentPosition * 1000).toLong()
+                                        danmakuManager.seekTo(currentPos)
+                                        if (isPlaying) danmakuManager.resume()
+                                    }
+                                    // 同步到 ViewModel 状态（驱动按钮图标更新）
+                                    viewModel.setDanmakuVisible(newSelected)
+                                }
+                            },
+                            onSubtitleClick = { anchorX, anchorY, anchorW, anchorH ->
+                                dialogManager.setLastAnchor(anchorX, anchorY, anchorW, anchorH)
+                                dialogManager.showSubtitleDialog()
+                            },
+                            onDanmakuClick = { anchorX, anchorY, anchorW, anchorH ->
+                                dialogManager.setLastAnchor(anchorX, anchorY, anchorW, anchorH)
+                                dialogManager.showDanmakuDialog()
+                            },
+                            onAspectRatioClick = { anchorX, anchorY, anchorW, anchorH ->
+                                dialogManager.setLastAnchor(anchorX, anchorY, anchorW, anchorH)
+                                dialogManager.showAspectRatioDialog(currentVideoAspect)
+                            },
+                            onMoreClick = { anchorX, anchorY, anchorW, anchorH ->
+                                dialogManager.setLastAnchor(anchorX, anchorY, anchorW, anchorH)
+                                dialogManager.showMoreOptionsDialog()
+                            },
+                            onVideoTitleClick = {
+                                showVideoListDrawer()
+                            }
                         )
                     }
                 }
@@ -512,7 +562,6 @@ class VideoPlayerActivity : AppCompatActivity(),
             Logger.d(TAG, "Compose test layer added successfully")
         } catch (e: Exception) {
             Logger.e(TAG, "Failed to setup Compose test layer: ${e.message}", e)
-            // 失败不影响现有功能，只记录日志
         }
     }
     
@@ -529,9 +578,6 @@ class VideoPlayerActivity : AppCompatActivity(),
             viewModel.paused.collect { paused ->
                 val isPlaying = paused != true
                 this@VideoPlayerActivity.isPlaying = isPlaying
-                
-                // 【方案A】通过ViewModel自动更新播放按钮
-                controlsManager?.updatePlayPauseButton(isPlaying)
                 
                 // 暂停指示器显示/隐藏
                 if (paused == true && !controlsManager!!.isVisible) {
@@ -559,15 +605,11 @@ class VideoPlayerActivity : AppCompatActivity(),
                     this@VideoPlayerActivity.currentPosition = position.toDouble()
                     this@VideoPlayerActivity.duration = duration.toDouble()
                     
-                    // 【方案A】通过ViewModel自动更新进度条
-                    controlsManager?.updateProgress(position.toDouble(), duration.toDouble())
-                    
                     // 初始化缩略图（仅一次）
                     if (!isThumbnailInitialized) {
                         videoUri?.let { uri ->
                             val isWebDav = intent.getBooleanExtra("is_webdav", false)
                             thumbnailManager.initializeVideo(uri, (duration * 1000L), isWebDav)
-                            seekBarThumbnailHelper?.updateDuration(duration.toDouble())
                             viewModel.setThumbnailInitialized(true)
                         }
                     }
@@ -581,8 +623,8 @@ class VideoPlayerActivity : AppCompatActivity(),
             viewModel.speed.collect { speed ->
                 com.fam4k007.videoplayer.utils.Logger.v(TAG, "【ViewModel】Speed changed to: ${speed}x")
                 
-                // 速度变化时显示提示（排除初始值）
-                if (previousSpeed != 1.0f && speed != previousSpeed) {
+                // 速度变化时显示提示（排除初始值；恢复到1.0x时不显示，避免长按松手后误触发）
+                if (previousSpeed != 1.0f && speed != previousSpeed && speed != 1.0f) {
                     showSpeedChangeHint(speed)
                 }
                 previousSpeed = speed
@@ -605,11 +647,12 @@ class VideoPlayerActivity : AppCompatActivity(),
         
         // ==================== 阶段1.2：UI状态监听示例 ====================
         
-        // 监听控制栏显示/隐藏状态（示例）
+        // 监听控制栏显示/隐藏状态 — 同步到 controlsManager，使顶部面板与 Compose 底部面板一起显示/隐藏
         lifecycleScope.launch {
             viewModel.controlsShown.collect { shown ->
-                // 【示例】当ViewModel状态变化时，同步到Manager
-                // 未来可完全由ViewModel驱动，不再需要Manager的isVisible状态
+                if (::controlsManager.isInitialized) {
+                    if (shown) controlsManager.showControls() else controlsManager.hideControls()
+                }
                 com.fam4k007.videoplayer.utils.Logger.v(TAG, "【ViewModel】Controls shown: $shown")
             }
         }
@@ -853,6 +896,29 @@ class VideoPlayerActivity : AppCompatActivity(),
                 Logger.v(TAG, "【ViewModel】Anime4K quality: $quality")
             }
         }
+        
+        // ==================== 视频切换事件监听 ====================
+        
+        // 监听上下集切换事件（从Compose UI触发）
+        lifecycleScope.launch {
+            viewModel.switchVideoEvent.collect { uri ->
+                Logger.d(TAG, "【ViewModel】Switching to video: $uri")
+                playVideo(uri)
+            }
+        }
+        
+        // ==================== 手势相关监听 ====================
+        
+        // 监听亮度变化（手势调节）
+        lifecycleScope.launch {
+            viewModel.currentBrightness.collect { brightness ->
+                // 设置窗口亮度
+                window.attributes = window.attributes.apply {
+                    screenBrightness = brightness
+                }
+                Logger.v(TAG, "【ViewModel】Brightness: $brightness")
+            }
+        }
     }
 
     /**
@@ -904,10 +970,10 @@ class VideoPlayerActivity : AppCompatActivity(),
                         getChapters = { playbackEngine.getChapters() },
                         seekTo = { playbackEngine.seekTo(it) },
                         onOutroReached = {
-                            // 使用seriesManager判断是否有下一集
-                            val hadNext = seriesManager.hasNext
+                            // 统一通过 ViewModel 切换，保证 _currentIndex 与播放状态始终同步
+                            val hadNext = viewModel.hasNext.value
                             if (hadNext) {
-                                playNextVideo()
+                                viewModel.nextVideo()
                             }
                             hadNext
                         }
@@ -916,7 +982,6 @@ class VideoPlayerActivity : AppCompatActivity(),
                 
                 override fun onFileLoaded() {
                     isPlaying = true
-                    controlsManager?.updatePlayPauseButton(true)
                     
                     // 不在这里隐藏加载动画，让 onBufferingStateChanged 来控制
                     // 因为文件加载后可能还在缓冲
@@ -941,8 +1006,10 @@ class VideoPlayerActivity : AppCompatActivity(),
                         preferencesManager.clearPlaybackPosition(uri.toString())
                         com.fam4k007.videoplayer.utils.Logger.d(TAG, "Video ended, position reset to 0")
                     }
-                    
-                    com.fam4k007.videoplayer.utils.Logger.d(TAG, "Video playback ended, auto-play disabled")
+
+                    // 视频播放完毕，自动切到下一集（nextVideo 内部自带 guard）
+                    com.fam4k007.videoplayer.utils.Logger.d(TAG, "Video ended, trying auto-play next")
+                    viewModel.nextVideo()
                 }
                 
                 override fun onError(message: String) {
@@ -993,20 +1060,17 @@ class VideoPlayerActivity : AppCompatActivity(),
                 }
                 
                 override fun onGestureEnd() {
-                    if (seekHint.visibility == View.VISIBLE) {
-                        seekHint.animate()
-                            .alpha(0f)
-                            .setDuration(300)
-                            .withEndAction { seekHint.visibility = View.GONE }
-                            .start()
+                    seekHint?.let {
+                        if (it.visibility == View.VISIBLE) {
+                            it.animate().alpha(0f).setDuration(300)
+                                .withEndAction { it.visibility = View.GONE }.start()
+                        }
                     }
-                    
-                    if (speedHint.visibility == View.VISIBLE) {
-                        speedHint.animate()
-                            .alpha(0f)
-                            .setDuration(300)
-                            .withEndAction { speedHint.visibility = View.GONE }
-                            .start()
+                    speedHint?.let {
+                        if (it.visibility == View.VISIBLE) {
+                            it.animate().alpha(0f).setDuration(300)
+                                .withEndAction { it.visibility = View.GONE }.start()
+                        }
                     }
                 }
                 
@@ -1017,20 +1081,13 @@ class VideoPlayerActivity : AppCompatActivity(),
                     danmakuManager.setSpeed(speedBeforeLongPress.toFloat())
                     
                     // 隐藏速度提示
-                    speedHint.animate()
-                        .alpha(0f)
-                        .setDuration(200)
-                        .withEndAction {
-                            speedHint.visibility = View.GONE
-                        }
-                        .start()
+                    speedHint?.animate()?.alpha(0f)?.setDuration(200)
+                        ?.withEndAction { speedHint?.visibility = View.GONE }?.start()
                 }
                 
                 override fun onSingleTap() {
-                    // 如果处于锁定状态，切换解锁按钮显示
-                    if (controlsManager?.isLocked == true) {
-                        controlsManager?.toggleUnlockButtonVisibility()
-                    } else {
+                    // 锁定状态下点击由 Compose 解锁按钮处理
+                    if (controlsManager?.isLocked != true) {
                         controlsManager?.toggleControls()
                     }
                 }
@@ -1051,13 +1108,12 @@ class VideoPlayerActivity : AppCompatActivity(),
                     danmakuManager.setSpeed(longPressSpeed)
                     
                     // 显示速度提示
-                    speedHintText.text = "正在${String.format("%.1f", longPressSpeed)}倍速播放"
-                    speedHint.visibility = View.VISIBLE
-                    speedHint.alpha = 0f
-                    speedHint.animate()
-                        .alpha(1f)
-                        .setDuration(200)
-                        .start()
+                    speedHintText?.text = "正在${String.format("%.1f", longPressSpeed)}倍速播放"
+                    speedHint?.apply {
+                        visibility = View.VISIBLE
+                        alpha = 0f
+                        animate().alpha(1f).setDuration(200).start()
+                    }
                 }
                 
                 override fun onSeekGesture(seekSeconds: Int, isRelativeSeek: Boolean) {
@@ -1074,16 +1130,12 @@ class VideoPlayerActivity : AppCompatActivity(),
                         val currentTime = FormatUtils.formatProgressTime(newPos.toDouble())
                         val sign = if (seekSeconds >= 0) "+" else ""
                         val seekTime = FormatUtils.formatProgressTime(seekSeconds.toDouble())
-                        seekHint.text = "$currentTime\n[$sign$seekTime]"
-                        
-                        if (seekHint.visibility != View.VISIBLE) {
-                            seekHint.visibility = View.VISIBLE
-                            seekHint.animate()
-                                .alpha(1f)
-                                .setDuration(200)
-                                .start()
+                        seekHint?.text = "$currentTime\n[$sign$seekTime]"
+                        if (seekHint?.visibility != View.VISIBLE) {
+                            seekHint?.visibility = View.VISIBLE
+                            seekHint?.animate()?.alpha(1f)?.setDuration(200)?.start()
                         } else {
-                            seekHint.alpha = 1f
+                            seekHint?.alpha = 1f
                         }
                     }
                 }
@@ -1108,25 +1160,21 @@ class VideoPlayerActivity : AppCompatActivity(),
                         val currentTime = FormatUtils.formatProgressTime(clampedPosition.toDouble())
                         val sign = if (deltaSeconds >= 0) "+" else ""
                         val seekTime = FormatUtils.formatProgressTime(kotlin.math.abs(deltaSeconds).toDouble())
-                        seekHint.text = "$currentTime\n[$sign$seekTime]"
-                        
-                        if (seekHint.visibility != View.VISIBLE) {
-                            seekHint.visibility = View.VISIBLE
-                            seekHint.alpha = 1f
+                        seekHint?.text = "$currentTime\n[$sign$seekTime]"
+                        if (seekHint?.visibility != View.VISIBLE) {
+                            seekHint?.visibility = View.VISIBLE
+                            seekHint?.alpha = 1f
                         } else {
-                            seekHint.alpha = 1f
+                            seekHint?.alpha = 1f
                         }
                     }
                 }
                 
                 override fun onSeekEnd() {
                     // 滑动seek结束，延迟隐藏提示
-                    seekHint.postDelayed({
-                        seekHint.animate()
-                            .alpha(0f)
-                            .setDuration(300)
-                            .withEndAction { seekHint.visibility = View.GONE }
-                            .start()
+                    seekHint?.postDelayed({
+                        seekHint?.animate()?.alpha(0f)?.setDuration(300)
+                            ?.withEndAction { seekHint?.visibility = View.GONE }?.start()
                     }, 300)
                 }
                 
@@ -1253,6 +1301,11 @@ class VideoPlayerActivity : AppCompatActivity(),
                     seriesManager.identifySeries(this, uri) { videoUri ->
                         getFileNameFromUri(videoUri)
                     }
+                    // 同步扫描结果到 ViewModel，使上下集按钮状态正确
+                    val seriesList = seriesManager.getVideoList()
+                    if (seriesList.isNotEmpty()) {
+                        viewModel.initSeriesFromUriList(seriesList, uri)
+                    }
                 }
             }
             
@@ -1349,45 +1402,10 @@ class VideoPlayerActivity : AppCompatActivity(),
      */
     private fun bindViewsToManagers() {
         controlsManager.bindViews(
-            topInfoPanel = findViewById(R.id.topInfoPanel),
-            controlPanel = findViewById(R.id.controlPanel),
-            topGradientBackground = findViewById(R.id.topGradientBackground),  // 顶部渐变背景层
-            bottomGradientBackground = findViewById(R.id.bottomGradientBackground),  // 底部渐变背景层
-            tvFileName = findViewById(R.id.tvFileName),
-            titleClickArea = findViewById(R.id.titleClickArea),  // 标题点击区域
-            tvBattery = findViewById(R.id.tvBattery),
-            tvTime = findViewById(R.id.tvTime),
-            tvTimeInfo = findViewById(R.id.tvTimeInfo),
-            btnPlayPause = findViewById(R.id.btnPlayPause),
-            btnPrevious = findViewById(R.id.btnPrevious),
-            btnNext = findViewById(R.id.btnNext),
-            btnRewind = findViewById(R.id.btnRewind),
-            btnForward = findViewById(R.id.btnForward),
-            btnBack = findViewById(R.id.btnBack),
-            btnSubtitle = findViewById(R.id.btnSubtitle),  // 新增字幕按钮
-            btnAspectRatio = findViewById(R.id.btnAspectRatio),  // 新增画面比例按钮
-            btnLock = findViewById(R.id.btnLock),  // 新增锁定按钮
-            btnUnlock = findViewById(R.id.btnUnlock),  // 新增解锁按钮（左侧）
-            btnUnlockRight = findViewById(R.id.btnUnlockRight),  // 新增解锁按钮（右侧）
-            btnMore = findViewById(R.id.btnMore),
-            btnSpeed = findViewById(R.id.btnSpeed),
-            btnAnime4K = findViewById(R.id.btnAnime4K),
-            btnRotateCorner = findViewById(R.id.btnRotateCorner),  // 新增：横屏旋转按钮
-            seekBar = findViewById(R.id.seekBar),
             resumePlaybackPrompt = findViewById(R.id.resumePlaybackPrompt),
             tvResumeConfirm = findViewById(R.id.tvResumeConfirm)
         )
         
-        // 初始化旋转按钮的 tag（根据当前方向）
-        val portraitUiInitial = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
-        findViewById<View>(R.id.btnRotateCorner)?.tag = 
-            if (!portraitUiInitial) "should_show" else "should_hide"
-        
-        val btnDanmaku = findViewById<ImageView>(R.id.btnDanmaku)
-        btnDanmaku.setOnClickListener {
-            dialogManager.showDanmakuDialog()
-        }
-
         // Portrait-only floating buttons (exist in both layouts; only visible in portrait mode).
         findViewById<Button>(R.id.btnAnime4KFloat)?.setOnClickListener {
             dialogManager.showAnime4KModeDialog(anime4KMode)
@@ -1397,83 +1415,17 @@ class VideoPlayerActivity : AppCompatActivity(),
             onTogglePortraitUi()
             controlsManager.resetAutoHideTimer()
         }
-        findViewById<ImageView>(R.id.btnRotateCorner)?.setOnClickListener {
-            onTogglePortraitUi()
-            controlsManager.resetAutoHideTimer()
-        }
-          
-        // 弹幕显示/隐藏按钮
-        val btnDanmakuToggle = findViewById<ImageView>(R.id.btnDanmakuToggle)
-        btnDanmakuToggle.setOnClickListener {
-            val hasLoadedDanmaku = danmakuManager.getCurrentDanmakuPath() != null
-            if (!hasLoadedDanmaku) {
-                DialogUtils.showToastShort(this, "请先加载弹幕文件")
-            } else {
-                // 切换trackSelected状态(参考DanDanPlay的selectTrack/deselectTrack)
-                val currentVisible = danmakuManager.isVisible()
-                val newSelected = !currentVisible
-                
-                // 设置轨道选中状态
-                danmakuManager.setTrackSelected(newSelected)
-                
-                // 如果选中且弹幕已准备好
-                if (newSelected && danmakuManager.isPrepared()) {
-                    // 先同步弹幕到当前播放位置（修复隐藏期间弹幕不同步的问题）
-                    val currentPosition = (playbackEngine.currentPosition * 1000).toLong()
-                    danmakuManager.seekTo(currentPosition)
-                    Logger.d(TAG, "Danmaku synced to current position: $currentPosition ms")
-                    
-                    // 如果视频正在播放，启动弹幕
-                    if (isPlaying) {
-                        danmakuManager.resume()
-                    }
-                }
-                
-                // 更新按钮图标
-                btnDanmakuToggle.setImageResource(
-                    if (newSelected) R.drawable.ic_danmaku_visible else R.drawable.ic_danmaku_hidden
-                )
-                
-                Logger.d(TAG, "Danmaku track selected: $newSelected")
-            }
-        }
         
         controlsManager.initialize()
         
-        // 初始化进度条缩略图助手（在controlsManager.initialize()之后）
-        // 获取controlsManager设置的监听器，然后用代理模式包装它
-        val seekBar = findViewById<SeekBar>(R.id.seekBar)
-        val container = findViewById<ViewGroup>(android.R.id.content)
-        val originalListener = controlsManager.getSeekBarListener()
-        seekBarThumbnailHelper = SeekBarThumbnailHelper(
-            this,
-            seekBar,
-            container,
-            thumbnailManager,
-            originalListener  // 传入原监听器
-        )
-        
         videoUri?.let { uri ->
             val fileName = getFileNameFromUri(uri)
-            controlsManager.setFileName(fileName)
+            viewModel.setVideoTitle(fileName)
         }
         
         gestureHandler.initialize()
         
-        gestureHandler.bindIndicatorViews(
-            brightnessIndicator = findViewById(R.id.brightnessIndicator),
-            volumeIndicator = findViewById(R.id.volumeIndicator),
-            brightnessBar = findViewById(R.id.brightnessBar),
-            volumeBar = findViewById(R.id.volumeBar),
-            brightnessText = findViewById(R.id.brightnessText),
-            volumeText = findViewById(R.id.volumeText)
-        )
-        
-        // 绑定双击跳转指示器
-        gestureHandler.bindDoubleTapSeekIndicators(
-            left = findViewById<DoubleTapSeekIndicator>(R.id.doubleTapSeekLeft),
-            right = findViewById<DoubleTapSeekIndicator>(R.id.doubleTapSeekRight)
-        )
+        // 亮度/音量指示器已移至 Compose 层，通过 ViewModel 驱动
         
         // 设置controlsManager引用到gestureHandler，用于检查锁定状态
         gestureHandler.setControlsManager(controlsManager)
@@ -1486,8 +1438,6 @@ class VideoPlayerActivity : AppCompatActivity(),
         videoUri?.let { uri ->
             filePickerManager.setCurrentVideoUri(uri)
         }
-        
-        updateEpisodeButtons()
     }
 
     override fun onTogglePortraitUi() {
@@ -1586,125 +1536,6 @@ class VideoPlayerActivity : AppCompatActivity(),
     }
 
     private fun applyPortraitSizing(enabled: Boolean) {
-        // Anime4K: use a floating button in portrait to avoid overlapping the bottom control row.
-        findViewById<View>(R.id.btnAnime4K)?.visibility = if (enabled) View.GONE else View.VISIBLE
-
-        // 竖屏时增加顶部间距，避开前置摄像头/刘海屏
-        findViewById<LinearLayout>(R.id.topInfoPanel)?.let { panel ->
-            val topPadding = if (enabled) {
-                // 竖屏：增加顶部间距避开摄像头
-                (32f * resources.displayMetrics.density).toInt()
-            } else {
-                // 横屏：使用默认间距
-                (8f * resources.displayMetrics.density).toInt()
-            }
-            panel.setPadding(
-                panel.paddingLeft,
-                topPadding,
-                panel.paddingRight,
-                panel.paddingBottom
-            )
-        }
-
-        findViewById<View>(R.id.topStatusContainer)?.visibility = View.VISIBLE
-
-        // In portrait, prioritize the right-side status and five-button cluster. The title only
-        // gets a small fixed slot and must ellipsize instead of competing for more width.
-        findViewById<View>(R.id.titleClickArea)?.let { v ->
-            val lp = v.layoutParams as? LinearLayout.LayoutParams ?: return@let
-            if (enabled) {
-                lp.width = 84.dpToPx()
-                lp.weight = 0f
-            } else {
-                lp.width = 0
-                lp.weight = 1f
-            }
-            v.layoutParams = lp
-        }
-        findViewById<View>(R.id.topRightPanel)?.let { v ->
-            val lp = v.layoutParams as? LinearLayout.LayoutParams ?: return@let
-            lp.width = 0
-            lp.weight = if (enabled) 2f else 1f
-            lp.marginEnd = (if (enabled) 8 else 60).dpToPx()
-            v.layoutParams = lp
-        }
-        findViewById<TextView>(R.id.tvFileName)?.let { tv ->
-            tv.maxLines = if (enabled) 1 else 2
-            tv.ellipsize = TextUtils.TruncateAt.END
-            tv.setSingleLine(enabled)
-            tv.textSize = if (enabled) 12f else 13f
-        }
-
-        // 1) Top-right icons: portrait uses a tighter five-button cluster while keeping time visible.
-        val topIconSize = if (enabled) 28 else 32
-        val topIconPadding = if (enabled) 4 else 6
-        val portraitIconMargin = 2.dpToPx()
-        val landscapeIconMargin = 4.dpToPx()
-        val portraitWideIconMargin = 4.dpToPx()
-        val landscapeWideIconMargin = 6.dpToPx()
-        listOf(
-            R.id.btnSubtitle,
-            R.id.btnDanmaku,
-            R.id.btnAspectRatio,
-            R.id.btnLock,
-            R.id.btnMore
-        ).forEach { id ->
-            findViewById<ImageView>(id)?.let { icon ->
-                val lp = icon.layoutParams as? ViewGroup.MarginLayoutParams ?: return@let
-                lp.width = topIconSize.dpToPx()
-                lp.height = topIconSize.dpToPx()
-                lp.marginStart = when {
-                    enabled && (id == R.id.btnLock || id == R.id.btnMore) -> portraitWideIconMargin
-                    enabled -> portraitIconMargin
-                    id == R.id.btnLock || id == R.id.btnMore -> landscapeWideIconMargin
-                    else -> landscapeIconMargin
-                }
-                icon.setPadding(
-                    topIconPadding.dpToPx(),
-                    topIconPadding.dpToPx(),
-                    topIconPadding.dpToPx(),
-                    topIconPadding.dpToPx()
-                )
-                icon.layoutParams = lp
-            }
-        }
-
-        // 2) Bottom main controls: reduce icon size/margins in portrait so they don't feel cramped.
-        val normalIconSize = if (enabled) 40 else 44
-        val playIconSize = if (enabled) 44 else 48
-        val normalPadding = if (enabled) 6 else 8
-        val compactMargin = if (enabled) 8 else 12
-
-        fun adjustBottomIcon(
-            id: Int,
-            sizeDp: Int,
-            paddingDp: Int,
-            marginStartDp: Int? = null,
-            marginEndDp: Int? = null
-        ) {
-            val icon = findViewById<ImageView>(id) ?: return
-            val lp = icon.layoutParams as? LinearLayout.LayoutParams ?: return
-            lp.width = sizeDp.dpToPx()
-            lp.height = sizeDp.dpToPx()
-            marginStartDp?.let { lp.marginStart = it.dpToPx() }
-            marginEndDp?.let { lp.marginEnd = it.dpToPx() }
-            icon.setPadding(
-                paddingDp.dpToPx(),
-                paddingDp.dpToPx(),
-                paddingDp.dpToPx(),
-                paddingDp.dpToPx()
-            )
-            icon.layoutParams = lp
-        }
-
-        adjustBottomIcon(R.id.btnDanmakuToggle, normalIconSize, 6)
-        adjustBottomIcon(R.id.btnPrevious, normalIconSize, normalPadding, marginStartDp = compactMargin, marginEndDp = 0)
-        adjustBottomIcon(R.id.btnRewind, normalIconSize, normalPadding, marginStartDp = compactMargin, marginEndDp = 0)
-        adjustBottomIcon(R.id.btnPlayPause, playIconSize, 6, marginStartDp = compactMargin, marginEndDp = compactMargin)
-        adjustBottomIcon(R.id.btnForward, normalIconSize, normalPadding, marginStartDp = 0, marginEndDp = compactMargin)
-        adjustBottomIcon(R.id.btnNext, normalIconSize, normalPadding, marginStartDp = 0, marginEndDp = compactMargin)
-        adjustBottomIcon(R.id.btnSpeed, normalIconSize, normalPadding)
-
         updatePortraitFloatingButtonsVisibility(
             controlsManager.isVisible && !controlsManager.isControlsLocked()
         )
@@ -1754,42 +1585,6 @@ class VideoPlayerActivity : AppCompatActivity(),
                     .start()
             }
         }
-        
-        // 横屏旋转按钮：设置标记，并处理显示/隐藏
-        findViewById<View>(R.id.btnRotateCorner)?.let { btn ->
-            val oldTag = btn.tag
-            val newTag = if (shouldShowLandscapeRotate) "should_show" else "should_hide"
-            btn.tag = newTag
-            
-            // 如果控制栏可见且按钮应该显示（从隐藏变为显示）
-            if (controlsVisible && newTag == "should_show" && btn.visibility != View.VISIBLE) {
-                btn.visibility = View.VISIBLE
-                btn.alpha = 0f
-                btn.translationY = 100f
-                btn.animate()
-                    .alpha(1f)
-                    .translationY(0f)
-                    .setDuration(250)
-                    .setInterpolator(android.view.animation.DecelerateInterpolator())
-                    .start()
-            } 
-            // 如果按钮应该隐藏（从显示变为隐藏）
-            else if (newTag == "should_hide" && btn.visibility == View.VISIBLE) {
-                btn.animate()
-                    .alpha(0f)
-                    .setDuration(200)
-                    .setInterpolator(android.view.animation.AccelerateInterpolator())
-                    .withEndAction { 
-                        btn.visibility = View.GONE
-                        btn.alpha = 1f
-                    }
-                    .start()
-            }
-            // 如果控制栏不可见，直接设置 visibility（不需要动画）
-            else if (!controlsVisible) {
-                btn.visibility = View.GONE
-            }
-        }
     }
 
     private fun refreshVideoLayoutAfterOrientationToggle() {
@@ -1812,7 +1607,6 @@ class VideoPlayerActivity : AppCompatActivity(),
                 mpvView.postDelayed({
                     playbackEngine.seekTo(pausedPosition, precise = true)
                     playbackEngine.pause()
-                    controlsManager.updatePlayPauseButton(false)
                 }, 120)
             }
         }
@@ -2121,11 +1915,8 @@ class VideoPlayerActivity : AppCompatActivity(),
                 if (loaded) {
                     com.fam4k007.videoplayer.utils.Logger.d(TAG, "Danmaku restored: path=${history.danmuPath}, trackSelected=$autoShow")
                     
-                    // 同步UI按钮状态
-                    val btnDanmakuToggle = findViewById<ImageView>(R.id.btnDanmakuToggle)
-                    btnDanmakuToggle?.setImageResource(
-                        if (autoShow) R.drawable.ic_danmaku_visible else R.drawable.ic_danmaku_hidden
-                    )
+                    // 同步Compose弹幕按钮状态
+                    viewModel.setDanmakuVisible(autoShow)
                 } else {
                     com.fam4k007.videoplayer.utils.Logger.w(TAG, "Failed to restore danmaku")
                 }
@@ -2178,12 +1969,9 @@ class VideoPlayerActivity : AppCompatActivity(),
                         // 显示加载成功提示，提醒用户需要手动显示
                         DialogUtils.showToastShort(this, "已加载弹幕: $fileName\n点击弹幕按钮显示")
                         
-                        // 根据实际的 trackSelected 状态更新按钮
-                        val btnDanmakuToggle = findViewById<ImageView>(R.id.btnDanmakuToggle)
+                        // 根据实际的 trackSelected 状态更新Compose弹幕按钮
                         val isTrackSelected = danmakuManager.getTrackSelected()
-                        btnDanmakuToggle?.setImageResource(
-                            if (isTrackSelected) R.drawable.ic_danmaku_visible else R.drawable.ic_danmaku_hidden
-                        )
+                        viewModel.setDanmakuVisible(isTrackSelected)
                         
                         com.fam4k007.videoplayer.utils.Logger.d(TAG, "Button state updated: trackSelected=$isTrackSelected")
                         
@@ -2402,14 +2190,6 @@ class VideoPlayerActivity : AppCompatActivity(),
     }
     
     /**
-     * 更新上一集下一集按钮状态
-     */
-    private fun updateEpisodeButtons() {
-        Logger.d(TAG, "updateEpisodeButtons - hasPrevious: ${seriesManager.hasPrevious}, hasNext: ${seriesManager.hasNext}")
-        controlsManager?.updateEpisodeButtons(seriesManager.hasPrevious, seriesManager.hasNext)
-    }
-    
-    /**
      * 播放上一集
      */
     private fun playPreviousVideo() {
@@ -2419,7 +2199,6 @@ class VideoPlayerActivity : AppCompatActivity(),
             if (previousUri != null) {
                 Logger.d(TAG, "Playing previous video: $previousUri")
                 playVideo(previousUri)
-                updateEpisodeButtons()
             }
         } else {
             DialogUtils.showToastShort(this, "已经是第一集了")
@@ -2436,7 +2215,6 @@ class VideoPlayerActivity : AppCompatActivity(),
             if (nextUri != null) {
                 Logger.d(TAG, "Playing next video: $nextUri")
                 playVideo(nextUri)
-                updateEpisodeButtons()
             }
         } else {
             DialogUtils.showToastShort(this, "已经是最后一集了")
@@ -2474,7 +2252,7 @@ class VideoPlayerActivity : AppCompatActivity(),
         }
         
         val fileName = getFileNameFromUri(uri)
-        controlsManager?.setFileName(fileName)
+        viewModel.setVideoTitle(fileName)
         
         val position = preferencesManager.getPlaybackPosition(uri.toString())
         
@@ -2516,8 +2294,6 @@ class VideoPlayerActivity : AppCompatActivity(),
                 Logger.d(TAG, "Synced danmaku to position: $position seconds")
             }
         }
-        
-        updateEpisodeButtons()
     }
 
     private fun loadResolvedRemoteVideo(
@@ -2617,9 +2393,7 @@ class VideoPlayerActivity : AppCompatActivity(),
             isPlaying = false
             
             // 更新UI状态
-            if (::controlsManager.isInitialized) {
-                controlsManager.updatePlayPauseButton(false)
-            }
+            // (播放按钮状态由Compose通过ViewModel自动更新)
             
             // 同步暂停弹幕(关键!修复问题1)
             if (::danmakuManager.isInitialized && danmakuManager.isPrepared()) {
@@ -2693,7 +2467,6 @@ class VideoPlayerActivity : AppCompatActivity(),
         if (::thumbnailManager.isInitialized) {
             thumbnailManager.release()
         }
-        seekBarThumbnailHelper?.release()
     }
     
     private fun savePlaybackState() {
@@ -3121,11 +2894,11 @@ class VideoPlayerActivity : AppCompatActivity(),
      * 由ViewModel监听speed StateFlow自动触发
      */
     private fun showSpeedChangeHint(speed: Float) {
-        speedHintText.text = String.format("%.1f倍速", speed)
-        speedHint.apply {
+        speedHintText?.text = String.format("%.1f倍速", speed)
+        speedHint?.apply {
             visibility = View.VISIBLE
             alpha = 0f
-            
+
             // 入场动画
             animate()
                 .alpha(1.0f)

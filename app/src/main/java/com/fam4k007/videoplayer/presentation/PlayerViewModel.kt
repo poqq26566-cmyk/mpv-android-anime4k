@@ -14,9 +14,16 @@ import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVNode
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -77,12 +84,18 @@ sealed class PlayerUpdates {
 class PlayerViewModel(
     private val playerRepository: PlayerRepository,
     private val anime4KManager: Anime4KManager,
-    private val seriesManager: SeriesManager
+    val seriesManager: SeriesManager  // 暴露给UI层用于判断上下集按钮状态
 ) : ViewModel(), MPVLib.EventObserver {
     
     companion object {
         private const val TAG = "PlayerViewModel"
     }
+    
+    // ==================== 视频切换事件 ====================
+    
+    // 视频切换事件流（用于通知Activity播放新视频）
+    private val _switchVideoEvent = MutableSharedFlow<Uri>(extraBufferCapacity = 1)
+    val switchVideoEvent: SharedFlow<Uri> = _switchVideoEvent.asSharedFlow()
     
     // ==================== MPV 属性状态（阶段1.1）====================
     
@@ -121,7 +134,7 @@ class PlayerViewModel(
     // ==================== UI控制状态（阶段1.2）====================
     
     // 控制面板显示状态
-    private val _controlsShown = MutableStateFlow(false)
+    private val _controlsShown = MutableStateFlow(true)  // 初始显示控制面板
     val controlsShown: StateFlow<Boolean> = _controlsShown.asStateFlow()
     
     // 进度条显示状态
@@ -166,12 +179,28 @@ class PlayerViewModel(
     private val _seekText = MutableStateFlow<String?>(null)
     val seekText: StateFlow<String?> = _seekText.asStateFlow()
     
+    // Seek指示器显示状态
+    private val _seekIndicatorShown = MutableStateFlow(false)
+    val seekIndicatorShown: StateFlow<Boolean> = _seekIndicatorShown.asStateFlow()
+    
+    // Seek偏移量（用于显示+10s/-10s）
+    private val _seekOffset = MutableStateFlow(0)
+    val seekOffset: StateFlow<Int> = _seekOffset.asStateFlow()
+    
     // 手势相关状态
     private val _isBrightnessSliderShown = MutableStateFlow(false)
     val isBrightnessSliderShown: StateFlow<Boolean> = _isBrightnessSliderShown.asStateFlow()
     
     private val _isVolumeSliderShown = MutableStateFlow(false)
     val isVolumeSliderShown: StateFlow<Boolean> = _isVolumeSliderShown.asStateFlow()
+    
+    // 当前亮度（0.0 - 1.0）
+    private val _currentBrightness = MutableStateFlow(0.5f)
+    val currentBrightness: StateFlow<Float> = _currentBrightness.asStateFlow()
+    
+    // 当前音量（0 - 100）
+    private val _currentVolume = MutableStateFlow(50)
+    val currentVolume: StateFlow<Int> = _currentVolume.asStateFlow()
     
     // 系列播放状态
     private val _videoList = MutableStateFlow<List<VideoFileParcelable>>(emptyList())
@@ -180,6 +209,15 @@ class PlayerViewModel(
     private val _currentIndex = MutableStateFlow(0)
     val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
     
+    // 上下集按钮状态（直接从 _videoList/_currentIndex 计算，无需依赖 seriesManager 实例）
+    val hasPrevious: StateFlow<Boolean> = combine(_currentIndex, _videoList) { idx, list ->
+        list.isNotEmpty() && idx > 0
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val hasNext: StateFlow<Boolean> = combine(_currentIndex, _videoList) { idx, list ->
+        list.isNotEmpty() && idx < list.size - 1
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    
     // 硬件解码状态
     private val _isHardwareDecoding = MutableStateFlow(true)
     val isHardwareDecoding: StateFlow<Boolean> = _isHardwareDecoding.asStateFlow()
@@ -187,10 +225,43 @@ class PlayerViewModel(
     // 当前播放视频URI
     private val _currentVideoUri = MutableStateFlow<Uri?>(null)
     val currentVideoUri: StateFlow<Uri?> = _currentVideoUri.asStateFlow()
+
+    // 视频标题（顶部面板显示）
+    private val _videoTitle = MutableStateFlow("")
+    val videoTitle: StateFlow<String> = _videoTitle.asStateFlow()
     
-    // 快进/快退秒数配置
+    // 快进/快退秒数配置（从 PreferencesManager 加载）
     private val _seekTimeSeconds = MutableStateFlow(5)
     val seekTimeSeconds: StateFlow<Int> = _seekTimeSeconds.asStateFlow()
+
+    // 双击快进/快退秒数（从 PreferencesManager 加载）
+    private val _doubleTapSeekSeconds = MutableStateFlow(10)
+    val doubleTapSeekSeconds: StateFlow<Int> = _doubleTapSeekSeconds.asStateFlow()
+
+    // 双击模式：0=播放/暂停，1=左右快退/快进（从 PreferencesManager 加载）
+    private val _doubleTapMode = MutableStateFlow(0)
+    val doubleTapMode: StateFlow<Int> = _doubleTapMode.asStateFlow()
+
+    // 长按倍速（从 PreferencesManager 加载）
+    private val _longPressSpeed = MutableStateFlow(2.0f)
+    val longPressSpeed: StateFlow<Float> = _longPressSpeed.asStateFlow()
+
+    // 是否正在长按倍速播放（用于显示速度提示浮层）
+    private val _isLongPressing = MutableStateFlow(false)
+    val isLongPressing: StateFlow<Boolean> = _isLongPressing.asStateFlow()
+
+    // 滑动 Seek 预览（null=未在滑动，有值=正在滑动中）
+    data class SwipeSeekPreview(val targetSeconds: Int, val deltaSeconds: Int)
+    private val _swipeSeekPreview = MutableStateFlow<SwipeSeekPreview?>(null)
+    val swipeSeekPreview: StateFlow<SwipeSeekPreview?> = _swipeSeekPreview.asStateFlow()
+
+    // 自定义倍速预设（从 PreferencesManager 加载，排序后的列表）
+    private val _customSpeedPresets = MutableStateFlow<List<Float>>(listOf(0.75f, 1.0f, 1.25f, 1.5f, 2.0f))
+    val customSpeedPresets: StateFlow<List<Float>> = _customSpeedPresets.asStateFlow()
+
+    // Slider 正在被拖动（拖动期间暂停自动隐藏定时器）
+    private val _isSliderDragging = MutableStateFlow(false)
+    val isSliderDragging: StateFlow<Boolean> = _isSliderDragging.asStateFlow()
     
     // 是否为在线视频
     private val _isOnlineVideo = MutableStateFlow(false)
@@ -263,6 +334,21 @@ class PlayerViewModel(
     
     // MPV初始化标志
     private var mpvInitialized = false
+    
+    init {
+        // 从 PreferencesManager 加载播放器设置
+        _seekTimeSeconds.value = playerRepository.getSeekTimeSeconds()
+        _doubleTapSeekSeconds.value = playerRepository.getDoubleTapSeekSeconds()
+        _doubleTapMode.value = playerRepository.getDoubleTapMode()
+        _longPressSpeed.value = playerRepository.getLongPressSpeed()
+        val rawPresets = playerRepository.getCustomSpeedPresets()
+        val parsedPresets = rawPresets
+            .mapNotNull { it.toFloatOrNull() }
+            .sorted()
+            .takeIf { it.isNotEmpty() }
+            ?: listOf(0.75f, 1.0f, 1.25f, 1.5f, 2.0f)
+        _customSpeedPresets.value = parsedPresets
+    }
     
     // 轮询协程的Job
     private var positionPollingJob: Job? = null
@@ -508,12 +594,18 @@ class PlayerViewModel(
     
     // ==================== UI状态操作方法（阶段1.2）====================
     
+    // 自动隐藏定时器
+    private var hideControlsJob: Job? = null
+    
     /**
      * 切换控制栏显示/隐藏
      */
     fun toggleControls() {
-        _controlsShown.value = !_controlsShown.value
-        Logger.v(TAG, "Controls ${if (_controlsShown.value) "shown" else "hidden"}")
+        if (_controlsShown.value) {
+            hideControls()
+        } else {
+            showControls()
+        }
     }
     
     /**
@@ -521,6 +613,8 @@ class PlayerViewModel(
      */
     fun showControls() {
         _controlsShown.value = true
+        Logger.v(TAG, "Controls shown")
+        resetAutoHideTimer()
     }
     
     /**
@@ -528,6 +622,46 @@ class PlayerViewModel(
      */
     fun hideControls() {
         _controlsShown.value = false
+        Logger.v(TAG, "Controls hidden")
+        cancelAutoHideTimer()
+    }
+    
+    /**
+     * 重置自动隐藏定时器（5秒后自动隐藏）
+     * Slider 拖动期间不启动定时器
+     */
+    fun resetAutoHideTimer() {
+        cancelAutoHideTimer()
+        // 只在播放中、控制面板可见、且 Slider 未被拖动时启动定时器
+        if (_controlsShown.value && paused.value != true && !_isSliderDragging.value) {
+            hideControlsJob = viewModelScope.launch {
+                delay(5000) // 5秒后自动隐藏
+                if (_controlsShown.value && !_isSliderDragging.value) {
+                    hideControls()
+                }
+            }
+        }
+    }
+
+    /**
+     * 设置 Slider 拖动状态
+     * 拖动时停止自动隐藏定时器，拖动结束后重新启动
+     */
+    fun setSliderDragging(isDragging: Boolean) {
+        _isSliderDragging.value = isDragging
+        if (isDragging) {
+            cancelAutoHideTimer()
+        } else {
+            resetAutoHideTimer()
+        }
+    }
+    
+    /**
+     * 取消自动隐藏定时器
+     */
+    private fun cancelAutoHideTimer() {
+        hideControlsJob?.cancel()
+        hideControlsJob = null
     }
     
     /**
@@ -606,6 +740,59 @@ class PlayerViewModel(
     }
     
     /**
+     * 调节亮度
+     * @param delta 亮度变化量（-1.0 到 1.0）
+     */
+    fun adjustBrightness(delta: Float) {
+        val newBrightness = (_currentBrightness.value + delta).coerceIn(0f, 1f)
+        _currentBrightness.value = newBrightness
+        _isBrightnessSliderShown.value = true
+        Logger.d(TAG, "Brightness adjusted to: $newBrightness")
+        
+        // 3秒后自动隐藏
+        viewModelScope.launch {
+            delay(3000)
+            _isBrightnessSliderShown.value = false
+        }
+    }
+    
+    /**
+     * 设置初始亮度（从系统获取）
+     */
+    fun setInitialBrightness(brightness: Float) {
+        _currentBrightness.value = brightness.coerceIn(0f, 1f)
+        Logger.d(TAG, "Initial brightness set to: $brightness")
+    }
+    
+    /**
+     * 设置初始音量（从系统获取）
+     */
+    fun setInitialVolume(volume: Int) {
+        _currentVolume.value = volume.coerceIn(0, 100)
+        Logger.d(TAG, "Initial volume set to: $volume")
+    }
+    
+    /**
+     * 调节音量
+     * @param delta 音量变化量（-100 到 100）
+     */
+    fun adjustVolume(delta: Float) {
+        val newVolume = (_currentVolume.value + delta.toInt()).coerceIn(0, 100)
+        _currentVolume.value = newVolume
+        _isVolumeSliderShown.value = true
+        
+        // 设置MPV音量
+        MPVLib.setPropertyInt("volume", newVolume)
+        Logger.d(TAG, "Volume adjusted to: $newVolume")
+        
+        // 3秒后自动隐藏
+        viewModelScope.launch {
+            delay(3000)
+            _isVolumeSliderShown.value = false
+        }
+    }
+    
+    /**
      * 设置弹幕显示状态
      */
     fun setDanmakuVisible(visible: Boolean) {
@@ -665,20 +852,48 @@ class PlayerViewModel(
      */
     fun nextVideo() {
         val list = _videoList.value
-        if (_currentIndex.value < list.size - 1) {
-            _currentIndex.value += 1
-            Logger.d(TAG, "Next video: index ${_currentIndex.value}")
+        val idx = _currentIndex.value
+        Logger.d(TAG, "nextVideo - idx=$idx, size=${list.size}")
+        if (list.isNotEmpty() && idx < list.size - 1) {
+            val newIndex = idx + 1
+            _currentIndex.value = newIndex
+            val uri = Uri.parse(list[newIndex].uri)
+            Logger.d(TAG, "Switching to next video: $uri, index: $newIndex")
+            viewModelScope.launch { _switchVideoEvent.emit(uri) }
+        } else {
+            Logger.d(TAG, "Already at last video")
         }
     }
-    
+
     /**
      * 切换到上一个视频
      */
     fun previousVideo() {
-        if (_currentIndex.value > 0) {
-            _currentIndex.value -= 1
-            Logger.d(TAG, "Previous video: index ${_currentIndex.value}")
+        val list = _videoList.value
+        val idx = _currentIndex.value
+        Logger.d(TAG, "previousVideo - idx=$idx, size=${list.size}")
+        if (list.isNotEmpty() && idx > 0) {
+            val newIndex = idx - 1
+            _currentIndex.value = newIndex
+            val uri = Uri.parse(list[newIndex].uri)
+            Logger.d(TAG, "Switching to previous video: $uri, index: $newIndex")
+            viewModelScope.launch { _switchVideoEvent.emit(uri) }
+        } else {
+            Logger.d(TAG, "Already at first video")
         }
+    }
+
+    /**
+     * 从 URI 列表初始化系列（identifySeries 扫描结果同步到 ViewModel）
+     */
+    fun initSeriesFromUriList(uriList: List<Uri>, currentUri: Uri) {
+        val idx = uriList.indexOfFirst { it.toString() == currentUri.toString() }.takeIf { it >= 0 } ?: 0
+        val list = uriList.map { uri ->
+            VideoFileParcelable(uri.toString(), uri.lastPathSegment ?: uri.toString(), "", 0L, 0L, 0L)
+        }
+        _videoList.value = list
+        _currentIndex.value = idx
+        Logger.d(TAG, "initSeriesFromUriList: ${uriList.size} videos, idx=$idx")
     }
     
     /**
@@ -694,6 +909,10 @@ class PlayerViewModel(
      */
     fun setCurrentVideoUri(uri: Uri?) {
         _currentVideoUri.value = uri
+    }
+
+    fun setVideoTitle(title: String) {
+        _videoTitle.value = title
     }
     
     /**
@@ -736,6 +955,42 @@ class PlayerViewModel(
         setSpeed(savedSpeed)
         Logger.d(TAG, "Speed restored to: $savedSpeed")
     }
+
+    /**
+     * 开始长按倍速（Compose 层调用）：保存当前速度并切换到长按速度
+     */
+    fun startLongPressSpeed() {
+        saveSpeedBeforeLongPress(_speed.value.toDouble())
+        setSpeed(_longPressSpeed.value.toDouble())
+        _isLongPressing.value = true
+        cancelAutoHideTimer()
+    }
+
+    /**
+     * 结束长按倍速（Compose 层调用）：恢复原速度
+     */
+    fun endLongPressSpeed() {
+        restoreSpeedAfterLongPress()
+        _isLongPressing.value = false
+        resetAutoHideTimer()
+    }
+
+    /**
+     * 更新滑动 Seek 预览（实时 seek + 显示预览文字）
+     */
+    fun updateSwipeSeek(targetSeconds: Int, deltaSeconds: Int) {
+        val clampedTarget = targetSeconds.coerceIn(0, _duration.value)
+        _swipeSeekPreview.value = SwipeSeekPreview(clampedTarget, deltaSeconds)
+        seekTo(clampedTarget)
+    }
+
+    /**
+     * 结束滑动 Seek（清除预览）
+     */
+    fun endSwipeSeek() {
+        _swipeSeekPreview.value = null
+    }
+
     
     /**
      * 标记缩略图已初始化
@@ -893,6 +1148,16 @@ class PlayerViewModel(
         val currentPos = position.value
         val newPos = (currentPos + seconds).coerceAtLeast(0)
         seekTo(newPos)
+        
+        // 显示seek指示器
+        _seekOffset.value = seconds
+        _seekIndicatorShown.value = true
+        
+        // 1秒后自动隐藏
+        viewModelScope.launch {
+            delay(1000)
+            _seekIndicatorShown.value = false
+        }
     }
     
     // ==================== 原有方法 ====================
