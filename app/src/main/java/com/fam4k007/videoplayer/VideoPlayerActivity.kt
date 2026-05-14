@@ -79,6 +79,10 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.File
 import java.io.FileOutputStream
 import java.lang.ref.WeakReference
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import com.fam4k007.videoplayer.ui.player.PlayerControls
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 
 /**
  * 视频播放器 Activity (重构版)
@@ -468,6 +472,48 @@ class VideoPlayerActivity : AppCompatActivity(),
         // 【阶段1.1】订阅ViewModel StateFlow，自动更新UI（方案A：零视觉影响）
         setupViewModelObservers()
         
+        // 【阶段2.1】添加Compose测试层（不影响现有XML布局）
+        setupComposeTestLayer()
+        
+    }
+    
+    /**
+     * 阶段2.1：设置Compose测试层
+     * 
+     * 目的：在不影响现有XML布局的情况下，验证Compose集成工作正常
+     * 当前：只显示调试信息在右上角
+     * 下一步：逐步在PlayerControls中实现完整UI元素
+     */
+    private fun setupComposeTestLayer() {
+        try {
+            // 创建ComposeView并添加到根布局
+            val composeView = ComposeView(this).apply {
+                // 设置组合策略：当Activity销毁时自动释放
+                setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+                
+                // 设置Compose内容
+                setContent {
+                    VideoPlayerTheme {
+                        PlayerControls(
+                            viewModel = viewModel,
+                            onBackPress = { finish() }
+                        )
+                    }
+                }
+            }
+            
+            // 添加到根布局，覆盖在所有视图之上
+            val rootView = findViewById<ViewGroup>(android.R.id.content)
+            rootView.addView(composeView, FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            ))
+            
+            Logger.d(TAG, "Compose test layer added successfully")
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to setup Compose test layer: ${e.message}", e)
+            // 失败不影响现有功能，只记录日志
+        }
     }
     
     /**
