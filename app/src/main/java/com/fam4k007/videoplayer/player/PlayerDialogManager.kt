@@ -17,6 +17,7 @@ import com.fam4k007.videoplayer.domain.danmaku.DanmakuManager
 import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.utils.DialogUtils
 import com.fam4k007.videoplayer.utils.ThemeManager
+import com.fam4k007.videoplayer.presentation.PlayerViewModel
 import `is`.xyz.mpv.MPVLib
 import java.io.File
 import java.lang.ref.WeakReference
@@ -32,7 +33,8 @@ class PlayerDialogManager(
     private val anime4KManager: Anime4KManager,
     private val preferencesManager: PreferencesManager,
     private val composeOverlayManager: com.fanchen.fam4k007.manager.compose.ComposeOverlayManager,
-    private val controlsManagerRef: WeakReference<PlayerControlsManager>
+    private val controlsManagerRef: WeakReference<PlayerControlsManager>,
+    private val viewModelRef: WeakReference<PlayerViewModel>? = null  // 新增：用于ViewModel数据访问
 ) {
     companion object {
         private const val TAG = "PlayerDialogManager"
@@ -58,12 +60,36 @@ class PlayerDialogManager(
 
     /**
      * 显示音频轨道选择对话框
+     * 使用ViewModel的audioTracks StateFlow数据
      */
     fun showAudioTrackDialog() {
         val activity = activityRef.get() ?: return
+        val viewModel = viewModelRef?.get()
 
         try {
-            val audioTracks = playbackEngine.getAudioTracks()
+            // 优先使用ViewModel数据，降级到PlaybackEngine
+            val audioTracks = if (viewModel != null) {
+                // 【方案A改进】使用ViewModel的audioTracks StateFlow
+                val vmTracks = viewModel.audioTracks.value
+                if (vmTracks.isNotEmpty()) {
+                    // 转换为对话框所需格式: Triple(id, displayName, isSelected)
+                    vmTracks.map { track ->
+                        val displayName = buildString {
+                            append("音轨${track.id}")
+                            track.lang?.let { append(" ($it)") }
+                            track.title?.let { append(" - $it") }
+                            track.codec?.let { append(" [$it]") }
+                        }
+                        Triple(track.id, displayName, track.selected)
+                    }
+                } else {
+                    // ViewModel数据未就绪，降级
+                    playbackEngine.getAudioTracks()
+                }
+            } else {
+                // 无ViewModel，使用原方法
+                playbackEngine.getAudioTracks()
+            }
 
             if (audioTracks.isEmpty()) {
                 DialogUtils.showToastShort(activity, "没有可用的音频轨道")
@@ -81,7 +107,7 @@ class PlayerDialogManager(
                 items,
                 currentTrackIndex,
                 showAbove = false,
-                useFixedHeight = false,  // 改为自适应高度
+                useFixedHeight = false,
                 showScrollHint = false
             ) { position ->
                 val trackId = audioTracks[position].first
@@ -295,18 +321,49 @@ class PlayerDialogManager(
 
     /**
      * 显示字幕轨道切换对话框
+     * 使用ViewModel的subtitleTracks StateFlow数据
      */
     private fun showSubtitleTrackDialog() {
         val activity = activityRef.get() ?: return
+        val viewModel = viewModelRef?.get()
 
         try {
-            val tracks = playbackEngine.getSubtitleTracks()
+            // 优先使用ViewModel数据，降级到PlaybackEngine
+            val tracks = if (viewModel != null) {
+                // 【方案A改进】使用ViewModel的subtitleTracks StateFlow
+                val vmTracks = viewModel.subtitleTracks.value
+                if (vmTracks.isNotEmpty()) {
+                    // 转换为对话框所需格式: Triple(id, displayName, isSelected)
+                    val trackList = mutableListOf<Triple<Int, String, Boolean>>()
+                    
+                    // 添加"关闭字幕"选项
+                    val currentId = MPVLib.getPropertyInt("sid") ?: -1
+                    trackList.add(Triple(-1, "关闭字幕", currentId == -1))
+                    
+                    // 添加ViewModel提供的轨道
+                    vmTracks.forEach { track ->
+                        val displayName = buildString {
+                            append("轨道${track.id}")
+                            track.lang?.let { append(" ($it)") }
+                            track.title?.let { append(" - $it") }
+                            if (track.external) append(" [外挂]")
+                        }
+                        trackList.add(Triple(track.id, displayName, track.selected))
+                    }
+                    
+                    trackList
+                } else {
+                    // ViewModel数据未就绪，降级
+                    playbackEngine.getSubtitleTracks()
+                }
+            } else {
+                // 无ViewModel，使用原方法
+                playbackEngine.getSubtitleTracks()
+            }
+            
             val btnSubtitle = activity.findViewById<ImageView>(R.id.btnSubtitle)
             
-            // tracks已包含"关闭字幕"选项
             val trackNames = tracks.map { it.second }
-            
-            // 获取当前选中的轨道索引
             val currentSelection = tracks.indexOfFirst { it.third }
 
             showPopupDialog(
@@ -329,6 +386,7 @@ class PlayerDialogManager(
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show subtitle track dialog", e)
+            DialogUtils.showToastShort(activity, "获取字幕轨道失败")
         }
     }
 

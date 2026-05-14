@@ -61,11 +61,13 @@ import com.fam4k007.videoplayer.utils.DialogUtils
 import com.fam4k007.videoplayer.utils.ThemeManager
 import com.fam4k007.videoplayer.utils.getThemeAttrColor
 import com.fam4k007.videoplayer.utils.Logger
+import com.fam4k007.videoplayer.presentation.PlayerViewModel
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.File
 import java.io.FileOutputStream
 import java.lang.ref.WeakReference
@@ -122,6 +124,7 @@ class VideoPlayerActivity : AppCompatActivity(),
     private var remoteResolveSequence = 0L
     private val preferencesManager: PreferencesManager by inject()
     private val historyManager: PlaybackHistoryManager by inject()
+    private val viewModel: PlayerViewModel by viewModel()
     private val subtitleManager = SubtitleManager()
     private var savedPosition = 0.0
     private var hasRestoredPosition = false
@@ -353,6 +356,9 @@ class VideoPlayerActivity : AppCompatActivity(),
             mpvView.initialize(filesDir.path, cacheDir.path)
             com.fam4k007.videoplayer.utils.Logger.d(TAG, "MPV View initialized")
             
+            // 注册ViewModel的MPV观察者（阶段1.1）
+            viewModel.registerMPVObservers()
+            
             mpvView.postDelayed({
                 com.fam4k007.videoplayer.utils.Logger.d(TAG, "Loading video after MPV init")
                 loadVideo()
@@ -393,6 +399,97 @@ class VideoPlayerActivity : AppCompatActivity(),
         // Apply portrait UI last: by this point all views are inflated and bound.
         applyPortraitUiEnabled(portraitUi)
         
+        // 【阶段1.1】订阅ViewModel StateFlow，自动更新UI（方案A：零视觉影响）
+        setupViewModelObservers()
+        
+    }
+    
+    /**
+     * 设置ViewModel状态监听，自动更新UI
+     * 替代手动调用Manager的update方法，实现响应式UI更新
+     * 
+     * 注意：目前与PlaybackEngine回调并行运行（双重更新）
+     * 测试通过后可逐步移除PlaybackEngine回调中的UI更新代码
+     */
+    private fun setupViewModelObservers() {
+        // 监听播放/暂停状态
+        lifecycleScope.launch {
+            viewModel.paused.collect { paused ->
+                val isPlaying = paused != true
+                this@VideoPlayerActivity.isPlaying = isPlaying
+                
+                // 【方案A】通过ViewModel自动更新播放按钮
+                controlsManager?.updatePlayPauseButton(isPlaying)
+                
+                // 暂停指示器显示/隐藏
+                if (paused == true && !controlsManager!!.isVisible) {
+                    showPauseIndicator()
+                } else {
+                    hidePauseIndicator()
+                }
+                
+                // 弹幕同步（保持原有逻辑）
+                if (danmakuManager.isPrepared()) {
+                    if (isPlaying) {
+                        danmakuManager.resume()
+                    } else {
+                        danmakuManager.pause()
+                    }
+                }
+            }
+        }
+        
+        // 监听播放进度和时长
+        lifecycleScope.launch {
+            viewModel.position.collect { position ->
+                val duration = viewModel.duration.value
+                if (duration > 0) {
+                    this@VideoPlayerActivity.currentPosition = position.toDouble()
+                    this@VideoPlayerActivity.duration = duration.toDouble()
+                    
+                    // 【方案A】通过ViewModel自动更新进度条
+                    controlsManager?.updateProgress(position.toDouble(), duration.toDouble())
+                    
+                    // 初始化缩略图（仅一次）
+                    if (!isThumbnailInitialized) {
+                        videoUri?.let { uri ->
+                            val isWebDav = intent.getBooleanExtra("is_webdav", false)
+                            thumbnailManager.initializeVideo(uri, (duration * 1000L), isWebDav)
+                            seekBarThumbnailHelper?.updateDuration(duration.toDouble())
+                            isThumbnailInitialized = true
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 监听播放速度变化
+        lifecycleScope.launch {
+            var previousSpeed = 1.0f
+            viewModel.speed.collect { speed ->
+                com.fam4k007.videoplayer.utils.Logger.v(TAG, "【ViewModel】Speed changed to: ${speed}x")
+                
+                // 速度变化时显示提示（排除初始值）
+                if (previousSpeed != 1.0f && speed != previousSpeed) {
+                    showSpeedChangeHint(speed)
+                }
+                previousSpeed = speed
+            }
+        }
+        
+        // 监听字幕轨道变化（可选：用于调试）
+        lifecycleScope.launch {
+            viewModel.subtitleTracks.collect { tracks ->
+                com.fam4k007.videoplayer.utils.Logger.d(TAG, "【ViewModel】Subtitle tracks updated: ${tracks.size} tracks")
+            }
+        }
+        
+        // 监听音频轨道变化（可选：用于调试）
+        lifecycleScope.launch {
+            viewModel.audioTracks.collect { tracks ->
+                com.fam4k007.videoplayer.utils.Logger.d(TAG, "【ViewModel】Audio tracks updated: ${tracks.size} tracks")
+            }
+        }
     }
 
     /**
@@ -404,51 +501,13 @@ class VideoPlayerActivity : AppCompatActivity(),
             WeakReference(this),
             object : PlaybackEngine.PlaybackEventCallback {
                 override fun onPlaybackStateChanged(isPlaying: Boolean) {
-                    this@VideoPlayerActivity.isPlaying = isPlaying
-                    controlsManager?.updatePlayPauseButton(isPlaying)
-                    
-                    // 按照DanDanPlay的逻辑：只有弹幕prepared并且track被选中时才控制弹幕播放
-                    if (danmakuManager.isPrepared()) {
-                        if (isPlaying) {
-                            danmakuManager.resume()
-                        } else {
-                            danmakuManager.pause()
-                        }
-                    }
+                    // 【已迁移到ViewModel】播放状态现由setupViewModelObservers()自动处理
+                    // 此回调保留为空，由ViewModel StateFlow驱动UI更新
                 }
                 
                 override fun onProgressUpdate(position: Double, duration: Double) {
-                    this@VideoPlayerActivity.currentPosition = position
-                    this@VideoPlayerActivity.duration = duration
-                    
-                    // 清除pending seek位置(当位置更新后，说明seek已完成)
-                    pendingSeekPosition = null
-                    
-                    controlsManager?.updateProgress(position, duration)
-                    
-                    // 只在第一次获取有效duration时初始化缩略图
-                    if (duration > 0 && !isThumbnailInitialized) {
-                        videoUri?.let { uri ->
-                            val isWebDav = intent.getBooleanExtra("is_webdav", false)
-                            thumbnailManager.initializeVideo(uri, (duration * 1000).toLong(), isWebDav)
-                            seekBarThumbnailHelper?.updateDuration(duration)
-                            isThumbnailInitialized = true
-                        }
-                    }
-                    
-                    // 检测播放状态变化，显示/隐藏暂停指示器
-                    if (isPlaying != previousIsPlaying) {
-                        if (!isPlaying) {
-                            // 暂停，显示暂停指示器
-                            showPauseIndicator()
-                        } else {
-                            // 播放，隐藏暂停指示器
-                            hidePauseIndicator()
-                        }
-                        previousIsPlaying = isPlaying
-                    }
-                    
-                    // 检测播放停顿缓冲
+                    // 【已迁移到ViewModel】进度/UI更新现由setupViewModelObservers()自动处理
+                    // 保留缓冲检测逻辑（非UI状态，仍需即时处理）
                     val currentTime = System.currentTimeMillis()
                     if (position != lastPositionForBuffering) {
                         // 位置在前进，隐藏停顿缓冲
@@ -864,7 +923,8 @@ class VideoPlayerActivity : AppCompatActivity(),
             anime4KManager,
             preferencesManager,
             composeOverlayManager,
-            WeakReference(controlsManager)
+            WeakReference(controlsManager),
+            WeakReference(viewModel)  // 传入ViewModel
         )
         dialogManager.setCallback(object : com.fam4k007.videoplayer.player.PlayerDialogManager.DialogCallback {
             override fun onSpeedChanged(speed: Double) {
@@ -2684,6 +2744,34 @@ class VideoPlayerActivity : AppCompatActivity(),
                 pauseIndicator.scaleY = 0.8f
             }
             .start()
+    }
+    
+    /**
+     * 显示速度变化提示
+     * 由ViewModel监听speed StateFlow自动触发
+     */
+    private fun showSpeedChangeHint(speed: Float) {
+        speedHintText.text = String.format("%.1f倍速", speed)
+        speedHint.apply {
+            visibility = View.VISIBLE
+            alpha = 0f
+            
+            // 入场动画
+            animate()
+                .alpha(1.0f)
+                .setDuration(200)
+                .withEndAction {
+                    // 2秒后自动隐藏
+                    postDelayed({
+                        animate()
+                            .alpha(0f)
+                            .setDuration(300)
+                            .withEndAction { visibility = View.GONE }
+                            .start()
+                    }, 2000)
+                }
+                .start()
+        }
     }
     
     override fun onScreenshot() {
