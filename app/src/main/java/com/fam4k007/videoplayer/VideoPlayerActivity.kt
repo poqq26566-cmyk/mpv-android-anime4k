@@ -118,7 +118,9 @@ class VideoPlayerActivity : AppCompatActivity(),
     private var btnResumePromptClose: TextView? = null
     private val resumePromptHandler = Handler(Looper.getMainLooper())
 
+    @Deprecated("Use viewModel.currentVideoUri instead", ReplaceWith("viewModel.currentVideoUri.value"))
     private var videoUri: Uri? = null
+    
     private var remotePlaybackRequest: RemotePlaybackRequest? = null
     private var remoteResolveJob: Job? = null
     private var remoteResolveSequence = 0L
@@ -126,54 +128,101 @@ class VideoPlayerActivity : AppCompatActivity(),
     private val historyManager: PlaybackHistoryManager by inject()
     private val viewModel: PlayerViewModel by viewModel()
     private val subtitleManager = SubtitleManager()
+    
+    @Deprecated("Use viewModel.savedPosition instead", ReplaceWith("viewModel.savedPosition.value"))
     private var savedPosition = 0.0
+    
+    @Deprecated("Use viewModel.hasRestoredPosition instead", ReplaceWith("viewModel.hasRestoredPosition.value"))
     private var hasRestoredPosition = false
+    
+    @Deprecated("Use viewModel.hasShownPrompt instead", ReplaceWith("viewModel.hasShownPrompt.value"))
     private var hasShownPrompt = false
+    
+    @Deprecated("Use viewModel.lastPlaybackPosition instead", ReplaceWith("viewModel.lastPlaybackPosition.value"))
     private var lastPlaybackPosition = 0L  // 从列表传入的播放位置
     
+    @Deprecated("Use viewModel.precisePosition instead", ReplaceWith("viewModel.precisePosition.value"))
     private var currentPosition = 0.0
+    
+    @Deprecated("Use viewModel.duration instead", ReplaceWith("viewModel.duration.value"))
     private var duration = 0.0
+    
+    // 【阶段1.2迁移】以下变量已迁移到ViewModel，Activity保留用于临时兼容
+    @Deprecated("Use viewModel.paused instead", ReplaceWith("viewModel.paused.value == false"))
     private var isPlaying = false
+    
+    @Deprecated("Use viewModel.speed instead", ReplaceWith("viewModel.speed.value.toDouble()"))
     private var currentSpeed = 1.0
+    
+    @Deprecated("Use viewModel.speedBeforeLongPress instead", ReplaceWith("viewModel.speedBeforeLongPress.value"))
     private var speedBeforeLongPress = 1.0  // 记录长按前的速度，用于松开后恢复
+    
+    @Deprecated("Use viewModel.isHardwareDecoding instead", ReplaceWith("viewModel.isHardwareDecoding.value"))
     private var isHardwareDecoding = true
+    
     private var pendingSeekPosition: Int? = null  // 待处理的seek位置，用于解决连续双击问题
+    
+    @Deprecated("Use viewModel.gestureStartPosition instead", ReplaceWith("viewModel.gestureStartPosition.value"))
     private var gestureStartPosition = 0  // 手势开始时的视频位置（用于滑动跳转）
     
+    @Deprecated("Use viewModel.videoAspect instead", ReplaceWith("viewModel.videoAspect.value"))
     private var currentVideoAspect = VideoAspect.FIT  // 当前画面比例模式
     
     // 缓冲检测相关变量
+    @Deprecated("Use viewModel.lastPositionForBuffering instead", ReplaceWith("viewModel.lastPositionForBuffering.value"))
     private var lastPositionForBuffering = 0.0
+    
+    @Deprecated("Use viewModel.lastPositionUpdateTime instead", ReplaceWith("viewModel.lastPositionUpdateTime.value"))
     private var lastPositionUpdateTime = 0L
+    
+    @Deprecated("Use viewModel.isStalledBuffering instead", ReplaceWith("viewModel.isStalledBuffering.value"))
     private var isStalledBuffering = false
     
     // 播放状态跟踪
+    @Deprecated("Use viewModel.previousIsPlaying instead", ReplaceWith("viewModel.previousIsPlaying.value"))
     private var previousIsPlaying = false
+    
+    @Deprecated("Use viewModel.isThumbnailInitialized instead", ReplaceWith("viewModel.isThumbnailInitialized.value"))
     private var isThumbnailInitialized = false  // 记录是否已初始化缩略图
     
+    @Deprecated("Use viewModel.seekTimeSeconds instead", ReplaceWith("viewModel.seekTimeSeconds.value"))
     private var seekTimeSeconds = 5
     
+    @Deprecated("Use viewModel.currentSeries instead", ReplaceWith("viewModel.currentSeries.value"))
     private var currentSeries: List<Uri> = emptyList()
+    
+    @Deprecated("Use viewModel.currentIndex instead", ReplaceWith("viewModel.currentIndex.value"))
     private var currentVideoIndex = -1
     
     // 当前文件夹的视频列表
+    @Deprecated("Use viewModel.videoList instead", ReplaceWith("viewModel.videoList.value"))
     private var currentVideoList: List<VideoFileParcelable> = emptyList()
 
     private var anime4KDialog: android.app.Dialog? = null
+    
+    @Deprecated("Use viewModel.anime4KEnabled instead", ReplaceWith("viewModel.anime4KEnabled.value"))
     private var anime4KEnabled = false
+    
+    @Deprecated("Use viewModel.anime4KMode instead", ReplaceWith("viewModel.anime4KMode.value"))
     private var anime4KMode = Anime4KManager.Mode.OFF
     
     // 标记本次播放是否已经自动加载过字幕（防止重复加载）
+    @Deprecated("Use viewModel.hasAutoLoadedSubtitle instead", ReplaceWith("viewModel.hasAutoLoadedSubtitle.value"))
     private var hasAutoLoadedSubtitle = false
+    
+    @Deprecated("Use viewModel.anime4KQuality instead", ReplaceWith("viewModel.anime4KQuality.value"))
     private var anime4KQuality = Anime4KManager.Quality.BALANCED
     
     // 当前视频所在文件夹路径
+    @Deprecated("Use viewModel.currentFolderPath instead", ReplaceWith("viewModel.currentFolderPath.value"))
     private var currentFolderPath: String? = null
     
     // 是否为在线视频
+    @Deprecated("Use viewModel.isOnlineVideo instead", ReplaceWith("viewModel.isOnlineVideo.value"))
     private var isOnlineVideo = false
     
     // 是否从主页继续播放进入（需要返回到视频列表而不是直接finish）
+    @Deprecated("Use viewModel.isFromHomeContinue instead", ReplaceWith("viewModel.isFromHomeContinue.value"))
     private var isFromHomeContinue = false
     
     private lateinit var seekHint: TextView
@@ -271,6 +320,10 @@ class VideoPlayerActivity : AppCompatActivity(),
                     intent.data
                 }
             }
+            
+            // 同步到ViewModel
+            viewModel.setCurrentVideoUri(videoUri)
+            
         } catch (e: Exception) {
             Log.e(TAG, "Error parsing video URI", e)
             DialogUtils.showToastShort(this, "解析视频地址失败: ${e.message}")
@@ -289,36 +342,41 @@ class VideoPlayerActivity : AppCompatActivity(),
         com.fam4k007.videoplayer.utils.Logger.d(TAG, "URI scheme: ${videoUri?.scheme}")
         
         // 判断是否为在线视频
-        isOnlineVideo = remotePlaybackRequest != null ||
+        val isOnline = remotePlaybackRequest != null ||
             intent.getBooleanExtra("is_online", false) ||
             intent.getBooleanExtra("is_online_video", false) ||
             isRemotePlaybackUri(videoUri)
+        viewModel.setIsOnlineVideo(isOnline)
 
-        if (isOnlineVideo && remotePlaybackRequest == null) {
+        if (isOnline && remotePlaybackRequest == null) {
             remotePlaybackRequest = buildLegacyRemotePlaybackRequest(videoUri!!)
         }
         
         com.fam4k007.videoplayer.utils.Logger.d(TAG, "Is online video: $isOnlineVideo")
         
         // 检查是否从主页继续播放进入（有 folder_path 参数）
-        isFromHomeContinue = intent.hasExtra("folder_path")
-        if (isFromHomeContinue) {
-            currentFolderPath = intent.getStringExtra("folder_path")
-            com.fam4k007.videoplayer.utils.Logger.d(TAG, "From home continue play, folder: $currentFolderPath")
+        val fromHomeContinue = intent.hasExtra("folder_path")
+        viewModel.setIsFromHomeContinue(fromHomeContinue)
+        if (fromHomeContinue) {
+            val folderPath = intent.getStringExtra("folder_path")
+            viewModel.setCurrentFolderPath(folderPath)
+            com.fam4k007.videoplayer.utils.Logger.d(TAG, "From home continue play, folder: $folderPath")
         } else if (isOnlineVideo) {
             com.fam4k007.videoplayer.utils.Logger.d(TAG, "Playing online video")
             // 在线视频不需要获取文件夹路径
-            currentFolderPath = null
+            viewModel.setCurrentFolderPath(null)
         } else {
             // 获取当前视频所在文件夹路径
             videoUri?.let { uri ->
-                currentFolderPath = uri.getFolderName()
-                com.fam4k007.videoplayer.utils.Logger.d(TAG, "Folder path: $currentFolderPath")
+                val folderPath = uri.getFolderName()
+                viewModel.setCurrentFolderPath(folderPath)
+                com.fam4k007.videoplayer.utils.Logger.d(TAG, "Folder path: $folderPath")
             }
         }
 
-        savedPosition = preferencesManager.getPlaybackPosition(videoUri.toString())
-        com.fam4k007.videoplayer.utils.Logger.d(TAG, "Saved position: $savedPosition seconds")
+        val savedPos = preferencesManager.getPlaybackPosition(videoUri.toString())
+        viewModel.setSavedPosition(savedPos)
+        com.fam4k007.videoplayer.utils.Logger.d(TAG, "Saved position: $savedPos seconds")
 
         mpvView = findViewById(R.id.surfaceView)
         danmakuView = findViewById(R.id.danmakuView)
@@ -456,7 +514,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                             val isWebDav = intent.getBooleanExtra("is_webdav", false)
                             thumbnailManager.initializeVideo(uri, (duration * 1000L), isWebDav)
                             seekBarThumbnailHelper?.updateDuration(duration.toDouble())
-                            isThumbnailInitialized = true
+                            viewModel.setThumbnailInitialized(true)
                         }
                     }
                 }
@@ -488,6 +546,257 @@ class VideoPlayerActivity : AppCompatActivity(),
         lifecycleScope.launch {
             viewModel.audioTracks.collect { tracks ->
                 com.fam4k007.videoplayer.utils.Logger.d(TAG, "【ViewModel】Audio tracks updated: ${tracks.size} tracks")
+            }
+        }
+        
+        // ==================== 阶段1.2：UI状态监听示例 ====================
+        
+        // 监听控制栏显示/隐藏状态（示例）
+        lifecycleScope.launch {
+            viewModel.controlsShown.collect { shown ->
+                // 【示例】当ViewModel状态变化时，同步到Manager
+                // 未来可完全由ViewModel驱动，不再需要Manager的isVisible状态
+                com.fam4k007.videoplayer.utils.Logger.v(TAG, "【ViewModel】Controls shown: $shown")
+            }
+        }
+        
+        // 监听控制栏锁定状态（示例）
+        lifecycleScope.launch {
+            viewModel.areControlsLocked.collect { locked ->
+                // 【示例】锁定状态变化时的处理
+                com.fam4k007.videoplayer.utils.Logger.v(TAG, "【ViewModel】Controls locked: $locked")
+            }
+        }
+        
+        // 监听视频比例变化（示例）
+        lifecycleScope.launch {
+            viewModel.videoAspect.collect { aspect ->
+                // 【示例】视频比例变化时更新Activity状态
+                currentVideoAspect = aspect
+                com.fam4k007.videoplayer.utils.Logger.v(TAG, "【ViewModel】Video aspect: ${aspect.displayName}")
+            }
+        }
+        
+        // 监听Anime4K状态变化（示例）
+        lifecycleScope.launch {
+            viewModel.anime4KEnabled.collect { enabled ->
+                anime4KEnabled = enabled
+                com.fam4k007.videoplayer.utils.Logger.v(TAG, "【ViewModel】Anime4K enabled: $enabled")
+            }
+        }
+        
+        // 监听弹幕显示状态（示例）
+        lifecycleScope.launch {
+            viewModel.danmakuVisible.collect { visible ->
+                // 【示例】弹幕显示状态同步到Manager
+                com.fam4k007.videoplayer.utils.Logger.v(TAG, "【ViewModel】Danmaku visible: $visible")
+            }
+        }
+        
+        // 监听硬件解码状态（示例）
+        lifecycleScope.launch {
+            viewModel.isHardwareDecoding.collect { hwdec ->
+                isHardwareDecoding = hwdec
+                com.fam4k007.videoplayer.utils.Logger.v(TAG, "【ViewModel】Hardware decoding: $hwdec")
+            }
+        }
+        
+        // ==================== 阶段1.2：ViewModel状态同步到Activity变量 ====================
+        
+        // 同步播放/暂停状态（ViewModel是唯一数据源）
+        lifecycleScope.launch {
+            viewModel.paused.collect { paused ->
+                isPlaying = (paused == false)
+            }
+        }
+        
+        // 同步播放速度（ViewModel是唯一数据源）
+        lifecycleScope.launch {
+            viewModel.speed.collect { speed ->
+                currentSpeed = speed.toDouble()
+            }
+        }
+        
+        // 同步视频比例（ViewModel是唯一数据源）
+        lifecycleScope.launch {
+            viewModel.videoAspect.collect { aspect ->
+                currentVideoAspect = aspect
+            }
+        }
+        
+        // 同步Anime4K状态（ViewModel是唯一数据源）
+        lifecycleScope.launch {
+            viewModel.anime4KEnabled.collect { enabled ->
+                anime4KEnabled = enabled
+            }
+        }
+        
+        // 同步视频列表（ViewModel是唯一数据源）
+        lifecycleScope.launch {
+            viewModel.videoList.collect { list ->
+                currentVideoList = list
+                Logger.v(TAG, "【ViewModel】Video list synced: ${list.size} videos")
+            }
+        }
+        
+        // 同步当前视频索引
+        lifecycleScope.launch {
+            viewModel.currentIndex.collect { index ->
+                currentVideoIndex = index
+                Logger.v(TAG, "【ViewModel】Current video index: $index")
+            }
+        }
+        
+        // 同步当前视频URI
+        lifecycleScope.launch {
+            viewModel.currentVideoUri.collect { uri ->
+                // videoUri在某些旧代码中仍需要使用，保持同步
+                if (uri != null && uri != videoUri) {
+                    Logger.v(TAG, "【ViewModel】Current video URI synced")
+                }
+            }
+        }
+        
+        // 同步快进秒数
+        lifecycleScope.launch {
+            viewModel.seekTimeSeconds.collect { seconds ->
+                seekTimeSeconds = seconds
+                Logger.v(TAG, "【ViewModel】Seek time: ${seconds}s")
+            }
+        }
+        
+        // 同步在线视频标识
+        lifecycleScope.launch {
+            viewModel.isOnlineVideo.collect { online ->
+                isOnlineVideo = online
+                Logger.v(TAG, "【ViewModel】Is online video: $online")
+            }
+        }
+        
+        // 同步保存的播放位置
+        lifecycleScope.launch {
+            viewModel.savedPosition.collect { position ->
+                savedPosition = position
+                Logger.v(TAG, "【ViewModel】Saved position: ${position}s")
+            }
+        }
+        
+        // 同步长按前的速度
+        lifecycleScope.launch {
+            viewModel.speedBeforeLongPress.collect { speed ->
+                speedBeforeLongPress = speed
+                Logger.v(TAG, "【ViewModel】Speed before long press: $speed")
+            }
+        }
+        
+        // 同步缩略图初始化标志
+        lifecycleScope.launch {
+            viewModel.isThumbnailInitialized.collect { initialized ->
+                isThumbnailInitialized = initialized
+                Logger.v(TAG, "【ViewModel】Thumbnail initialized: $initialized")
+            }
+        }
+        
+        // 同步字幕自动加载标志
+        lifecycleScope.launch {
+            viewModel.hasAutoLoadedSubtitle.collect { loaded ->
+                hasAutoLoadedSubtitle = loaded
+                Logger.v(TAG, "【ViewModel】Has auto-loaded subtitle: $loaded")
+            }
+        }
+        
+        // 同步文件夹路径
+        lifecycleScope.launch {
+            viewModel.currentFolderPath.collect { path ->
+                currentFolderPath = path
+                Logger.v(TAG, "【ViewModel】Current folder path: $path")
+            }
+        }
+        
+        // 同步是否从主页继续播放
+        lifecycleScope.launch {
+            viewModel.isFromHomeContinue.collect { fromHome ->
+                isFromHomeContinue = fromHome
+                Logger.v(TAG, "【ViewModel】Is from home continue: $fromHome")
+            }
+        }
+        
+        // 同步最后播放位置
+        lifecycleScope.launch {
+            viewModel.lastPlaybackPosition.collect { position ->
+                lastPlaybackPosition = position
+                Logger.v(TAG, "【ViewModel】Last playback position: ${position}ms")
+            }
+        }
+        
+        // 同步位置恢复标志
+        lifecycleScope.launch {
+            viewModel.hasRestoredPosition.collect { restored ->
+                hasRestoredPosition = restored
+            }
+        }
+        
+        // 同步提示显示标志
+        lifecycleScope.launch {
+            viewModel.hasShownPrompt.collect { shown ->
+                hasShownPrompt = shown
+            }
+        }
+        
+        // 同步缓冲检测相关
+        lifecycleScope.launch {
+            viewModel.lastPositionForBuffering.collect { position ->
+                lastPositionForBuffering = position
+            }
+        }
+        
+        lifecycleScope.launch {
+            viewModel.lastPositionUpdateTime.collect { time ->
+                lastPositionUpdateTime = time
+            }
+        }
+        
+        lifecycleScope.launch {
+            viewModel.isStalledBuffering.collect { isStalled ->
+                isStalledBuffering = isStalled
+            }
+        }
+        
+        // 同步之前的播放状态
+        lifecycleScope.launch {
+            viewModel.previousIsPlaying.collect { wasPlaying ->
+                previousIsPlaying = wasPlaying
+            }
+        }
+        
+        // 同步系列播放列表
+        lifecycleScope.launch {
+            viewModel.currentSeries.collect { series ->
+                currentSeries = series
+                Logger.v(TAG, "【ViewModel】Current series synced: ${series.size} videos")
+            }
+        }
+        
+        // 同步手势开始位置
+        lifecycleScope.launch {
+            viewModel.gestureStartPosition.collect { position ->
+                gestureStartPosition = position
+            }
+        }
+        
+        // 同步Anime4K模式
+        lifecycleScope.launch {
+            viewModel.anime4KMode.collect { mode ->
+                anime4KMode = mode
+                Logger.v(TAG, "【ViewModel】Anime4K mode: $mode")
+            }
+        }
+        
+        // 同步Anime4K质量
+        lifecycleScope.launch {
+            viewModel.anime4KQuality.collect { quality ->
+                anime4KQuality = quality
+                Logger.v(TAG, "【ViewModel】Anime4K quality: $quality")
             }
         }
     }
@@ -649,7 +958,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                 
                 override fun onLongPressRelease() {
                     // 恢复到长按前的速度
-                    currentSpeed = speedBeforeLongPress
+                    viewModel.restoreSpeedAfterLongPress()
                     playbackEngine?.setSpeed(speedBeforeLongPress)
                     danmakuManager.setSpeed(speedBeforeLongPress.toFloat())
                     
@@ -680,10 +989,10 @@ class VideoPlayerActivity : AppCompatActivity(),
                     val longPressSpeed = preferencesManager.getLongPressSpeed()
                     
                     // 记录当前速度，用于松开后恢复
-                    speedBeforeLongPress = currentSpeed
+                    viewModel.saveSpeedBeforeLongPress(currentSpeed)
                     
                     // 设置为长按速度
-                    currentSpeed = longPressSpeed.toDouble()
+                    viewModel.setSpeed(longPressSpeed.toDouble())
                     playbackEngine?.setSpeed(longPressSpeed.toDouble())
                     danmakuManager.setSpeed(longPressSpeed)
                     
@@ -811,6 +1120,9 @@ class VideoPlayerActivity : AppCompatActivity(),
                 }
                 
                 override fun onLockClick() {
+                    // 【阶段1.2改进】使用ViewModel的action方法
+                    viewModel.toggleLock()
+                    // Manager仍需调用以更新UI（未来可由Compose自动处理）
                     controlsManager.toggleLock()
                 }
                 
@@ -871,8 +1183,9 @@ class VideoPlayerActivity : AppCompatActivity(),
             com.fam4k007.videoplayer.utils.Logger.d(TAG, "isFromHomeContinue: $isFromHomeContinue")
             
             if (videoListParcelable != null && videoListParcelable.isNotEmpty()) {
-                // 保存视频列表用于显示
-                currentVideoList = videoListParcelable
+                // 保存视频列表到ViewModel
+                val currentIndex = videoListParcelable.indexOfFirst { Uri.parse(it.uri) == videoUri }.takeIf { it >= 0 } ?: 0
+                viewModel.setVideoList(videoListParcelable, currentIndex)
                 
                 val uriList = videoListParcelable.map { Uri.parse(it.uri) }
                 videoUri?.let { uri ->
@@ -928,14 +1241,14 @@ class VideoPlayerActivity : AppCompatActivity(),
         )
         dialogManager.setCallback(object : com.fam4k007.videoplayer.player.PlayerDialogManager.DialogCallback {
             override fun onSpeedChanged(speed: Double) {
-                currentSpeed = speed
+                viewModel.setSpeed(speed)
                 playbackEngine.setSpeed(speed)
                 danmakuManager.setSpeed(speed.toFloat())
                 preferencesManager.setLastPlaybackSpeed(speed.toFloat())
             }
             
             override fun onAnime4KChanged(enabled: Boolean, mode: Anime4KManager.Mode, quality: Anime4KManager.Quality) {
-                anime4KEnabled = enabled
+                viewModel.setAnime4K(enabled, mode, quality)
                 anime4KMode = mode
                 anime4KQuality = quality
                 applyAnime4K()
@@ -1457,7 +1770,7 @@ class VideoPlayerActivity : AppCompatActivity(),
     private fun loadVideo() {
         videoUri?.let { uri ->
             // 重置自动加载字幕标志（新视频开始播放）
-            hasAutoLoadedSubtitle = false
+            viewModel.setHasAutoLoadedSubtitle(false)
             
             val position = if (duration > 0 && duration < 30) {
                 com.fam4k007.videoplayer.utils.Logger.d(TAG, "Short video detected, starting from 0")
@@ -1656,7 +1969,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                 com.fam4k007.videoplayer.utils.Logger.d(TAG, "Saved auto-loaded subtitle path to preferences")
                 
                 // 设置标志，防止 restoreSubtitlePreferences 重复加载
-                hasAutoLoadedSubtitle = true
+                viewModel.setHasAutoLoadedSubtitle(true)
                 
                 DialogUtils.showToastShort(this, "已自动加载字幕: ${foundSubtitle.name}")
             } catch (e: Exception) {
@@ -1961,8 +2274,9 @@ class VideoPlayerActivity : AppCompatActivity(),
      * 加载用户设置
      */
     private fun loadUserSettings() {
-        seekTimeSeconds = preferencesManager.getSeekTime()
-        Log.d(SEEK_DEBUG, "loadUserSettings: seekTimeSeconds loaded = $seekTimeSeconds seconds")
+        val seekTime = preferencesManager.getSeekTime()
+        viewModel.setSeekTimeSeconds(seekTime)
+        Log.d(SEEK_DEBUG, "loadUserSettings: seekTimeSeconds loaded = $seekTime seconds")
         
         // 如果启用了Anime4K记忆功能，恢复上次使用的模式
         if (preferencesManager.isAnime4KMemoryEnabled()) {
@@ -1970,16 +2284,17 @@ class VideoPlayerActivity : AppCompatActivity(),
             try {
                 anime4KMode = Anime4KManager.Mode.valueOf(lastMode)
                 // 只有非OFF模式才启用Anime4K
-                anime4KEnabled = (anime4KMode != Anime4KManager.Mode.OFF)
-                Logger.d(TAG, "Anime4K mode restored from memory: $lastMode, enabled=$anime4KEnabled")
+                val enabled = (anime4KMode != Anime4KManager.Mode.OFF)
+                viewModel.setAnime4K(enabled, anime4KMode, anime4KQuality)
+                Logger.d(TAG, "Anime4K mode restored from memory: $lastMode, enabled=$enabled")
             } catch (e: IllegalArgumentException) {
                 Log.e(TAG, "Invalid Anime4K mode in preferences: $lastMode", e)
                 anime4KMode = Anime4KManager.Mode.OFF
-                anime4KEnabled = false
+                viewModel.setAnime4K(false, Anime4KManager.Mode.OFF, anime4KQuality)
             }
         } else {
             anime4KMode = Anime4KManager.Mode.OFF
-            anime4KEnabled = false
+            viewModel.setAnime4K(false, Anime4KManager.Mode.OFF, anime4KQuality)
         }
     }
     
@@ -1990,7 +2305,7 @@ class VideoPlayerActivity : AppCompatActivity(),
         if (preferencesManager.isRememberSpeedEnabled()) {
             val lastSpeed = preferencesManager.getLastPlaybackSpeed()
             if (lastSpeed != 1.0f) {
-                currentSpeed = lastSpeed.toDouble()
+                viewModel.setSpeed(lastSpeed.toDouble())
                 playbackEngine.setSpeed(lastSpeed.toDouble())
                 danmakuManager.setSpeed(lastSpeed)
                 Logger.d(TAG, "Restored remembered playback speed: ${lastSpeed}x")
@@ -2028,7 +2343,7 @@ class VideoPlayerActivity : AppCompatActivity(),
     private fun handleVideoListIntent() {
         val lastPosition = intent.getLongExtra("lastPosition", -1L)
         if (lastPosition > 0) {
-            this.lastPlaybackPosition = lastPosition
+            viewModel.setLastPlaybackPosition(lastPosition)
         }
     }
     
@@ -2081,11 +2396,12 @@ class VideoPlayerActivity : AppCompatActivity(),
         videoUri = uri
         
         // 重置自动加载字幕标志（新视频开始播放）
-        hasAutoLoadedSubtitle = false
+        viewModel.setHasAutoLoadedSubtitle(false)
         
         // 更新在线视频标志
-        isOnlineVideo = isRemotePlaybackUri(uri)
-        remotePlaybackRequest = if (isOnlineVideo) {
+        val isOnline = isRemotePlaybackUri(uri)
+        viewModel.setIsOnlineVideo(isOnline)
+        remotePlaybackRequest = if (isOnline) {
             RemotePlaybackRequest(
                 url = uri.toString(),
                 title = resolveVideoTitle(uri),
@@ -2226,7 +2542,7 @@ class VideoPlayerActivity : AppCompatActivity(),
      * VideoAspectCallback 实现
      */
     override fun onVideoAspectChanged(aspect: VideoAspect) {
-        currentVideoAspect = aspect
+        viewModel.setVideoAspect(aspect)
         Logger.d(TAG, "Video aspect changed to: ${aspect.displayName}")
     }
 

@@ -6,8 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.fam4k007.videoplayer.database.PlaybackHistoryEntity
 import com.fam4k007.videoplayer.repository.PlayerRepository
 import com.fam4k007.videoplayer.utils.Logger
+import com.fam4k007.videoplayer.player.VideoAspect
+import com.fam4k007.videoplayer.domain.player.Anime4KManager
+import com.fam4k007.videoplayer.VideoFileParcelable
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVNode
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,12 +20,53 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
+ * Sheet类型枚举（对话框/底部菜单）
+ */
+enum class Sheets {
+    None,
+    Speed,           // 播放速度
+    AspectRatio,     // 画面比例
+    Subtitle,        // 字幕轨道
+    AudioTrack,      // 音频轨道
+    Danmaku,         // 弹幕设置
+    Anime4K,         // Anime4K设置
+    Decoder,         // 解码器选择
+    More             // 更多设置
+}
+
+/**
+ * Panel类型枚举（侧边栏面板）
+ */
+enum class Panels {
+    None,
+    Playlist,        // 播放列表
+    Series,          // 剧集列表
+    Settings         // 设置面板
+}
+
+/**
+ * 播放器更新提示（速度、亮度、音量变化等）
+ */
+sealed class PlayerUpdates {
+    data object None : PlayerUpdates()
+    data class Speed(val speed: Double) : PlayerUpdates()
+    data class Brightness(val brightness: Float) : PlayerUpdates()
+    data class Volume(val volume: Int) : PlayerUpdates()
+    data class Seek(val position: Int, val duration: Int) : PlayerUpdates()
+}
+
+/**
  * 播放器ViewModel
  * 管理播放器相关的UI状态，调用Repository和Domain层
  * 
  * 阶段1.1: MPV状态直接监听（学习mpvEx）
  * - 使用MPVLib观察者模式监听属性变化
  * - 将MPV状态封装为StateFlow，自动触发UI更新
+ * 
+ * 阶段1.2: UI状态集中管理
+ * - 将所有UI状态变量移到ViewModel
+ * - 所有状态使用StateFlow封装
+ * - Activity只负责UI渲染和系统集成
  */
 class PlayerViewModel(
     private val playerRepository: PlayerRepository
@@ -31,7 +76,7 @@ class PlayerViewModel(
         private const val TAG = "PlayerViewModel"
     }
     
-    // ==================== MPV 属性状态（阶段1.1新增）====================
+    // ==================== MPV 属性状态（阶段1.1）====================
     
     // 播放状态（直接从MPV监听）
     private val _paused = MutableStateFlow<Boolean?>(null)
@@ -65,13 +110,169 @@ class PlayerViewModel(
     private val _audioTracks = MutableStateFlow<List<AudioTrack>>(emptyList())
     val audioTracks: StateFlow<List<AudioTrack>> = _audioTracks.asStateFlow()
     
+    // ==================== UI控制状态（阶段1.2）====================
+    
+    // 控制面板显示状态
+    private val _controlsShown = MutableStateFlow(false)
+    val controlsShown: StateFlow<Boolean> = _controlsShown.asStateFlow()
+    
+    // 进度条显示状态
+    private val _seekBarShown = MutableStateFlow(false)
+    val seekBarShown: StateFlow<Boolean> = _seekBarShown.asStateFlow()
+    
+    // 控制栏锁定状态
+    private val _areControlsLocked = MutableStateFlow(false)
+    val areControlsLocked: StateFlow<Boolean> = _areControlsLocked.asStateFlow()
+    
+    // 对话框/Sheet状态
+    private val _sheetShown = MutableStateFlow(Sheets.None)
+    val sheetShown: StateFlow<Sheets> = _sheetShown.asStateFlow()
+    
+    // 面板状态
+    private val _panelShown = MutableStateFlow(Panels.None)
+    val panelShown: StateFlow<Panels> = _panelShown.asStateFlow()
+    
+    // 播放器更新提示（速度、亮度、音量变化）
+    private val _playerUpdate = MutableStateFlow<PlayerUpdates>(PlayerUpdates.None)
+    val playerUpdate: StateFlow<PlayerUpdates> = _playerUpdate.asStateFlow()
+    
+    // 视频比例模式
+    private val _videoAspect = MutableStateFlow(VideoAspect.FIT)
+    val videoAspect: StateFlow<VideoAspect> = _videoAspect.asStateFlow()
+    
+    // Anime4K 状态
+    private val _anime4KEnabled = MutableStateFlow(false)
+    val anime4KEnabled: StateFlow<Boolean> = _anime4KEnabled.asStateFlow()
+    
+    private val _anime4KMode = MutableStateFlow(Anime4KManager.Mode.OFF)
+    val anime4KMode: StateFlow<Anime4KManager.Mode> = _anime4KMode.asStateFlow()
+    
+    private val _anime4KQuality = MutableStateFlow(Anime4KManager.Quality.BALANCED)
+    val anime4KQuality: StateFlow<Anime4KManager.Quality> = _anime4KQuality.asStateFlow()
+    
+    // 弹幕显示状态
+    private val _danmakuVisible = MutableStateFlow(true)
+    val danmakuVisible: StateFlow<Boolean> = _danmakuVisible.asStateFlow()
+    
+    // Seek提示文本
+    private val _seekText = MutableStateFlow<String?>(null)
+    val seekText: StateFlow<String?> = _seekText.asStateFlow()
+    
+    // 手势相关状态
+    private val _isBrightnessSliderShown = MutableStateFlow(false)
+    val isBrightnessSliderShown: StateFlow<Boolean> = _isBrightnessSliderShown.asStateFlow()
+    
+    private val _isVolumeSliderShown = MutableStateFlow(false)
+    val isVolumeSliderShown: StateFlow<Boolean> = _isVolumeSliderShown.asStateFlow()
+    
+    // 系列播放状态
+    private val _videoList = MutableStateFlow<List<VideoFileParcelable>>(emptyList())
+    val videoList: StateFlow<List<VideoFileParcelable>> = _videoList.asStateFlow()
+    
+    private val _currentIndex = MutableStateFlow(0)
+    val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
+    
+    // 硬件解码状态
+    private val _isHardwareDecoding = MutableStateFlow(true)
+    val isHardwareDecoding: StateFlow<Boolean> = _isHardwareDecoding.asStateFlow()
+    
+    // 当前播放视频URI
+    private val _currentVideoUri = MutableStateFlow<Uri?>(null)
+    val currentVideoUri: StateFlow<Uri?> = _currentVideoUri.asStateFlow()
+    
+    // 快进/快退秒数配置
+    private val _seekTimeSeconds = MutableStateFlow(5)
+    val seekTimeSeconds: StateFlow<Int> = _seekTimeSeconds.asStateFlow()
+    
+    // 是否为在线视频
+    private val _isOnlineVideo = MutableStateFlow(false)
+    val isOnlineVideo: StateFlow<Boolean> = _isOnlineVideo.asStateFlow()
+    
+    // 保存的播放位置（用于恢复播放）
+    private val _savedPosition = MutableStateFlow(0.0)
+    val savedPosition: StateFlow<Double> = _savedPosition.asStateFlow()
+    
+    // 长按前的速度（用于松开后恢复）
+    private val _speedBeforeLongPress = MutableStateFlow(1.0)
+    val speedBeforeLongPress: StateFlow<Double> = _speedBeforeLongPress.asStateFlow()
+    
+    // 是否已初始化缩略图
+    private val _isThumbnailInitialized = MutableStateFlow(false)
+    val isThumbnailInitialized: StateFlow<Boolean> = _isThumbnailInitialized.asStateFlow()
+    
+    // 是否已自动加载字幕
+    private val _hasAutoLoadedSubtitle = MutableStateFlow(false)
+    val hasAutoLoadedSubtitle: StateFlow<Boolean> = _hasAutoLoadedSubtitle.asStateFlow()
+    
+    // 当前视频所在文件夹路径
+    private val _currentFolderPath = MutableStateFlow<String?>(null)
+    val currentFolderPath: StateFlow<String?> = _currentFolderPath.asStateFlow()
+    
+    // 是否从主页继续播放进入
+    private val _isFromHomeContinue = MutableStateFlow(false)
+    val isFromHomeContinue: StateFlow<Boolean> = _isFromHomeContinue.asStateFlow()
+    
+    // 从列表传入的播放位置
+    private val _lastPlaybackPosition = MutableStateFlow(0L)
+    val lastPlaybackPosition: StateFlow<Long> = _lastPlaybackPosition.asStateFlow()
+    
+    // 位置恢复相关标志
+    private val _hasRestoredPosition = MutableStateFlow(false)
+    val hasRestoredPosition: StateFlow<Boolean> = _hasRestoredPosition.asStateFlow()
+    
+    private val _hasShownPrompt = MutableStateFlow(false)
+    val hasShownPrompt: StateFlow<Boolean> = _hasShownPrompt.asStateFlow()
+    
+    // 缓冲检测相关
+    private val _lastPositionForBuffering = MutableStateFlow(0.0)
+    val lastPositionForBuffering: StateFlow<Double> = _lastPositionForBuffering.asStateFlow()
+    
+    private val _lastPositionUpdateTime = MutableStateFlow(0L)
+    val lastPositionUpdateTime: StateFlow<Long> = _lastPositionUpdateTime.asStateFlow()
+    
+    private val _isStalledBuffering = MutableStateFlow(false)
+    val isStalledBuffering: StateFlow<Boolean> = _isStalledBuffering.asStateFlow()
+    
+    // 播放状态跟踪
+    private val _previousIsPlaying = MutableStateFlow(false)
+    val previousIsPlaying: StateFlow<Boolean> = _previousIsPlaying.asStateFlow()
+    
+    // 系列播放相关
+    private val _currentSeries = MutableStateFlow<List<Uri>>(emptyList())
+    val currentSeries: StateFlow<List<Uri>> = _currentSeries.asStateFlow()
+    
+    // 手势相关状态
+    private val _pendingSeekPosition = MutableStateFlow<Int?>(null)
+    val pendingSeekPosition: StateFlow<Int?> = _pendingSeekPosition.asStateFlow()
+    
+    private val _gestureStartPosition = MutableStateFlow(0)
+    val gestureStartPosition: StateFlow<Int> = _gestureStartPosition.asStateFlow()
+    
+    // ==================== 内部状态 ====================
+    
     // MPV观察者是否已注册
     private var mpvObserverRegistered = false
     
-    init {
+    // MPV初始化标志
+    private var mpvInitialized = false
+    
+    // 轮询协程的Job
+    private var positionPollingJob: Job? = null
+    private var durationPollingJob: Job? = null
+    
+    /**
+     * 启动MPV轮询协程
+     * 应在MPV初始化后调用
+     */
+    private fun startMPVPolling() {
+        if (positionPollingJob?.isActive == true) {
+            Logger.w(TAG, "Position polling already started")
+            return
+        }
+        
         // 轮询更新高精度位置（约24fps）
-        viewModelScope.launch {
-            while (isActive) {
+        positionPollingJob = viewModelScope.launch {
+            while (isActive && mpvInitialized) {
                 try {
                     MPVLib.getPropertyDouble("time-pos")?.let {
                         _precisePosition.value = it
@@ -84,9 +285,9 @@ class PlayerViewModel(
         }
         
         // 轮询更新高精度时长
-        viewModelScope.launch {
+        durationPollingJob = viewModelScope.launch {
             var lastDuration = 0
-            while (isActive) {
+            while (isActive && mpvInitialized) {
                 try {
                     val intDuration = MPVLib.getPropertyInt("duration") ?: 0
                     if (intDuration != lastDuration) {
@@ -103,6 +304,8 @@ class PlayerViewModel(
                 delay(1000) // 每秒检查一次
             }
         }
+        
+        Logger.d(TAG, "MPV polling started")
     }
     
     /**
@@ -114,6 +317,12 @@ class PlayerViewModel(
             Logger.w(TAG, "MPV observers already registered")
             return
         }
+        
+        // 标记MPV已初始化
+        mpvInitialized = true
+        
+        // 启动轮询协程
+        startMPVPolling()
         
         try {
             // 注册事件观察者
@@ -141,6 +350,15 @@ class PlayerViewModel(
      */
     fun unregisterMPVObservers() {
         if (!mpvObserverRegistered) return
+        
+        // 取消轮询协程
+        positionPollingJob?.cancel()
+        durationPollingJob?.cancel()
+        positionPollingJob = null
+        durationPollingJob = null
+        
+        // 标记MPV未初始化
+        mpvInitialized = false
         
         try {
             MPVLib.removeObserver(this)
@@ -280,6 +498,396 @@ class PlayerViewModel(
         }
     }
     
+    // ==================== UI状态操作方法（阶段1.2）====================
+    
+    /**
+     * 切换控制栏显示/隐藏
+     */
+    fun toggleControls() {
+        _controlsShown.value = !_controlsShown.value
+        Logger.v(TAG, "Controls ${if (_controlsShown.value) "shown" else "hidden"}")
+    }
+    
+    /**
+     * 显示控制栏
+     */
+    fun showControls() {
+        _controlsShown.value = true
+    }
+    
+    /**
+     * 隐藏控制栏
+     */
+    fun hideControls() {
+        _controlsShown.value = false
+    }
+    
+    /**
+     * 切换控制栏锁定状态
+     */
+    fun toggleLock() {
+        _areControlsLocked.value = !_areControlsLocked.value
+        Logger.v(TAG, "Controls ${if (_areControlsLocked.value) "locked" else "unlocked"}")
+    }
+    
+    /**
+     * 设置控制栏锁定状态
+     */
+    fun setControlsLocked(locked: Boolean) {
+        _areControlsLocked.value = locked
+    }
+    
+    /**
+     * 显示Sheet对话框
+     */
+    fun showSheet(sheet: Sheets) {
+        _sheetShown.value = sheet
+        Logger.v(TAG, "Show sheet: $sheet")
+    }
+    
+    /**
+     * 关闭Sheet对话框
+     */
+    fun dismissSheet() {
+        _sheetShown.value = Sheets.None
+    }
+    
+    /**
+     * 显示Panel面板
+     */
+    fun showPanel(panel: Panels) {
+        _panelShown.value = panel
+        Logger.v(TAG, "Show panel: $panel")
+    }
+    
+    /**
+     * 关闭Panel面板
+     */
+    fun dismissPanel() {
+        _panelShown.value = Panels.None
+    }
+    
+    /**
+     * 显示播放器更新提示
+     */
+    fun showPlayerUpdate(update: PlayerUpdates) {
+        _playerUpdate.value = update
+        // 自动清除提示（2秒后）
+        viewModelScope.launch {
+            delay(2000)
+            if (_playerUpdate.value == update) {
+                _playerUpdate.value = PlayerUpdates.None
+            }
+        }
+    }
+    
+    /**
+     * 设置视频比例
+     */
+    fun setVideoAspect(aspect: VideoAspect) {
+        _videoAspect.value = aspect
+        Logger.d(TAG, "Video aspect changed to: ${aspect.displayName}")
+    }
+    
+    /**
+     * 切换弹幕显示/隐藏
+     */
+    fun toggleDanmaku() {
+        _danmakuVisible.value = !_danmakuVisible.value
+        Logger.v(TAG, "Danmaku ${if (_danmakuVisible.value) "visible" else "hidden"}")
+    }
+    
+    /**
+     * 设置弹幕显示状态
+     */
+    fun setDanmakuVisible(visible: Boolean) {
+        _danmakuVisible.value = visible
+    }
+    
+    /**
+     * 设置Anime4K状态
+     */
+    fun setAnime4K(enabled: Boolean, mode: Anime4KManager.Mode, quality: Anime4KManager.Quality) {
+        _anime4KEnabled.value = enabled
+        _anime4KMode.value = mode
+        _anime4KQuality.value = quality
+        Logger.d(TAG, "Anime4K: enabled=$enabled, mode=$mode, quality=$quality")
+    }
+    
+    /**
+     * 切换Anime4K开关
+     */
+    fun toggleAnime4K() {
+        _anime4KEnabled.value = !_anime4KEnabled.value
+        Logger.v(TAG, "Anime4K ${if (_anime4KEnabled.value) "enabled" else "disabled"}")
+    }
+    
+    /**
+     * 设置Seek提示文本
+     */
+    fun setSeekText(text: String?) {
+        _seekText.value = text
+    }
+    
+    /**
+     * 显示亮度滑块
+     */
+    fun showBrightnessSlider(show: Boolean) {
+        _isBrightnessSliderShown.value = show
+    }
+    
+    /**
+     * 显示音量滑块
+     */
+    fun showVolumeSlider(show: Boolean) {
+        _isVolumeSliderShown.value = show
+    }
+    
+    /**
+     * 设置视频列表
+     */
+    fun setVideoList(list: List<VideoFileParcelable>, currentIndex: Int = 0) {
+        _videoList.value = list
+        _currentIndex.value = currentIndex
+        Logger.d(TAG, "Video list set: ${list.size} videos, current index: $currentIndex")
+    }
+    
+    /**
+     * 切换到下一个视频
+     */
+    fun nextVideo() {
+        val list = _videoList.value
+        if (_currentIndex.value < list.size - 1) {
+            _currentIndex.value += 1
+            Logger.d(TAG, "Next video: index ${_currentIndex.value}")
+        }
+    }
+    
+    /**
+     * 切换到上一个视频
+     */
+    fun previousVideo() {
+        if (_currentIndex.value > 0) {
+            _currentIndex.value -= 1
+            Logger.d(TAG, "Previous video: index ${_currentIndex.value}")
+        }
+    }
+    
+    /**
+     * 设置硬件解码状态
+     */
+    fun setHardwareDecoding(enabled: Boolean) {
+        _isHardwareDecoding.value = enabled
+        Logger.d(TAG, "Hardware decoding: $enabled")
+    }
+    
+    /**
+     * 设置当前视频URI
+     */
+    fun setCurrentVideoUri(uri: Uri?) {
+        _currentVideoUri.value = uri
+    }
+    
+    /**
+     * 设置快进/快退秒数
+     */
+    fun setSeekTimeSeconds(seconds: Int) {
+        _seekTimeSeconds.value = seconds
+        Logger.d(TAG, "Seek time set to: ${seconds}s")
+    }
+    
+    /**
+     * 设置是否为在线视频
+     */
+    fun setIsOnlineVideo(isOnline: Boolean) {
+        _isOnlineVideo.value = isOnline
+        Logger.d(TAG, "Is online video: $isOnline")
+    }
+    
+    /**
+     * 设置保存的播放位置
+     */
+    fun setSavedPosition(position: Double) {
+        _savedPosition.value = position
+        Logger.d(TAG, "Saved position: ${position}s")
+    }
+    
+    /**
+     * 保存长按前的速度
+     */
+    fun saveSpeedBeforeLongPress(speed: Double) {
+        _speedBeforeLongPress.value = speed
+        Logger.d(TAG, "Speed before long press saved: $speed")
+    }
+    
+    /**
+     * 恢复长按前的速度
+     */
+    fun restoreSpeedAfterLongPress() {
+        val savedSpeed = _speedBeforeLongPress.value
+        setSpeed(savedSpeed)
+        Logger.d(TAG, "Speed restored to: $savedSpeed")
+    }
+    
+    /**
+     * 标记缩略图已初始化
+     */
+    fun setThumbnailInitialized(initialized: Boolean) {
+        _isThumbnailInitialized.value = initialized
+        Logger.d(TAG, "Thumbnail initialized: $initialized")
+    }
+    
+    /**
+     * 设置是否已自动加载字幕
+     */
+    fun setHasAutoLoadedSubtitle(loaded: Boolean) {
+        _hasAutoLoadedSubtitle.value = loaded
+        Logger.d(TAG, "Has auto-loaded subtitle: $loaded")
+    }
+    
+    /**
+     * 设置当前文件夹路径
+     */
+    fun setCurrentFolderPath(path: String?) {
+        _currentFolderPath.value = path
+        Logger.d(TAG, "Current folder path: $path")
+    }
+    
+    /**
+     * 设置是否从主页继续播放进入
+     */
+    fun setIsFromHomeContinue(fromHome: Boolean) {
+        _isFromHomeContinue.value = fromHome
+        Logger.d(TAG, "Is from home continue: $fromHome")
+    }
+    
+    /**
+     * 设置从列表传入的播放位置
+     */
+    fun setLastPlaybackPosition(position: Long) {
+        _lastPlaybackPosition.value = position
+        Logger.d(TAG, "Last playback position: ${position}ms")
+    }
+    
+    /**
+     * 标记已恢复播放位置
+     */
+    fun setHasRestoredPosition(restored: Boolean) {
+        _hasRestoredPosition.value = restored
+    }
+    
+    /**
+     * 标记已显示提示
+     */
+    fun setHasShownPrompt(shown: Boolean) {
+        _hasShownPrompt.value = shown
+    }
+    
+    /**
+     * 更新缓冲检测位置
+     */
+    fun updateBufferingPosition(position: Double) {
+        _lastPositionForBuffering.value = position
+    }
+    
+    /**
+     * 更新缓冲检测时间
+     */
+    fun updateBufferingTime(time: Long) {
+        _lastPositionUpdateTime.value = time
+    }
+    
+    /**
+     * 设置缓冲停滞状态
+     */
+    fun setIsStalledBuffering(isStalled: Boolean) {
+        _isStalledBuffering.value = isStalled
+    }
+    
+    /**
+     * 更新之前的播放状态
+     */
+    fun updatePreviousIsPlaying(wasPlaying: Boolean) {
+        _previousIsPlaying.value = wasPlaying
+    }
+    
+    /**
+     * 设置系列播放列表
+     */
+    fun setCurrentSeries(series: List<Uri>) {
+        _currentSeries.value = series
+        Logger.d(TAG, "Current series: ${series.size} videos")
+    }
+    
+    /**
+     * 设置待处理的seek位置
+     */
+    fun setPendingSeekPosition(position: Int?) {
+        _pendingSeekPosition.value = position
+    }
+    
+    /**
+     * 设置手势开始位置
+     */
+    fun setGestureStartPosition(position: Int) {
+        _gestureStartPosition.value = position
+    }
+    
+    // ==================== MPV播放控制方法（阶段1.2）====================
+    
+    /**
+     * 切换播放/暂停
+     */
+    fun togglePlayPause() {
+        val currentPaused = paused.value ?: true
+        MPVLib.setPropertyBoolean("pause", !currentPaused)
+        Logger.d(TAG, "Toggle play/pause: ${!currentPaused}")
+    }
+    
+    /**
+     * 播放
+     */
+    fun play() {
+        MPVLib.setPropertyBoolean("pause", false)
+    }
+    
+    /**
+     * 暂停
+     */
+    fun pause() {
+        MPVLib.setPropertyBoolean("pause", true)
+    }
+    
+    /**
+     * 设置播放速度
+     */
+    fun setSpeed(speed: Double) {
+        MPVLib.setPropertyDouble("speed", speed)
+        // 显示速度变化提示
+        if (speed != 1.0) {
+            showPlayerUpdate(PlayerUpdates.Speed(speed))
+        }
+        Logger.d(TAG, "Speed changed to: ${speed}x")
+    }
+    
+    /**
+     * Seek到指定位置
+     */
+    fun seekTo(position: Int) {
+        MPVLib.setPropertyInt("time-pos", position)
+        Logger.d(TAG, "Seek to: $position")
+    }
+    
+    /**
+     * 相对Seek（前进/后退）
+     */
+    fun seekRelative(seconds: Int) {
+        val currentPos = position.value
+        val newPos = (currentPos + seconds).coerceAtLeast(0)
+        seekTo(newPos)
+    }
+    
+    // ==================== 原有方法 ====================
     // ==================== UI State（原有代码）====================
     
     private val _playbackState = MutableStateFlow(PlaybackState())
