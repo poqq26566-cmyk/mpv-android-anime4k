@@ -8,6 +8,7 @@ import com.fam4k007.videoplayer.repository.PlayerRepository
 import com.fam4k007.videoplayer.utils.Logger
 import com.fam4k007.videoplayer.player.VideoAspect
 import com.fam4k007.videoplayer.domain.player.Anime4KManager
+import com.fam4k007.videoplayer.domain.player.SeriesManager
 import com.fam4k007.videoplayer.VideoFileParcelable
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVNode
@@ -67,9 +68,16 @@ sealed class PlayerUpdates {
  * - 将所有UI状态变量移到ViewModel
  * - 所有状态使用StateFlow封装
  * - Activity只负责UI渲染和系统集成
+ * 
+ * 阶段1.3: Manager集成（保留现有架构）
+ * - 通过Koin注入无View依赖的Manager（Anime4KManager、SeriesManager）
+ * - 需要View的Manager通过initializeManagers()延迟初始化
+ * - Manager回调更新ViewModel StateFlow
  */
 class PlayerViewModel(
-    private val playerRepository: PlayerRepository
+    private val playerRepository: PlayerRepository,
+    private val anime4KManager: Anime4KManager,
+    private val seriesManager: SeriesManager
 ) : ViewModel(), MPVLib.EventObserver {
     
     companion object {

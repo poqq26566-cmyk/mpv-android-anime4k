@@ -51,9 +51,17 @@ import com.fam4k007.videoplayer.remote.RemotePlaybackResolver
 import com.fam4k007.videoplayer.remote.RemoteUrlParser
 import com.fam4k007.videoplayer.domain.player.GestureHandler
 import com.fam4k007.videoplayer.domain.player.PlaybackEngine
-import com.fam4k007.videoplayer.player.PlayerControlsManager
+import com.fam4k007.videoplayer.domain.player.PlayerControlsManager
 import com.fam4k007.videoplayer.player.DoubleTapSeekIndicator
-import com.fam4k007.videoplayer.player.SeriesManager
+import com.fam4k007.videoplayer.domain.player.SeriesManager
+import com.fam4k007.videoplayer.domain.player.PlayerDialogManager
+import com.fam4k007.videoplayer.domain.player.FilePickerManager
+import com.fam4k007.videoplayer.domain.player.SeekBarThumbnailHelper
+import com.fam4k007.videoplayer.domain.player.SubtitleDialogCallback
+import com.fam4k007.videoplayer.domain.player.DanmakuDialogCallback
+import com.fam4k007.videoplayer.domain.player.MoreOptionsCallback
+import com.fam4k007.videoplayer.domain.player.VideoAspectCallback
+import com.fam4k007.videoplayer.domain.player.VideoUriProvider
 import com.fam4k007.videoplayer.utils.FormatUtils
 import com.fam4k007.videoplayer.utils.UriUtils.resolveUri
 import com.fam4k007.videoplayer.utils.UriUtils.getFolderName
@@ -77,11 +85,11 @@ import java.lang.ref.WeakReference
  * 使用管理器模式进行职责分离，防止内存泄漏
  */
 class VideoPlayerActivity : AppCompatActivity(),
-    com.fam4k007.videoplayer.player.SubtitleDialogCallback,
-    com.fam4k007.videoplayer.player.DanmakuDialogCallback,
-    com.fam4k007.videoplayer.player.MoreOptionsCallback,
-    com.fam4k007.videoplayer.player.VideoAspectCallback,
-    com.fam4k007.videoplayer.player.VideoUriProvider {
+    SubtitleDialogCallback,
+    DanmakuDialogCallback,
+    MoreOptionsCallback,
+    VideoAspectCallback,
+    VideoUriProvider {
 
     companion object {
         private const val TAG = "VideoPlayerActivity"
@@ -97,13 +105,13 @@ class VideoPlayerActivity : AppCompatActivity(),
     private lateinit var seriesManager: SeriesManager
     private lateinit var anime4KManager: Anime4KManager
     private lateinit var danmakuManager: com.fam4k007.videoplayer.domain.danmaku.DanmakuManager
-    private lateinit var dialogManager: com.fam4k007.videoplayer.player.PlayerDialogManager
-    private lateinit var filePickerManager: com.fam4k007.videoplayer.player.FilePickerManager
+    private lateinit var dialogManager: PlayerDialogManager
+    private lateinit var filePickerManager: FilePickerManager
     private lateinit var composeOverlayManager: com.fanchen.fam4k007.manager.compose.ComposeOverlayManager
     private lateinit var screenshotManager: com.fam4k007.videoplayer.manager.ScreenshotManager
     private lateinit var skipIntroOutroManager: com.fanchen.fam4k007.manager.SkipIntroOutroManager
     private lateinit var thumbnailManager: com.fam4k007.videoplayer.manager.VideoThumbnailManager
-    private var seekBarThumbnailHelper: com.fam4k007.videoplayer.player.SeekBarThumbnailHelper? = null
+    private var seekBarThumbnailHelper: SeekBarThumbnailHelper? = null
 
     private lateinit var mpvView: CustomMPVView
     private lateinit var danmakuView: com.fam4k007.videoplayer.danmaku.DanmakuPlayerView
@@ -1229,7 +1237,7 @@ class VideoPlayerActivity : AppCompatActivity(),
             }
         }
         
-        dialogManager = com.fam4k007.videoplayer.player.PlayerDialogManager(
+        dialogManager = PlayerDialogManager(
             WeakReference(this),
             playbackEngine,
             danmakuManager,
@@ -1239,7 +1247,7 @@ class VideoPlayerActivity : AppCompatActivity(),
             WeakReference(controlsManager),
             WeakReference(viewModel)  // 传入ViewModel
         )
-        dialogManager.setCallback(object : com.fam4k007.videoplayer.player.PlayerDialogManager.DialogCallback {
+        dialogManager.setCallback(object : PlayerDialogManager.DialogCallback {
             override fun onSpeedChanged(speed: Double) {
                 viewModel.setSpeed(speed)
                 playbackEngine.setSpeed(speed)
@@ -1262,7 +1270,7 @@ class VideoPlayerActivity : AppCompatActivity(),
         })
         
         // 初始化文件选择器管理器
-        filePickerManager = com.fam4k007.videoplayer.player.FilePickerManager(
+        filePickerManager = FilePickerManager(
             WeakReference(this),
             subtitleManager,
             danmakuManager,
@@ -1391,7 +1399,7 @@ class VideoPlayerActivity : AppCompatActivity(),
         val seekBar = findViewById<SeekBar>(R.id.seekBar)
         val container = findViewById<ViewGroup>(android.R.id.content)
         val originalListener = controlsManager.getSeekBarListener()
-        seekBarThumbnailHelper = com.fam4k007.videoplayer.player.SeekBarThumbnailHelper(
+        seekBarThumbnailHelper = SeekBarThumbnailHelper(
             this,
             seekBar,
             container,

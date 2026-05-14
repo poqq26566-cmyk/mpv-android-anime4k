@@ -1,4 +1,4 @@
-package com.fam4k007.videoplayer.player
+package com.fam4k007.videoplayer.domain.player
 
 import android.net.Uri
 import android.util.Log

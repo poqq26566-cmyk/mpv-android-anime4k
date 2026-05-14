@@ -1,4 +1,4 @@
-package com.fam4k007.videoplayer.player
+package com.fam4k007.videoplayer.domain.player
 
 import android.app.Dialog
 import android.content.Context
@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.fam4k007.videoplayer.domain.player.Anime4KManager
 import com.fam4k007.videoplayer.domain.player.PlaybackEngine
+import com.fam4k007.videoplayer.player.VideoAspect
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.danmaku.DanmakuConfig
 import com.fam4k007.videoplayer.domain.danmaku.DanmakuManager

@@ -10,7 +10,7 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.fam4k007.videoplayer.player.DoubleTapSeekIndicator
-import com.fam4k007.videoplayer.player.PlayerControlsManager
+import com.fam4k007.videoplayer.domain.player.PlayerControlsManager
 import `is`.xyz.mpv.MPVLib
 import java.lang.ref.WeakReference
 
