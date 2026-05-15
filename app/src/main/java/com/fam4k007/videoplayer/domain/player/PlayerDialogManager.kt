@@ -277,6 +277,12 @@ class PlayerDialogManager(
         }
         recyclerView.adapter = adapter
 
+        // 控制滑动提示文字的显示
+        val scrollHint = contentView.findViewById<android.widget.TextView>(R.id.tvScrollHint)
+        if (scrollHint != null) {
+            scrollHint.visibility = if (showScrollHint) View.VISIBLE else View.GONE
+        }
+
         val anchor = resolvePopupAnchor()
 
         popupWindow = PopupWindow(
@@ -511,6 +517,12 @@ class PlayerDialogManager(
             popupWindow?.dismiss()
         }
         recyclerView.adapter = adapter
+
+        // 控制滑动提示文字的显示
+        val scrollHint = contentView.findViewById<android.widget.TextView>(R.id.tvScrollHint)
+        if (scrollHint != null) {
+            scrollHint.visibility = if (showScrollHint) View.VISIBLE else View.GONE
+        }
 
         val anchor = resolvePopupAnchor(anchorView)
 

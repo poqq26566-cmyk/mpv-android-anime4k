@@ -26,4 +26,18 @@
 
     </androidx.core.widget.NestedScrollView>
 
+    <TextView
+        android:id="@+id/tvScrollHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="2dp"
+        android:paddingBottom="4dp"
+        android:text="@string/scroll_hint"
+        android:textColor="@color/dialog_title"
+        android:textSize="10sp"
+        android:visibility="gone" />
+
 </LinearLayout>
+ 
+ 

@@ -97,6 +97,10 @@ internal fun VideoPlayerActivity.setupComposeTestLayer() {
                         },
                         onRotateClick = {
                             onTogglePortraitUi()
+                        },
+                        onSpeedClick = { anchorX, anchorY, anchorW, anchorH ->
+                            dialogManager.setLastAnchor(anchorX, anchorY, anchorW, anchorH)
+                            dialogManager.showSpeedDialog(viewModel.speed.value.toDouble())
                         }
                     )
                 }

@@ -48,6 +48,7 @@ fun PlayerControls(
     onVideoTitleClick: () -> Unit = {},
     onRestartFromBeginning: () -> Unit = {},
     onRotateClick: () -> Unit = {},
+    onSpeedClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
     // 收集ViewModel状态
@@ -100,6 +101,7 @@ fun PlayerControls(
                 onAnime4KClick = onAnime4KClick,
                 onDanmakuToggle = onDanmakuToggle,
                 onRotateClick = onRotateClick,
+                onSpeedClick = onSpeedClick,
                 modifier = Modifier
             )
         }
@@ -155,6 +157,7 @@ fun BottomControlPanel(
     onAnime4KClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
     onDanmakuToggle: () -> Unit = {},
     onRotateClick: () -> Unit = {},
+    onSpeedClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
     // 收集状态
@@ -268,9 +271,15 @@ fun BottomControlPanel(
                 .padding(horizontal = if (isPortrait) 12.dp else 24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 超分辨率（Anime4K）按钮 — 最左侧（横屏和竖屏都显示）
-            run {
-                Spacer(modifier = Modifier.width(8.dp))
+            // 左侧按钮组（超分辨率 + 弹幕开关 + 快退 + 上一集）
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Spacer(modifier = Modifier.width(14.dp))
+
+                // 超分辨率（Anime4K）按钮
                 var anime4KBounds by remember { mutableStateOf(android.graphics.Rect()) }
                 Box(
                     modifier = Modifier
@@ -293,14 +302,9 @@ fun BottomControlPanel(
                         fontWeight = if (anime4KActive) FontWeight.Bold else FontWeight.Normal
                     )
                 }
-            }
 
-            // 左侧按钮组（弹幕开关 + 快退 + 上一集）
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+                Spacer(modifier = Modifier.weight(1f))
+
                 // 弹幕显示/隐藏按钮
                 IconButton(
                     onClick = {
@@ -358,7 +362,7 @@ fun BottomControlPanel(
                 }
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(4.dp))
 
             // 中央播放/暂停按钮
             IconButton(
@@ -378,7 +382,7 @@ fun BottomControlPanel(
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(4.dp))
 
             // 右侧按钮组（下一集 + 快进 + 倍速）
             Row(
@@ -423,18 +427,19 @@ fun BottomControlPanel(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                // 倍速按钮（循环切换用户自定义倍速列表）
+                // 倍速按钮（弹出对话框选择）
+                var speedBounds by remember { mutableStateOf(android.graphics.Rect()) }
                 IconButton(
                     onClick = {
-                        val presets = customSpeedPresets
-                        if (presets.isNotEmpty()) {
-                            val currentIdx = presets.indexOfFirst { kotlin.math.abs(it - speed) < 0.01f }
-                            val nextIdx = if (currentIdx < 0 || currentIdx >= presets.size - 1) 0 else currentIdx + 1
-                            viewModel.setSpeed(presets[nextIdx].toDouble())
-                        }
+                        speedBounds.let { b -> onSpeedClick(b.left, b.top, b.width(), b.height()) }
                         viewModel.resetAutoHideTimer()
                     },
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier
+                        .onGloballyPositioned { coords ->
+                            val r = coords.boundsInWindow()
+                            speedBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
+                        }
+                        .size(40.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -453,22 +458,24 @@ fun BottomControlPanel(
                         }
                     }
                 }
-            }
 
-            // 旋转按钮 — 最右侧（横屏和竖屏都显示）
-            IconButton(
-                onClick = {
-                    onRotateClick()
-                    viewModel.resetAutoHideTimer()
-                },
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.crop_arrow_rotate_24_filled),
-                    contentDescription = "旋转",
-                    tint = Color.White,
-                    modifier = Modifier.size(22.dp)
-                )
+                Spacer(modifier = Modifier.weight(1f))
+
+                // 旋转按钮 — 最右侧（横屏和竖屏都显示）
+                IconButton(
+                    onClick = {
+                        onRotateClick()
+                        viewModel.resetAutoHideTimer()
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.crop_arrow_rotate_24_filled),
+                        contentDescription = "旋转",
+                        tint = Color.White,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
             }
         }
     }

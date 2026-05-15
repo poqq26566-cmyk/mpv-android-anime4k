@@ -25,4 +25,7 @@
     <string name="theme_midnight">午夜</string>
     <string name="theme_sunset">日落</string>
     <string name="theme_rose_gold">玫瑰金</string>
+
+    <!-- 弹出菜单 -->
+    <string name="scroll_hint">可上下滑动</string>
 </resources>
