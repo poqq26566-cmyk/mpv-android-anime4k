@@ -607,4 +607,22 @@ class PlayerRepository(
     fun setCustomSpeedPresets(presets: Set<String>) {
         preferencesManager.setCustomSpeedPresets(presets)
     }
+
+    // ==================== 自动连播（百分百复用 mpvEx）====================
+
+    fun isAutoPlayNextEnabled(): Boolean {
+        return preferencesManager.isAutoPlayNextEnabled()
+    }
+
+    fun setAutoPlayNextEnabled(enabled: Boolean) {
+        preferencesManager.setAutoPlayNextEnabled(enabled)
+    }
+
+    fun isCloseAfterEndOfVideo(): Boolean {
+        return preferencesManager.isCloseAfterEndOfVideo()
+    }
+
+    fun setCloseAfterEndOfVideo(enabled: Boolean) {
+        preferencesManager.setCloseAfterEndOfVideo(enabled)
+    }
 }

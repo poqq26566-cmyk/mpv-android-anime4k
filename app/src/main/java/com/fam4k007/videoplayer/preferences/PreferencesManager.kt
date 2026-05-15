@@ -1100,4 +1100,26 @@ class PreferencesManager private constructor(context: Context) {
     fun setPortraitUIEnabled(enabled: Boolean) {
         sharedPreferences.edit().putBoolean("portrait_ui_enabled", enabled).apply()
     }
+
+    /**
+     * 是否启用自动连播（百分百复用 mpvEx autoplayNextVideo 算法）
+     */
+    fun isAutoPlayNextEnabled(): Boolean {
+        return sharedPreferences.getBoolean("autoplay_next_video", true)
+    }
+
+    fun setAutoPlayNextEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("autoplay_next_video", enabled).apply()
+    }
+
+    /**
+     * 是否在视频结束后关闭播放器（百分百复用 mpvEx closeAfterReachingEndOfVideo 算法）
+     */
+    fun isCloseAfterEndOfVideo(): Boolean {
+        return sharedPreferences.getBoolean("close_after_eof", true)
+    }
+
+    fun setCloseAfterEndOfVideo(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("close_after_eof", enabled).apply()
+    }
 }

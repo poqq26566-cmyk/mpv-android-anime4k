@@ -154,34 +154,35 @@ internal fun VideoPlayerActivity.handleVideoListIntent() {
 }
 
 /**
- * 播放上一集
+ * 播放上一集（百分百复用 mpvEx 算法 - 委托给 Activity.playPrevious）
  */
 internal fun VideoPlayerActivity.playPreviousVideo() {
     Logger.d(TAG, "playPreviousVideo called")
-    viewModel.previousVideo()
+    playPrevious()
 }
 
 /**
- * 播放下一集
+ * 播放下一集（百分百复用 mpvEx 算法 - 委托给 Activity.playNext）
  */
 internal fun VideoPlayerActivity.playNextVideo() {
     Logger.d(TAG, "playNextVideo called")
-    viewModel.nextVideo()
+    playNext()
 }
 
 /**
- * 播放指定视频
+ * 播放指定视频（百分百复用 mpvEx loadPlaylistItem 算法）
  */
 internal fun VideoPlayerActivity.playVideo(uri: Uri) {
     videoUri = uri
 
-    // 使用 ViewModel 的 currentIndex 同步 seriesManager（避免 URI 字符串比较不匹配）
-    val vmIndex = viewModel.currentIndex.value
-    if (vmIndex >= 0 && vmIndex < seriesManager.getVideoList().size) {
-        seriesManager.syncIndex(vmIndex)
-    } else {
-        // 回退到 URI 匹配
-        seriesManager.switchToVideo(uri)
+    // 设置切换标志，防止级联切换
+    isSwitchingVideo = true
+
+    // 更新播放列表索引
+    val newIndex = playlist.indexOfFirst { it.toString() == uri.toString() }
+    if (newIndex >= 0) {
+        playlistIndex = newIndex
+        viewModel.syncPlaylistIndex(newIndex)
     }
 
     // 重置自动加载字幕标志（新视频开始播放）
@@ -213,7 +214,7 @@ internal fun VideoPlayerActivity.playVideo(uri: Uri) {
 
     val position = preferencesManager.getPlaybackPosition(uri.toString())
 
-    // 【重要】清除旧弹幕，避免切换视频时弹幕残留
+    // 清除旧弹幕
     Logger.d(TAG, "Releasing old danmaku before playing new video")
     danmakuManager.release()
 
@@ -227,29 +228,53 @@ internal fun VideoPlayerActivity.playVideo(uri: Uri) {
     // 设置当前视频 URI 给文件选择器管理器
     filePickerManager.setCurrentVideoUri(uri)
 
-    // 自动加载字幕和弹幕（和初始播放一样的逻辑）
+    // 自动加载字幕和弹幕
     lifecycleScope.launch {
         delay(500)
 
-        // 本地视频自动加载同名字幕
         if (!isOnlineVideo) {
             Logger.d(TAG, "Auto-loading subtitle for next video")
             autoLoadSubtitleIfExists(uri)
         }
 
-        // 恢复字幕偏好设置
         restoreSubtitlePreferences(uri)
 
-        // 【重要】加载新视频的弹幕
         Logger.d(TAG, "Loading danmaku for new video: $uri")
         loadDanmakuForVideo(uri)
 
-        // 同步弹幕到播放位置
         if (position > 0) {
             delay(300)
             danmakuManager.seekTo((position * 1000).toLong())
             Logger.d(TAG, "Synced danmaku to position: $position seconds")
         }
+    }
+}
+
+/**
+ * 从 URI 解析文件路径（用于 generatePlaylistFromFolder）
+ */
+internal fun VideoPlayerActivity.parsePathFromUri(uri: Uri): String? {
+    return when (uri.scheme) {
+        "file" -> uri.path
+        "content" -> {
+            try {
+                val cursor = contentResolver.query(
+                    uri,
+                    arrayOf(android.provider.MediaStore.Video.Media.DATA),
+                    null, null, null
+                )
+                cursor?.use {
+                    if (it.moveToFirst()) {
+                        val columnIndex = it.getColumnIndexOrThrow(android.provider.MediaStore.Video.Media.DATA)
+                        it.getString(columnIndex)
+                    } else null
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to parse path from content URI", e)
+                null
+            }
+        }
+        else -> null
     }
 }
 

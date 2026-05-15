@@ -1,5 +1,6 @@
 package com.fam4k007.videoplayer
 
+import android.net.Uri
 import android.view.View
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
@@ -137,18 +138,19 @@ internal fun VideoPlayerActivity.setupViewModelObservers() {
         }
     }
 
-    // 同步视频列表（ViewModel是唯一数据源）
+    // 同步视频列表（ViewModel是唯一数据源 - 百分百复用 mpvEx 算法）
     lifecycleScope.launch {
         viewModel.videoList.collect { list ->
-            currentVideoList = list
+            // 同步到 Activity 的 playlist
+            playlist = list.map { Uri.parse(it.uri) }
             Logger.v(TAG, "【ViewModel】Video list synced: ${list.size} videos")
         }
     }
 
-    // 同步当前视频索引
+    // 同步当前视频索引（百分百复用 mpvEx 算法）
     lifecycleScope.launch {
         viewModel.currentIndex.collect { index ->
-            currentVideoIndex = index
+            playlistIndex = index
             Logger.v(TAG, "【ViewModel】Current video index: $index")
         }
     }
@@ -206,11 +208,11 @@ internal fun VideoPlayerActivity.setupViewModelObservers() {
         }
     }
 
-    // 同步系列播放列表
+    // 同步播放列表 URI（百分百复用 mpvEx 算法）
     lifecycleScope.launch {
-        viewModel.currentSeries.collect { series ->
-            currentSeries = series
-            Logger.v(TAG, "【ViewModel】Current series synced: ${series.size} videos")
+        viewModel.playlistUris.collect { uris ->
+            playlist = uris
+            Logger.v(TAG, "【ViewModel】Playlist synced: ${uris.size} videos")
         }
     }
 

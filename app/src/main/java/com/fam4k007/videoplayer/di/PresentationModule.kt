@@ -23,12 +23,11 @@ import org.koin.dsl.module
  */
 val presentationModule = module {
     
-    // 播放器ViewModel（注入PlayerRepository、Anime4KManager和SeriesManager）
+    // 播放器ViewModel（注入PlayerRepository、Anime4KManager）
     viewModel { 
         PlayerViewModel(
             get<com.fam4k007.videoplayer.repository.PlayerRepository>(), 
-            get<com.fam4k007.videoplayer.domain.player.Anime4KManager>(), 
-            get<com.fam4k007.videoplayer.domain.player.SeriesManager>()
+            get<com.fam4k007.videoplayer.domain.player.Anime4KManager>()
         ) 
     }
     

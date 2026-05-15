@@ -1,7 +1,6 @@
 package com.fam4k007.videoplayer.di
 
 import com.fam4k007.videoplayer.domain.player.Anime4KManager
-import com.fam4k007.videoplayer.domain.player.SeriesManager
 import com.fam4k007.videoplayer.domain.subtitle.SubtitleManager
 import com.fam4k007.videoplayer.domain.webdav.WebDavClient
 import com.fam4k007.videoplayer.domain.webdav.WebDavConfig
@@ -25,11 +24,6 @@ val domainModule = module {
     // Anime4KManager单例
     single { 
         Anime4KManager(androidContext())
-    }
-    
-    // SeriesManager - 系列视频管理器（无状态，使用factory）
-    factory { 
-        SeriesManager()
     }
     
     // SubtitleManager - 字幕管理器（无状态，使用factory）

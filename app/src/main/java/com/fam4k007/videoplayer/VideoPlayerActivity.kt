@@ -46,7 +46,6 @@ import com.fam4k007.videoplayer.remote.RemoteUrlParser
 import com.fam4k007.videoplayer.domain.player.GestureHandler
 import com.fam4k007.videoplayer.domain.player.PlaybackEngine
 import com.fam4k007.videoplayer.domain.player.PlayerControlsManager
-import com.fam4k007.videoplayer.domain.player.SeriesManager
 import com.fam4k007.videoplayer.domain.player.PlayerDialogManager
 import com.fam4k007.videoplayer.domain.player.FilePickerManager
 import com.fam4k007.videoplayer.domain.player.SubtitleDialogCallback
@@ -99,7 +98,6 @@ class VideoPlayerActivity : AppCompatActivity(),
     internal lateinit var controlsManager: PlayerControlsManager
     internal val isControlsManagerInitialized get() = ::controlsManager.isInitialized
     internal lateinit var gestureHandler: GestureHandler
-    internal lateinit var seriesManager: SeriesManager
     internal lateinit var anime4KManager: Anime4KManager
     internal lateinit var danmakuManager: com.fam4k007.videoplayer.domain.danmaku.DanmakuManager
     internal lateinit var dialogManager: PlayerDialogManager
@@ -159,15 +157,38 @@ class VideoPlayerActivity : AppCompatActivity(),
     @Deprecated("Use viewModel.isStalledBuffering instead", ReplaceWith("viewModel.isStalledBuffering.value"))
     internal var isStalledBuffering = false
     
-    @Deprecated("Use viewModel.currentSeries instead", ReplaceWith("viewModel.currentSeries.value"))
-    internal var currentSeries: List<Uri> = emptyList()
+    // ==================== 播放列表管理（百分百复用 mpvEx 算法）====================
     
-    @Deprecated("Use viewModel.currentIndex instead", ReplaceWith("viewModel.currentIndex.value"))
-    internal var currentVideoIndex = -1
+    /** 播放列表（URI 列表）*/
+    internal var playlist: List<Uri> = emptyList()
     
-    // 当前文件夹的视频列表
-    @Deprecated("Use viewModel.videoList instead", ReplaceWith("viewModel.videoList.value"))
-    internal var currentVideoList: List<VideoFileParcelable> = emptyList()
+    /** 当前播放索引 */
+    internal var playlistIndex: Int = 0
+    
+    /** 随机播放索引列表 */
+    private var shuffledIndices: List<Int> = emptyList()
+    
+    /** 随机播放当前位置 */
+    private var shuffledPosition: Int = 0
+    
+    /** 播放列表数据库ID（来自自定义播放列表） */
+    private var playlistId: Int? = null
+    
+    /** 窗口加载偏移（用于大播放列表） */
+    private var playlistWindowOffset: Int = 0
+    
+    /** 完整播放列表的总项目数（窗口加载时使用） */
+    var playlistTotalCount: Int = -1
+        private set
+    
+    /** 当前是否为 M3U 播放列表 */
+    private var isM3uPlaylist: Boolean = false
+
+    /** 防止 handleEndOfFile 重入（切换视频时 MPV 会对旧视频发出 END_FILE 事件） */
+    internal var isSwitchingVideo = false
+
+    /** 是否已经在处理 END_FILE（防重入保护） */
+    private var isHandlingEndOfFile = false
 
     internal var anime4KDialog: android.app.Dialog? = null
     
@@ -706,6 +727,404 @@ class VideoPlayerActivity : AppCompatActivity(),
     }
 
     override fun getVideoUri(): Uri? = videoUri
+
+    // ==================== 播放列表管理（百分百复用 mpvEx 算法）====================
+
+    /**
+     * 检查是否有下一个视频
+     */
+    fun hasNext(): Boolean {
+        if (playlist.isEmpty()) return false
+
+        // repeat ALL 模式下始终有"下一个"
+        if (viewModel.shouldRepeatPlaylist()) return true
+
+        val effectiveSize = if (playlistTotalCount > 0) playlistTotalCount else playlist.size
+
+        return if (viewModel.shuffleEnabled.value) {
+            shuffledPosition < shuffledIndices.size - 1
+        } else {
+            playlistIndex < effectiveSize - 1
+        }
+    }
+
+    /**
+     * 检查是否有上一个视频
+     */
+    fun hasPrevious(): Boolean {
+        if (playlist.isEmpty()) return false
+
+        // repeat ALL 模式下始终有"上一个"
+        if (viewModel.shouldRepeatPlaylist()) return true
+
+        return if (viewModel.shuffleEnabled.value) {
+            shuffledPosition > 0
+        } else {
+            playlistIndex > 0
+        }
+    }
+
+    /**
+     * 生成随机播放索引
+     */
+    private fun generateShuffledIndices() {
+        if (playlist.isEmpty()) return
+
+        val indices = playlist.indices.filter { it != playlistIndex }.toMutableList()
+        indices.shuffle()
+
+        shuffledIndices = listOf(playlistIndex) + indices
+        shuffledPosition = 0
+    }
+
+    /**
+     * 当随机播放切换时调用
+     */
+    fun onShuffleToggled(enabled: Boolean) {
+        if (enabled && playlist.isNotEmpty()) {
+            generateShuffledIndices()
+        } else {
+            shuffledIndices = emptyList()
+            shuffledPosition = 0
+        }
+    }
+
+    /**
+     * 播放下一集
+     */
+    fun playNext() {
+        if (playlist.isEmpty()) return
+
+        val effectiveSize = if (playlistTotalCount > 0) playlistTotalCount else playlist.size
+
+        if (viewModel.shuffleEnabled.value) {
+            if (shuffledIndices.isEmpty()) {
+                generateShuffledIndices()
+            }
+
+            if (shuffledPosition < shuffledIndices.size - 1) {
+                shuffledPosition++
+                playlistIndex = shuffledIndices[shuffledPosition]
+                loadPlaylistItem(playlistIndex)
+            } else if (viewModel.shouldRepeatPlaylist()) {
+                generateShuffledIndices()
+                shuffledPosition = 0
+                playlistIndex = shuffledIndices[0]
+                loadPlaylistItem(playlistIndex)
+            }
+        } else {
+            if (playlistIndex < effectiveSize - 1) {
+                playlistIndex++
+                loadPlaylistItem(playlistIndex)
+            } else if (viewModel.shouldRepeatPlaylist()) {
+                playlistIndex = 0
+                loadPlaylistItem(0)
+            }
+        }
+    }
+
+    /**
+     * 播放上一集
+     */
+    fun playPrevious() {
+        if (playlist.isEmpty()) return
+
+        val effectiveSize = if (playlistTotalCount > 0) playlistTotalCount else playlist.size
+
+        if (viewModel.shuffleEnabled.value) {
+            if (shuffledIndices.isEmpty()) {
+                generateShuffledIndices()
+            }
+
+            if (shuffledPosition > 0) {
+                shuffledPosition--
+                playlistIndex = shuffledIndices[shuffledPosition]
+                loadPlaylistItem(playlistIndex)
+            } else if (viewModel.shouldRepeatPlaylist()) {
+                shuffledPosition = shuffledIndices.size - 1
+                playlistIndex = shuffledIndices[shuffledPosition]
+                loadPlaylistItem(playlistIndex)
+            }
+        } else {
+            if (playlistIndex > 0) {
+                playlistIndex--
+                loadPlaylistItem(playlistIndex)
+            } else if (viewModel.shouldRepeatPlaylist()) {
+                playlistIndex = effectiveSize - 1
+                loadPlaylistItem(playlistIndex)
+            }
+        }
+    }
+
+    /**
+     * 播放指定索引的播放列表项
+     */
+    internal fun playPlaylistItem(index: Int) {
+        if (index in playlist.indices) {
+            loadPlaylistItem(index)
+        }
+    }
+
+    /**
+     * 加载播放列表项
+     */
+    private fun loadPlaylistItem(index: Int) {
+        if (index < 0 || index >= playlist.size) {
+            Log.e(TAG, "Invalid playlist index: $index (playlist size: ${playlist.size})")
+            return
+        }
+        loadPlaylistItemInternal(index)
+    }
+
+    /**
+     * 内部：加载播放列表项
+     */
+    private fun loadPlaylistItemInternal(index: Int) {
+        if (index < 0 || index >= playlist.size) {
+            Log.e(TAG, "Invalid playlist index: $index (playlist size: ${playlist.size})")
+            return
+        }
+
+        // 设置切换标志，防止 MPV 对旧视频发出的 END_FILE 事件触发级联切换
+        isSwitchingVideo = true
+
+        // 保存当前视频的播放状态
+        videoUri?.let { uri ->
+            preferencesManager.clearPlaybackPosition(uri.toString())
+        }
+
+        val uri = playlist[index]
+        playlistIndex = index
+
+        // 更新 ViewModel 的索引
+        viewModel.syncPlaylistIndex(index)
+
+        // 获取文件名
+        val fileName = getFileNameFromUri(uri)
+        viewModel.setVideoTitle(fileName)
+
+        // 设置新的 videoUri
+        videoUri = uri
+        viewModel.setCurrentVideoUri(uri)
+
+        // 更新在线视频标志
+        val isOnline = isRemotePlaybackUri(uri)
+        viewModel.setIsOnlineVideo(isOnline)
+        remotePlaybackRequest = if (isOnline) {
+            RemotePlaybackRequest(
+                url = uri.toString(),
+                title = fileName,
+                source = RemotePlaybackRequest.Source.UNKNOWN
+            )
+        } else {
+            null
+        }
+
+        // 显示加载动画（仅在线视频）
+        if (isOnline) {
+            loadingIndicator.visibility = View.VISIBLE
+            loadingIndicator.alpha = 1f
+        } else {
+            loadingIndicator.visibility = View.GONE
+        }
+
+        // 获取保存的播放位置
+        val position = preferencesManager.getPlaybackPosition(uri.toString())
+
+        // 重置自动加载字幕标志
+        viewModel.setHasAutoLoadedSubtitle(false)
+
+        // 释放旧弹幕
+        danmakuManager.release()
+
+        // 加载视频
+        if (isOnline) {
+            loadResolvedRemoteVideo(remotePlaybackRequest!!, position)
+        } else {
+            playbackEngine?.loadVideo(uri, position)
+            applyRememberedSpeed()
+        }
+
+        // 设置当前视频 URI 给文件选择器
+        filePickerManager.setCurrentVideoUri(uri)
+
+        // 加载弹幕
+        loadDanmakuForVideo(uri)
+
+        // 自动加载字幕和恢复设置
+        lifecycleScope.launch {
+            delay(500)
+
+            if (!isOnline) {
+                autoLoadSubtitleIfExists(uri)
+            }
+
+            restoreSubtitlePreferences(uri)
+
+            if (position > 0) {
+                delay(300)
+                danmakuManager.seekTo((position * 1000).toLong())
+            }
+        }
+
+        Logger.d(TAG, "Loaded playlist item: index=$index, uri=$uri")
+    }
+
+    /**
+     * 处理视频播放结束事件
+     * 百分百复用 mpvEx 的 handleEndOfFile 算法
+     * 加入防重入保护：MPV 加载新视频时会对旧视频发出 END_FILE，必须忽略
+     */
+    fun handleEndOfFile() {
+        // 防重入保护：如果正在切换视频或已在处理中，忽略此次 END_FILE
+        if (isSwitchingVideo || isHandlingEndOfFile) {
+            Log.d(TAG, "handleEndOfFile ignored: isSwitchingVideo=$isSwitchingVideo, isHandlingEndOfFile=$isHandlingEndOfFile")
+            return
+        }
+
+        isHandlingEndOfFile = true
+        try {
+            // 检查是否重复当前文件
+            if (viewModel.shouldRepeatCurrentFile()) {
+                MPVLib.command("seek", "0", "absolute")
+                MPVLib.setPropertyBoolean("pause", false)
+                return
+            }
+
+            // 处理播放列表播放
+            if (playlist.isNotEmpty()) {
+                val hasNextItem = if (viewModel.shuffleEnabled.value) {
+                    shuffledPosition < shuffledIndices.size - 1
+                } else {
+                    playlistIndex < playlist.size - 1
+                }
+
+                // 检查是否启用自动连播
+                val autoplayEnabled = preferencesManager.isAutoPlayNextEnabled()
+
+                if (hasNextItem && (autoplayEnabled || viewModel.shouldRepeatPlaylist())) {
+                    isSwitchingVideo = true
+                    playNext()
+                } else if (viewModel.shouldRepeatPlaylist()) {
+                    // 到达播放列表末尾且 repeat ALL：从头开始
+                    isSwitchingVideo = true
+                    if (viewModel.shuffleEnabled.value) {
+                        generateShuffledIndices()
+                        shuffledPosition = 0
+                        playlistIndex = shuffledIndices[0]
+                        loadPlaylistItem(playlistIndex)
+                    } else {
+                        playlistIndex = 0
+                        loadPlaylistItem(0)
+                    }
+                } else if (preferencesManager.isCloseAfterEndOfVideo()) {
+                    finishAndRemoveTask()
+                }
+                // 如果自动连播关闭且 closeAfterEndOfVideo 关闭，则停留在当前视频
+            } else {
+                // 单视频播放（无播放列表）
+                if (preferencesManager.isCloseAfterEndOfVideo()) {
+                    finishAndRemoveTask()
+                }
+            }
+        } finally {
+            isHandlingEndOfFile = false
+        }
+    }
+
+    /**
+     * 从文件夹生成播放列表
+     * 百分百复用 mpvEx 的 generatePlaylistFromFolder 算法
+     */
+    fun generatePlaylistFromFolder(currentPath: String) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            runCatching {
+                val currentFile = java.io.File(currentPath)
+                if (!currentFile.exists()) return@runCatching
+
+                val parentFolder = currentFile.parentFile ?: return@runCatching
+
+                // 视频扩展名
+                val videoExtensions = setOf(
+                    "mp4", "mkv", "avi", "mov", "flv", "wmv",
+                    "webm", "m4v", "3gp", "ts", "m2ts", "mts",
+                    "ogv", "ogm", "rmvb", "rm", "asf", "vob",
+                    "divx", "xvid", "f4v", "mpeg", "mpg"
+                )
+
+                // 列出文件夹中的视频文件（百分百复用 mpvEx 逻辑：过滤视频扩展名 + 排除隐藏文件）
+                val files = parentFolder.listFiles { file ->
+                    file.isFile &&
+                        file.extension.lowercase() in videoExtensions &&
+                        !file.name.startsWith(".")
+                } ?: return@runCatching
+
+                // 按文件名自然排序
+                val siblingFiles = files.sortedWith { f1, f2 ->
+                    compareNaturalFileNames(f1.name, f2.name)
+                }
+
+                if (siblingFiles.size <= 1) return@runCatching
+
+                val newPlaylist = siblingFiles.map { Uri.fromFile(it) }
+
+                val newIndex = siblingFiles.indexOfFirst { it.absolutePath == currentFile.absolutePath }
+
+                if (newIndex != -1) {
+                    withContext(Dispatchers.Main) {
+                        playlist = newPlaylist
+                        playlistIndex = newIndex
+                        // 同步 ViewModel
+                        viewModel.syncPlaylistFromActivity(newPlaylist, newIndex)
+                        Log.d(TAG, "Auto-playlist generated: ${playlist.size} videos")
+                        if (viewModel.shuffleEnabled.value) {
+                            onShuffleToggled(true)
+                        }
+                    }
+                }
+            }.onFailure { e ->
+                Log.e(TAG, "Failed to auto-generate playlist", e)
+            }
+        }
+    }
+
+    /**
+     * 自然排序文件名比较器（百分百复用 mpvEx 的 NaturalOrderComparator 逻辑）
+     */
+    private fun compareNaturalFileNames(name1: String, name2: String): Int {
+        val s1 = name1.lowercase()
+        val s2 = name2.lowercase()
+        var i1 = 0
+        var i2 = 0
+        while (i1 < s1.length && i2 < s2.length) {
+            val c1 = s1[i1]
+            val c2 = s2[i2]
+            if (c1.isDigit() && c2.isDigit()) {
+                var num1 = 0L
+                var num2 = 0L
+                while (i1 < s1.length && s1[i1].isDigit()) {
+                    num1 = num1 * 10 + (s1[i1] - '0')
+                    i1++
+                }
+                while (i2 < s2.length && s2[i2].isDigit()) {
+                    num2 = num2 * 10 + (s2[i2] - '0')
+                    i2++
+                }
+                val cmp = num1.compareTo(num2)
+                if (cmp != 0) return cmp
+            } else {
+                if (c1 != c2) return c1.compareTo(c2)
+                i1++
+                i2++
+            }
+        }
+        return (s1.length - i1).compareTo(s2.length - i2)
+    }
+
+    /**
+     * 检查当前播放列表是否为 M3U 播放列表
+     */
+    fun isCurrentPlaylistM3U(): Boolean = isM3uPlaylist
 }
 
 fun Int.dpToPx(): Int {

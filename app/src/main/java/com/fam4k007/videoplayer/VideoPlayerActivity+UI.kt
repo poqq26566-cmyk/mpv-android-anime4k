@@ -85,15 +85,16 @@ internal fun VideoPlayerActivity.applyAnime4K() {
  * 显示视频列表抽屉
  */
 internal fun VideoPlayerActivity.showVideoListDrawer() {
+    val videoList = viewModel.videoList.value
     // 如果没有视频列表，提示用户
-    if (currentVideoList.isEmpty()) {
+    if (videoList.isEmpty()) {
         DialogUtils.showToastShort(this, "当前没有可用的视频列表")
         return
     }
 
     videoUri?.let { uri ->
         composeOverlayManager.showVideoListDrawer(
-            videoList = currentVideoList,
+            videoList = videoList,
             currentVideoUri = uri,
             onVideoSelected = { video, index ->
                 // 切换到选中的视频

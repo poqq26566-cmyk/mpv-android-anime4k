@@ -8,7 +8,6 @@ import com.fam4k007.videoplayer.repository.PlayerRepository
 import com.fam4k007.videoplayer.utils.Logger
 import com.fam4k007.videoplayer.player.VideoAspect
 import com.fam4k007.videoplayer.domain.player.Anime4KManager
-import com.fam4k007.videoplayer.domain.player.SeriesManager
 import com.fam4k007.videoplayer.VideoFileParcelable
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVNode
@@ -26,6 +25,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+
+/**
+ * 重复模式（百分百复用 mpvEx RepeatMode）
+ */
+enum class RepeatMode {
+    OFF,      // 不重复
+    ONE,      // 重复当前文件
+    ALL       // 重复全部（播放列表）
+}
 
 /**
  * Sheet类型枚举（对话框/底部菜单）
@@ -83,8 +91,7 @@ sealed class PlayerUpdates {
  */
 class PlayerViewModel(
     private val playerRepository: PlayerRepository,
-    private val anime4KManager: Anime4KManager,
-    val seriesManager: SeriesManager  // 暴露给UI层用于判断上下集按钮状态
+    private val anime4KManager: Anime4KManager
 ) : ViewModel(), MPVLib.EventObserver {
     
     companion object {
@@ -202,21 +209,48 @@ class PlayerViewModel(
     private val _currentVolume = MutableStateFlow(50)
     val currentVolume: StateFlow<Int> = _currentVolume.asStateFlow()
     
-    // 系列播放状态
+    // 重复模式（百分百复用 mpvEx RepeatMode）
+    private val _repeatMode = MutableStateFlow(RepeatMode.OFF)
+    val repeatMode: StateFlow<RepeatMode> = _repeatMode.asStateFlow()
+
+    // 随机播放状态
+    private val _shuffleEnabled = MutableStateFlow(false)
+    val shuffleEnabled: StateFlow<Boolean> = _shuffleEnabled.asStateFlow()
+    
+    // 自动连播开关（百分百复用 mpvEx autoplayNextVideo）
+    private val _autoPlayNextEnabled = MutableStateFlow(true)
+    val autoPlayNextEnabled: StateFlow<Boolean> = _autoPlayNextEnabled.asStateFlow()
+
+    // 系列播放状态（百分百复用 mpvEx 算法）
     private val _videoList = MutableStateFlow<List<VideoFileParcelable>>(emptyList())
     val videoList: StateFlow<List<VideoFileParcelable>> = _videoList.asStateFlow()
-    
+
     private val _currentIndex = MutableStateFlow(0)
     val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
+
+    // 播放列表 URI 列表（百分百复用 mpvEx playlist 逻辑）
+    private val _playlistUris = MutableStateFlow<List<Uri>>(emptyList())
+    val playlistUris: StateFlow<List<Uri>> = _playlistUris.asStateFlow()
     
-    // 上下集按钮状态（直接从 _videoList/_currentIndex 计算，无需依赖 seriesManager 实例）
-    val hasPrevious: StateFlow<Boolean> = combine(_currentIndex, _videoList) { idx, list ->
-        list.isNotEmpty() && idx > 0
+    // 上下集按钮状态（百分百复用 mpvEx hasNext/hasPrevious 算法）
+    // hasNext: list not empty AND (repeat ALL OR index < size - 1)
+    val hasPrevious: StateFlow<Boolean> = combine(_currentIndex, _playlistUris, _repeatMode) { idx, list, repeatMode ->
+        list.isNotEmpty() && (repeatMode == RepeatMode.ALL || idx > 0)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    val hasNext: StateFlow<Boolean> = combine(_currentIndex, _videoList) { idx, list ->
-        list.isNotEmpty() && idx < list.size - 1
+    val hasNext: StateFlow<Boolean> = combine(_currentIndex, _playlistUris, _repeatMode) { idx, list, repeatMode ->
+        list.isNotEmpty() && (repeatMode == RepeatMode.ALL || idx < list.size - 1)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /**
+     * 是否应该重复播放列表（百分百复用 mpvEx shouldRepeatPlaylist）
+     */
+    fun shouldRepeatPlaylist(): Boolean = _repeatMode.value == RepeatMode.ALL
+
+    /**
+     * 是否应该重复当前文件（百分百复用 mpvEx shouldRepeatCurrentFile）
+     */
+    fun shouldRepeatCurrentFile(): Boolean = _repeatMode.value == RepeatMode.ONE
     
     // 硬件解码状态
     private val _isHardwareDecoding = MutableStateFlow(true)
@@ -853,60 +887,190 @@ class PlayerViewModel(
     }
     
     /**
-     * 设置视频列表
+     * 设置视频列表（百分百复用 mpvEx 算法 - 从 VideoFileParcelable 列表设置）
      */
     fun setVideoList(list: List<VideoFileParcelable>, currentIndex: Int = 0) {
         _videoList.value = list
         _currentIndex.value = currentIndex
+        _playlistUris.value = list.map { Uri.parse(it.uri) }
         Logger.d(TAG, "Video list set: ${list.size} videos, current index: $currentIndex")
+    }
+
+    /**
+     * 同步 Activity 的播放列表到 ViewModel（百分百复用 mpvEx 算法）
+     */
+    fun syncPlaylistFromActivity(uriList: List<Uri>, currentIndex: Int) {
+        _playlistUris.value = uriList
+        _currentIndex.value = currentIndex
+        // 同步 VideoFileParcelable 列表
+        _videoList.value = uriList.map { uri ->
+            VideoFileParcelable(uri.toString(), uri.lastPathSegment ?: uri.toString(), "", 0L, 0L, 0L)
+        }
+        Logger.d(TAG, "syncPlaylistFromActivity: ${uriList.size} videos, index=$currentIndex")
+    }
+
+    /**
+     * 同步 Activity 的播放列表索引到 ViewModel（百分百复用 mpvEx 算法）
+     */
+    fun syncPlaylistIndex(index: Int) {
+        _currentIndex.value = index
+        Logger.d(TAG, "syncPlaylistIndex: $index")
     }
     
     /**
-     * 切换到下一个视频
+     * 切换到下一个视频（百分百复用 mpvEx playNext 算法）
+     * 委托给 Activity 执行实际的播放切换和索引更新
      */
     fun nextVideo() {
-        val list = _videoList.value
+        val uris = _playlistUris.value
         val idx = _currentIndex.value
-        Logger.d(TAG, "nextVideo - idx=$idx, size=${list.size}")
-        if (list.isNotEmpty() && idx < list.size - 1) {
-            val newIndex = idx + 1
-            _currentIndex.value = newIndex
-            val uri = Uri.parse(list[newIndex].uri)
-            Logger.d(TAG, "Switching to next video: $uri, index: $newIndex")
-            viewModelScope.launch { _switchVideoEvent.emit(uri) }
+        Logger.d(TAG, "nextVideo - idx=$idx, size=${uris.size}")
+
+        val effectiveSize = uris.size
+
+        if (_shuffleEnabled.value) {
+            // 随机播放模式
+            if (_shuffleIndices.value.isEmpty() && uris.isNotEmpty()) {
+                generateShuffleIndicesInternal()
+            }
+            val shuffled = _shuffleIndices.value
+            val shuffledPos = _shuffledPosition.value
+            if (shuffledPos < shuffled.size - 1) {
+                val newPos = shuffledPos + 1
+                _shuffledPosition.value = newPos
+                val newIndex = shuffled[newPos]
+                _currentIndex.value = newIndex
+                val uri = uris[newIndex]
+                Logger.d(TAG, "Shuffle next: pos=$newPos, index=$newIndex, uri=$uri")
+                viewModelScope.launch { _switchVideoEvent.emit(uri) }
+            } else if (shouldRepeatPlaylist()) {
+                generateShuffleIndicesInternal()
+                _shuffledPosition.value = 0
+                val newIndex = _shuffleIndices.value[0]
+                _currentIndex.value = newIndex
+                viewModelScope.launch { _switchVideoEvent.emit(uris[newIndex]) }
+            }
         } else {
-            Logger.d(TAG, "Already at last video")
+            if (uris.isNotEmpty() && idx < effectiveSize - 1) {
+                val newIndex = idx + 1
+                _currentIndex.value = newIndex
+                val uri = uris[newIndex]
+                Logger.d(TAG, "Switching to next video: $uri, index: $newIndex")
+                viewModelScope.launch { _switchVideoEvent.emit(uri) }
+            } else if (uris.isNotEmpty() && shouldRepeatPlaylist()) {
+                _currentIndex.value = 0
+                viewModelScope.launch { _switchVideoEvent.emit(uris[0]) }
+            } else {
+                Logger.d(TAG, "Already at last video")
+            }
         }
     }
 
     /**
-     * 切换到上一个视频
+     * 切换到上一个视频（百分百复用 mpvEx playPrevious 算法）
      */
     fun previousVideo() {
-        val list = _videoList.value
+        val uris = _playlistUris.value
         val idx = _currentIndex.value
-        Logger.d(TAG, "previousVideo - idx=$idx, size=${list.size}")
-        if (list.isNotEmpty() && idx > 0) {
-            val newIndex = idx - 1
-            _currentIndex.value = newIndex
-            val uri = Uri.parse(list[newIndex].uri)
-            Logger.d(TAG, "Switching to previous video: $uri, index: $newIndex")
-            viewModelScope.launch { _switchVideoEvent.emit(uri) }
+        Logger.d(TAG, "previousVideo - idx=$idx, size=${uris.size}")
+
+        val effectiveSize = uris.size
+
+        if (_shuffleEnabled.value) {
+            if (_shuffleIndices.value.isEmpty() && uris.isNotEmpty()) {
+                generateShuffleIndicesInternal()
+            }
+            val shuffled = _shuffleIndices.value
+            val shuffledPos = _shuffledPosition.value
+            if (shuffledPos > 0) {
+                val newPos = shuffledPos - 1
+                _shuffledPosition.value = newPos
+                val newIndex = shuffled[newPos]
+                _currentIndex.value = newIndex
+                viewModelScope.launch { _switchVideoEvent.emit(uris[newIndex]) }
+            } else if (shouldRepeatPlaylist()) {
+                _shuffledPosition.value = shuffled.size - 1
+                val newIndex = shuffled[shuffled.size - 1]
+                _currentIndex.value = newIndex
+                viewModelScope.launch { _switchVideoEvent.emit(uris[newIndex]) }
+            }
         } else {
-            Logger.d(TAG, "Already at first video")
+            if (uris.isNotEmpty() && idx > 0) {
+                val newIndex = idx - 1
+                _currentIndex.value = newIndex
+                val uri = uris[newIndex]
+                Logger.d(TAG, "Switching to previous video: $uri, index: $newIndex")
+                viewModelScope.launch { _switchVideoEvent.emit(uri) }
+            } else if (uris.isNotEmpty() && shouldRepeatPlaylist()) {
+                _currentIndex.value = effectiveSize - 1
+                viewModelScope.launch { _switchVideoEvent.emit(uris[effectiveSize - 1]) }
+            } else {
+                Logger.d(TAG, "Already at first video")
+            }
         }
     }
 
+    // 随机播放内部索引（百分百复用 mpvEx generateShuffledIndices 算法）
+    private val _shuffleIndices = MutableStateFlow<List<Int>>(emptyList())
+    private val _shuffledPosition = MutableStateFlow(0)
+
+    private fun generateShuffleIndicesInternal() {
+        val uris = _playlistUris.value
+        if (uris.isEmpty()) return
+        val currentIdx = _currentIndex.value
+        val indices = uris.indices.filter { it != currentIdx }.toMutableList()
+        indices.shuffle()
+        _shuffleIndices.value = listOf(currentIdx) + indices
+        _shuffledPosition.value = 0
+        Logger.d(TAG, "Shuffle indices generated: ${_shuffleIndices.value.size} items")
+    }
+
     /**
-     * 从 URI 列表初始化系列（identifySeries 扫描结果同步到 ViewModel）
+     * 设置随机播放状态（百分百复用 mpvEx onShuffleToggled 算法）
+     */
+    fun setShuffleEnabled(enabled: Boolean) {
+        _shuffleEnabled.value = enabled
+        if (enabled && _playlistUris.value.isNotEmpty()) {
+            generateShuffleIndicesInternal()
+        } else {
+            _shuffleIndices.value = emptyList()
+            _shuffledPosition.value = 0
+        }
+        Logger.d(TAG, "Shuffle ${if (enabled) "enabled" else "disabled"}")
+    }
+
+    /**
+     * 循环切换重复模式（百分百复用 mpvEx cycleRepeatMode 算法）
+     */
+    fun cycleRepeatMode() {
+        val hasPlaylist = _playlistUris.value.isNotEmpty()
+        _repeatMode.value = when (_repeatMode.value) {
+            RepeatMode.OFF -> RepeatMode.ONE
+            RepeatMode.ONE -> if (hasPlaylist) RepeatMode.ALL else RepeatMode.OFF
+            RepeatMode.ALL -> RepeatMode.OFF
+        }
+        Logger.d(TAG, "Repeat mode cycled to: ${_repeatMode.value}")
+    }
+
+    /**
+     * 设置自动连播开关（百分百复用 mpvEx autoplayNextVideo 算法）
+     */
+    fun setAutoPlayNextEnabled(enabled: Boolean) {
+        _autoPlayNextEnabled.value = enabled
+        Logger.d(TAG, "Auto play next ${if (enabled) "enabled" else "disabled"}")
+    }
+
+    /**
+     * 从 URI 列表初始化系列（向后兼容 - 百分百复用 mpvEx 算法）
      */
     fun initSeriesFromUriList(uriList: List<Uri>, currentUri: Uri) {
         val idx = uriList.indexOfFirst { it.toString() == currentUri.toString() }.takeIf { it >= 0 } ?: 0
+        _playlistUris.value = uriList
+        _currentIndex.value = idx
         val list = uriList.map { uri ->
             VideoFileParcelable(uri.toString(), uri.lastPathSegment ?: uri.toString(), "", 0L, 0L, 0L)
         }
         _videoList.value = list
-        _currentIndex.value = idx
         Logger.d(TAG, "initSeriesFromUriList: ${uriList.size} videos, idx=$idx")
     }
     

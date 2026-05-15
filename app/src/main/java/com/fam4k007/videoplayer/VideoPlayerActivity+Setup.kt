@@ -18,7 +18,6 @@ import com.fam4k007.videoplayer.domain.player.GestureHandler
 import com.fam4k007.videoplayer.domain.player.PlaybackEngine
 import com.fam4k007.videoplayer.domain.player.PlayerControlsManager
 import com.fam4k007.videoplayer.domain.player.PlayerDialogManager
-import com.fam4k007.videoplayer.domain.player.SeriesManager
 import com.fam4k007.videoplayer.ui.player.PlayerControls
 import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import com.fam4k007.videoplayer.utils.DialogUtils
@@ -182,6 +181,9 @@ internal fun VideoPlayerActivity.initializeManagers() {
             override fun onFileLoaded() {
                 isPlaying = true
 
+                // 重置切换标志，允许后续的 END_FILE 事件正常处理
+                isSwitchingVideo = false
+
                 // 不在这里隐藏加载动画，让 onBufferingStateChanged 来控制
                 // 因为文件加载后可能还在缓冲
 
@@ -206,9 +208,9 @@ internal fun VideoPlayerActivity.initializeManagers() {
                     com.fam4k007.videoplayer.utils.Logger.d(TAG, "Video ended, position reset to 0")
                 }
 
-                // 视频播放完毕，自动切到下一集（nextVideo 内部自带 guard）
-                com.fam4k007.videoplayer.utils.Logger.d(TAG, "Video ended, trying auto-play next")
-                viewModel.nextVideo()
+                // 百分百复用 mpvEx handleEndOfFile 算法
+                com.fam4k007.videoplayer.utils.Logger.d(TAG, "Video ended, handleEndOfFile")
+                handleEndOfFile()
             }
 
             override fun onError(message: String) {
@@ -474,45 +476,38 @@ internal fun VideoPlayerActivity.initializeManagers() {
         WeakReference(gestureHandler)  // 传入GestureHandler引用
     )
 
-    seriesManager = SeriesManager()
-
-    // 只在本地视频时处理系列
+    // 百分百复用 mpvEx 播放列表初始化算法
+    // 只在本地视频时处理播放列表
     if (!isOnlineVideo) {
         val videoListParcelable = intent.getParcelableArrayListExtra<VideoFileParcelable>("video_list")
 
-        com.fam4k007.videoplayer.utils.Logger.d(TAG, "=== Video List Processing ===")
+        com.fam4k007.videoplayer.utils.Logger.d(TAG, "=== Playlist Initialization ===")
         com.fam4k007.videoplayer.utils.Logger.d(TAG, "videoListParcelable: ${videoListParcelable?.size ?: "null"}")
-        com.fam4k007.videoplayer.utils.Logger.d(TAG, "isFromHomeContinue: ${viewModel.isFromHomeContinue.value}")
 
         if (videoListParcelable != null && videoListParcelable.isNotEmpty()) {
-            // 保存视频列表到ViewModel
+            // 从列表传入：直接设置播放列表
             val currentIndex = videoListParcelable.indexOfFirst { Uri.parse(it.uri) == videoUri }.takeIf { it >= 0 } ?: 0
             viewModel.setVideoList(videoListParcelable, currentIndex)
 
-            val uriList = videoListParcelable.map { Uri.parse(it.uri) }
-            videoUri?.let { uri ->
-                seriesManager.setVideoList(uriList, uri)
-                com.fam4k007.videoplayer.utils.Logger.d(TAG, "Video list from intent: ${uriList.size} videos, currentIndex: ${seriesManager.currentIndex}")
-            }
-            com.fam4k007.videoplayer.utils.Logger.d(TAG, "currentVideoList size: ${currentVideoList.size}")
+            // 同步到 Activity 的 playlist
+            playlist = videoListParcelable.map { Uri.parse(it.uri) }
+            playlistIndex = currentIndex
+
+            com.fam4k007.videoplayer.utils.Logger.d(TAG, "Playlist from intent: ${playlist.size} videos, currentIndex: $playlistIndex")
         } else {
-            com.fam4k007.videoplayer.utils.Logger.d(TAG, "No video_list in intent, calling identifySeries")
+            // 没有列表传入：从文件夹生成播放列表（百分百复用 mpvEx 算法）
+            com.fam4k007.videoplayer.utils.Logger.d(TAG, "No video_list in intent, generating playlist from folder")
             videoUri?.let { uri ->
-                seriesManager.identifySeries(this, uri) { videoUri ->
-                    getFileNameFromUri(videoUri)
-                }
-                // 同步扫描结果到 ViewModel，使上下集按钮状态正确
-                val seriesList = seriesManager.getVideoList()
-                if (seriesList.isNotEmpty()) {
-                    viewModel.initSeriesFromUriList(seriesList, uri)
+                val path = parsePathFromUri(uri)
+                if (path != null) {
+                    generatePlaylistFromFolder(path)
                 }
             }
         }
 
-        com.fam4k007.videoplayer.utils.Logger.d(TAG, "Series list size: ${seriesManager.getVideoList().size}, currentIndex: ${seriesManager.currentIndex}")
-        com.fam4k007.videoplayer.utils.Logger.d(TAG, "hasPrevious: ${seriesManager.hasPrevious}, hasNext: ${seriesManager.hasNext}")
+        com.fam4k007.videoplayer.utils.Logger.d(TAG, "Playlist size: ${playlist.size}, currentIndex: $playlistIndex")
     } else {
-        com.fam4k007.videoplayer.utils.Logger.d(TAG, "Online video - skipping series detection")
+        com.fam4k007.videoplayer.utils.Logger.d(TAG, "Online video - skipping playlist generation")
     }
 
     anime4KManager = Anime4KManager(this)

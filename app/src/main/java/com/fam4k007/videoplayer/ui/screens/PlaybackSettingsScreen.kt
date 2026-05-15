@@ -171,6 +171,28 @@ fun PlaybackSettingsScreen(
                 }
             }
 
+            // 自动连播（百分百复用 mpvEx）
+            item {
+                PreferenceSectionHeader("自动连播")
+            }
+
+            item {
+                PreferenceCard {
+                    SwitchItem(
+                        title = "自动播放下一集",
+                        subtitle = if (settings.autoPlayNext) "当前视频结束后自动播放下一个" else "播放完当前视频后停止",
+                        checked = settings.autoPlayNext,
+                        onCheckedChange = { viewModel.setAutoPlayNext(it) }
+                    )
+                    SwitchItem(
+                        title = "播放完最后一集后退出",
+                        subtitle = if (settings.closeAfterEOF) "播放完最后一集后自动退出播放器" else "播放完最后一集后停留在当前视频",
+                        checked = settings.closeAfterEOF,
+                        onCheckedChange = { viewModel.setCloseAfterEOF(it) }
+                    )
+                }
+            }
+
             item { Spacer(Modifier.height(MaterialTheme.spacing.medium)) }
         }
     }

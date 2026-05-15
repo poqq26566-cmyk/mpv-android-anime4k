@@ -63,7 +63,11 @@ class PlaybackSettingsViewModel(
                     customSpeedPresets = playerRepository.getCustomSpeedPresets(),
                     
                     // 画质增强
-                    anime4KMemory = playerRepository.isAnime4KMemoryEnabled()
+                    anime4KMemory = playerRepository.isAnime4KMemoryEnabled(),
+
+                    // 自动连播
+                    autoPlayNext = playerRepository.isAutoPlayNextEnabled(),
+                    closeAfterEOF = playerRepository.isCloseAfterEndOfVideo()
                 )
                 _playbackSettings.value = settings
                 Logger.d(TAG, "Loaded playback settings")
@@ -218,6 +222,38 @@ class PlaybackSettingsViewModel(
             }
         }
     }
+
+    // ==================== 自动连播 ====================
+
+    /**
+     * 设置自动连播下一集（百分百复用 mpvEx 算法）
+     */
+    fun setAutoPlayNext(enabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setAutoPlayNextEnabled(enabled)
+                _playbackSettings.value = _playbackSettings.value.copy(autoPlayNext = enabled)
+                Logger.d(TAG, "Set auto play next: $enabled")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set auto play next", e)
+            }
+        }
+    }
+
+    /**
+     * 设置视频结束后关闭播放器（百分百复用 mpvEx 算法）
+     */
+    fun setCloseAfterEOF(enabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setCloseAfterEndOfVideo(enabled)
+                _playbackSettings.value = _playbackSettings.value.copy(closeAfterEOF = enabled)
+                Logger.d(TAG, "Set close after EOF: $enabled")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set close after EOF", e)
+            }
+        }
+    }
 }
 
 /**
@@ -241,5 +277,9 @@ data class PlaybackSettings(
     val customSpeedPresets: Set<String> = setOf("1.0"),
     
     // 画质增强
-    val anime4KMemory: Boolean = false
+    val anime4KMemory: Boolean = false,
+
+    // 自动连播（百分百复用 mpvEx）
+    val autoPlayNext: Boolean = true,
+    val closeAfterEOF: Boolean = true
 )
