@@ -869,10 +869,10 @@ class PlaybackEngine(
                 val title = MPVLib.getPropertyString("track-list/$i/title") ?: ""
                 
                 val name = when {
-                    title.isNotEmpty() && lang.isNotEmpty() -> "#$id: $title ($lang)"
-                    title.isNotEmpty() -> "#$id: $title"
-                    lang.isNotEmpty() -> "#$id: $lang"
-                    else -> "#$id: 字幕轨道"
+                    title.isNotEmpty() && lang.isNotEmpty() -> "$title ($lang)"
+                    title.isNotEmpty() -> title
+                    lang.isNotEmpty() -> lang
+                    else -> "字幕轨道"
                 }
                 
                 tracks.add(Triple(id, name, id == currentTrackId))

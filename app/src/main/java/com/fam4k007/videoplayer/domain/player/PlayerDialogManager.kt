@@ -1,7 +1,8 @@
 package com.fam4k007.videoplayer.domain.player
 
-import android.app.Dialog
 import android.content.Context
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.util.Log
 import android.view.View
 import android.widget.*
@@ -41,6 +42,30 @@ class PlayerDialogManager(
         private const val TAG = "PlayerDialogManager"
     }
 
+    private data class PopupAnchor(
+        val x: Int,
+        val y: Int,
+        val width: Int,
+        val height: Int
+    ) {
+        val right: Int get() = x + width
+        val bottom: Int get() = y + height
+        val centerX: Int get() = x + width / 2
+    }
+
+    private data class PopupPosition(
+        val x: Int,
+        val y: Int,
+        val width: Int,
+        val height: Int
+    )
+
+    enum class PopupHorizontalAlignment {
+        START,
+        CENTER,
+        END
+    }
+
     private val context: Context?
         get() = activityRef.get()
 
@@ -56,6 +81,171 @@ class PlayerDialogManager(
         Log.d(TAG, "setLastAnchor: x=$x, y=$y, w=$w, h=$h")
     }
 
+    private fun resolvePopupAnchor(anchorView: View? = null): PopupAnchor {
+        if (anchorView != null && anchorView.isShown) {
+            val location = IntArray(2)
+            anchorView.getLocationOnScreen(location)
+            val anchor = PopupAnchor(
+                x = location[0],
+                y = location[1],
+                width = anchorView.width.coerceAtLeast(1),
+                height = anchorView.height.coerceAtLeast(1)
+            )
+            lastAnchorX = anchor.x
+            lastAnchorY = anchor.y
+            lastAnchorW = anchor.width
+            lastAnchorH = anchor.height
+            return anchor
+        }
+
+        // 如果lastAnchor没有设置（还是初始值0），使用屏幕右上角作为默认位置
+        if (lastAnchorX == 0 && lastAnchorY == 0) {
+            val activity = activityRef.get()
+            if (activity != null) {
+                val screenWidth = activity.resources.displayMetrics.widthPixels
+                // 假设"更多"按钮在右上角，估算其位置
+                // 这是一个回退方案，实际位置应该通过setLastAnchor设置
+                val estimatedX = screenWidth - 80  // 假设按钮在右边，距离右边缘约80px
+                val estimatedY = 60   // 假设按钮在顶部状态栏下方
+                Log.w(TAG, "resolvePopupAnchor: lastAnchor not set, using estimated position ($estimatedX, $estimatedY)")
+                return PopupAnchor(
+                    x = estimatedX,
+                    y = estimatedY,
+                    width = 50,
+                    height = 50
+                )
+            }
+        }
+
+        return PopupAnchor(
+            x = lastAnchorX,
+            y = lastAnchorY,
+            width = lastAnchorW.coerceAtLeast(1),
+            height = lastAnchorH.coerceAtLeast(1)
+        )
+    }
+
+    private fun calculatePopupPosition(
+        anchor: PopupAnchor,
+        popupWidth: Int,
+        popupHeight: Int,
+        showAbove: Boolean,
+        horizontalAlignment: PopupHorizontalAlignment = PopupHorizontalAlignment.CENTER,
+        clampToScreen: Boolean = true
+    ): PopupPosition? {
+        val activity = activityRef.get() ?: return null
+        val screenWidth = activity.resources.displayMetrics.widthPixels
+        val screenHeight = activity.resources.displayMetrics.heightPixels
+        val margin = 8.dpToPx()
+        val popupGap = 10.dpToPx()
+        val dialogWidth = popupWidth.coerceAtLeast(anchor.width)
+        val dialogHeight = popupHeight
+
+        Log.d(TAG, "calculatePopupPosition: anchor=(${ anchor.x}, ${anchor.y}, ${anchor.width}, ${anchor.height}), alignment=$horizontalAlignment, screenWidth=$screenWidth")
+
+        val minX = margin
+        val maxX = (screenWidth - dialogWidth - margin).coerceAtLeast(minX)
+        
+        // 计算初始X位置
+        val initialX = when (horizontalAlignment) {
+            PopupHorizontalAlignment.START -> anchor.x
+            PopupHorizontalAlignment.CENTER -> anchor.x + (anchor.width - dialogWidth) / 2
+            PopupHorizontalAlignment.END -> {
+                // 对于END对齐，检查锚点是否超出屏幕
+                val anchorRight = anchor.x + anchor.width
+                if (anchorRight > screenWidth) {
+                    // 锚点位置异常，直接右对齐到屏幕边缘
+                    Log.w(TAG, "calculatePopupPosition: anchor right ($anchorRight) exceeds screen width ($screenWidth), aligning to screen edge")
+                    screenWidth - dialogWidth - margin
+                } else {
+                    // 正常情况：菜单右边缘对齐到锚点右边缘
+                    anchor.x + anchor.width - dialogWidth
+                }
+            }
+        }
+        Log.d(TAG, "calculatePopupPosition: initialX=$initialX, minX=$minX, maxX=$maxX, dialogWidth=$dialogWidth")
+        // 将位置限制在屏幕可见范围内
+        val popupX = if (clampToScreen) initialX.coerceIn(minX, maxX) else initialX
+
+        val minY = margin
+        val maxY = (screenHeight - dialogHeight - margin).coerceAtLeast(minY)
+        val belowY = anchor.bottom + popupGap
+        val aboveY = anchor.y - dialogHeight - popupGap
+        val preferredY = if (showAbove) aboveY else belowY
+        val fallbackY = if (showAbove) belowY else aboveY
+        val popupY = when {
+            preferredY in minY..maxY -> preferredY
+            fallbackY in minY..maxY -> fallbackY
+            else -> preferredY.coerceIn(minY, maxY)
+        }
+
+        return PopupPosition(
+            x = popupX,
+            y = popupY,
+            width = dialogWidth,
+            height = dialogHeight
+        )
+    }
+
+    private fun applyPopupPosition(
+        popupWindow: PopupWindow,
+        contentView: View,
+        anchor: PopupAnchor,
+        showAbove: Boolean,
+        horizontalAlignment: PopupHorizontalAlignment = PopupHorizontalAlignment.CENTER,
+        clampToScreen: Boolean = true,
+        widthOverride: Int? = null,
+        heightOverride: Int? = null,
+        rootView: View
+    ) {
+        val measuredWidth: Int
+        val measuredHeight: Int
+
+        if (widthOverride != null && heightOverride != null) {
+            measuredWidth = widthOverride
+            measuredHeight = heightOverride
+        } else {
+            contentView.measure(
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            )
+            measuredWidth = contentView.measuredWidth
+            measuredHeight = contentView.measuredHeight
+        }
+
+        val popupPosition = calculatePopupPosition(
+            anchor = anchor,
+            popupWidth = measuredWidth,
+            popupHeight = measuredHeight,
+            showAbove = showAbove,
+            horizontalAlignment = horizontalAlignment,
+            clampToScreen = clampToScreen
+        ) ?: return
+
+        if (popupWindow.isShowing) {
+            popupWindow.update(
+                popupPosition.x,
+                popupPosition.y,
+                popupPosition.width,
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        } else {
+            popupWindow.width = popupPosition.width
+            popupWindow.height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            popupWindow.showAtLocation(
+                rootView,
+                android.view.Gravity.NO_GRAVITY,
+                popupPosition.x,
+                popupPosition.y
+            )
+        }
+
+        Log.d(
+            TAG,
+            "applyPopupPosition: anchor=(${anchor.x},${anchor.y},${anchor.width},${anchor.height}), dialogWidth=${popupPosition.width}, dialogHeight=${popupPosition.height}, popupX=${popupPosition.x}, popupY=${popupPosition.y}"
+        )
+    }
+
     /**
      * 为Compose按钮显示对话框（直接使用lastAnchor坐标）
      */
@@ -66,81 +256,79 @@ class PlayerDialogManager(
         showAbove: Boolean = false,
         useFixedHeight: Boolean = false,
         showScrollHint: Boolean = false,
+        horizontalAlignment: PopupHorizontalAlignment = PopupHorizontalAlignment.CENTER,
+        clampToScreen: Boolean = true,
         onItemClick: (Int) -> Unit
     ) {
         val activity = activityRef.get() ?: return
 
-        val dialog = Dialog(activity, android.R.style.Theme_Translucent_NoTitleBar)
-        
         val layoutRes = if (useFixedHeight) R.layout.dialog_popup_menu_fixed else R.layout.dialog_popup_menu
-        val dialogView = activity.layoutInflater.inflate(layoutRes, null)
-        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.recyclerViewPopup)
+        val contentView = activity.layoutInflater.inflate(layoutRes, null)
+        val recyclerView = contentView.findViewById<RecyclerView>(R.id.recyclerViewPopup)
+        val rootView = activity.findViewById<View>(android.R.id.content)
+        var popupWindow: PopupWindow? = null
 
         recyclerView.layoutManager = LinearLayoutManager(activity)
         recyclerView.isVerticalScrollBarEnabled = false
         
-        if (useFixedHeight && showScrollHint && items.size > 3) {
-            val scrollHint = dialogView.findViewById<TextView>(R.id.scrollHint)
-            scrollHint?.visibility = View.VISIBLE
-        }
-
         val adapter = PopupMenuAdapter(items, selectedPosition) { position ->
             onItemClick(position)
-            dialog.dismiss()
+            popupWindow?.dismiss()
         }
         recyclerView.adapter = adapter
 
-        dialog.setContentView(dialogView)
-        dialog.setCanceledOnTouchOutside(true)
+        val anchor = resolvePopupAnchor()
 
-        // 直接使用lastAnchor坐标
-        val anchorX = lastAnchorX
-        val anchorY = lastAnchorY
-        val anchorW = lastAnchorW
-        val anchorH = lastAnchorH
-
-        // 测量对话框尺寸
-        dialogView.measure(
-            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-        )
-        val dialogWidth = dialogView.measuredWidth.coerceAtLeast(anchorW)
-        val dialogHeight = dialogView.measuredHeight
-
-        // 计算对话框位置，防止超出屏幕左右边缘
-        val screenWidth = activity.resources.displayMetrics.widthPixels
-        val rawX = anchorX + (anchorW - dialogWidth) / 2
-        val margin = 8.dpToPx()
-
-        val window = dialog.window
-        val layoutParams = window?.attributes
-        layoutParams?.gravity = android.view.Gravity.TOP or android.view.Gravity.START
-        layoutParams?.x = rawX.coerceIn(margin, (screenWidth - dialogWidth - margin).coerceAtLeast(margin))
-
-        layoutParams?.y = if (showAbove) {
-            anchorY - dialogHeight - 10
-        } else {
-            anchorY + anchorH + 10
+        popupWindow = PopupWindow(
+            contentView,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        ).apply {
+            isOutsideTouchable = true
+            isClippingEnabled = false
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            animationStyle = R.style.PopupAnimation
         }
 
-        layoutParams?.width = dialogWidth
-        layoutParams?.height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-        window?.attributes = layoutParams
-
-        window?.setWindowAnimations(R.style.PopupAnimation)
+        applyPopupPosition(
+            popupWindow = popupWindow,
+            contentView = contentView,
+            anchor = anchor,
+            showAbove = showAbove,
+            horizontalAlignment = horizontalAlignment,
+            clampToScreen = clampToScreen,
+            rootView = rootView
+        )
         
         controlsManagerRef.get()?.setPopupVisible(true)
+
+        contentView.post {
+            val actualWidth = contentView.width
+            val actualHeight = contentView.height
+            if (actualWidth > 0 && actualHeight > 0) {
+                applyPopupPosition(
+                    popupWindow = popupWindow,
+                    contentView = contentView,
+                    anchor = anchor,
+                    showAbove = showAbove,
+                    horizontalAlignment = horizontalAlignment,
+                    clampToScreen = clampToScreen,
+                    widthOverride = actualWidth,
+                    heightOverride = actualHeight,
+                    rootView = rootView
+                )
+            }
+        }
         
-        dialog.show()
-        
-        activeDialogs.add(dialog)
-        dialog.setOnDismissListener {
-            activeDialogs.remove(dialog)
+        activePopupWindows.add(popupWindow)
+        popupWindow.setOnDismissListener {
+            activePopupWindows.remove(popupWindow)
             controlsManagerRef.get()?.setPopupVisible(false)
         }
         
         if (selectedPosition >= 0 && useFixedHeight) {
-            val nestedScrollView = dialogView.findViewById<androidx.core.widget.NestedScrollView>(R.id.nestedScrollViewPopup)
+            val nestedScrollView = contentView.findViewById<androidx.core.widget.NestedScrollView>(R.id.nestedScrollViewPopup)
             nestedScrollView?.post {
                 val itemHeight = 40.dpToPx()
                 val targetScroll = selectedPosition * itemHeight - itemHeight
@@ -149,8 +337,8 @@ class PlayerDialogManager(
         }
     }
     
-    // 追踪所有活动的Dialog，防止内存泄漏
-    private val activeDialogs = mutableListOf<Dialog>()
+    // 追踪所有活动的 PopupWindow，防止内存泄漏
+    private val activePopupWindows = mutableListOf<PopupWindow>()
 
     // 回调接口
     interface DialogCallback {
@@ -207,15 +395,15 @@ class PlayerDialogManager(
             // 获取当前选中的轨道索引
             val currentTrackIndex = audioTracks.indexOfFirst { it.third }
 
-            val btnMore = activity.findViewById<ImageView>(R.id.btnMore)
-            showPopupDialog(
-                btnMore,
+            showPopupDialogAtLastAnchor(
                 items,
                 currentTrackIndex,
                 title = "音频轨道",
                 showAbove = false,
                 useFixedHeight = false,
-                showScrollHint = false
+                showScrollHint = false,
+                horizontalAlignment = PopupHorizontalAlignment.CENTER,
+                clampToScreen = false
             ) { position ->
                 val trackId = audioTracks[position].first
                 playbackEngine.selectAudioTrack(trackId)
@@ -238,15 +426,15 @@ class PlayerDialogManager(
         val currentDecoder = preferencesManager.getHardwareDecoder()
         val currentSelection = if (currentDecoder) 0 else 1
 
-        val btnMore = activity.findViewById<ImageView>(R.id.btnMore)
-        showPopupDialog(
-            btnMore,
+        showPopupDialogAtLastAnchor(
             items,
             currentSelection,
             title = "解码方式",
             showAbove = false,
             useFixedHeight = false,
-            showScrollHint = false
+            showScrollHint = false,
+            horizontalAlignment = PopupHorizontalAlignment.CENTER,
+            clampToScreen = false
         ) { position ->
             val newDecoder = (position == 0)
             preferencesManager.setHardwareDecoder(newDecoder)
@@ -269,9 +457,7 @@ class PlayerDialogManager(
             VideoAspect.CROP -> 2
         }
 
-        val btnAspectRatio = activity.findViewById<ImageView>(R.id.btnAspectRatio)
-        showPopupDialog(
-            btnAspectRatio,
+        showPopupDialogAtLastAnchor(
             items,
             currentSelection,
             title = "画面比例",
@@ -303,106 +489,84 @@ class PlayerDialogManager(
         showAbove: Boolean = false,
         useFixedHeight: Boolean = false,
         showScrollHint: Boolean = false,
+        horizontalAlignment: PopupHorizontalAlignment = PopupHorizontalAlignment.CENTER,
         onItemClick: (Int) -> Unit
     ) {
         val activity = activityRef.get() ?: return
 
-        val dialog = Dialog(activity, android.R.style.Theme_Translucent_NoTitleBar)
-        
         // 根据是否需要固定高度选择不同的布局文件
         val layoutRes = if (useFixedHeight) R.layout.dialog_popup_menu_fixed else R.layout.dialog_popup_menu
-        val dialogView = activity.layoutInflater.inflate(layoutRes, null)
-        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.recyclerViewPopup)
+        val contentView = activity.layoutInflater.inflate(layoutRes, null)
+        val recyclerView = contentView.findViewById<RecyclerView>(R.id.recyclerViewPopup)
+        val rootView = activity.findViewById<View>(android.R.id.content)
+        var popupWindow: PopupWindow? = null
 
         // 标题已从布局中移除，不再设置标题
 
         recyclerView.layoutManager = LinearLayoutManager(activity)
         recyclerView.isVerticalScrollBarEnabled = false
         
-        // 如果使用固定高度且需要显示滑动提示
-        if (useFixedHeight && showScrollHint && items.size > 3) {
-            val scrollHint = dialogView.findViewById<TextView>(R.id.scrollHint)
-            scrollHint?.visibility = View.VISIBLE
-        }
-
         val adapter = PopupMenuAdapter(items, selectedPosition) { position ->
             onItemClick(position)
-            dialog.dismiss()
+            popupWindow?.dismiss()
         }
         recyclerView.adapter = adapter
 
-        dialog.setContentView(dialogView)
-        dialog.setCanceledOnTouchOutside(true)
+        val anchor = resolvePopupAnchor(anchorView)
 
-        // 获取锚点位置：优先使用可见视图的实际坐标，否则用 lastAnchor
-        val location = IntArray(2)
-        val anchorW: Int
-        val anchorH: Int
-        if (anchorView.isShown) {
-            anchorView.getLocationOnScreen(location)
-            anchorW = anchorView.width.coerceAtLeast(1)
-            anchorH = anchorView.height.coerceAtLeast(1)
-            // 更新 lastAnchor 供嵌套对话框使用
-            lastAnchorX = location[0]; lastAnchorY = location[1]
-            lastAnchorW = anchorW; lastAnchorH = anchorH
-        } else {
-            // View 不可见（GONE / 在 GONE 父容器内），使用存储的 lastAnchor
-            location[0] = lastAnchorX; location[1] = lastAnchorY
-            anchorW = lastAnchorW; anchorH = lastAnchorH
+        popupWindow = PopupWindow(
+            contentView,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        ).apply {
+            isOutsideTouchable = true
+            isClippingEnabled = false
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            animationStyle = R.style.PopupAnimation
         }
-        val anchorX = location[0]
-        val anchorY = location[1]
 
-        // 测量对话框尺寸
-        dialogView.measure(
-            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        applyPopupPosition(
+            popupWindow = popupWindow,
+            contentView = contentView,
+            anchor = anchor,
+            showAbove = showAbove,
+            horizontalAlignment = horizontalAlignment,
+            rootView = rootView
         )
-        val dialogWidth = dialogView.measuredWidth.coerceAtLeast(anchorW)
-        val dialogHeight = dialogView.measuredHeight
-
-        // 计算对话框位置，防止超出屏幕左右边缘
-        val screenWidth = activity.resources.displayMetrics.widthPixels
-        val rawX = anchorX + (anchorW - dialogWidth) / 2
-        val margin = 8.dpToPx()
-
-        val window = dialog.window
-        val layoutParams = window?.attributes
-        layoutParams?.gravity = android.view.Gravity.TOP or android.view.Gravity.START
-        layoutParams?.x = rawX.coerceIn(margin, (screenWidth - dialogWidth - margin).coerceAtLeast(margin))
-
-        // 根据参数决定显示在上方还是下方
-        layoutParams?.y = if (showAbove) {
-            anchorY - dialogHeight - 10
-        } else {
-            anchorY + anchorH + 10
-        }
-
-        layoutParams?.width = dialogWidth
-        layoutParams?.height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-        window?.attributes = layoutParams
-
-        // 设置进场和出场动画
-        window?.setWindowAnimations(R.style.PopupAnimation)
         
         // 通知控制组件有弹窗显示
         controlsManagerRef.get()?.setPopupVisible(true)
+
+        contentView.post {
+            val actualWidth = contentView.width
+            val actualHeight = contentView.height
+            if (actualWidth > 0 && actualHeight > 0) {
+                applyPopupPosition(
+                    popupWindow = popupWindow,
+                    contentView = contentView,
+                    anchor = anchor,
+                    showAbove = showAbove,
+                    horizontalAlignment = horizontalAlignment,
+                    widthOverride = actualWidth,
+                    heightOverride = actualHeight,
+                    rootView = rootView
+                )
+            }
+        }
         
-        dialog.show()
-        
-        // 追踪Dialog
-        activeDialogs.add(dialog)
-        dialog.setOnDismissListener {
-            activeDialogs.remove(dialog)
+        activePopupWindows.add(popupWindow)
+        popupWindow.setOnDismissListener {
+            activePopupWindows.remove(popupWindow)
             // 通知控制组件弹窗关闭
             controlsManagerRef.get()?.setPopupVisible(false)
         }
         
         // 如果有选中项且使用固定高度，自动滚动到选中位置
         if (selectedPosition >= 0 && useFixedHeight) {
-            val nestedScrollView = dialogView.findViewById<androidx.core.widget.NestedScrollView>(R.id.nestedScrollViewPopup)
+            val nestedScrollView = contentView.findViewById<androidx.core.widget.NestedScrollView>(R.id.nestedScrollViewPopup)
             nestedScrollView?.post {
-                val itemHeight = 50.dpToPx()
+                val itemHeight = 40.dpToPx()
                 val scrollViewHeight = nestedScrollView.height
                 val targetY = selectedPosition * itemHeight - (scrollViewHeight / 2) + (itemHeight / 2)
                 nestedScrollView.smoothScrollTo(0, targetY.coerceAtLeast(0))
@@ -421,11 +585,9 @@ class PlayerDialogManager(
     fun showSubtitleDialog() {
         val activity = activityRef.get() ?: return
 
-        val btnSubtitle = activity.findViewById<ImageView>(R.id.btnSubtitle)
         val menuItems = listOf("字幕轨道", "外挂字幕", "更多设置")
 
-        showPopupDialog(
-            btnSubtitle,
+        showPopupDialogAtLastAnchor(
             menuItems,
             selectedPosition = -1,
             title = "字幕",
@@ -468,9 +630,8 @@ class PlayerDialogManager(
                     // 添加ViewModel提供的轨道
                     vmTracks.forEach { track ->
                         val displayName = buildString {
-                            append("轨道${track.id}")
-                            track.lang?.let { append(" ($it)") }
-                            track.title?.let { append(" - $it") }
+                            track.lang?.let { append("$it") }
+                            track.title?.let { append(" $it") }
                             if (track.external) append(" [外挂]")
                         }
                         trackList.add(Triple(track.id, displayName, track.selected))
@@ -486,13 +647,10 @@ class PlayerDialogManager(
                 playbackEngine.getSubtitleTracks()
             }
             
-            val btnSubtitle = activity.findViewById<ImageView>(R.id.btnSubtitle)
-            
             val trackNames = tracks.map { it.second }
             val currentSelection = tracks.indexOfFirst { it.third }
 
-            showPopupDialog(
-                btnSubtitle,
+            showPopupDialogAtLastAnchor(
                 trackNames,
                 currentSelection,
                 title = "字幕轨道",
@@ -654,17 +812,14 @@ class PlayerDialogManager(
         val speeds = speedValues.map { "${it}x" }
         val currentSelection = speedValues.indexOf(currentSpeed)
 
-        // btnSpeed 已移至 Compose UI，使用 btnMore 作为对话框锚点
-        val anchor = activity.findViewById<android.view.View>(R.id.btnMore)
-
-        showPopupDialog(
-            anchor,
+        showPopupDialogAtLastAnchor(
             speeds,
             currentSelection,
             title = "播放速度",
             showAbove = true,
             useFixedHeight = true,
-            showScrollHint = true
+            showScrollHint = true,
+            horizontalAlignment = PopupHorizontalAlignment.CENTER
         ) { position ->
             val newSpeed = speedValues[position]
             dialogCallback?.onSpeedChanged(newSpeed)
@@ -751,8 +906,10 @@ class PlayerDialogManager(
             selectedPosition = -1,
             title = "更多选项",
             showAbove = false,
-            useFixedHeight = true,  // 改为固定高度，最多显示3项
-            showScrollHint = true   // 显示滚动提示
+            useFixedHeight = true,
+            showScrollHint = true,
+            horizontalAlignment = PopupHorizontalAlignment.CENTER,
+            clampToScreen = false
         ) { position ->
             // 根据是否有章节项调整索引映射
             val actualAction = if (hasChapters) {
@@ -826,7 +983,9 @@ class PlayerDialogManager(
                 title = "章节",
                 showAbove = false,
                 useFixedHeight = true,
-                showScrollHint = true
+                showScrollHint = true,
+                horizontalAlignment = PopupHorizontalAlignment.CENTER,
+                clampToScreen = false
             ) { position ->
                 MPVLib.setPropertyInt("chapter", position)
                 
@@ -852,8 +1011,6 @@ class PlayerDialogManager(
     fun showDanmakuDialog() {
         val activity = activityRef.get() ?: return
 
-        val btnDanmaku = activity.findViewById<ImageView>(R.id.btnDanmaku)
-        
         // 简化的菜单项：移除了显示/隐藏选项，合并弹幕来源
         val menuItems = listOf(
             "选择弹幕",
@@ -862,8 +1019,7 @@ class PlayerDialogManager(
             "弹幕设置"
         )
 
-        showPopupDialog(
-            btnDanmaku,
+        showPopupDialogAtLastAnchor(
             menuItems,
             selectedPosition = -1,
             title = "弹幕",
@@ -886,15 +1042,12 @@ class PlayerDialogManager(
     private fun showDanmakuSourceDialog() {
         val activity = activityRef.get() ?: return
 
-        val btnDanmaku = activity.findViewById<ImageView>(R.id.btnDanmaku)
-        
         val sourceItems = listOf(
             "本地弹幕",
             "网络弹幕"
         )
 
-        showPopupDialog(
-            btnDanmaku,
+        showPopupDialogAtLastAnchor(
             sourceItems,
             selectedPosition = -1,
             title = "弹幕来源",
@@ -924,8 +1077,6 @@ class PlayerDialogManager(
         // 获取文件名
         val fileName = File(currentPath).name
         
-        val btnDanmaku = activity.findViewById<ImageView>(R.id.btnDanmaku)
-        
         val menuItems = listOf(
             "✓ $fileName",
             "取消弹幕轨道"
@@ -934,8 +1085,7 @@ class PlayerDialogManager(
         // 根据trackSelected状态确定选中项：true=0（弹幕轨道），false=1（取消弹幕轨道）
         val selectedIndex = if (danmakuManager.getTrackSelected()) 0 else 1
         
-        showPopupDialog(
-            btnDanmaku,
+        showPopupDialogAtLastAnchor(
             menuItems,
             selectedPosition = selectedIndex,
             title = "弹幕轨道",
@@ -1046,17 +1196,17 @@ class PlayerDialogManager(
      * 清理资源
      */
     fun cleanup() {
-        // 释放所有活动的Dialog
-        activeDialogs.forEach { dialog ->
+        // 释放所有活动的 PopupWindow
+        activePopupWindows.forEach { popupWindow ->
             try {
-                if (dialog.isShowing) {
-                    dialog.dismiss()
+                if (popupWindow.isShowing) {
+                    popupWindow.dismiss()
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error dismissing dialog", e)
+                Log.e(TAG, "Error dismissing popup window", e)
             }
         }
-        activeDialogs.clear()
+        activePopupWindows.clear()
         
         // 清理回调
         dialogCallback = null

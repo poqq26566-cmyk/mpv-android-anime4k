@@ -212,6 +212,12 @@ class VideoPlayerActivity : AppCompatActivity(),
                 android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         }
         
+        // 立即隐藏系统栏，避免初始显示时的闪烁和挤压
+        WindowCompat.getInsetsController(window, window.decorView)?.apply {
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            hide(WindowInsetsCompat.Type.systemBars())
+        }
+        
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         com.fam4k007.videoplayer.utils.Logger.d(TAG, "Screen keep-on enabled")
         

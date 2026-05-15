@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
     <LinearLayout
         android:id="@+id/innerLayout"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="40dp"
+        android:minWidth="120dp"
         android:orientation="horizontal"
         android:gravity="center"
         android:paddingStart="16dp"
@@ -16,12 +17,15 @@
 
         <TextView
             android:id="@+id/itemText"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="选项"
             android:gravity="center"
             android:textSize="14sp"
-            android:textColor="?attr/colorDialogText" />
+            android:textColor="?attr/colorDialogText"
+            android:maxWidth="180dp"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
     </LinearLayout>
 

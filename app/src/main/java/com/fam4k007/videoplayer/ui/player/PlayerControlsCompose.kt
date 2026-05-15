@@ -613,6 +613,10 @@ fun TopControlPanel(
     var danmakuBounds by remember { mutableStateOf(android.graphics.Rect()) }
     var ratioBounds by remember { mutableStateOf(android.graphics.Rect()) }
     var moreBounds by remember { mutableStateOf(android.graphics.Rect()) }
+    
+    // 获取屏幕宽度用于坐标约束
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val screenWidthPx = (configuration.screenWidthDp * context.resources.displayMetrics.density).toInt()
 
     Row(
         modifier = modifier
@@ -626,8 +630,7 @@ fun TopControlPanel(
                     )
                 )
             )
-            .statusBarsPadding()
-            .padding(start = 4.dp, top = 18.dp, end = 16.dp, bottom = 6.dp),
+            .padding(start = 4.dp, top = 18.dp, end = 100.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 返回按钮
@@ -689,7 +692,7 @@ fun TopControlPanel(
             )
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(18.dp))
 
         // 字幕按钮
         IconButton(
@@ -701,7 +704,12 @@ fun TopControlPanel(
                 .size(38.dp)
                 .onGloballyPositioned { coords ->
                     val r = coords.boundsInWindow()
-                    subtitleBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
+                    // 约束X坐标到屏幕范围内
+                    val x = r.left.toInt().coerceAtMost(screenWidthPx - r.width.toInt())
+                    val y = r.top.toInt()
+                    subtitleBounds = android.graphics.Rect(
+                        x, y, x + r.width.toInt(), y + r.height.toInt()
+                    )
                 }
         ) {
             Icon(
@@ -712,7 +720,7 @@ fun TopControlPanel(
             )
         }
 
-        Spacer(modifier = Modifier.width(10.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
         // 弹幕按钮
         IconButton(
@@ -724,7 +732,11 @@ fun TopControlPanel(
                 .size(38.dp)
                 .onGloballyPositioned { coords ->
                     val r = coords.boundsInWindow()
-                    danmakuBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
+                    val x = r.left.toInt().coerceAtMost(screenWidthPx - r.width.toInt())
+                    val y = r.top.toInt()
+                    danmakuBounds = android.graphics.Rect(
+                        x, y, x + r.width.toInt(), y + r.height.toInt()
+                    )
                 }
         ) {
             Icon(
@@ -735,7 +747,7 @@ fun TopControlPanel(
             )
         }
 
-        Spacer(modifier = Modifier.width(10.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
         // 画面比例按钮
         IconButton(
@@ -747,7 +759,11 @@ fun TopControlPanel(
                 .size(38.dp)
                 .onGloballyPositioned { coords ->
                     val r = coords.boundsInWindow()
-                    ratioBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
+                    val x = r.left.toInt().coerceAtMost(screenWidthPx - r.width.toInt())
+                    val y = r.top.toInt()
+                    ratioBounds = android.graphics.Rect(
+                        x, y, x + r.width.toInt(), y + r.height.toInt()
+                    )
                 }
         ) {
             Icon(
@@ -758,7 +774,7 @@ fun TopControlPanel(
             )
         }
 
-        Spacer(modifier = Modifier.width(10.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
         // 锁定按钮
         IconButton(
@@ -773,7 +789,7 @@ fun TopControlPanel(
             )
         }
 
-        Spacer(modifier = Modifier.width(10.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
         // 更多选项按钮
         IconButton(
@@ -785,7 +801,12 @@ fun TopControlPanel(
                 .size(38.dp)
                 .onGloballyPositioned { coords ->
                     val r = coords.boundsInWindow()
-                    moreBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
+                    // 约束X坐标到屏幕范围内，防止超出屏幕宽度
+                    val x = r.left.toInt().coerceAtMost(screenWidthPx - r.width.toInt())
+                    val y = r.top.toInt()
+                    moreBounds = android.graphics.Rect(
+                        x, y, x + r.width.toInt(), y + r.height.toInt()
+                    )
                 }
         ) {
             Icon(
