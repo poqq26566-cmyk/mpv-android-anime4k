@@ -36,6 +36,10 @@ sealed interface AppScreen {
     @Serializable
     data object CacheManagement : AppScreen
 
+        /** 开源许可页 */
+        @Serializable
+        data object License : AppScreen
+
     /** WebDAV 账户列表页 */
     @Serializable
     data object WebDavAccounts : AppScreen
@@ -43,4 +47,36 @@ sealed interface AppScreen {
     /** WebDAV 文件浏览页 */
     @Serializable
     data class WebDavBrowser(val accountId: String) : AppScreen
+
+    /** B站弹幕下载页 */
+    @Serializable
+    data object BiliBiliDanmaku : AppScreen
+
+    /** 视频浏览页 */
+    @Serializable
+    data object VideoBrowser : AppScreen
+
+    /** 下载管理页 */
+    @Serializable
+    data object Download : AppScreen
+
+    /** 字幕搜索页 */
+    @Serializable
+    data object SubtitleSearch : AppScreen
+
+    /** B站番剧播放页 */
+    @Serializable
+    data object BiliBiliPlay : AppScreen
+
+    /** TV浏览器页 */
+    @Serializable
+    data class TVBrowser(val initialUrl: String = "") : AppScreen
+
+    /** 媒体信息页 */
+    @Serializable
+    data class MediaInfo(val videoUri: String, val videoName: String) : AppScreen
+
+    /** 视频列表页 */
+    @Serializable
+    data class VideoList(val folderName: String, val folderPath: String) : AppScreen
 }

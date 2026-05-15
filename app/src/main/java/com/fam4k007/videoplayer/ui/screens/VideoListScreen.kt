@@ -37,7 +37,6 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.VideoFileParcelable
-import com.fam4k007.videoplayer.mediainfo.MediaInfoActivity
 import com.fam4k007.videoplayer.presentation.LibraryViewModel
 import com.fam4k007.videoplayer.utils.ThumbnailCacheManager
 import com.fam4k007.videoplayer.utils.FileOperationManager
@@ -61,6 +60,7 @@ fun VideoListScreen(
     preloadedVideos: List<VideoFileParcelable>? = null,  // 预加载的视频列表（flat模式）
     onNavigateBack: () -> Unit,
     onOpenVideo: (VideoFileParcelable, Int, List<VideoFileParcelable>) -> Unit,
+    onOpenMediaInfo: (VideoFileParcelable) -> Unit = {},
     viewModel: LibraryViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
@@ -305,11 +305,10 @@ fun VideoListScreen(
         )
     }
 
-    // 监听selectedVideo变化，启动MediaInfoActivity
+    // 监听selectedVideo变化，打开媒体信息
     LaunchedEffect(selectedVideo) {
         selectedVideo?.let { video ->
-            MediaInfoActivity.start(context, video.uri, video.name)
-            (context as? android.app.Activity)?.overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+            onOpenMediaInfo(video)
             selectedVideo = null // 重置状态
         }
     }

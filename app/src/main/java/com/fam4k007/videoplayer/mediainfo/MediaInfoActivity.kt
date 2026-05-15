@@ -113,7 +113,7 @@ class MediaInfoActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MediaInfoScreen(
+fun MediaInfoScreen(
     videoUri: String,
     videoName: String,
     onBack: () -> Unit,

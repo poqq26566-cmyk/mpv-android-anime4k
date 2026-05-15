@@ -1,14 +1,32 @@
 package com.fam4k007.videoplayer.navigation
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.Settings
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,19 +38,29 @@ import com.fam4k007.videoplayer.domain.webdav.WebDavClient
 import com.fam4k007.videoplayer.domain.webdav.WebDavConfig
 import com.fam4k007.videoplayer.presentation.PlaybackHistoryViewModel
 import com.fam4k007.videoplayer.presentation.PlaybackSettingsViewModel
+import com.fam4k007.videoplayer.presentation.SubtitleSearchViewModel
 import com.fam4k007.videoplayer.repository.WebDavRepository
 import com.fam4k007.videoplayer.ui.screens.AboutScreen
+import com.fam4k007.videoplayer.ui.screens.BiliBiliDanmakuScreen
+import com.fam4k007.videoplayer.ui.screens.BiliBiliPlayScreen
 import com.fam4k007.videoplayer.ui.screens.CacheManagementScreen
+import com.fam4k007.videoplayer.ui.screens.DownloadScreen
+import com.fam4k007.videoplayer.ui.screens.FolderBrowserScreen
+import com.fam4k007.videoplayer.ui.screens.TVBrowserScreen
+import com.fam4k007.videoplayer.ui.screens.VideoListScreen
 import com.fam4k007.videoplayer.ui.screens.HomeScreen
+import com.fam4k007.videoplayer.ui.screens.LicenseScreen
 import com.fam4k007.videoplayer.ui.screens.LogViewerScreen
 import com.fam4k007.videoplayer.ui.screens.PlaybackHistoryScreen
 import com.fam4k007.videoplayer.ui.screens.PlaybackSettingsScreen
-import com.fam4k007.videoplayer.LicenseActivity
 import com.fam4k007.videoplayer.ui.screens.SettingsScreen
+import com.fam4k007.videoplayer.ui.screens.SubtitleSearchScreen
 import com.fam4k007.videoplayer.ui.webdav.WebDavAccountListScreen
 import com.fam4k007.videoplayer.ui.webdav.WebDavBrowserScreen
-import org.koin.compose.koinInject
+import com.fam4k007.videoplayer.ui.viewmodels.BiliBiliDanmakuViewModel
+import com.fam4k007.videoplayer.mediainfo.MediaInfoScreen
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 /**
  * 应用主导航图
@@ -81,6 +109,15 @@ fun AppNavGraph(
                 },
                 onNavigateToWebDav = {
                     navController.navigate(AppScreen.WebDavAccounts)
+                },
+                onNavigateToVideoBrowser = {
+                    navController.navigate(AppScreen.VideoBrowser)
+                },
+                onNavigateToBiliBiliPlay = {
+                    navController.navigate(AppScreen.BiliBiliPlay)
+                },
+                onNavigateToTVBrowser = {
+                    navController.navigate(AppScreen.TVBrowser(initialUrl = ""))
                 }
             )
         }
@@ -96,6 +133,15 @@ fun AppNavGraph(
                 },
                 onNavigateToAbout = {
                     navController.navigate(AppScreen.About)
+                },
+                onNavigateToBiliBiliDanmaku = {
+                    navController.navigate(AppScreen.BiliBiliDanmaku)
+                },
+                onNavigateToDownload = {
+                    navController.navigate(AppScreen.Download)
+                },
+                onNavigateToSubtitleSearch = {
+                    navController.navigate(AppScreen.SubtitleSearch)
                 }
             )
         }
@@ -194,11 +240,7 @@ fun AppNavGraph(
                 versionName = versionName,
                 onBack = { navController.popBackStack() },
                 onNavigateToLicense = {
-                    context.startActivity(Intent(context, LicenseActivity::class.java))
-                    (context as? android.app.Activity)?.overridePendingTransition(
-                        R.anim.slide_in_right,
-                        R.anim.slide_out_left
-                    )
+                    navController.navigate(AppScreen.License)
                 },
                 onNavigateToLogs = {
                     navController.navigate(AppScreen.LogViewer)
@@ -239,6 +281,233 @@ fun AppNavGraph(
             CacheManagementScreen(
                 viewModel = viewModel,
                 onBack = { navController.popBackStack() }
+            )
+        }
+        
+        composable<AppScreen.License> {
+            LicenseScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<AppScreen.BiliBiliDanmaku> {
+            val context = LocalContext.current
+            val viewModel: BiliBiliDanmakuViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+            val savedFolderUri by viewModel.savedFolderUri.collectAsStateWithLifecycle()
+            val downloadProgress by viewModel.downloadProgress.collectAsStateWithLifecycle()
+            val isDownloading by viewModel.isDownloading.collectAsStateWithLifecycle()
+            val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+            val successMessage by viewModel.successMessage.collectAsStateWithLifecycle()
+
+            // 处理错误消息
+            LaunchedEffect(errorMessage) {
+                errorMessage?.let {
+                    Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                    viewModel.clearErrorMessage()
+                }
+            }
+
+            // 处理成功消息
+            LaunchedEffect(successMessage) {
+                successMessage?.let {
+                    Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                    viewModel.clearSuccessMessage()
+                }
+            }
+
+            BiliBiliDanmakuScreen(
+                savedFolderUri = savedFolderUri,
+                downloadProgress = downloadProgress,
+                isDownloading = isDownloading,
+                onBack = { navController.popBackStack() },
+                onFolderSelected = { uri ->
+                    viewModel.setFolderUri(uri, context.contentResolver)
+                },
+                onDownloadDanmaku = { url, downloadWholeSeason ->
+                    viewModel.startDownload(url, downloadWholeSeason)
+                }
+            )
+        }
+
+        composable<AppScreen.VideoBrowser> {
+            val context = LocalContext.current
+
+            // 检查存储权限（每次重组时检查）
+            val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                Environment.isExternalStorageManager()
+            } else {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED
+            }
+
+            // 权限请求启动器（Android 10及以下）
+            val permissionLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestPermission()
+            ) { _ ->
+                // 权限结果会在重组时自动检查
+            }
+
+            FolderBrowserScreen(
+                hasPermission = hasPermission,
+                onRequestPermission = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        try {
+                            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                            intent.data = Uri.parse("package:${context.packageName}")
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                            context.startActivity(intent)
+                        }
+                    } else {
+                        permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                    }
+                },
+                onNavigateBack = { navController.popBackStack() },
+                onOpenFolder = { folder ->
+                    navController.navigate(
+                        AppScreen.VideoList(
+                            folderName = folder.folderName,
+                            folderPath = folder.folderPath
+                        )
+                    )
+                }
+            )
+        }
+
+        composable<AppScreen.Download> {
+            DownloadScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<AppScreen.SubtitleSearch> {
+            val context = LocalContext.current
+            val viewModel: SubtitleSearchViewModel = koinViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            // 显示Toast消息
+            LaunchedEffect(uiState.message) {
+                uiState.message?.let { message ->
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    viewModel.clearMessage()
+                }
+            }
+
+            SubtitleSearchScreen(
+                savedFolderUri = uiState.savedFolderUri,
+                mediaResults = uiState.mediaResults,
+                searchResults = uiState.searchResults,
+                isSearchingMedia = uiState.isSearchingMedia,
+                isSearching = uiState.isSearching,
+                searchOptions = uiState.searchOptions,
+                selectedMedia = uiState.selectedMedia,
+                onBack = { navController.popBackStack() },
+                onFolderSelected = { uri ->
+                    try {
+                        val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        context.contentResolver.takePersistableUriPermission(uri, flags)
+                        viewModel.setFolderUri(uri)
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "设置失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                onSearchOptionsChanged = { options -> viewModel.updateSearchOptions(options) },
+                onSearchMedia = { query -> viewModel.searchMedia(query) },
+                onSelectMedia = { media -> viewModel.selectMedia(media) },
+                onDownload = { subtitle -> viewModel.downloadSubtitle(subtitle) },
+                onClearSelection = { viewModel.clearSelection() }
+            )
+        }
+
+        composable<AppScreen.BiliBiliPlay> {
+            BiliBiliPlayScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<AppScreen.TVBrowser> { backStackEntry ->
+            val context = LocalContext.current
+            val lifecycleOwner = LocalLifecycleOwner.current
+            val args = backStackEntry.toRoute<AppScreen.TVBrowser>()
+            var webView by remember { mutableStateOf<android.webkit.WebView?>(null) }
+
+            // 处理 WebView 生命周期
+            DisposableEffect(lifecycleOwner) {
+                val observer = LifecycleEventObserver { _, event ->
+                    when (event) {
+                        Lifecycle.Event.ON_RESUME -> webView?.onResume()
+                        Lifecycle.Event.ON_PAUSE -> webView?.onPause()
+                        Lifecycle.Event.ON_DESTROY -> {
+                            webView?.destroy()
+                            webView = null
+                        }
+                        else -> {}
+                    }
+                }
+                lifecycleOwner.lifecycle.addObserver(observer)
+                onDispose {
+                    lifecycleOwner.lifecycle.removeObserver(observer)
+                }
+            }
+
+            TVBrowserScreen(
+                initialUrl = args.initialUrl,
+                onWebViewCreated = { webView = it },
+                onBackPressed = {
+                    if (webView?.canGoBack() == true) {
+                        webView?.goBack()
+                    } else {
+                        navController.popBackStack()
+                    }
+                }
+            )
+        }
+
+        composable<AppScreen.MediaInfo> { backStackEntry ->
+            val context = LocalContext.current
+            val args = backStackEntry.toRoute<AppScreen.MediaInfo>()
+
+            MediaInfoScreen(
+                videoUri = args.videoUri,
+                videoName = args.videoName,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<AppScreen.VideoList> { backStackEntry ->
+            val context = LocalContext.current
+            val args = backStackEntry.toRoute<AppScreen.VideoList>()
+
+            VideoListScreen(
+                folderName = args.folderName,
+                folderPath = args.folderPath,
+                onNavigateBack = { navController.popBackStack() },
+                onOpenVideo = { video, index, allVideos ->
+                    val intent = android.content.Intent(context, VideoPlayerActivity::class.java).apply {
+                        data = Uri.parse(video.uri)
+                        putExtra("video_name", video.name)
+                        putExtra("current_index", index)
+                        putExtra("folderName", args.folderName)
+                        putParcelableArrayListExtra("video_list", ArrayList(allVideos))
+                    }
+                    context.startActivity(intent)
+                    (context as? android.app.Activity)?.overridePendingTransition(
+                        R.anim.slide_in_right,
+                        R.anim.slide_out_left
+                    )
+                },
+                onOpenMediaInfo = { video ->
+                    navController.navigate(
+                        AppScreen.MediaInfo(
+                            videoUri = video.uri,
+                            videoName = video.name
+                        )
+                    )
+                }
             )
         }
     }

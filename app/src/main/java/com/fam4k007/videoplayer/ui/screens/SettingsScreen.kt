@@ -38,10 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.fam4k007.videoplayer.BiliBiliDanmakuComposeActivity
-import com.fam4k007.videoplayer.DownloadActivity
-import com.fam4k007.videoplayer.R
-import com.fam4k007.videoplayer.SubtitleSearchActivity
 import com.fam4k007.videoplayer.bilibili.auth.BiliBiliAuthManager
 import com.fam4k007.videoplayer.ui.components.ClickableItem
 import com.fam4k007.videoplayer.ui.components.PreferenceCard
@@ -69,6 +65,9 @@ fun SettingsScreen(
     onNavigateToPlaybackSettings: () -> Unit = {},
     onNavigateToPlaybackHistory: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
+    onNavigateToBiliBiliDanmaku: () -> Unit = {},
+    onNavigateToDownload: () -> Unit = {},
+    onNavigateToSubtitleSearch: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val authManager: BiliBiliAuthManager = koinInject()
@@ -193,11 +192,7 @@ fun SettingsScreen(
                         icon = Icons.Default.Comment,
                         onClick = {
                             if (authManager.isLoggedIn()) {
-                                context.startActivity(Intent(context, BiliBiliDanmakuComposeActivity::class.java))
-                                (context as? android.app.Activity)?.overridePendingTransition(
-                                    R.anim.slide_in_right,
-                                    R.anim.slide_out_left
-                                )
+                                onNavigateToBiliBiliDanmaku()
                             } else {
                                 android.widget.Toast.makeText(
                                     context,
@@ -214,11 +209,7 @@ fun SettingsScreen(
                         icon = Icons.Default.Download,
                         onClick = {
                             if (authManager.isLoggedIn()) {
-                                context.startActivity(Intent(context, DownloadActivity::class.java))
-                                (context as? android.app.Activity)?.overridePendingTransition(
-                                    R.anim.slide_in_right,
-                                    R.anim.slide_out_left
-                                )
+                                onNavigateToDownload()
                             } else {
                                 android.widget.Toast.makeText(
                                     context,
@@ -234,11 +225,7 @@ fun SettingsScreen(
                         subtitle = "搜索并下载在线字幕",
                         icon = Icons.Default.Subtitles,
                         onClick = {
-                            context.startActivity(Intent(context, SubtitleSearchActivity::class.java))
-                            (context as? android.app.Activity)?.overridePendingTransition(
-                                R.anim.slide_in_right,
-                                R.anim.slide_out_left
-                            )
+                            onNavigateToSubtitleSearch()
                         }
                     )
                 }

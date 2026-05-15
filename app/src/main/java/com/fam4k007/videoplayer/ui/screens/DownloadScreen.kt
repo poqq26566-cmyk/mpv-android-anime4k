@@ -32,7 +32,10 @@ import com.fam4k007.videoplayer.download.DownloadItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
+fun DownloadScreen(
+    viewModel: BilibiliDownloadViewModel = viewModel(),
+    onBack: () -> Unit = {}
+) {
     val downloadItems by viewModel.downloadItems.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val downloadPath by viewModel.downloadPath.collectAsState()
@@ -85,10 +88,7 @@ fun DownloadScreen(viewModel: BilibiliDownloadViewModel = viewModel()) {
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { 
-                        activity?.finish()
-                        activity?.overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-                    }) {
+                    IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "返回"

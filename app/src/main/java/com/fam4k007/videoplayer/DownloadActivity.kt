@@ -26,7 +26,12 @@ class DownloadActivity : ComponentActivity() {
                     darkMode = themeController.getDarkMode(),
                     amoledMode = themeController.getAmoledMode()
                 ) {
-                    DownloadScreen()
+                    DownloadScreen(
+                        onBack = {
+                            finish()
+                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+                        }
+                    )
                 }
             }
         }

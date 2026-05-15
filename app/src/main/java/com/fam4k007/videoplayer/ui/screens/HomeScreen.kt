@@ -49,9 +49,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.PlaybackHistoryManager
-import com.fam4k007.videoplayer.VideoBrowserComposeActivity
 import com.fam4k007.videoplayer.VideoPlayerActivity
-import com.fam4k007.videoplayer.BiliBiliPlayActivity
 import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
 import com.fam4k007.videoplayer.remote.RemotePlaybackLauncher
@@ -67,7 +65,10 @@ import org.koin.compose.koinInject
 fun HomeScreen(
     historyManager: PlaybackHistoryManager,
     onNavigateToSettings: () -> Unit,
-    onNavigateToWebDav: () -> Unit = {}
+    onNavigateToWebDav: () -> Unit = {},
+    onNavigateToVideoBrowser: () -> Unit = {},
+    onNavigateToBiliBiliPlay: () -> Unit = {},
+    onNavigateToTVBrowser: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val preferencesManager: PreferencesManager = koinInject()
@@ -130,11 +131,7 @@ fun HomeScreen(
                     if (preferencesManager.getVideoDisplayMode() == "flat") {
                         flatScanAndPlayAllVideos(context)
                     } else {
-                        context.startActivity(Intent(context, VideoBrowserComposeActivity::class.java))
-                        (context as? android.app.Activity)?.overridePendingTransition(
-                            R.anim.slide_in_right,
-                            R.anim.slide_out_left
-                        )
+                        onNavigateToVideoBrowser()
                     }
                 }
             )
@@ -149,19 +146,11 @@ fun HomeScreen(
             onToggle = { isExpanded = !isExpanded },
             onTVClick = {
                 isExpanded = false
-                com.fam4k007.videoplayer.tv.TVBrowserActivity.start(context)
-                (context as? android.app.Activity)?.overridePendingTransition(
-                    R.anim.slide_in_right,
-                    R.anim.slide_out_left
-                )
+                onNavigateToTVBrowser()
             },
             onBiliBiliClick = {
                 isExpanded = false  // 点击后自动收起
-                context.startActivity(Intent(context, BiliBiliPlayActivity::class.java))
-                (context as? android.app.Activity)?.overridePendingTransition(
-                    R.anim.slide_in_right,
-                    R.anim.slide_out_left
-                )
+                onNavigateToBiliBiliPlay()
             },
             onWebDavClick = {
                 isExpanded = false  // 点击后自动收起
