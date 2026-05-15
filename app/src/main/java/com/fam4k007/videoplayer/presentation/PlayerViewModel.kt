@@ -706,18 +706,47 @@ class PlayerViewModel(
      * 切换控制栏锁定状态
      */
     fun toggleLock() {
-        _areControlsLocked.value = !_areControlsLocked.value
-        Logger.v(TAG, "Controls ${if (_areControlsLocked.value) "locked" else "unlocked"}")
+        val newLocked = !_areControlsLocked.value
+        _areControlsLocked.value = newLocked
+        if (newLocked) {
+            // 锁定时自动显示解锁按钮
+            showUnlockButtons()
+        } else {
+            // 解锁时隐藏解锁按钮并取消自动隐藏
+            _unlockButtonsVisible.value = false
+        }
+        Logger.v(TAG, "Controls ${if (newLocked) "locked" else "unlocked"}")
     }
     
-    /**
-     * 触发解锁按钮重新显示（锁定状态下单击屏幕时调用）
-     */
-    private val _unlockTrigger = MutableStateFlow(0L)
-    val unlockTrigger: StateFlow<Long> = _unlockTrigger.asStateFlow()
+    // 解锁按钮显示状态
+    private val _unlockButtonsVisible = MutableStateFlow(false)
+    val unlockButtonsVisible: StateFlow<Boolean> = _unlockButtonsVisible.asStateFlow()
     
+    // 解锁按钮自动隐藏 Job
+    private var unlockButtonsHideJob: Job? = null
+    
+    /**
+     * 触发解锁按钮显示/隐藏（锁定状态下单击屏幕时调用）
+     * 点击时切换显示状态；显示时自动 3 秒后隐藏
+     */
     fun triggerUnlockButtons() {
-        _unlockTrigger.value = System.currentTimeMillis()
+        if (_unlockButtonsVisible.value) {
+            // 当前可见 → 隐藏
+            _unlockButtonsVisible.value = false
+            unlockButtonsHideJob?.cancel()
+        } else {
+            // 当前隐藏 → 显示并启动自动隐藏
+            showUnlockButtons()
+        }
+    }
+    
+    private fun showUnlockButtons() {
+        _unlockButtonsVisible.value = true
+        unlockButtonsHideJob?.cancel()
+        unlockButtonsHideJob = viewModelScope.launch {
+            delay(3_000L)
+            _unlockButtonsVisible.value = false
+        }
     }
     
     /**

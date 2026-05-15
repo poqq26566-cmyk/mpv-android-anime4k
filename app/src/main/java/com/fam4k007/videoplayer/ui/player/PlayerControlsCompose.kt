@@ -843,25 +843,14 @@ fun UnlockButtons(
     modifier: Modifier = Modifier
 ) {
     val areControlsLocked by viewModel.areControlsLocked.collectAsState()
-    val unlockTrigger by viewModel.unlockTrigger.collectAsState()
-
-    // 用于触发自动隐藏的 key：每次进入锁定状态或单击屏幕时重新计时
-    var visible by remember { mutableStateOf(true) }
-
-    LaunchedEffect(areControlsLocked, unlockTrigger) {
-        if (areControlsLocked) {
-            visible = true
-            delay(3_000L)
-            visible = false
-        }
-    }
+    val unlockButtonsVisible by viewModel.unlockButtonsVisible.collectAsState()
 
     if (!areControlsLocked) return
 
     Box(modifier = modifier.fillMaxSize()) {
         // 左侧解锁按钮
         androidx.compose.animation.AnimatedVisibility(
-            visible = visible,
+            visible = unlockButtonsVisible,
             enter = androidx.compose.animation.fadeIn(),
             exit = androidx.compose.animation.fadeOut(),
             modifier = Modifier
@@ -883,9 +872,8 @@ fun UnlockButtons(
             }
         }
 
-        // 右侧解锁按钮
         androidx.compose.animation.AnimatedVisibility(
-            visible = visible,
+            visible = unlockButtonsVisible,
             enter = androidx.compose.animation.fadeIn(),
             exit = androidx.compose.animation.fadeOut(),
             modifier = Modifier
