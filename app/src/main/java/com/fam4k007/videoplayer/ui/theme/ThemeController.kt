@@ -1,6 +1,7 @@
 package com.fam4k007.videoplayer.ui.theme
 
 import android.content.Context
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +38,7 @@ class ThemeController(private val preferencesManager: PreferencesManager) {
         return when (modeStr) {
             "dark" -> DarkMode.Dark
             "light" -> DarkMode.Light
+            "amoled" -> DarkMode.Amoled
             "system" -> DarkMode.System
             else -> DarkMode.System
         }
@@ -49,9 +51,23 @@ class ThemeController(private val preferencesManager: PreferencesManager) {
         val modeStr = when (mode) {
             DarkMode.Dark -> "dark"
             DarkMode.Light -> "light"
+            DarkMode.Amoled -> "amoled"
             DarkMode.System -> "system"
         }
         preferencesManager.setThemeMode(modeStr)
+        
+        // 同步设置 AMOLED 模式
+        preferencesManager.setAmoledMode(mode == DarkMode.Amoled)
+        
+        // 立即应用夜间模式，确保 recreate() 后 Activity 使用正确的配置
+        AppCompatDelegate.setDefaultNightMode(
+            when (mode) {
+                DarkMode.Dark -> AppCompatDelegate.MODE_NIGHT_YES
+                DarkMode.Light -> AppCompatDelegate.MODE_NIGHT_NO
+                DarkMode.Amoled -> AppCompatDelegate.MODE_NIGHT_YES
+                DarkMode.System -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+            }
+        )
     }
     
     /**

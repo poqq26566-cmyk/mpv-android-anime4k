@@ -16,7 +16,6 @@ import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import com.fam4k007.videoplayer.utils.Logger
 import com.fam4k007.videoplayer.utils.NoMediaChecker
-import com.fam4k007.videoplayer.utils.ThemeManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -44,10 +43,6 @@ class VideoListComposeActivity : ComponentActivity() {
         
         // 启用边到边显示
         enableEdgeToEdge()
-        
-        // 应用主题
-        val currentTheme = ThemeManager.getCurrentTheme(this)
-        setTheme(currentTheme.styleRes)
 
         val folderName = intent.getStringExtra("folder_name") ?: "视频列表"
         folderPath = intent.getStringExtra("folder_path") ?: ""

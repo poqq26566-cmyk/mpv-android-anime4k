@@ -169,6 +169,13 @@ enum class AppTheme(
             tertiary = tertiaryDark,
             background = backgroundDark,
             surface = backgroundDark,
+            surfaceDim = Color.Black,
+            surfaceBright = Color(0xFF1F1F1F),
+            surfaceContainerLowest = Color.Black,
+            surfaceContainerLow = Color(0xFF0A0A0A),
+            surfaceContainer = Color(0xFF121212),
+            surfaceContainerHigh = Color(0xFF1A1A1A),
+            surfaceContainerHighest = Color(0xFF242424),
             surfaceVariant = backgroundDark.copy(alpha = 0.9f),
         )
     }
@@ -217,6 +224,7 @@ enum class AppTheme(
 enum class DarkMode {
     Light,   // 始终亮色
     Dark,    // 始终暗色
+    Amoled,  // AMOLED 纯黑模式
     System;  // 跟随系统
 
     companion object {

@@ -417,6 +417,7 @@ fun VideoListScreenPaging(
     LaunchedEffect(selectedVideo) {
         selectedVideo?.let { video ->
             MediaInfoActivity.start(context, video.uri, video.name)
+            (context as? android.app.Activity)?.overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
             selectedVideo = null // 重置状态
         }
     }

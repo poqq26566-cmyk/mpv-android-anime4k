@@ -1,5 +1,7 @@
 package com.fanchen.fam4k007.manager.compose
 
+import com.fam4k007.videoplayer.R
+
 import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -67,6 +69,7 @@ class BiliBiliLoginActivity : ComponentActivity() {
                         authManager = authManager,
                         onClose = {
                             finish()
+                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                         }
                     )
                 }

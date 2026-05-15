@@ -16,7 +16,6 @@ import androidx.navigation.compose.rememberNavController
 import com.fam4k007.videoplayer.navigation.AppNavGraph
 import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
-import com.fam4k007.videoplayer.utils.ThemeManager
 import com.fam4k007.videoplayer.utils.UpdateManager
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.KoinAndroidContext
@@ -24,8 +23,6 @@ import org.koin.androidx.compose.KoinAndroidContext
 class MainActivity : BaseActivity() {
     
     private var historyManager: PlaybackHistoryManager? = null
-    private var lastThemeName: String? = null
-    private var needsRefresh = false
     
     // 更新弹窗状态
     private var showUpdateDialog by mutableStateOf(false)
@@ -33,13 +30,13 @@ class MainActivity : BaseActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
-        ThemeManager.applyTheme(this)
         super.onCreate(savedInstanceState)
         
         // 检查用户是否已同意协议
         if (!UserAgreementActivity.isAgreed(this)) {
             val intent = Intent(this, UserAgreementActivity::class.java)
             startActivity(intent)
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
             finish()
             return
         }
@@ -51,24 +48,12 @@ class MainActivity : BaseActivity() {
             false
         }
         
-        lastThemeName = ThemeManager.getCurrentTheme(this).themeName
-        
         // 延迟检查更新（5秒后，避免阻塞启动）
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             checkForUpdateSilently()
         }, 5000)
         
         setupContent()
-    }
-    
-    override fun onResume() {
-        super.onResume()
-        val currentThemeName = ThemeManager.getCurrentTheme(this).themeName
-        if (lastThemeName != null && lastThemeName != currentThemeName) {
-            lastThemeName = currentThemeName
-            needsRefresh = false
-            recreate()
-        }
     }
     
     private fun setupContent() {

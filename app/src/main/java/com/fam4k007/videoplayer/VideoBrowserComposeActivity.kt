@@ -20,7 +20,6 @@ import com.fam4k007.videoplayer.ui.screens.FolderBrowserScreen
 import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import com.fam4k007.videoplayer.utils.NoMediaChecker
-import com.fam4k007.videoplayer.utils.ThemeManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -45,10 +44,6 @@ class VideoBrowserComposeActivity : ComponentActivity() {
         
         // 启用边到边显示，让内容可以绘制到状态栏区域
         enableEdgeToEdge()
-        
-        // 应用主题
-        val currentTheme = ThemeManager.getCurrentTheme(this)
-        setTheme(currentTheme.styleRes)
 
         setupContent()
     }

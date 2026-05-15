@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -27,6 +28,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.res.Configuration
 import android.os.BatteryManager
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.presentation.PlayerViewModel
@@ -63,6 +65,10 @@ fun PlayerControls(
         }
     }
 
+    // 检测屏幕方向
+    val configuration = LocalConfiguration.current
+    val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+
     Box(
         modifier = modifier.fillMaxSize()
     ) {
@@ -71,39 +77,77 @@ fun PlayerControls(
             viewModel = viewModel
         )
 
-        // 顶部控制面板（带显示/隐藏动画）
-        androidx.compose.animation.AnimatedVisibility(
-            visible = controlsShown && !areControlsLocked,
-            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { -it }),
-            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { -it }),
-            modifier = Modifier.align(Alignment.TopCenter)
-        ) {
-            TopControlPanel(
-                viewModel = viewModel,
-                onBackPress = onBackPress,
-                onSubtitleClick = onSubtitleClick,
-                onDanmakuClick = onDanmakuClick,
-                onAspectRatioClick = onAspectRatioClick,
-                onMoreClick = onMoreClick,
-                onVideoTitleClick = onVideoTitleClick
-            )
-        }
+        if (isPortrait) {
+            // ═══ 竖屏模式：使用独立的全屏控制组件 ═══
+            // 顶部控制面板（带显示/隐藏动画）
+            androidx.compose.animation.AnimatedVisibility(
+                visible = controlsShown && !areControlsLocked,
+                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { -it }),
+                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { -it }),
+                modifier = Modifier.align(Alignment.TopCenter)
+            ) {
+                PortraitTopBar(
+                    viewModel = viewModel,
+                    onBackPress = onBackPress,
+                    onSubtitleClick = onSubtitleClick,
+                    onDanmakuClick = onDanmakuClick,
+                    onAspectRatioClick = onAspectRatioClick,
+                    onMoreClick = onMoreClick,
+                    onVideoTitleClick = onVideoTitleClick
+                )
+            }
 
-        // 底部控制面板（带显示/隐藏动画）
-        androidx.compose.animation.AnimatedVisibility(
-            visible = controlsShown && !areControlsLocked,
-            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it }),
-            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it }),
-            modifier = Modifier.align(Alignment.BottomCenter)
-        ) {
-            BottomControlPanel(
-                viewModel = viewModel,
-                onAnime4KClick = onAnime4KClick,
-                onDanmakuToggle = onDanmakuToggle,
-                onRotateClick = onRotateClick,
-                onSpeedClick = onSpeedClick,
-                modifier = Modifier
-            )
+            // 底部控制面板（带显示/隐藏动画）
+            androidx.compose.animation.AnimatedVisibility(
+                visible = controlsShown && !areControlsLocked,
+                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it }),
+                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it }),
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) {
+                PortraitBottomControls(
+                    viewModel = viewModel,
+                    onAnime4KClick = onAnime4KClick,
+                    onDanmakuToggle = onDanmakuToggle,
+                    onRotateClick = onRotateClick,
+                    onSpeedClick = onSpeedClick
+                )
+            }
+        } else {
+            // ═══ 横屏模式：使用现有控制组件 ═══
+            // 顶部控制面板（带显示/隐藏动画）
+            androidx.compose.animation.AnimatedVisibility(
+                visible = controlsShown && !areControlsLocked,
+                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { -it }),
+                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { -it }),
+                modifier = Modifier.align(Alignment.TopCenter)
+            ) {
+                TopControlPanel(
+                    viewModel = viewModel,
+                    onBackPress = onBackPress,
+                    onSubtitleClick = onSubtitleClick,
+                    onDanmakuClick = onDanmakuClick,
+                    onAspectRatioClick = onAspectRatioClick,
+                    onMoreClick = onMoreClick,
+                    onVideoTitleClick = onVideoTitleClick
+                )
+            }
+
+            // 底部控制面板（带显示/隐藏动画）
+            androidx.compose.animation.AnimatedVisibility(
+                visible = controlsShown && !areControlsLocked,
+                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it }),
+                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it }),
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) {
+                BottomControlPanel(
+                    viewModel = viewModel,
+                    onAnime4KClick = onAnime4KClick,
+                    onDanmakuToggle = onDanmakuToggle,
+                    onRotateClick = onRotateClick,
+                    onSpeedClick = onSpeedClick,
+                    modifier = Modifier
+                )
+            }
         }
 
         // 锁定时：左右解锁按钮

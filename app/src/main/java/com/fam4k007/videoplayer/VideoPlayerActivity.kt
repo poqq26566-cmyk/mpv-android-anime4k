@@ -57,8 +57,6 @@ import com.fam4k007.videoplayer.utils.FormatUtils
 import com.fam4k007.videoplayer.utils.UriUtils.resolveUri
 import com.fam4k007.videoplayer.utils.UriUtils.getFolderName
 import com.fam4k007.videoplayer.utils.DialogUtils
-import com.fam4k007.videoplayer.utils.ThemeManager
-import com.fam4k007.videoplayer.utils.getThemeAttrColor
 import com.fam4k007.videoplayer.utils.Logger
 import com.fam4k007.videoplayer.presentation.PlayerViewModel
 import `is`.xyz.mpv.MPVLib
@@ -212,8 +210,6 @@ class VideoPlayerActivity : AppCompatActivity(),
     internal var wasPlayingBeforeDanmakuPicker = false
     
     override fun onCreate(savedInstanceState: Bundle?) {
-        ThemeManager.applyTheme(this)
-        
         super.onCreate(savedInstanceState)
 
         val portraitUi = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
@@ -1002,10 +998,10 @@ class VideoPlayerActivity : AppCompatActivity(),
                 // 检查是否启用自动连播
                 val autoplayEnabled = preferencesManager.isAutoPlayNextEnabled()
 
-                if (hasNextItem && (autoplayEnabled || viewModel.shouldRepeatPlaylist())) {
+                if (hasNextItem && autoplayEnabled) {
                     isSwitchingVideo = true
                     playNext()
-                } else if (viewModel.shouldRepeatPlaylist()) {
+                } else if (viewModel.shouldRepeatPlaylist() && autoplayEnabled) {
                     // 到达播放列表末尾且 repeat ALL：从头开始
                     isSwitchingVideo = true
                     if (viewModel.shuffleEnabled.value) {

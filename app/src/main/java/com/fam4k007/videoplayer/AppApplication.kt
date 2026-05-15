@@ -1,9 +1,11 @@
 package com.fam4k007.videoplayer
 
 import android.app.Application
+import android.os.Build
+import androidx.appcompat.app.AppCompatDelegate
 import com.fam4k007.videoplayer.database.VideoDatabase
 import com.fam4k007.videoplayer.di.appModules
-import com.fam4k007.videoplayer.manager.ThemeManager
+import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.utils.CrashHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +40,19 @@ class AppApplication : Application() {
         }
         
         // 初始化主题
-        ThemeManager.initTheme(this)
+        val themePrefs = PreferencesManager.getInstance(this)
+        val themeModeStr = themePrefs.getThemeMode()
+        val nightMode = when (themeModeStr.lowercase()) {
+            "dark" -> AppCompatDelegate.MODE_NIGHT_YES
+            "system" -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                    AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                else
+                    AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY
+            }
+            else -> AppCompatDelegate.MODE_NIGHT_NO
+        }
+        AppCompatDelegate.setDefaultNightMode(nightMode)
         
         // 后台预热数据库连接（减少首次查询延迟）
         applicationScope.launch {

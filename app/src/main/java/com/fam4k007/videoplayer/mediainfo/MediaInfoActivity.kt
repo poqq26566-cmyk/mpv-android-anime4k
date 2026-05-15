@@ -1,5 +1,7 @@
 package com.fam4k007.videoplayer.mediainfo
 
+import com.fam4k007.videoplayer.R
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -92,7 +94,10 @@ class MediaInfoActivity : ComponentActivity() {
                         MediaInfoScreen(
                             videoUri = videoUri,
                             videoName = videoName,
-                            onBack = { finish() }
+                            onBack = {
+                                finish()
+                                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+                            }
                         )
                     }
                 }

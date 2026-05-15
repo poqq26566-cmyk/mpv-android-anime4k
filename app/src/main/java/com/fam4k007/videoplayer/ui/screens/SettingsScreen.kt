@@ -137,6 +137,7 @@ fun SettingsScreen(
                         subtitle = when (currentDarkMode) {
                             DarkMode.Light -> "关闭"
                             DarkMode.Dark -> "开启"
+                            DarkMode.Amoled -> "AMOLED模式"
                             DarkMode.System -> "跟随系统"
                         },
                         icon = Icons.Default.Palette,

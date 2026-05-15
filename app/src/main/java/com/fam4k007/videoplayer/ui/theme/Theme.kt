@@ -33,6 +33,7 @@ fun VideoPlayerTheme(
     val useDarkTheme = when (darkMode) {
         DarkMode.Dark -> true
         DarkMode.Light -> false
+        DarkMode.Amoled -> true
         DarkMode.System -> systemInDarkTheme
     }
 

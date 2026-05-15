@@ -18,7 +18,6 @@ import com.fam4k007.videoplayer.danmaku.DanmakuConfig
 import com.fam4k007.videoplayer.domain.danmaku.DanmakuManager
 import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.utils.DialogUtils
-import com.fam4k007.videoplayer.utils.ThemeManager
 import com.fam4k007.videoplayer.presentation.PlayerViewModel
 import `is`.xyz.mpv.MPVLib
 import java.io.File
@@ -401,6 +400,11 @@ class PlayerDialogManager(
             // 获取当前选中的轨道索引
             val currentTrackIndex = audioTracks.indexOfFirst { it.third }
 
+            // 根据屏幕方向决定对齐方式：竖屏靠右对齐，横屏居中
+            val configuration = activity.resources.configuration
+            val isPortrait = configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
+            val horizontalAlignment = if (isPortrait) PopupHorizontalAlignment.END else PopupHorizontalAlignment.CENTER
+
             showPopupDialogAtLastAnchor(
                 items,
                 currentTrackIndex,
@@ -408,7 +412,7 @@ class PlayerDialogManager(
                 showAbove = false,
                 useFixedHeight = false,
                 showScrollHint = false,
-                horizontalAlignment = PopupHorizontalAlignment.CENTER,
+                horizontalAlignment = horizontalAlignment,
                 clampToScreen = false
             ) { position ->
                 val trackId = audioTracks[position].first
@@ -432,6 +436,11 @@ class PlayerDialogManager(
         val currentDecoder = preferencesManager.getHardwareDecoder()
         val currentSelection = if (currentDecoder) 0 else 1
 
+        // 根据屏幕方向决定对齐方式：竖屏靠右对齐，横屏居中
+        val configuration = activity.resources.configuration
+        val isPortrait = configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
+        val horizontalAlignment = if (isPortrait) PopupHorizontalAlignment.END else PopupHorizontalAlignment.CENTER
+
         showPopupDialogAtLastAnchor(
             items,
             currentSelection,
@@ -439,7 +448,7 @@ class PlayerDialogManager(
             showAbove = false,
             useFixedHeight = false,
             showScrollHint = false,
-            horizontalAlignment = PopupHorizontalAlignment.CENTER,
+            horizontalAlignment = horizontalAlignment,
             clampToScreen = false
         ) { position ->
             val newDecoder = (position == 0)
@@ -912,6 +921,11 @@ class PlayerDialogManager(
         }
         items.addAll(listOf("截图", "音轨", "解码", "片头片尾", assOverrideText, autoRotateText))
         
+        // 根据屏幕方向决定对齐方式：竖屏靠右对齐，横屏居中
+        val configuration = activity.resources.configuration
+        val isPortrait = configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
+        val horizontalAlignment = if (isPortrait) PopupHorizontalAlignment.END else PopupHorizontalAlignment.CENTER
+
         // 使用专门为Compose按钮设计的对话框显示方法
         showPopupDialogAtLastAnchor(
             items,
@@ -920,7 +934,7 @@ class PlayerDialogManager(
             showAbove = false,
             useFixedHeight = true,
             showScrollHint = true,
-            horizontalAlignment = PopupHorizontalAlignment.CENTER,
+            horizontalAlignment = horizontalAlignment,
             clampToScreen = false
         ) { position ->
             // 根据是否有章节项调整索引映射
@@ -989,6 +1003,12 @@ class PlayerDialogManager(
             val currentChapter = MPVLib.getPropertyInt("chapter") ?: 0
 
             // 使用专门为Compose按钮设计的对话框显示方法
+
+            // 根据屏幕方向决定对齐方式：竖屏靠右对齐，横屏居中
+            val configuration = activity.resources.configuration
+            val isPortrait = configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
+            val horizontalAlignment = if (isPortrait) PopupHorizontalAlignment.END else PopupHorizontalAlignment.CENTER
+
             showPopupDialogAtLastAnchor(
                 chapters,
                 currentChapter,
@@ -996,7 +1016,7 @@ class PlayerDialogManager(
                 showAbove = false,
                 useFixedHeight = true,
                 showScrollHint = true,
-                horizontalAlignment = PopupHorizontalAlignment.CENTER,
+                horizontalAlignment = horizontalAlignment,
                 clampToScreen = false
             ) { position ->
                 MPVLib.setPropertyInt("chapter", position)
@@ -1242,11 +1262,13 @@ class PlayerDialogManager(
 
                 val isSelected = selectedPosition >= 0 && position == selectedPosition
                 if (isSelected) {
-                    val primaryColor = ThemeManager.getThemeColor(
-                        activity,
-                        com.google.android.material.R.attr.colorPrimary
+                    val typedValue = android.util.TypedValue()
+                    activity.theme.resolveAttribute(
+                        com.google.android.material.R.attr.colorPrimary,
+                        typedValue,
+                        true
                     )
-                    itemText.setTextColor(primaryColor)
+                    itemText.setTextColor(typedValue.data)
                     itemText.setTypeface(null, android.graphics.Typeface.BOLD)
                 } else {
                     val typedValue = android.util.TypedValue()

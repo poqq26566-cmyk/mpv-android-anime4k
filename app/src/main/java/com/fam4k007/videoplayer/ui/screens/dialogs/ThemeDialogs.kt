@@ -131,6 +131,7 @@ fun DarkModeSelectionDialog(
                 val modes = listOf(
                     DarkMode.Light to "关闭",
                     DarkMode.Dark to "开启",
+                    DarkMode.Amoled to "AMOLED模式",
                     DarkMode.System to "跟随系统"
                 )
                 

@@ -43,7 +43,10 @@ internal fun VideoPlayerActivity.setupComposeTestLayer() {
                 VideoPlayerTheme {
                     PlayerControls(
                         viewModel = viewModel,
-                        onBackPress = { finish() },
+                        onBackPress = {
+                            finish()
+                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+                        },
                         onAnime4KClick = { x, y, w, h ->
                             dialogManager.setLastAnchor(x, y, w, h)
                             dialogManager.showAnime4KModeDialog(anime4KMode)
