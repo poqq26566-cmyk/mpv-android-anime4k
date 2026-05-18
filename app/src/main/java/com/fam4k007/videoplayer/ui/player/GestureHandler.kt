@@ -144,40 +144,45 @@ fun GestureHandler(
                             }
                             isDrag = true
 
-                            // 首次确定手势方向
-                            if (!isVerticalGesture && !isHorizontalGesture) {
-                                val dx = abs(pointer.position.x - downPosition.x)
-                                val dy = abs(pointer.position.y - downPosition.y)
-                                when {
-                                    dy > dx && dy > 20f -> isVerticalGesture = true
-                                    dx > dy && dx > 20f -> {
-                                        isHorizontalGesture = true
-                                        // 记录水平 seek 的起始视频位置（只记录一次）
-                                        swipeSeekStartVideoPosition = viewModel.precisePosition.value.toInt()
+                            // 【冲突检测】长按状态下忽略所有垂直/水平滑动，仅允许手指抬起结束长按
+                            if (isLongPress) {
+                                // 继续等待手指抬起，不做任何滑动处理
+                            } else {
+                                // 首次确定手势方向
+                                if (!isVerticalGesture && !isHorizontalGesture) {
+                                    val dx = abs(pointer.position.x - downPosition.x)
+                                    val dy = abs(pointer.position.y - downPosition.y)
+                                    when {
+                                        dy > dx && dy > 20f -> isVerticalGesture = true
+                                        dx > dy && dx > 20f -> {
+                                            isHorizontalGesture = true
+                                            // 记录水平 seek 的起始视频位置（只记录一次）
+                                            swipeSeekStartVideoPosition = viewModel.precisePosition.value.toInt()
+                                        }
                                     }
                                 }
-                            }
 
-                            when {
-                                isVerticalGesture -> {
-                                    val delta = pointer.positionChange()
-                                    val isLeftSide = downPosition.x < size.width / 2
-                                    if (isLeftSide) {
-                                        viewModel.adjustBrightness(-delta.y / size.height * 2f)
-                                    } else {
-                                        viewModel.adjustVolume(-delta.y / size.height * 100f)
+                                when {
+                                    isVerticalGesture -> {
+                                        val delta = pointer.positionChange()
+                                        val isLeftSide = downPosition.x < size.width / 2
+                                        if (isLeftSide) {
+                                            viewModel.adjustBrightness(-delta.y / size.height * 2f)
+                                        } else {
+                                            viewModel.adjustVolume(-delta.y / size.height * 150f)
+                                        }
+                                        // 垂直手势不 consume，不影响上层 Slider
                                     }
-                                    // 垂直手势不 consume，不影响上层 Slider
-                                }
-                                isHorizontalGesture -> {
-                                    // 基于绝对偏移量计算目标位置（而非每帧步进）
-                                    val totalDeltaX = pointer.position.x - downPosition.x
-                                    val deltaSeconds = (totalDeltaX * SWIPE_SEEK_SENSITIVITY).toInt()
-                                    val targetSeconds = (swipeSeekStartVideoPosition + deltaSeconds)
-                                        .coerceIn(0, duration)
-                                    viewModel.updateSwipeSeek(targetSeconds, deltaSeconds)
-                                    // 消费水平滑动事件，防止穿透到底部面板按钮
-                                    pointer.consume()
+                                    isHorizontalGesture -> {
+                                        // 基于绝对偏移量计算目标位置（而非每帧步进）
+                                        val totalDeltaX = pointer.position.x - downPosition.x
+                                        val deltaSeconds = (totalDeltaX * SWIPE_SEEK_SENSITIVITY).toInt()
+                                        val targetSeconds = (swipeSeekStartVideoPosition + deltaSeconds)
+                                            .coerceIn(0, duration)
+                                        viewModel.updateSwipeSeek(targetSeconds, deltaSeconds)
+                                        // 消费水平滑动事件，防止穿透到底部面板按钮
+                                        pointer.consume()
+                                    }
                                 }
                             }
                         }
@@ -211,8 +216,8 @@ fun GestureHandler(
 
                                     if (doubleTapMode == 1) {
                                         val isLeftSide = downPosition.x < size.width / 2
-                                        if (isLeftSide) viewModel.seekRelative(-doubleTapSeekSeconds)
-                                        else viewModel.seekRelative(doubleTapSeekSeconds)
+                                        if (isLeftSide) viewModel.seekRelative(-doubleTapSeekSeconds, atTop = false)
+                                        else viewModel.seekRelative(doubleTapSeekSeconds, atTop = false)
                                     } else {
                                         viewModel.togglePlayPause()
                                     }

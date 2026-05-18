@@ -1,13 +1,8 @@
 package com.fam4k007.videoplayer.ui.player
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
@@ -18,6 +13,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,7 +22,7 @@ import com.fam4k007.videoplayer.presentation.PlayerViewModel
 
 /**
  * Seek指示器（快进/快退提示）
- * 显示在屏幕中央，提示前进/后退的秒数
+ * 按钮点击时显示在顶部，双击手势时显示在左侧/右侧
  */
 @Composable
 fun SeekIndicator(
@@ -35,41 +31,73 @@ fun SeekIndicator(
 ) {
     val seekIndicatorShown by viewModel.seekIndicatorShown.collectAsState()
     val seekOffset by viewModel.seekOffset.collectAsState(initial = 0)
+    val seekIndicatorAtTop by viewModel.seekIndicatorAtTop.collectAsState()
     
-    AnimatedVisibility(
-        visible = seekIndicatorShown,
-        enter = fadeIn(tween(200)) + scaleIn(tween(200)),
-        exit = fadeOut(tween(300)) + scaleOut(tween(300)),
-        modifier = modifier.fillMaxSize()
-    ) {
+    if (seekIndicatorShown) {
+        val alignment = if (seekIndicatorAtTop) {
+            Alignment.TopCenter
+        } else {
+            // 双击手势：正数（快进）显示在右侧，负数（快退）显示在左侧
+            if (seekOffset > 0) Alignment.CenterEnd else Alignment.CenterStart
+        }
+        
+        val topPadding = if (seekIndicatorAtTop) 60.dp else 0.dp
+        val sidePadding = if (!seekIndicatorAtTop) 48.dp else 0.dp
+        
         Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = alignment
         ) {
-            Row(
-                modifier = Modifier
-                    .background(Color.Black.copy(alpha = 0.7f))
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                // 图标
-                Icon(
-                    imageVector = if (seekOffset.compareTo(0) > 0) Icons.Default.FastForward else Icons.Default.FastRewind,
-                    contentDescription = if (seekOffset.compareTo(0) > 0) "快进" else "快退",
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
-                
-                Spacer(modifier = Modifier.width(12.dp))
-                
-                // 文字
-                Text(
-                    text = if (seekOffset.compareTo(0) > 0) "+${seekOffset}秒" else "${seekOffset}秒",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
+            if (seekIndicatorAtTop) {
+                // 顶部指示器（按钮点击）：水平排列，整体高度调矮
+                Row(
+                    modifier = Modifier
+                        .padding(top = topPadding)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = if (seekOffset.compareTo(0) > 0) Icons.Default.FastForward else Icons.Default.FastRewind,
+                        contentDescription = if (seekOffset.compareTo(0) > 0) "快进" else "快退",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = if (seekOffset.compareTo(0) > 0) "+${seekOffset}秒" else "${seekOffset}秒",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            } else {
+                // 侧边指示器（双击手势）：上下排列，文字在上图标在下
+                Column(
+                    modifier = Modifier
+                        .padding(start = sidePadding, end = sidePadding)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .padding(horizontal = 10.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = if (seekOffset.compareTo(0) > 0) "+${seekOffset}秒" else "${seekOffset}秒",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Icon(
+                        imageVector = if (seekOffset.compareTo(0) > 0) Icons.Default.FastForward else Icons.Default.FastRewind,
+                        contentDescription = if (seekOffset.compareTo(0) > 0) "快进" else "快退",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
         }
     }

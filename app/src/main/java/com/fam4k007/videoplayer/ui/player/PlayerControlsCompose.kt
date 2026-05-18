@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.boundsInWindow
@@ -328,6 +329,7 @@ fun BottomControlPanel(
                 Box(
                     modifier = Modifier
                         .height(36.dp)
+                        .clip(RoundedCornerShape(8.dp))
                         .onGloballyPositioned { coords ->
                             val r = coords.boundsInWindow()
                             anime4KBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
@@ -574,8 +576,8 @@ fun SwipeSeekOverlay(
         val preview = swipeSeekPreview ?: return@AnimatedVisibility
         val targetTime = formatTime(preview.targetSeconds)
         val delta = preview.deltaSeconds
-        val sign = if (delta >= 0) "+" else ""
-        val deltaText = "$sign${formatTime(kotlin.math.abs(delta))}"
+        val sign = if (delta >= 0) "+" else "-"
+        val deltaText = formatTime(kotlin.math.abs(delta))
 
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -583,7 +585,8 @@ fun SwipeSeekOverlay(
         ) {
             Column(
                 modifier = Modifier
-                    .background(Color.Black.copy(alpha = 0.75f))
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color.Black.copy(alpha = 0.55f))
                     .padding(horizontal = 32.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -969,8 +972,9 @@ fun LongPressSpeedOverlay(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
-                    .padding(top = 48.dp)
-                    .background(Color.Black.copy(alpha = 0.6f))
+                    .padding(top = 15.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.Black.copy(alpha = 0.4f))
                     .padding(horizontal = 20.dp, vertical = 8.dp)
             )
         }

@@ -98,6 +98,23 @@ class PlayerViewModel(
         private const val TAG = "PlayerViewModel"
     }
     
+    // ==================== 音量变更事件 ====================
+    
+    data class VolumeChange(
+        val volume: Int,          // 目标音量值 (0-100 或 0-300)
+        val volumeBoostEnabled: Boolean  // 是否启用音量增强
+    )
+    
+    // 音量变更事件流（用于通知Activity设置MPV音量）
+    private val _volumeChangeEvent = MutableSharedFlow<VolumeChange>(extraBufferCapacity = 1)
+    val volumeChangeEvent: SharedFlow<VolumeChange> = _volumeChangeEvent.asSharedFlow()
+    
+    // ==================== 亮度变更事件 ====================
+    
+    // 亮度变更事件流（用于通知Activity设置窗口亮度）
+    private val _brightnessChangeEvent = MutableSharedFlow<Float>(extraBufferCapacity = 1)
+    val brightnessChangeEvent: SharedFlow<Float> = _brightnessChangeEvent.asSharedFlow()
+    
     // ==================== 视频切换事件 ====================
     
     // 视频切换事件流（用于通知Activity播放新视频）
@@ -194,6 +211,10 @@ class PlayerViewModel(
     private val _seekOffset = MutableStateFlow(0)
     val seekOffset: StateFlow<Int> = _seekOffset.asStateFlow()
     
+    // Seek指示器是否在顶部显示（false=双击手势，在左侧/右侧显示）
+    private val _seekIndicatorAtTop = MutableStateFlow(true)
+    val seekIndicatorAtTop: StateFlow<Boolean> = _seekIndicatorAtTop.asStateFlow()
+    
     // 手势相关状态
     private val _isBrightnessSliderShown = MutableStateFlow(false)
     val isBrightnessSliderShown: StateFlow<Boolean> = _isBrightnessSliderShown.asStateFlow()
@@ -201,13 +222,21 @@ class PlayerViewModel(
     private val _isVolumeSliderShown = MutableStateFlow(false)
     val isVolumeSliderShown: StateFlow<Boolean> = _isVolumeSliderShown.asStateFlow()
     
+    // 指示器自动隐藏 Job（每次手势时取消上一个，确保停止操作后才隐藏）
+    private var brightnessHideJob: Job? = null
+    private var volumeHideJob: Job? = null
+    private val indicatorHideDelay = 2000L  // 停止手势后 2 秒隐藏
     // 当前亮度（0.0 - 1.0）
     private val _currentBrightness = MutableStateFlow(0.5f)
     val currentBrightness: StateFlow<Float> = _currentBrightness.asStateFlow()
     
-    // 当前音量（0 - 100）
+    // 当前音量（0 - 100，音量增强开启时 0 - 300）
     private val _currentVolume = MutableStateFlow(50)
     val currentVolume: StateFlow<Int> = _currentVolume.asStateFlow()
+    
+    // 音量增强状态
+    private val _volumeBoostEnabled = MutableStateFlow(false)
+    val volumeBoostEnabled: StateFlow<Boolean> = _volumeBoostEnabled.asStateFlow()
     
     // 重复模式（百分百复用 mpvEx RepeatMode）
     private val _repeatMode = MutableStateFlow(RepeatMode.OFF)
@@ -826,19 +855,37 @@ class PlayerViewModel(
         Logger.v(TAG, "Danmaku ${if (_danmakuVisible.value) "visible" else "hidden"}")
     }
     
+    // 亮度浮点累加器（小幅度调节时累积到 0.01 再更新）
+    private var brightnessAccumulator = 0f
+    private var lastBrightnessEmitValue = -1f
+
     /**
      * 调节亮度
-     * @param delta 亮度变化量（-1.0 到 1.0）
+     * @param delta 亮度变化量（浮点累加，避免小幅度丢失）
+     * 注意：只调节当前窗口亮度，不修改系统亮度设置。退出播放器自动恢复。
      */
     fun adjustBrightness(delta: Float) {
-        val newBrightness = (_currentBrightness.value + delta).coerceIn(0f, 1f)
-        _currentBrightness.value = newBrightness
+        brightnessAccumulator += delta
+        val intDelta = (brightnessAccumulator * 100f).toInt()
+        if (intDelta != 0) {
+            brightnessAccumulator -= intDelta / 100f
+            val newBrightness = (_currentBrightness.value + intDelta / 100f).coerceIn(0f, 1f)
+            _currentBrightness.value = newBrightness
+            _isBrightnessSliderShown.value = true
+            
+            // 避免重复发送相同值
+            if (kotlin.math.abs(newBrightness - lastBrightnessEmitValue) > 0.005f) {
+                lastBrightnessEmitValue = newBrightness
+                _brightnessChangeEvent.tryEmit(newBrightness)
+                Logger.d(TAG, "Brightness adjusted to: $newBrightness")
+            }
+        }
         _isBrightnessSliderShown.value = true
-        Logger.d(TAG, "Brightness adjusted to: $newBrightness")
         
-        // 3秒后自动隐藏
-        viewModelScope.launch {
-            delay(3000)
+        // 取消上一个隐藏任务，重新计时 — 停止操作后 2 秒才隐藏
+        brightnessHideJob?.cancel()
+        brightnessHideJob = viewModelScope.launch {
+            delay(indicatorHideDelay)
             _isBrightnessSliderShown.value = false
         }
     }
@@ -852,29 +899,49 @@ class PlayerViewModel(
     }
     
     /**
-     * 设置初始音量（从系统获取）
+     * 设置音量增强开关状态
      */
-    fun setInitialVolume(volume: Int) {
-        _currentVolume.value = volume.coerceIn(0, 100)
-        Logger.d(TAG, "Initial volume set to: $volume")
+    fun setVolumeBoostEnabled(enabled: Boolean) {
+        _volumeBoostEnabled.value = enabled
+        Logger.d(TAG, "Volume boost enabled: $enabled")
     }
     
     /**
+     * 设置初始音量（从系统获取）
+     */
+    fun setInitialVolume(volume: Int) {
+        val maxVol = if (_volumeBoostEnabled.value) 300 else 100
+        _currentVolume.value = volume.coerceIn(0, maxVol)
+        Logger.d(TAG, "Initial volume set to: ${_currentVolume.value}")
+    }
+    
+    // 音量浮点累加器（解决 toInt() 截断导致小幅度调节不响应的问题）
+    private var volumeAccumulator = 0f
+
+    /**
      * 调节音量
-     * @param delta 音量变化量（-100 到 100）
+     * @param delta 音量变化量（浮点累加，避免 toInt() 截断丢失小幅度调节）
+     * 注意：只调节MPV音量，不修改系统音量。退出播放器时由domain GestureHandler自动恢复。
      */
     fun adjustVolume(delta: Float) {
-        val newVolume = (_currentVolume.value + delta.toInt()).coerceIn(0, 100)
-        _currentVolume.value = newVolume
+        volumeAccumulator += delta
+        val intDelta = volumeAccumulator.toInt()
+        if (intDelta != 0) {
+            volumeAccumulator -= intDelta
+            val maxVol = if (_volumeBoostEnabled.value) 300 else 100
+            val newVolume = (_currentVolume.value + intDelta).coerceIn(0, maxVol)
+            if (newVolume != _currentVolume.value) {
+                _currentVolume.value = newVolume
+                _volumeChangeEvent.tryEmit(VolumeChange(newVolume, _volumeBoostEnabled.value))
+                Logger.d(TAG, "Volume adjusted to: $newVolume (boost: ${_volumeBoostEnabled.value})")
+            }
+        }
         _isVolumeSliderShown.value = true
         
-        // 设置MPV音量
-        MPVLib.setPropertyInt("volume", newVolume)
-        Logger.d(TAG, "Volume adjusted to: $newVolume")
-        
-        // 3秒后自动隐藏
-        viewModelScope.launch {
-            delay(3000)
+        // 取消上一个隐藏任务，重新计时 — 停止操作后 2 秒才隐藏
+        volumeHideJob?.cancel()
+        volumeHideJob = viewModelScope.launch {
+            delay(indicatorHideDelay)
             _isVolumeSliderShown.value = false
         }
     }
@@ -1368,8 +1435,10 @@ class PlayerViewModel(
     
     /**
      * 相对Seek（前进/后退）
+     * @param seconds 偏移秒数
+     * @param atTop 指示器是否显示在顶部（true=按钮点击显示在顶部，false=双击手势显示在侧边）
      */
-    fun seekRelative(seconds: Int) {
+    fun seekRelative(seconds: Int, atTop: Boolean = true) {
         val currentPos = position.value
         val newPos = (currentPos + seconds).coerceAtLeast(0)
         seekTo(newPos)
@@ -1377,6 +1446,7 @@ class PlayerViewModel(
         // 显示seek指示器
         _seekOffset.value = seconds
         _seekIndicatorShown.value = true
+        _seekIndicatorAtTop.value = atTop
         
         // 1秒后自动隐藏
         viewModelScope.launch {

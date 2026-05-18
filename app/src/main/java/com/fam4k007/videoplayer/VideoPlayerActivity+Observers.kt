@@ -236,14 +236,6 @@ internal fun VideoPlayerActivity.setupViewModelObservers() {
 
     // ==================== 手势相关监听 ====================
 
-    // 监听亮度变化（手势调节）
-    lifecycleScope.launch {
-        viewModel.currentBrightness.collect { brightness ->
-            // 设置窗口亮度
-            window.attributes = window.attributes.apply {
-                screenBrightness = brightness
-            }
-            Logger.v(TAG, "【ViewModel】Brightness: $brightness")
-        }
-    }
+    // 亮度变化已由 Compose 层的 brightnessChangeEvent 观察者处理（在 Setup.kt 中）
+    // 这里不再直接设置窗口亮度，避免 0.5f 初始值覆盖系统默认亮度
 }

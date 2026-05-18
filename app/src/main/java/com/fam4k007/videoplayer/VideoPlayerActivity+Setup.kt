@@ -58,11 +58,53 @@ internal fun VideoPlayerActivity.setupComposeTestLayer() {
                             Logger.d("VideoPlayerActivity", "File loaded, isSwitchingVideo reset to false")
                         }
                     }
+                    // 监听音量变更事件 — 参考 mpvEx：直接调节系统音量，增强时系统满音量+MPV接管
+                    LaunchedEffect(Unit) {
+                        viewModel.volumeChangeEvent.collect { change ->
+                            try {
+                                val audioManager = this@setupComposeTestLayer.getSystemService(
+                                    android.content.Context.AUDIO_SERVICE
+                                ) as android.media.AudioManager
+                                val maxSysVol = audioManager.getStreamMaxVolume(
+                                    android.media.AudioManager.STREAM_MUSIC
+                                )
+                                if (change.volumeBoostEnabled && change.volume > 100) {
+                                    // 增强模式且超过 100%：系统音量设最大，MPV 接管
+                                    audioManager.setStreamVolume(
+                                        android.media.AudioManager.STREAM_MUSIC, maxSysVol, 0
+                                    )
+                                    `is`.xyz.mpv.MPVLib.setPropertyInt("volume", change.volume)
+                                } else {
+                                    // 普通模式（含增强模式 0-100%）：直接调系统音量
+                                    val sysVol = (change.volume.toFloat() / 100f * maxSysVol).toInt()
+                                        .coerceIn(0, maxSysVol)
+                                    audioManager.setStreamVolume(
+                                        android.media.AudioManager.STREAM_MUSIC, sysVol, 0
+                                    )
+                                    `is`.xyz.mpv.MPVLib.setPropertyInt("volume", 100)
+                                }
+                            } catch (e: Exception) {
+                                Logger.e("VideoPlayerActivity", "Failed to apply volume", e)
+                            }
+                        }
+                    }
+                    // 监听亮度变更事件 — 仅调节当前窗口亮度，不修改系统亮度设置
+                    LaunchedEffect(Unit) {
+                        viewModel.brightnessChangeEvent.collect { brightness ->
+                            try {
+                                this@setupComposeTestLayer.window.attributes = 
+                                    this@setupComposeTestLayer.window.attributes.apply {
+                                        screenBrightness = brightness
+                                    }
+                            } catch (e: Exception) {
+                                Logger.e("VideoPlayerActivity", "Failed to set window brightness", e)
+                            }
+                        }
+                    }
                     PlayerControls(
                         viewModel = viewModel,
                         onBackPress = {
-                            finish()
-                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+                            handleBackNavigation()
                         },
                         onAnime4KClick = { x, y, w, h ->
                             dialogManager.setLastAnchor(x, y, w, h)

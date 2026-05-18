@@ -407,24 +407,44 @@ class VideoPlayerActivity : AppCompatActivity(),
         // 【阶段1.1】订阅ViewModel StateFlow，自动更新UI（方案A：零视觉影响）
         setupViewModelObservers()
         
+        // ========== 在 setupComposeTestLayer (调用 gestureHandler.initialize) 之前读取系统音量和亮度 ==========
+        // 因为 gestureHandler.initialize() 会将系统音量设为 MAX，必须在它之前读取原始值
+        
+        // 读取原始系统音量百分比
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+        val sysVol = audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC)
+        val maxSysVol = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC)
+        val originalVolumePercent = ((sysVol.toFloat() / maxSysVol) * 100).toInt()
+        viewModel.setInitialVolume(originalVolumePercent)
+        Logger.d(TAG, "Original system volume: $sysVol/$maxSysVol = $originalVolumePercent%")
+        
+        // 读取系统亮度（0-255）并归一化到 0-1，参考 mpvEx 做法
+        val sysBrightness = runCatching {
+            android.provider.Settings.System.getFloat(
+                contentResolver,
+                android.provider.Settings.System.SCREEN_BRIGHTNESS
+            ).let { raw ->
+                (raw / 255f).coerceIn(0f, 1f)
+            }
+        }.getOrElse {
+            Logger.w(TAG, "Failed to read system brightness, falling back to 0f: $it")
+            0f
+        }
+        viewModel.setInitialBrightness(sysBrightness)
+        // 将亮度应用到当前窗口，使指示器数值与实际亮度一致（参考 mpvEx）
+        window.attributes = window.attributes.apply {
+            screenBrightness = sysBrightness
+        }
+        Logger.d(TAG, "System brightness: ${(sysBrightness * 100).toInt()}%")
+        
+        // 读取音量增强状态
+        
+        // 读取音量增强状态
+        val volumeBoost = preferencesManager.isVolumeBoostEnabled()
+        viewModel.setVolumeBoostEnabled(volumeBoost)
+        
         // 【阶段2.1】添加Compose测试层（不影响现有XML布局）
         setupComposeTestLayer()
-        
-        // 初始化当前系统亮度到ViewModel（用于手势调节）
-        val currentBrightness = window.attributes.screenBrightness
-        if (currentBrightness > 0) {
-            viewModel.setInitialBrightness(currentBrightness)
-        } else {
-            // 如果当前使用系统默认亮度，设置为0.5
-            viewModel.setInitialBrightness(0.5f)
-        }
-        
-        // 初始化当前音量到ViewModel（用于手势调节）
-        val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
-        val currentVolume = audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC)
-        val maxVolume = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC)
-        val volumePercent = ((currentVolume.toFloat() / maxVolume) * 100).toInt()
-        viewModel.setInitialVolume(volumePercent)
         
     }
 
@@ -537,6 +557,10 @@ class VideoPlayerActivity : AppCompatActivity(),
     override fun onResume() {
         super.onResume()
         themeRevision++
+        // 重新同步音量增强状态（用户可能在设置页面修改了）
+        val currentBoost = preferencesManager.isVolumeBoostEnabled()
+        viewModel.setVolumeBoostEnabled(currentBoost)
+        Logger.d(TAG, "Activity resumed, volume boost synced: $currentBoost")
         // 不自动恢复播放，让用户手动控制
         Logger.d(TAG, "Activity resumed")
     }
@@ -551,6 +575,11 @@ class VideoPlayerActivity : AppCompatActivity(),
     }
     
     override fun onDestroy() {
+        // 必须在 super.onDestroy() 之前恢复音量和亮度，避免 context 失效
+        if (::gestureHandler.isInitialized) {
+            gestureHandler.restoreOriginalSettings()
+        }
+        
         super.onDestroy()
         Logger.d(TAG, "Activity destroyed")
 
@@ -566,11 +595,6 @@ class VideoPlayerActivity : AppCompatActivity(),
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        
-        // 检查gestureHandler是否已初始化
-        if (::gestureHandler.isInitialized) {
-            gestureHandler.restoreOriginalSettings()
-        }
         
         // 释放弹幕资源
         if (::danmakuManager.isInitialized) {
