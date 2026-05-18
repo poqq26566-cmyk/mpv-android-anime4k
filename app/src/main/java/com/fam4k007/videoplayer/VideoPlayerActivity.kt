@@ -68,9 +68,13 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.File
 import java.io.FileOutputStream
 import java.lang.ref.WeakReference
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import com.fam4k007.videoplayer.ui.player.PlayerControls
+import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 
 /**
@@ -116,6 +120,7 @@ class VideoPlayerActivity : AppCompatActivity(),
     internal var remotePlaybackRequest: RemotePlaybackRequest? = null
     internal var remoteResolveJob: Job? = null
     internal var remoteResolveSequence = 0L
+    internal var themeRevision by mutableIntStateOf(0)
     internal val preferencesManager: PreferencesManager by inject()
     internal val historyManager: PlaybackHistoryManager by inject()
     internal val viewModel: PlayerViewModel by viewModel()
@@ -531,6 +536,7 @@ class VideoPlayerActivity : AppCompatActivity(),
     
     override fun onResume() {
         super.onResume()
+        themeRevision++
         // 不自动恢复播放，让用户手动控制
         Logger.d(TAG, "Activity resumed")
     }

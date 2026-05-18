@@ -19,7 +19,9 @@ import com.fam4k007.videoplayer.domain.player.PlaybackEngine
 import com.fam4k007.videoplayer.domain.player.PlayerControlsManager
 import com.fam4k007.videoplayer.domain.player.PlayerDialogManager
 import com.fam4k007.videoplayer.ui.player.PlayerControls
+import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
+import com.fam4k007.videoplayer.ui.theme.rememberThemeController
 import com.fam4k007.videoplayer.utils.DialogUtils
 import com.fam4k007.videoplayer.utils.FormatUtils
 import com.fam4k007.videoplayer.utils.Logger
@@ -40,7 +42,14 @@ internal fun VideoPlayerActivity.setupComposeTestLayer() {
 
             // 设置Compose内容
             setContent {
-                VideoPlayerTheme {
+                val revision = themeRevision
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val themeController = rememberThemeController(context)
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
+                ) {
                     PlayerControls(
                         viewModel = viewModel,
                         onBackPress = {

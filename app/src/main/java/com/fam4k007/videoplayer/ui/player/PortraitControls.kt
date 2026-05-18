@@ -21,8 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -319,6 +318,7 @@ fun PortraitBottomControls(
     val danmakuVisible by viewModel.danmakuVisible.collectAsState()
     val anime4KMode by viewModel.anime4KMode.collectAsState()
     val seekTimeSeconds by viewModel.seekTimeSeconds.collectAsState()
+    val seekbarStyleName by viewModel.seekbarStyle.collectAsState()
 
     // 拖动进度状态
     var sliderPosition by remember { mutableStateOf<Float?>(null) }
@@ -496,29 +496,28 @@ fun PortraitBottomControls(
                 modifier = Modifier.padding(end = 6.dp),
             )
 
-            Slider(
-                value = if (duration > 0) displayPosition else 0f,
-                onValueChange = { newValue ->
+            val seekbarStyle = SeekbarStyle.fromName(seekbarStyleName)
+            CustomSeekbar(
+                progress = displayPosition,
+                duration = duration.toFloat().coerceAtLeast(1f),
+                seekbarStyle = seekbarStyle,
+                accentColor = MaterialTheme.colorScheme.primary,
+                paused = paused == true,
+                isDragging = isDragging,
+                onSeek = { newValue ->
                     if (!isDragging) {
                         isDragging = true
                         viewModel.setSliderDragging(true)
                     }
                     sliderPosition = newValue
                 },
-                onValueChangeFinished = {
+                onSeekFinished = {
                     sliderPosition?.let { pos -> viewModel.seekTo(pos.toInt()) }
                     isDragging = false
                     sliderPosition = null
                     viewModel.setSliderDragging(false)
                 },
-                valueRange = 0f..duration.toFloat().coerceAtLeast(1f),
-                modifier = Modifier.weight(1f),
-                colors =
-                    SliderDefaults.colors(
-                        thumbColor = Color.White,
-                        activeTrackColor = Color(0xFF1976D2),
-                        inactiveTrackColor = Color.Gray,
-                    ),
+                modifier = Modifier.weight(1f)
             )
 
             Text(

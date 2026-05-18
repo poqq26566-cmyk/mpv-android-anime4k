@@ -24,6 +24,7 @@ import com.fam4k007.videoplayer.ui.components.PreferenceDivider
 import com.fam4k007.videoplayer.ui.components.PreferenceSectionHeader
 import com.fam4k007.videoplayer.ui.components.SwitchItem
 import com.fam4k007.videoplayer.ui.components.TextItem
+import com.fam4k007.videoplayer.ui.player.SeekbarStyle
 import com.fam4k007.videoplayer.ui.theme.spacing
 
 /**
@@ -87,6 +88,20 @@ fun PlaybackSettingsScreen(
                         title = "快进/快退时长",
                         value = "${settings.seekTime}秒",
                         onClick = { showSeekTimeDialog = true }
+                    )
+                }
+            }
+
+            // 进度条样式
+            item {
+                PreferenceSectionHeader("进度条样式")
+            }
+
+            item {
+                PreferenceCard {
+                    SeekbarStyleCard(
+                        currentStyle = settings.seekbarStyle,
+                        onStyleChange = { viewModel.setSeekbarStyle(it) }
                     )
                 }
             }
@@ -219,6 +234,7 @@ fun PlaybackSettingsScreen(
             onDismiss = { showSpeedPresetsDialog = false }
         )
     }
+
 }
 
 @Composable
@@ -653,6 +669,70 @@ private fun SpeedPresetsDialog(
                     ) {
                         Text("保存")
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SeekbarStyleCard(
+    currentStyle: String,
+    onStyleChange: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = MaterialTheme.spacing.medium,
+                vertical = MaterialTheme.spacing.small
+            )
+    ) {
+        Text(
+            "进度条样式",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(Modifier.height(MaterialTheme.spacing.small))
+
+        SeekbarStyle.entries.forEach { style ->
+            val isSelected = currentStyle == style.name
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onStyleChange(style.name) }
+                    .padding(vertical = MaterialTheme.spacing.small, horizontal = MaterialTheme.spacing.small),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
+                    selected = isSelected,
+                    onClick = { onStyleChange(style.name) },
+                    modifier = Modifier.size(24.dp),
+                    colors = RadioButtonDefaults.colors(
+                        selectedColor = MaterialTheme.colorScheme.primary,
+                        unselectedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    )
+                )
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text(
+                        style.displayName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (isSelected) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurface,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                    )
+                    Text(
+                        when (style) {
+                            SeekbarStyle.Standard -> "经典细轨，配合圆点指示器，简约清晰"
+                            SeekbarStyle.Wavy -> "动态波浪动画，播放时律动起伏，生动流畅"
+                            SeekbarStyle.Thick -> "宽幅轨道，便于触摸操作，沉稳醒目"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }

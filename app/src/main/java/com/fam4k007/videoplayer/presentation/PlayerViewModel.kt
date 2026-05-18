@@ -280,6 +280,10 @@ class PlayerViewModel(
     private val _longPressSpeed = MutableStateFlow(2.0f)
     val longPressSpeed: StateFlow<Float> = _longPressSpeed.asStateFlow()
 
+    // 进度条样式（从 PreferencesManager 加载）
+    private val _seekbarStyle = MutableStateFlow("Standard")
+    val seekbarStyle: StateFlow<String> = _seekbarStyle.asStateFlow()
+
     // 是否正在长按倍速播放（用于显示速度提示浮层）
     private val _isLongPressing = MutableStateFlow(false)
     val isLongPressing: StateFlow<Boolean> = _isLongPressing.asStateFlow()
@@ -379,6 +383,7 @@ class PlayerViewModel(
         _doubleTapSeekSeconds.value = playerRepository.getDoubleTapSeekSeconds()
         _doubleTapMode.value = playerRepository.getDoubleTapMode()
         _longPressSpeed.value = playerRepository.getLongPressSpeed()
+        _seekbarStyle.value = playerRepository.getSeekbarStyle()
         val rawPresets = playerRepository.getCustomSpeedPresets()
         val parsedPresets = rawPresets
             .mapNotNull { it.toFloatOrNull() }

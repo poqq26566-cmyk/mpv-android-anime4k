@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Subtitles
@@ -36,6 +37,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.fam4k007.videoplayer.bilibili.auth.BiliBiliAuthManager
@@ -125,7 +127,7 @@ fun SettingsScreen(
                     val currentTheme = themeController.getCurrentTheme()
                     ClickableItem(
                         title = "应用主题",
-                        subtitle = currentTheme.name,
+                        subtitle = stringResource(currentTheme.titleRes),
                         icon = Icons.Default.Palette,
                         onClick = { showThemeDialog = true }
                     )
@@ -139,7 +141,7 @@ fun SettingsScreen(
                             DarkMode.Amoled -> "AMOLED模式"
                             DarkMode.System -> "跟随系统"
                         },
-                        icon = Icons.Default.Palette,
+                        icon = Icons.Default.DarkMode,
                         onClick = { showDarkModeDialog = true }
                     )
                 }

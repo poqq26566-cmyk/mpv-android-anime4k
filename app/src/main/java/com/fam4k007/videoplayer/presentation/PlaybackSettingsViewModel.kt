@@ -65,6 +65,9 @@ class PlaybackSettingsViewModel(
                     // 画质增强
                     anime4KMemory = playerRepository.isAnime4KMemoryEnabled(),
 
+                    // 进度条样式
+                    seekbarStyle = playerRepository.getSeekbarStyle(),
+
                     // 自动连播
                     autoPlayNext = playerRepository.isAutoPlayNextEnabled(),
                     closeAfterEOF = playerRepository.isCloseAfterEndOfVideo()
@@ -223,6 +226,20 @@ class PlaybackSettingsViewModel(
         }
     }
 
+    // ==================== 进度条样式 ====================
+
+    fun setSeekbarStyle(style: String) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setSeekbarStyle(style)
+                _playbackSettings.value = _playbackSettings.value.copy(seekbarStyle = style)
+                Logger.d(TAG, "Set seekbar style: $style")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set seekbar style", e)
+            }
+        }
+    }
+
     // ==================== 自动连播 ====================
 
     /**
@@ -278,6 +295,9 @@ data class PlaybackSettings(
     
     // 画质增强
     val anime4KMemory: Boolean = false,
+
+    // 进度条样式
+    val seekbarStyle: String = "Standard",
 
     // 自动连播（百分百复用 mpvEx）
     val autoPlayNext: Boolean = true,

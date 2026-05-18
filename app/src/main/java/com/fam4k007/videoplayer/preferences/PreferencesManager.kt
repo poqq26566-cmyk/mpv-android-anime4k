@@ -486,6 +486,24 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putBoolean("amoled_mode", enabled).apply()
     }
     
+    /**
+     * 获取进度条样式
+     * @return 样式名称，默认 "Standard"
+     */
+    fun getSeekbarStyle(): String {
+        return sharedPreferences.getString(
+            "seekbar_style",
+            "Standard"
+        ) ?: "Standard"
+    }
+    
+    /**
+     * 保存进度条样式
+     */
+    fun setSeekbarStyle(style: String) {
+        sharedPreferences.edit().putString("seekbar_style", style).apply()
+    }
+    
     // ==================== 弹幕设置 ====================
     
     fun getDanmakuEnabled(): Boolean {

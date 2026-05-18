@@ -470,7 +470,21 @@ class PlayerRepository(
     fun setLongPressSpeed(speed: Float) {
         preferencesManager.setLongPressSpeed(speed)
     }
-    
+
+    /**
+     * 获取进度条样式
+     */
+    fun getSeekbarStyle(): String {
+        return preferencesManager.getSeekbarStyle()
+    }
+
+    /**
+     * 设置进度条样式
+     */
+    fun setSeekbarStyle(style: String) {
+        preferencesManager.setSeekbarStyle(style)
+    }
+
     /**
      * 是否启用播放倍速记忆
      */
