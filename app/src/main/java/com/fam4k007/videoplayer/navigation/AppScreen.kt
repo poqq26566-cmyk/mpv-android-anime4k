@@ -56,9 +56,13 @@ sealed interface AppScreen {
     @Serializable
     data object VideoBrowser : AppScreen
 
-    /** 下载管理页 */
+    /** 视频下载页（B站） */
     @Serializable
     data object Download : AppScreen
+
+    /** 下载管理器页 */
+    @Serializable
+    data object DownloadManager : AppScreen
 
     /** 字幕搜索页 */
     @Serializable

@@ -21,6 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -55,6 +57,8 @@ fun SubtitleSearchScreen(
     var searchQuery by remember { mutableStateOf("") }
     var showOptionsDialog by remember { mutableStateOf(false) }
     val primaryColor = MaterialTheme.colorScheme.primary
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val context = LocalContext.current
 
     val folderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
@@ -132,6 +136,7 @@ fun SubtitleSearchScreen(
                             }
                             IconButton(
                                 onClick = {
+                                    keyboardController?.hide()
                                     if (searchQuery.isNotBlank()) {
                                         onSearchMedia(searchQuery.trim())
                                     }
@@ -193,9 +198,13 @@ fun SubtitleSearchScreen(
                             tint = primaryColor
                         )
                         Spacer(modifier = Modifier.width(8.dp))
+                        val displayPath = currentFolderUri?.let { uri ->
+                            val docFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, uri)
+                            docFile?.name ?: "已设置路径"
+                        }
                         Text(
-                            text = if (currentFolderUri != null) "已设置文件夹" else "设置文件夹",
-                            fontSize = 14.sp,
+                            text = displayPath ?: "设置文件夹",
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -352,27 +361,8 @@ fun SubtitleSearchScreen(
                             }
                         }
                     }
-                    // 空状态
-                    else -> {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                Icons.Default.VideoLibrary,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                "输入影片名称开始搜索",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 16.sp
-                            )
-                        }
-                    }
+                    // 空状态 - 不显示任何内容
+                    else -> {}
                 }
             }
         }

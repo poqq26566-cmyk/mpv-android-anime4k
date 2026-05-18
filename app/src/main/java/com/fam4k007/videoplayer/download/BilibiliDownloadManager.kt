@@ -3,7 +3,9 @@ package com.fam4k007.videoplayer.download
 import android.content.Context
 import android.util.Log
 import com.fam4k007.videoplayer.utils.CookieManager
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
@@ -206,7 +208,12 @@ class BilibiliDownloadManager(private val context: Context) {
     }
 
     // 下载文件
-    suspend fun downloadFile(url: String, file: File, onProgress: (Long, Long) -> Unit): Result<Unit> {
+    suspend fun downloadFile(
+        url: String,
+        file: File,
+        taskId: String,
+        onProgress: (Long, Long) -> Unit
+    ): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 val request = Request.Builder()
@@ -215,32 +222,60 @@ class BilibiliDownloadManager(private val context: Context) {
                     .addHeader("Referer", "https://www.bilibili.com")
                     .build()
 
-                val response = client.newCall(request).execute()
+                val call = client.newCall(request)
+                // 注册 Call 到共享存储，以便暂停时取消
+                DownloadTaskStore.activeCalls[taskId] = call
+
+                val response = call.execute()
                 if (!response.isSuccessful) {
+                    DownloadTaskStore.activeCalls.remove(taskId)
                     return@withContext Result.failure(Exception("下载失败: ${response.code}"))
                 }
 
-                val body = response.body ?: return@withContext Result.failure(Exception("响应体为空"))
+                val body = response.body ?: run {
+                    DownloadTaskStore.activeCalls.remove(taskId)
+                    return@withContext Result.failure(Exception("响应体为空"))
+                }
 
                 val contentLength = body.contentLength()
                 var bytesRead = 0L
 
-                file.outputStream().use { output ->
-                    body.byteStream().use { input ->
-                        val buffer = ByteArray(8192)
-                        var read: Int
-                        while (input.read(buffer).also { read = it } != -1) {
-                            output.write(buffer, 0, read)
-                            bytesRead += read
-                            onProgress(bytesRead, contentLength)
+                try {
+                    file.outputStream().use { output ->
+                        body.byteStream().use { input ->
+                            val buffer = ByteArray(8192)
+                            var read: Int
+                            while (input.read(buffer).also { read = it } != -1) {
+                                // 每次读取后检查协程是否被取消
+                                ensureActive()
+                                output.write(buffer, 0, read)
+                                bytesRead += read
+                                onProgress(bytesRead, contentLength)
+                            }
                         }
                     }
+                } finally {
+                    DownloadTaskStore.activeCalls.remove(taskId)
                 }
 
                 Result.success(Unit)
+            } catch (e: CancellationException) {
+                Log.d(TAG, "下载被取消: $url")
+                throw e // 让协程框架处理取消
+            } catch (e: java.io.IOException) {
+                // 判断是否是因为取消导致的IO异常
+                if (DownloadTaskStore.activeCalls[taskId]?.isCanceled() == true ||
+                    DownloadTaskStore.getItem(taskId)?.status == "paused") {
+                    Log.d(TAG, "下载因暂停中断: $url")
+                    throw CancellationException("下载已暂停")
+                }
+                Log.e(TAG, "下载文件失败", e)
+                Result.failure(e)
             } catch (e: Exception) {
                 Log.e(TAG, "下载文件失败", e)
                 Result.failure(e)
+            } finally {
+                DownloadTaskStore.activeCalls.remove(taskId)
             }
         }
     }

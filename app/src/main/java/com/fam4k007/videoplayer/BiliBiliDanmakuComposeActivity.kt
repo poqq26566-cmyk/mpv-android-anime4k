@@ -33,6 +33,7 @@ class BiliBiliDanmakuComposeActivity : BaseActivity() {
             val isDownloading by viewModel.isDownloading.collectAsStateWithLifecycle()
             val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
             val successMessage by viewModel.successMessage.collectAsStateWithLifecycle()
+            val downloadWholeSeason by viewModel.downloadWholeSeason.collectAsStateWithLifecycle()
 
             // 处理错误消息
             LaunchedEffect(errorMessage) {
@@ -61,6 +62,7 @@ class BiliBiliDanmakuComposeActivity : BaseActivity() {
                         savedFolderUri = savedFolderUri,
                         downloadProgress = downloadProgress,
                         isDownloading = isDownloading,
+                        downloadWholeSeason = downloadWholeSeason,
                         onBack = {
                             finish()
                             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
@@ -68,8 +70,11 @@ class BiliBiliDanmakuComposeActivity : BaseActivity() {
                         onFolderSelected = { uri ->
                             viewModel.setFolderUri(uri, contentResolver)
                         },
-                        onDownloadDanmaku = { url, downloadWholeSeason ->
-                            viewModel.startDownload(url, downloadWholeSeason)
+                        onDownloadDanmaku = { url, wholeSeason ->
+                            viewModel.startDownload(url, wholeSeason)
+                        },
+                        onModeChanged = { wholeSeason ->
+                            viewModel.setDownloadMode(wholeSeason)
                         }
                     )
                 }

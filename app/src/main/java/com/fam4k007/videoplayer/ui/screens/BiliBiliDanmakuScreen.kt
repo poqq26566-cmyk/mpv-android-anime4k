@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -30,16 +31,18 @@ fun BiliBiliDanmakuScreen(
     savedFolderUri: Uri?,
     downloadProgress: DownloadProgress,
     isDownloading: Boolean,
+    downloadWholeSeason: Boolean = true,
     onBack: () -> Unit,
     onFolderSelected: (Uri) -> Unit,
-    onDownloadDanmaku: (String, Boolean) -> Unit
+    onDownloadDanmaku: (String, Boolean) -> Unit,
+    onModeChanged: (Boolean) -> Unit = {}
 ) {
     var currentFolderUri by remember { mutableStateOf(savedFolderUri) }
     var url by remember { mutableStateOf("") }
-    var downloadWholeSeason by remember { mutableStateOf(true) }
     var showModeDialog by remember { mutableStateOf(false) }
     var showProgressDialog by remember { mutableStateOf(false) }
     val primaryColor = MaterialTheme.colorScheme.primary
+    val keyboardController = LocalSoftwareKeyboardController.current
     
     // 当开始下载时显示进度弹窗
     LaunchedEffect(isDownloading) {
@@ -60,7 +63,7 @@ fun BiliBiliDanmakuScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("B站弹幕下载", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text("哔哩哔哩弹幕下载", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -103,8 +106,7 @@ fun BiliBiliDanmakuScreen(
                         ) 
                     },
                     enabled = currentFolderUri != null,
-                    singleLine = false,
-                    maxLines = 3,
+                    singleLine = true,
                     leadingIcon = {
                         Icon(
                             Icons.Default.Link,
@@ -125,6 +127,7 @@ fun BiliBiliDanmakuScreen(
                             }
                             IconButton(
                                 onClick = {
+                                    keyboardController?.hide()
                                     if (url.isNotBlank()) {
                                         onDownloadDanmaku(url.trim(), downloadWholeSeason)
                                     }
@@ -132,7 +135,7 @@ fun BiliBiliDanmakuScreen(
                                 enabled = currentFolderUri != null && url.isNotBlank()
                             ) {
                                 Icon(
-                                    Icons.Default.Download,
+                                    Icons.Default.Send,
                                     contentDescription = "下载",
                                     tint = if (currentFolderUri != null && url.isNotBlank()) 
                                         primaryColor 
@@ -245,7 +248,7 @@ fun BiliBiliDanmakuScreen(
             currentMode = downloadWholeSeason,
             onDismiss = { showModeDialog = false },
             onModeSelected = { wholeSeason ->
-                downloadWholeSeason = wholeSeason
+                onModeChanged(wholeSeason)
                 showModeDialog = false
             }
         )

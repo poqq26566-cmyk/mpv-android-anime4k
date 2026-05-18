@@ -4,7 +4,10 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -13,8 +16,7 @@ import java.io.File
 class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(application) {
 
     private val downloadManager = BilibiliDownloadManager(application)
-    private val _downloadItems = MutableStateFlow<List<DownloadItem>>(emptyList())
-    val downloadItems: StateFlow<List<DownloadItem>> = _downloadItems
+    val downloadItems: StateFlow<List<DownloadItem>> = DownloadTaskStore.downloadItems
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -52,12 +54,13 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
     private val _isEpisodeListExpanded = MutableStateFlow(true)
     val isEpisodeListExpanded: StateFlow<Boolean> = _isEpisodeListExpanded
 
-    // 存储每个下载任务的Job，用于暂停/取消
-    private val downloadJobs = mutableMapOf<String, Job>()
-
     private val TAG = "BilibiliDownloadVM"
 
     init {
+        // 注册恢复下载回调，供 DownloadManagerViewModel 使用
+        DownloadTaskStore.onResumeDownload = { item ->
+            resumeDownload(item)
+        }
         loadDownloads()
     }
 
@@ -170,10 +173,32 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
 
     // 清除已完成的下载
     fun clearCompletedDownloads() {
-        _downloadItems.value = _downloadItems.value.filter { 
-            it.status != "completed" && it.status != "cancelled" 
-        }
+        DownloadTaskStore.clearCompleted(deleteFiles = false)
         Log.d(TAG, "已清除完成的下载记录")
+    }
+
+    // 清除所有下载（可选是否删除文件）
+    fun clearAllDownloads(deleteFiles: Boolean = false) {
+        DownloadTaskStore.clearAll(deleteFiles = deleteFiles)
+        Log.d(TAG, "已清除所有下载记录, 删除文件=$deleteFiles")
+    }
+
+    // 删除单个下载任务
+    fun deleteDownload(item: DownloadItem, deleteFile: Boolean = false) {
+        // 先取消任务
+        DownloadTaskStore.downloadJobs[item.id]?.cancel()
+        DownloadTaskStore.downloadJobs.remove(item.id)
+        // 删除本地文件
+        if (deleteFile && item.filePath != null) {
+            try {
+                val file = java.io.File(item.filePath)
+                if (file.exists()) file.delete()
+            } catch (e: Exception) {
+                Log.e(TAG, "删除文件失败", e)
+            }
+        }
+        DownloadTaskStore.removeItem(item.id)
+        Log.d(TAG, "已删除下载: ${item.title}, 删除文件=$deleteFile")
     }
 
     /**
@@ -303,18 +328,18 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
 
     fun addDownload(aid: String, cid: String, title: String) {
         val newItem = DownloadItem(
-            id = System.currentTimeMillis().toString(),
+            id = DownloadTaskStore.nextId(),
             title = title,
             url = "bilibili://$aid/$cid",
             status = "pending"
         )
-        _downloadItems.value = _downloadItems.value + newItem
+        DownloadTaskStore.addItem(newItem)
         startDownload(newItem, aid, cid)
     }
 
     private fun startDownload(item: DownloadItem, aid: String, cid: String) {
         viewModelScope.launch {
-            updateItemStatus(item.id, "downloading")
+            DownloadTaskStore.updateItemStatus(item.id, "downloading")
 
             try {
                 val videoInfoResult = downloadManager.getMediaInfo(aid, cid)
@@ -328,36 +353,27 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
                         val fileName = "${item.title}_${fragment.type}_${System.currentTimeMillis()}.mp4"
                         val file = File(downloadDir, fileName)
 
-                        val downloadResult = downloadManager.downloadFile(fragment.url, file) { bytesRead, totalBytes ->
+                        val downloadResult = downloadManager.downloadFile(fragment.url, file, item.id) { bytesRead, totalBytes ->
                             val progress = if (totalBytes > 0) (bytesRead * 100 / totalBytes).toInt() else 0
-                            updateItemProgress(item.id, progress)
+                            DownloadTaskStore.updateItemProgress(item.id, progress)
                         }
 
                         if (downloadResult.isFailure) {
-                            updateItemStatus(item.id, "failed", downloadResult.exceptionOrNull()?.message)
+                            DownloadTaskStore.updateItemStatus(item.id, "failed", downloadResult.exceptionOrNull()?.message)
                             return@launch
                         }
                     }
 
-                    updateItemStatus(item.id, "completed")
+                    DownloadTaskStore.updateItemStatus(item.id, "completed")
                 } else {
-                    updateItemStatus(item.id, "failed", videoInfoResult.exceptionOrNull()?.message)
+                    DownloadTaskStore.updateItemStatus(item.id, "failed", videoInfoResult.exceptionOrNull()?.message)
                 }
+            } catch (e: CancellationException) {
+                // 暂停/取消导致的取消异常，不设为失败
+                throw e
             } catch (e: Exception) {
-                updateItemStatus(item.id, "failed", e.message)
+                DownloadTaskStore.updateItemStatus(item.id, "failed", e.message)
             }
-        }
-    }
-
-    private fun updateItemProgress(id: String, progress: Int) {
-        _downloadItems.value = _downloadItems.value.map {
-            if (it.id == id) it.copy(progress = progress) else it
-        }
-    }
-
-    private fun updateItemStatus(id: String, status: String, errorMessage: String? = null) {
-        _downloadItems.value = _downloadItems.value.map {
-            if (it.id == id) it.copy(status = status, errorMessage = errorMessage) else it
         }
     }
 
@@ -374,18 +390,27 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
     // 新增：下载选定集数（支持视频/番剧）
     fun addDownloadByMediaParse(parse: MediaParseResult) {
         val newItem = DownloadItem(
-            id = System.currentTimeMillis().toString(),
+            id = DownloadTaskStore.nextId(),
             title = parse.title,
             url = "bilibili://${parse.aid}/${parse.cid}",
             status = "pending"
         )
-        _downloadItems.value = _downloadItems.value + newItem
+        DownloadTaskStore.addItem(newItem)
         startDownloadByMediaParse(newItem, parse)
     }
 
     private fun startDownloadByMediaParse(item: DownloadItem, parse: MediaParseResult) {
         val job = viewModelScope.launch {
-            updateItemStatus(item.id, "downloading")
+            // 并发限制：如果已有下载任务在进行，设置为等待中
+            if (!DownloadTaskStore.tryAcquireDownloadSlot()) {
+                DownloadTaskStore.updateItemStatus(item.id, "pending")
+                // 轮询等待直到获得下载许可
+                while (!DownloadTaskStore.tryAcquireDownloadSlot()) {
+                    delay(1000)
+                    ensureActive()
+                }
+            }
+            DownloadTaskStore.updateItemStatus(item.id, "downloading")
             try {
                 val result = downloadManager.getMediaInfo(
                     id = parse.aid,
@@ -407,7 +432,7 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
                         
                         Log.d(TAG, "开始下载片段 ${index + 1}/$fragmentCount: ${fragment.type}")
                         
-                        val downloadResult = downloadManager.downloadFile(fragment.url, file) { bytesRead, totalBytes ->
+                        val downloadResult = downloadManager.downloadFile(fragment.url, file, item.id) { bytesRead, totalBytes ->
                             val fragmentProgress = if (totalBytes > 0) {
                                 (bytesRead.toFloat() / totalBytes * 100).toInt()
                             } else 0
@@ -415,11 +440,11 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
                             val completedWeight = index * 100
                             val overallProgress = (completedWeight + fragmentProgress) / fragmentCount
                             
-                            updateItemProgress(item.id, overallProgress)
+                            DownloadTaskStore.updateItemProgress(item.id, overallProgress)
                         }
                         
                         if (downloadResult.isFailure) {
-                            updateItemStatus(item.id, "failed", downloadResult.exceptionOrNull()?.message)
+                            DownloadTaskStore.updateItemStatus(item.id, "failed", downloadResult.exceptionOrNull()?.message)
                             downloadedFiles.forEach { it.delete() }
                             return@launch
                         }
@@ -430,7 +455,7 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
                     
                     // 合并音视频
                     if (downloadedFiles.size == 2) {
-                        updateItemStatus(item.id, "merging")
+                        DownloadTaskStore.updateItemStatus(item.id, "merging")
                         val videoFile = downloadedFiles.find { it.name.contains("video") }
                         val audioFile = downloadedFiles.find { it.name.contains("audio") }
                         
@@ -450,47 +475,62 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
                                 // 如果是DocumentTree，移动到最终位置
                                 if (_downloadPath.value.startsWith("content://")) {
                                     if (moveToFinalLocation(outputFile, outputFileName)) {
-                                        updateItemStatus(item.id, "completed")
+                                        DownloadTaskStore.updateItemStatus(item.id, "completed")
                                     } else {
-                                        updateItemStatus(item.id, "failed", "无法保存到选择的文件夹")
+                                        DownloadTaskStore.updateItemStatus(item.id, "failed", "无法保存到选择的文件夹")
                                     }
                                 } else {
-                                    updateItemStatus(item.id, "completed")
+                                    DownloadTaskStore.updateItemStatus(item.id, "completed")
                                 }
                             } else {
-                                updateItemStatus(item.id, "failed", "音视频合并失败")
+                                DownloadTaskStore.updateItemStatus(item.id, "failed", "音视频合并失败")
                             }
                         }
                     } else {
-                        updateItemStatus(item.id, "completed")
+                        DownloadTaskStore.updateItemStatus(item.id, "completed")
                     }
                 } else {
-                    updateItemStatus(item.id, "failed", result.exceptionOrNull()?.message)
+                    DownloadTaskStore.updateItemStatus(item.id, "failed", result.exceptionOrNull()?.message)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.e(TAG, "下载异常", e)
-                updateItemStatus(item.id, "failed", e.message)
+                DownloadTaskStore.updateItemStatus(item.id, "failed", e.message)
             } finally {
-                downloadJobs.remove(item.id)
+                DownloadTaskStore.downloadJobs.remove(item.id)
+                // 暂停时不释放下载槽，防止下一个任务自动开始
+                val currentStatus = DownloadTaskStore.getItem(item.id)?.status
+                if (currentStatus != "paused") {
+                    DownloadTaskStore.releaseDownloadSlot()
+                }
             }
         }
         
-        downloadJobs[item.id] = job
+        DownloadTaskStore.downloadJobs[item.id] = job
     }
 
     // 新增：根据EpisodeInfo下载番剧集数
     fun addDownloadByEpisode(episode: EpisodeInfo, seasonId: String) {
         val newItem = DownloadItem(
-            id = System.currentTimeMillis().toString(),
+            id = DownloadTaskStore.nextId(),
             title = episode.longTitle.ifEmpty { episode.title },
-            url = "bilibili://ep${episode.episodeId}",
+            url = "bilibili://${episode.aid}/${episode.cid}",
             status = "pending",
             mediaType = MediaType.Bangumi
         )
-        _downloadItems.value = _downloadItems.value + newItem
+        DownloadTaskStore.addItem(newItem)
         
         val job = viewModelScope.launch {
-            updateItemStatus(newItem.id, "downloading")
+            // 并发限制
+            if (!DownloadTaskStore.tryAcquireDownloadSlot()) {
+                DownloadTaskStore.updateItemStatus(newItem.id, "pending")
+                while (!DownloadTaskStore.tryAcquireDownloadSlot()) {
+                    delay(1000)
+                    ensureActive()
+                }
+            }
+            DownloadTaskStore.updateItemStatus(newItem.id, "downloading")
             try {
                 val result = downloadManager.getMediaInfo(
                     id = episode.aid,
@@ -513,7 +553,7 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
                         
                         Log.d(TAG, "开始下载片段 ${index + 1}/$fragmentCount: ${fragment.type}, URL: ${fragment.url}")
                         
-                        val downloadResult = downloadManager.downloadFile(fragment.url, file) { bytesRead, totalBytes ->
+                        val downloadResult = downloadManager.downloadFile(fragment.url, file, newItem.id) { bytesRead, totalBytes ->
                             // 计算当前片段的进度
                             val fragmentProgress = if (totalBytes > 0) {
                                 (bytesRead.toFloat() / totalBytes * 100).toInt()
@@ -523,12 +563,12 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
                             val completedWeight = index * 100
                             val overallProgress = (completedWeight + fragmentProgress) / fragmentCount
                             
-                            updateItemProgress(newItem.id, overallProgress)
+                            DownloadTaskStore.updateItemProgress(newItem.id, overallProgress)
                         }
                         
                         if (downloadResult.isFailure) {
                             Log.e(TAG, "下载片段失败: ${fragment.type}", downloadResult.exceptionOrNull())
-                            updateItemStatus(newItem.id, "failed", downloadResult.exceptionOrNull()?.message)
+                            DownloadTaskStore.updateItemStatus(newItem.id, "failed", downloadResult.exceptionOrNull()?.message)
                             downloadedFiles.forEach { it.delete() } // 清理已下载的文件
                             return@launch
                         }
@@ -539,7 +579,7 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
                     
                     // 合并音视频
                     if (downloadedFiles.size == 2) {
-                        updateItemStatus(newItem.id, "merging")
+                        DownloadTaskStore.updateItemStatus(newItem.id, "merging")
                         Log.d(TAG, "开始合并音视频")
                         
                         val videoFile = downloadedFiles.find { it.name.contains("video") }
@@ -563,39 +603,45 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
                                 if (_downloadPath.value.startsWith("content://")) {
                                     if (moveToFinalLocation(outputFile, outputFileName)) {
                                         Log.d(TAG, "文件已移动到用户选择的文件夹")
-                                        updateItemStatus(newItem.id, "completed")
+                                        DownloadTaskStore.updateItemStatus(newItem.id, "completed")
                                     } else {
                                         Log.e(TAG, "移动文件失败")
-                                        updateItemStatus(newItem.id, "failed", "无法保存到选择的文件夹")
+                                        DownloadTaskStore.updateItemStatus(newItem.id, "failed", "无法保存到选择的文件夹")
                                     }
                                 } else {
-                                    updateItemStatus(newItem.id, "completed")
+                                    DownloadTaskStore.updateItemStatus(newItem.id, "completed")
                                 }
                             } else {
                                 Log.e(TAG, "合并失败")
-                                updateItemStatus(newItem.id, "failed", "音视频合并失败")
+                                DownloadTaskStore.updateItemStatus(newItem.id, "failed", "音视频合并失败")
                             }
                         } else {
                             Log.e(TAG, "找不到音视频文件")
-                            updateItemStatus(newItem.id, "failed", "找不到音视频文件")
+                            DownloadTaskStore.updateItemStatus(newItem.id, "failed", "找不到音视频文件")
                         }
                     } else {
                         Log.d(TAG, "只有一个片段，无需合并")
-                        updateItemStatus(newItem.id, "completed")
+                        DownloadTaskStore.updateItemStatus(newItem.id, "completed")
                     }
                     
                 } else {
-                    updateItemStatus(newItem.id, "failed", result.exceptionOrNull()?.message)
+                    DownloadTaskStore.updateItemStatus(newItem.id, "failed", result.exceptionOrNull()?.message)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.e(TAG, "下载异常", e)
-                updateItemStatus(newItem.id, "failed", e.message)
+                DownloadTaskStore.updateItemStatus(newItem.id, "failed", e.message)
             } finally {
-                downloadJobs.remove(newItem.id)
+                DownloadTaskStore.downloadJobs.remove(newItem.id)
+                val currentStatus = DownloadTaskStore.getItem(newItem.id)?.status
+                if (currentStatus != "paused") {
+                    DownloadTaskStore.releaseDownloadSlot()
+                }
             }
         }
         
-        downloadJobs[newItem.id] = job
+        DownloadTaskStore.downloadJobs[newItem.id] = job
     }
     
     // 合并音视频（使用MediaMuxer）
@@ -704,22 +750,102 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
     }
 
     fun pauseDownload(item: DownloadItem) {
-        downloadJobs[item.id]?.cancel()
-        downloadJobs.remove(item.id)
-        updateItemStatus(item.id, "paused")
+        DownloadTaskStore.pauseDownload(item.id)
         Log.d(TAG, "暂停下载: ${item.title}")
     }
 
     fun resumeDownload(item: DownloadItem) {
-        // TODO: 实现断点续传
         Log.d(TAG, "恢复下载: ${item.title}")
-        updateItemStatus(item.id, "downloading")
+        
+        val downloadItem = DownloadTaskStore.getItem(item.id) ?: return
+        
+        if (downloadItem.url.startsWith("bilibili://")) {
+            val parts = downloadItem.url.removePrefix("bilibili://").split("/")
+            if (parts.size >= 2) {
+                val aid = if (parts[0].startsWith("ep")) "" else parts[0]
+                val cid = parts.getOrElse(1) { "" }
+                
+                val job = viewModelScope.launch {
+                    // 恢复已暂停的任务：槽位已经被自己占着，不需要重新获取
+                    DownloadTaskStore.updateItemStatus(item.id, "downloading")
+                    try {
+                        val videoInfoResult = downloadManager.getMediaInfo(aid, cid)
+                        if (videoInfoResult.isSuccess) {
+                            val videoInfo = videoInfoResult.getOrThrow()
+                            val downloadDir = getDownloadDir()
+                            
+                            val downloadedFiles = mutableListOf<java.io.File>()
+                            val fragmentCount = videoInfo.fragments.size
+                            
+                            for ((index, fragment) in videoInfo.fragments.withIndex()) {
+                                val fileName = "${downloadItem.title}_${fragment.type}.m4s"
+                                val file = createDownloadFile(fileName)
+                                
+                                val downloadResult = downloadManager.downloadFile(fragment.url, file, item.id) { bytesRead, totalBytes ->
+                                    val fragmentProgress = if (totalBytes > 0) {
+                                        (bytesRead.toFloat() / totalBytes * 100).toInt()
+                                    } else 0
+                                    val completedWeight = index * 100
+                                    val overallProgress = (completedWeight + fragmentProgress) / fragmentCount
+                                    DownloadTaskStore.updateItemProgress(item.id, overallProgress)
+                                }
+                                
+                                if (downloadResult.isFailure) {
+                                    DownloadTaskStore.updateItemStatus(item.id, "failed", downloadResult.exceptionOrNull()?.message)
+                                    downloadedFiles.forEach { it.delete() }
+                                    return@launch
+                                }
+                                downloadedFiles.add(file)
+                            }
+                            
+                            if (downloadedFiles.size == 2) {
+                                DownloadTaskStore.updateItemStatus(item.id, "merging")
+                                val videoFile = downloadedFiles.find { it.name.contains("video") }
+                                val audioFile = downloadedFiles.find { it.name.contains("audio") }
+                                
+                                if (videoFile != null && audioFile != null) {
+                                    val outputFileName = "${downloadItem.title}.mp4"
+                                    val outputFile = createDownloadFile(outputFileName)
+                                    
+                                    val mergeResult = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                        mergeVideoAudio(videoFile, audioFile, outputFile)
+                                    }
+                                    
+                                    if (mergeResult) {
+                                        videoFile.delete()
+                                        audioFile.delete()
+                                        DownloadTaskStore.updateItemStatus(item.id, "completed")
+                                    } else {
+                                        DownloadTaskStore.updateItemStatus(item.id, "failed", "音视频合并失败")
+                                    }
+                                }
+                            } else {
+                                DownloadTaskStore.updateItemStatus(item.id, "completed")
+                            }
+                        } else {
+                            DownloadTaskStore.updateItemStatus(item.id, "failed", videoInfoResult.exceptionOrNull()?.message)
+                        }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        DownloadTaskStore.updateItemStatus(item.id, "failed", e.message)
+                    } finally {
+                        DownloadTaskStore.downloadJobs.remove(item.id)
+                        val currentStatus = DownloadTaskStore.getItem(item.id)?.status
+                        if (currentStatus != "paused") {
+                            DownloadTaskStore.releaseDownloadSlot()
+                        }
+                    }
+                }
+                DownloadTaskStore.downloadJobs[item.id] = job
+            }
+        }
     }
 
     fun cancelDownload(item: DownloadItem) {
-        downloadJobs[item.id]?.cancel()
-        downloadJobs.remove(item.id)
-        _downloadItems.value = _downloadItems.value.filter { it.id != item.id }
+        DownloadTaskStore.downloadJobs[item.id]?.cancel()
+        DownloadTaskStore.downloadJobs.remove(item.id)
+        DownloadTaskStore.removeItem(item.id)
         Log.d(TAG, "取消下载: ${item.title}")
     }
 }

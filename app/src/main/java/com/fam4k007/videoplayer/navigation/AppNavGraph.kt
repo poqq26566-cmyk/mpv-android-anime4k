@@ -44,6 +44,7 @@ import com.fam4k007.videoplayer.ui.screens.AboutScreen
 import com.fam4k007.videoplayer.ui.screens.BiliBiliDanmakuScreen
 import com.fam4k007.videoplayer.ui.screens.BiliBiliPlayScreen
 import com.fam4k007.videoplayer.ui.screens.CacheManagementScreen
+import com.fam4k007.videoplayer.ui.screens.DownloadManagerScreen
 import com.fam4k007.videoplayer.ui.screens.DownloadScreen
 import com.fam4k007.videoplayer.ui.screens.FolderBrowserScreen
 import com.fam4k007.videoplayer.ui.screens.TVBrowserScreen
@@ -298,6 +299,7 @@ fun AppNavGraph(
             val isDownloading by viewModel.isDownloading.collectAsStateWithLifecycle()
             val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
             val successMessage by viewModel.successMessage.collectAsStateWithLifecycle()
+            val downloadWholeSeason by viewModel.downloadWholeSeason.collectAsStateWithLifecycle()
 
             // 处理错误消息
             LaunchedEffect(errorMessage) {
@@ -319,12 +321,16 @@ fun AppNavGraph(
                 savedFolderUri = savedFolderUri,
                 downloadProgress = downloadProgress,
                 isDownloading = isDownloading,
+                downloadWholeSeason = downloadWholeSeason,
                 onBack = { navController.popBackStack() },
                 onFolderSelected = { uri ->
                     viewModel.setFolderUri(uri, context.contentResolver)
                 },
-                onDownloadDanmaku = { url, downloadWholeSeason ->
-                    viewModel.startDownload(url, downloadWholeSeason)
+                onDownloadDanmaku = { url, wholeSeason ->
+                    viewModel.startDownload(url, wholeSeason)
+                },
+                onModeChanged = { wholeSeason ->
+                    viewModel.setDownloadMode(wholeSeason)
                 }
             )
         }
@@ -379,6 +385,15 @@ fun AppNavGraph(
 
         composable<AppScreen.Download> {
             DownloadScreen(
+                onBack = { navController.popBackStack() },
+                onNavigateToDownloadManager = {
+                    navController.navigate(AppScreen.DownloadManager)
+                }
+            )
+        }
+
+        composable<AppScreen.DownloadManager> {
+            DownloadManagerScreen(
                 onBack = { navController.popBackStack() }
             )
         }

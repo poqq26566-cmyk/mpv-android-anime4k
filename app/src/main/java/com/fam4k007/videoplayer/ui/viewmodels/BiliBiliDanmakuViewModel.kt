@@ -44,12 +44,32 @@ class BiliBiliDanmakuViewModel(application: Application) : AndroidViewModel(appl
     private val _successMessage = MutableStateFlow<String?>(null)
     val successMessage: StateFlow<String?> = _successMessage.asStateFlow()
 
+    // 下载模式：true=整季下载，false=单集下载
+    private val _downloadWholeSeason = MutableStateFlow(true)
+    val downloadWholeSeason: StateFlow<Boolean> = _downloadWholeSeason.asStateFlow()
+
     companion object {
         private const val TAG = "BiliBiliDanmakuVM"
     }
 
     init {
         loadSavedFolderUri()
+        loadDownloadMode()
+    }
+
+    /**
+     * 加载已保存的下载模式
+     */
+    private fun loadDownloadMode() {
+        _downloadWholeSeason.value = prefs.getBoolean("download_whole_season", true)
+    }
+
+    /**
+     * 设置下载模式并持久化
+     */
+    fun setDownloadMode(wholeSeason: Boolean) {
+        _downloadWholeSeason.value = wholeSeason
+        prefs.edit().putBoolean("download_whole_season", wholeSeason).apply()
     }
 
     /**
