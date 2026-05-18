@@ -16,8 +16,6 @@ internal fun VideoPlayerActivity.applyPortraitUiEnabled(enabled: Boolean) {
             ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         }
     }
-
-    applyPortraitSizing(enabled)
 }
 
 internal fun VideoPlayerActivity.syncPortraitUiWithConfiguration(configuration: Configuration) {
@@ -26,32 +24,13 @@ internal fun VideoPlayerActivity.syncPortraitUiWithConfiguration(configuration: 
     applyPortraitUiEnabled(isPortrait)
 }
 
-internal fun VideoPlayerActivity.applyPortraitSizing(enabled: Boolean) {
-    updatePortraitFloatingButtonsVisibility(
-        controlsManager.isVisible && !controlsManager.isControlsLocked()
-    )
-}
-
-internal fun VideoPlayerActivity.updatePortraitFloatingButtonsVisibility(controlsVisible: Boolean) {
-    // 竖屏超分辨率和旋转按钮已移至 Compose 控制面板层，不再使用老布局悬浮按钮
-    findViewById<View>(R.id.btnAnime4KFloat)?.let { btn ->
-        btn.animate().cancel()
-        btn.visibility = View.GONE
-    }
-    findViewById<View>(R.id.btnRotateFloat)?.let { btn ->
-        btn.animate().cancel()
-        btn.visibility = View.GONE
-    }
-}
-
 internal fun VideoPlayerActivity.refreshVideoLayoutAfterOrientationToggle() {
     mpvView.post {
         playbackEngine.changeVideoAspect(currentVideoAspect)
         listOf(
             R.id.surfaceView,
             R.id.danmakuView,
-            R.id.clickArea,
-            R.id.loadingIndicator
+            R.id.clickArea
         ).forEach { id ->
             findViewById<View>(id)?.apply {
                 requestLayout()

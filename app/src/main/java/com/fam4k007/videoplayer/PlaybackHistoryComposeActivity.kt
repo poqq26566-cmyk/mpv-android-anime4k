@@ -43,7 +43,6 @@ class PlaybackHistoryComposeActivity : BaseActivity() {
                         viewModel = viewModel,
                         onBack = {
                             finish()
-                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                         },
                         onPlayVideo = { uri, startPosition ->
                             val intent = Intent(this@PlaybackHistoryComposeActivity, VideoPlayerActivity::class.java).apply {
@@ -51,7 +50,6 @@ class PlaybackHistoryComposeActivity : BaseActivity() {
                                 putExtra("lastPosition", startPosition)
                             }
                             startActivity(intent)
-                            startActivityWithDefaultTransition()
                         }
                     )
                 }

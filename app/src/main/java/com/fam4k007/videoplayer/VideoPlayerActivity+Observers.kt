@@ -106,11 +106,27 @@ internal fun VideoPlayerActivity.setupViewModelObservers() {
         }
     }
 
-    // 监听弹幕显示状态（示例）
+    // 监听弹幕显示状态 — 确保弹幕渲染已启动
     lifecycleScope.launch {
         viewModel.danmakuVisible.collect { visible ->
-            // 【示例】弹幕显示状态同步到Manager
-            com.fam4k007.videoplayer.utils.Logger.v(TAG, "【ViewModel】Danmaku visible: $visible")
+            Logger.v(TAG, "【ViewModel】Danmaku visible: $visible")
+        }
+    }
+    
+    // 监听弹幕准备完成，自动启动渲染（兜底方案）
+    lifecycleScope.launch {
+        // 轮询等待弹幕准备完成且视频位置已更新，然后确保渲染已启动
+        // prepared() 回调中 start() 依赖 provider.isPlaying()，
+        // 但重启 App 时 MPV 可能尚未更新 isPlaying 状态，导致 start() 被跳过
+        while (true) {
+            if (danmakuManager.isPrepared() && viewModel.danmakuVisible.value) {
+                val currentPos = (currentPosition * 1000).toLong()
+                danmakuManager.seekTo(currentPos)
+                danmakuManager.start()
+                Logger.d(TAG, "Danmaku rendering ensured after prepared, seekTo=$currentPos")
+                break
+            }
+            kotlinx.coroutines.delay(100)
         }
     }
 
@@ -221,6 +237,16 @@ internal fun VideoPlayerActivity.setupViewModelObservers() {
         viewModel.anime4KMode.collect { mode ->
             anime4KMode = mode
             Logger.v(TAG, "【ViewModel】Anime4K mode: $mode")
+        }
+    }
+
+    // ==================== Seek事件监听（弹幕同步）====================
+
+    // 监听Seek事件，同步弹幕进度（Compsoe控件通过ViewModel.seekTo触发）
+    lifecycleScope.launch {
+        viewModel.seekEvent.collect { position ->
+            Logger.d(TAG, "【ViewModel】Seek event received, syncing danmaku to: ${position}s")
+            danmakuManager.seekTo((position * 1000).toLong())
         }
     }
 

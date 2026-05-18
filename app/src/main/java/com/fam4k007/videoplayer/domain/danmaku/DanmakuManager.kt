@@ -2,9 +2,12 @@ package com.fam4k007.videoplayer.domain.danmaku
 
 import android.content.Context
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.fam4k007.videoplayer.danmaku.DanmakuConfig
 import com.fam4k007.videoplayer.danmaku.DanmakuPlayerView
+import com.fam4k007.videoplayer.domain.player.PlaybackEngine
 import com.fam4k007.videoplayer.utils.DialogUtils
 import java.io.File
 
@@ -26,7 +29,7 @@ class DanmakuManager(
     private var currentDanmakuPath: String? = null
     
     // 播放引擎引用（用于提供播放位置）
-    private var playbackEngine: Any? = null
+    private var playbackEngine: PlaybackEngine? = null
 
     /**
      * 初始化弹幕配置
@@ -62,33 +65,17 @@ class DanmakuManager(
      * 设置播放引擎（用于提供播放位置）
      * 参考 DanDanPlay 的 ControlWrapper 设计
      */
-    fun setPlaybackEngine(engine: Any) {
+    fun setPlaybackEngine(engine: PlaybackEngine) {
         playbackEngine = engine
         
         // 创建 PlaybackPositionProvider 并设置到 DanmakuView
         val provider = object : DanmakuPlayerView.PlaybackPositionProvider {
             override fun getCurrentPosition(): Long {
-                return try {
-                    // 使用反射获取 currentPosition 属性（秒）并转换为毫秒
-                    val field = engine.javaClass.getDeclaredField("currentPosition")
-                    field.isAccessible = true
-                    val positionInSeconds = field.getDouble(engine)
-                    (positionInSeconds * 1000).toLong()
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to get currentPosition", e)
-                    0L
-                }
+                return (engine.currentPosition * 1000).toLong()
             }
             
             override fun isPlaying(): Boolean {
-                return try {
-                    val field = engine.javaClass.getDeclaredField("isPlaying")
-                    field.isAccessible = true
-                    field.getBoolean(engine)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to get isPlaying", e)
-                    false
-                }
+                return engine.isPlaying
             }
         }
         
@@ -159,10 +146,24 @@ class DanmakuManager(
             // 注意：setTrackSelected 会根据 autoShow 参数决定可见性
             danmakuView.setTrackSelected(autoShow)
             
-            // 【修复】如果视频正在播放且需要自动显示，立即启动弹幕
-            if (autoShow && isPlaying && isPrepared()) {
-                start()
-                Log.d(TAG, "Danmaku auto-started for playing video")
+            // 延迟等待弹幕准备完成后再启动渲染
+            // 直接调用 start() 会因 isPrepared()=false 被跳过
+            // 重启 App 时 provider.isPlaying() 也可能为 false，导致 prepared() 中不调 start()
+            if (autoShow) {
+                Handler(Looper.getMainLooper()).postDelayed({
+                    if (isPrepared()) {
+                        start()
+                        Log.d(TAG, "Danmaku auto-started for autoShow=true")
+                    } else {
+                        // 还没准备好，再等500ms
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            if (isPrepared()) {
+                                start()
+                                Log.d(TAG, "Danmaku auto-started after retry")
+                            }
+                        }, 500)
+                    }
+                }, 300)
             }
             
             Log.d(TAG, "Danmaku loaded and track selected: $danmakuPath, autoShow=$autoShow")

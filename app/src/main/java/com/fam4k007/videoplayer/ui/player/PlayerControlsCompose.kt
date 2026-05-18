@@ -32,6 +32,7 @@ import android.content.res.Configuration
 import android.os.BatteryManager
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.presentation.PlayerViewModel
+import com.fam4k007.videoplayer.ui.components.LoadingIndicator
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.delay
@@ -177,6 +178,9 @@ fun PlayerControls(
 
         // 暂停指示器（暂停时在屏幕中央短暂显示后淡出）
         PauseIndicator(viewModel = viewModel)
+
+        // 加载动画（在线视频缓冲/加载时显示，覆盖在所有控件之上）
+        LoadingOverlay(viewModel = viewModel)
     }
 }
 
@@ -1110,6 +1114,33 @@ fun PauseIndicator(
                 tint = Color.White.copy(alpha = 0.8f),
                 modifier = Modifier.size(90.dp)
             )
+        }
+    }
+}
+
+/**
+ * 加载动画覆盖层（在线视频缓冲/加载时显示转圈动画）
+ */
+@Composable
+fun LoadingOverlay(
+    viewModel: PlayerViewModel,
+    modifier: Modifier = Modifier
+) {
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    androidx.compose.animation.AnimatedVisibility(
+        visible = isLoading,
+        enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(200)),
+        exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(300)),
+        modifier = modifier.fillMaxSize()
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.3f)),
+            contentAlignment = Alignment.Center
+        ) {
+            LoadingIndicator()
         }
     }
 }

@@ -502,6 +502,7 @@ private fun VideoItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(28.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),

@@ -82,6 +82,8 @@ class VideoRepository(
                     
                     // 确保文件真的在该文件夹下（排除子文件夹）
                     val file = File(path)
+                    // 检查文件是否真实存在（MediaStore可能有过期数据）
+                    if (!file.exists()) continue
                     if (file.parent == folderPath) {
                         val uri = Uri.withAppendedPath(
                             MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
@@ -268,6 +270,8 @@ class VideoRepository(
                     val dateAdded = cursor.getLong(dateColumn)
                     
                     val file = File(path)
+                    // 检查文件是否真实存在（MediaStore可能有过期数据）
+                    if (!file.exists()) continue
                     val folderPath = file.parent ?: continue
                     
                     val uri = Uri.withAppendedPath(

@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import java.io.File
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -148,6 +149,9 @@ class VideoListComposeActivity : ComponentActivity() {
                 
                 while (cursor.moveToNext()) {
                     val path = cursor.getString(dataColumn)
+                    val file = File(path)
+                    // 检查文件是否真实存在（MediaStore可能有过期数据）
+                    if (!file.exists()) continue
                     if (path.substringBeforeLast("/") == folderPath) {
                         val id = cursor.getLong(idColumn)
                         val name = cursor.getString(nameColumn)

@@ -38,19 +38,15 @@ class SettingsComposeActivity : ComponentActivity() {
                     SettingsScreen(
                         onNavigateBack = {
                             finish()
-                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                         },
                         onNavigateToPlaybackSettings = {
                             startActivity(Intent(this@SettingsComposeActivity, PlaybackSettingsComposeActivity::class.java))
-                            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
                         },
                         onNavigateToPlaybackHistory = {
                             startActivity(Intent(this@SettingsComposeActivity, PlaybackHistoryComposeActivity::class.java))
-                            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
                         },
                         onNavigateToAbout = {
                             startActivity(Intent(this@SettingsComposeActivity, AboutComposeActivity::class.java))
-                            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
                         }
                     )
                 }

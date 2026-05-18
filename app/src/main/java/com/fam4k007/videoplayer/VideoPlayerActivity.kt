@@ -112,7 +112,7 @@ class VideoPlayerActivity : AppCompatActivity(),
     internal lateinit var mpvView: CustomMPVView
     internal lateinit var danmakuView: com.fam4k007.videoplayer.danmaku.DanmakuPlayerView
     internal lateinit var clickArea: View
-    internal lateinit var loadingIndicator: android.widget.ProgressBar
+    // loadingIndicator 已迁移至 Compose LoadingOverlay
     
     @Deprecated("Use viewModel.currentVideoUri instead", ReplaceWith("viewModel.currentVideoUri.value"))
     internal var videoUri: Uri? = null
@@ -362,14 +362,10 @@ class VideoPlayerActivity : AppCompatActivity(),
         mpvView = findViewById(R.id.surfaceView)
         danmakuView = findViewById(R.id.danmakuView)
         clickArea = findViewById(R.id.clickArea)
-        loadingIndicator = findViewById(R.id.loadingIndicator)
+        // loadingIndicator 已迁移至 Compose LoadingOverlay
         
         // 根据是否为在线视频设置加载动画的初始状态
-        if (isOnlineVideo) {
-            loadingIndicator.visibility = View.VISIBLE
-        } else {
-            loadingIndicator.visibility = View.GONE
-        }
+        viewModel.setLoading(isOnlineVideo)
         
         com.fam4k007.videoplayer.utils.Logger.d(TAG, "Initializing MPV in Activity...")
         try {
@@ -962,12 +958,7 @@ class VideoPlayerActivity : AppCompatActivity(),
         }
 
         // 显示加载动画（仅在线视频）
-        if (isOnline) {
-            loadingIndicator.visibility = View.VISIBLE
-            loadingIndicator.alpha = 1f
-        } else {
-            loadingIndicator.visibility = View.GONE
-        }
+        viewModel.setLoading(isOnline)
 
         // 获取保存的播放位置
         val position = preferencesManager.getPlaybackPosition(uri.toString())

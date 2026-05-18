@@ -51,10 +51,6 @@ class PlayerControlsManager(
         fun onControlsShown()  // 新增：控制栏显示时回调（用于隐藏暂停指示器）
     }
 
-    // UI 组件（顶部面板已迁移至 Compose，仅保留底部面板和提示）
-    private var resumePlaybackPrompt: LinearLayout? = null
-    private var tvResumeConfirm: TextView? = null
-
     // 状态
     var isVisible = true
         private set
@@ -71,18 +67,6 @@ class PlayerControlsManager(
 
 
     /**
-     * 绑定UI组件（顶部面板已迁到 Compose，仅保留恢复播放提示）
-     */
-    fun bindViews(
-        resumePlaybackPrompt: LinearLayout,
-        tvResumeConfirm: TextView
-    ) {
-        this.resumePlaybackPrompt = resumePlaybackPrompt
-        this.tvResumeConfirm = tvResumeConfirm
-        setupClickListeners()
-    }
-
-    /**
      * 初始化
      */
     fun initialize() {
@@ -96,26 +80,6 @@ class PlayerControlsManager(
         Log.d(TAG, "PlayerControlsManager initialized")
     }
 
-    /**
-     * 设置按钮点击监听
-     */
-    private fun setupClickListeners() {
-        tvResumeConfirm?.setOnClickListener {
-            resumePlaybackPrompt?.visibility = View.GONE
-        }
-    }
-
-    /**
-     * 显示恢复播放提示
-     */
-    fun showResumePrompt() {
-        resumePlaybackPrompt?.visibility = View.VISIBLE
-        
-        // 5秒后自动隐藏
-        handler.postDelayed({
-            resumePlaybackPrompt?.visibility = View.GONE
-        }, 5000)
-    }
 
     /**
      * 切换控制面板显示/隐藏
@@ -265,7 +229,5 @@ class PlayerControlsManager(
     fun cleanup() {
         Log.d(TAG, "Cleaning up PlayerControlsManager")
         handler.removeCallbacks(hideControlsRunnable)
-        resumePlaybackPrompt = null
-        tvResumeConfirm = null
     }
 }

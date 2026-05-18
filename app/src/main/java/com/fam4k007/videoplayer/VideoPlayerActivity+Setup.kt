@@ -202,7 +202,7 @@ internal fun VideoPlayerActivity.initializeManagers() {
                     // 位置在前进，隐藏停顿缓冲
                     if (isStalledBuffering) {
                         isStalledBuffering = false
-                        loadingIndicator.visibility = View.GONE
+                        viewModel.setLoading(false)
                         com.fam4k007.videoplayer.utils.Logger.d(TAG, "Playback resumed, hide stalled buffering indicator")
                     }
                     lastPositionForBuffering = position
@@ -211,14 +211,14 @@ internal fun VideoPlayerActivity.initializeManagers() {
                     // 位置停顿超过0.2秒，且正在播放，显示停顿缓冲（仅在线视频）
                     isStalledBuffering = true
                     if (isOnlineVideo) {
-                        loadingIndicator.visibility = View.VISIBLE
+                        viewModel.setLoading(true)
                         com.fam4k007.videoplayer.utils.Logger.d(TAG, "Playback stalled, show buffering indicator (online video)")
                     }
                 }
 
                 // 初始播放后隐藏加载动画（防止MPV缓冲状态延迟）
-                if (position > 1.0 && isPlaying && loadingIndicator.visibility == View.VISIBLE && !isStalledBuffering) {
-                    loadingIndicator.visibility = View.GONE
+                if (position > 1.0 && isPlaying && !isStalledBuffering) {
+                    viewModel.setLoading(false)
                     com.fam4k007.videoplayer.utils.Logger.d(TAG, "Initial playback started, hide loading indicator")
                 }
 
@@ -283,18 +283,7 @@ internal fun VideoPlayerActivity.initializeManagers() {
                 // 根据缓冲状态显示或隐藏加载动画（仅在线视频）
                 com.fam4k007.videoplayer.utils.Logger.d(TAG, "Buffering state changed: $isBuffering, isOnlineVideo: $isOnlineVideo")
 
-                if (isBuffering && isOnlineVideo) {
-                    // 显示加载动画（仅在线视频）
-                    loadingIndicator.visibility = View.VISIBLE
-                    loadingIndicator.alpha = 0f
-                    loadingIndicator.animate()
-                        .alpha(1f)
-                        .setDuration(200)
-                        .start()
-                } else {
-                    // 缓冲完成时立即隐藏加载动画，不使用动画延迟
-                    loadingIndicator.visibility = View.GONE
-                }
+                viewModel.setLoading(isBuffering && isOnlineVideo)
             }
 
             override fun onSurfaceReady() {
@@ -524,7 +513,6 @@ internal fun VideoPlayerActivity.initializeManagers() {
             }
 
             override fun onControlsVisibilityChanged(visible: Boolean) {
-                updatePortraitFloatingButtonsVisibility(visible)
             }
 
             override fun onVideoTitleClick() {
@@ -657,21 +645,6 @@ internal fun VideoPlayerActivity.initializeManagers() {
  * 绑定所有View到对应的管理器
  */
 internal fun VideoPlayerActivity.bindViewsToManagers() {
-    controlsManager.bindViews(
-        resumePlaybackPrompt = findViewById(R.id.resumePlaybackPrompt),
-        tvResumeConfirm = findViewById(R.id.tvResumeConfirm)
-    )
-
-    // Portrait-only floating buttons (exist in both layouts; only visible in portrait mode).
-    findViewById<Button>(R.id.btnAnime4KFloat)?.setOnClickListener {
-        dialogManager.showAnime4KModeDialog(anime4KMode)
-        controlsManager.resetAutoHideTimer()
-    }
-    findViewById<ImageView>(R.id.btnRotateFloat)?.setOnClickListener {
-        onTogglePortraitUi()
-        controlsManager.resetAutoHideTimer()
-    }
-
     controlsManager.initialize()
 
     videoUri?.let { uri ->

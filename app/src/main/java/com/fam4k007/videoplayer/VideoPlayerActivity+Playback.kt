@@ -202,12 +202,7 @@ internal fun VideoPlayerActivity.playVideo(uri: Uri) {
     }
 
     // 显示加载动画（仅在线视频）
-    if (isOnlineVideo) {
-        loadingIndicator.visibility = View.VISIBLE
-        loadingIndicator.alpha = 1f
-    } else {
-        loadingIndicator.visibility = View.GONE
-    }
+    viewModel.setLoading(isOnlineVideo)
 
     val fileName = getFileNameFromUri(uri)
     viewModel.setVideoTitle(fileName)
@@ -375,28 +370,22 @@ internal fun VideoPlayerActivity.savePlaybackState() {
             val fileName = getFileNameFromUri(uri)
             val folderName = uri.getFolderName()
 
+            // 获取弹幕信息，一起写入历史记录（避免 addHistory 和 updateDanmu 的竞态条件）
+            val danmakuPath = danmakuManager.getCurrentDanmakuPath()
+            // 使用 ViewModel 的弹幕状态作为数据源（它是用户实际的开关状态）
+            // 不使用 danmakuManager.isVisible() 因为 isShown 可能在停顿时不准确
+            val danmuVisible = danmakuPath != null && viewModel.danmakuVisible.value
+
             historyManager.addHistory(
                 uri = uri,
                 fileName = fileName,
                 position = (currentPosition * 1000).toLong(),
                 duration = (duration * 1000).toLong(),
-                folderName = folderName
+                folderName = folderName,
+                danmuPath = danmakuPath,
+                danmuVisible = danmuVisible
             )
-            Logger.d(TAG, "History saved: $fileName")
-
-            // 3. 保存弹幕信息到历史记录(保存真实的显示状态)
-            val danmakuPath = danmakuManager.getCurrentDanmakuPath()
-            if (danmakuPath != null) {
-                // 只有prepared且visible时才保存为true
-                val actualVisible = danmakuManager.isVisible() && danmakuManager.isPrepared()
-                historyManager.updateDanmu(
-                    uri = uri,
-                    danmuPath = danmakuPath,
-                    danmuVisible = actualVisible,
-                    danmuOffsetTime = 0L
-                )
-                Logger.d(TAG, "Danmu info saved: path=$danmakuPath, visible=$actualVisible")
-            }
+            Logger.d(TAG, "History saved: $fileName, danmuPath=$danmakuPath, danmuVisible=$danmuVisible")
         } else if (isOnlineVideo) {
             Logger.d(TAG, "Skipping history for online video: $uri")
         }

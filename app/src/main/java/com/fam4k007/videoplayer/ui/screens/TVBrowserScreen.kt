@@ -138,7 +138,14 @@ fun TVBrowserScreen(
                                         }
                                     }
                                     IconButton(onClick = { viewModel.navigateToUrl() }) {
-                                        Icon(Icons.Default.ArrowForward, "前往")
+                                        Icon(
+                                            Icons.Default.Send,
+                                            "前往",
+                                            tint = if (state.urlInput.isNotEmpty())
+                                                MaterialTheme.colorScheme.primary
+                                            else
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                     }
                                 }
                             },
@@ -164,7 +171,9 @@ fun TVBrowserScreen(
                 .padding(paddingValues)
         ) {
             if (state.urlToLoad.isNotEmpty()) {
-                // 有URL时显示WebView
+                // 本地持有WebView引用，用于响应urlToLoad变化
+                var localWebView by remember { mutableStateOf<WebView?>(null) }
+
                 AndroidView(
                     factory = { ctx ->
                         WebView(ctx).apply {
@@ -179,17 +188,20 @@ fun TVBrowserScreen(
                                 getCurrentPageTitle = { viewModel.getCurrentPageTitle() }
                             )
                             loadUrl(state.urlToLoad)
+                            localWebView = this
                             onWebViewCreated(this)
                         }
                     },
                     modifier = Modifier.fillMaxSize(),
-                    update = { webView ->
-                        // 当urlToLoad变化时，加载新URL
-                        if (webView.url != state.urlToLoad && state.urlToLoad.isNotEmpty()) {
-                            webView.loadUrl(state.urlToLoad)
-                        }
-                    }
+                    update = { _ -> }
                 )
+                // 只在urlToLoad值实际变化时才重新加载WebView（用户主动输入新地址）
+                LaunchedEffect(state.urlToLoad) {
+                    val url = state.urlToLoad
+                    if (url.isNotEmpty()) {
+                        localWebView?.loadUrl(url)
+                    }
+                }
             } else {
                 // 没有URL时显示空白
                 Box(modifier = Modifier.fillMaxSize())

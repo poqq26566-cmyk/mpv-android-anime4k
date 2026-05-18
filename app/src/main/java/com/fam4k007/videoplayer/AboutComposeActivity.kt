@@ -41,11 +41,9 @@ class AboutComposeActivity : BaseActivity() {
                         versionName = versionName,
                         onBack = {
                             finish()
-                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                         },
                         onNavigateToLicense = {
                             startActivity(Intent(this@AboutComposeActivity, LicenseActivity::class.java))
-                            startActivityWithDefaultTransition()
                         },
                         onSendEmail = {
                             sendEmail()

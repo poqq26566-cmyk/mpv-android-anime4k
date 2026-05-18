@@ -65,7 +65,6 @@ class BiliBiliDanmakuComposeActivity : BaseActivity() {
                         downloadWholeSeason = downloadWholeSeason,
                         onBack = {
                             finish()
-                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                         },
                         onFolderSelected = { uri ->
                             viewModel.setFolderUri(uri, contentResolver)

@@ -659,7 +659,7 @@ fun ExpandableActionButton(
 }
 
 /**
- * 功能项（纯图标 + 文字，无背景容器）
+ * 功能项（纯图标 + 文字，点击水波纹为圆角方形）
  */
 @Composable
 fun ActionItem(
@@ -671,6 +671,7 @@ fun ActionItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(8.dp)
     ) {

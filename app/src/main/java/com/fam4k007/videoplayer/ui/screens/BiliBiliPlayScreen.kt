@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -91,7 +92,7 @@ fun BiliBiliPlayScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("B站番剧播放", fontWeight = FontWeight.Bold) },
+                title = { Text("哔哩哔哩番剧播放", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -164,14 +165,21 @@ fun BiliBiliPlayScreen(
                         ),
                         shape = RoundedCornerShape(20.dp)
                     )
-                    Button(
+                    IconButton(
                         onClick = {
                             focusManager.clearFocus()
                             viewModel.parseUrl(inputUrl)
                         },
-                        shape = RoundedCornerShape(20.dp)
+                        enabled = inputUrl.isNotBlank()
                     ) {
-                        Text("解析")
+                        Icon(
+                            Icons.Default.Send,
+                            contentDescription = "解析",
+                            tint = if (inputUrl.isNotBlank())
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }

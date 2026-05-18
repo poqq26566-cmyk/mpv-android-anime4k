@@ -39,7 +39,6 @@ class PlaybackSettingsComposeActivity : ComponentActivity() {
                         viewModel = viewModel,
                         onNavigateBack = {
                             finish()
-                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                         }
                     )
                 }

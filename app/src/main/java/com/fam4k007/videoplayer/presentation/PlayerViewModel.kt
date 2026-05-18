@@ -115,6 +115,12 @@ class PlayerViewModel(
     private val _brightnessChangeEvent = MutableSharedFlow<Float>(extraBufferCapacity = 1)
     val brightnessChangeEvent: SharedFlow<Float> = _brightnessChangeEvent.asSharedFlow()
     
+    // ==================== Seek事件（用于弹幕同步）====================
+    
+    // Seek事件流（用于通知Activity同步弹幕进度）
+    private val _seekEvent = MutableSharedFlow<Int>(extraBufferCapacity = 1)
+    val seekEvent: SharedFlow<Int> = _seekEvent.asSharedFlow()
+    
     // ==================== 视频切换事件 ====================
     
     // 视频切换事件流（用于通知Activity播放新视频）
@@ -337,6 +343,10 @@ class PlayerViewModel(
     // 是否为在线视频
     private val _isOnlineVideo = MutableStateFlow(false)
     val isOnlineVideo: StateFlow<Boolean> = _isOnlineVideo.asStateFlow()
+    
+    // 加载动画显示状态（在线视频缓冲/加载时显示）
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     
     // 保存的播放位置（用于恢复播放）
     private val _savedPosition = MutableStateFlow(0.0)
@@ -1216,6 +1226,14 @@ class PlayerViewModel(
     }
     
     /**
+     * 设置加载动画显示状态（在线视频缓冲/加载时显示）
+     */
+    fun setLoading(loading: Boolean) {
+        _isLoading.value = loading
+        Logger.v(TAG, "Loading indicator: $loading")
+    }
+    
+    /**
      * 设置保存的播放位置
      */
     fun setSavedPosition(position: Double) {
@@ -1430,6 +1448,8 @@ class PlayerViewModel(
      */
     fun seekTo(position: Int) {
         MPVLib.setPropertyInt("time-pos", position)
+        // 发射Seek事件，通知Activity同步弹幕进度
+        _seekEvent.tryEmit(position)
         Logger.d(TAG, "Seek to: $position")
     }
     
