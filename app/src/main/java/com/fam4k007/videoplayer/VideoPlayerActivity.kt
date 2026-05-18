@@ -107,7 +107,6 @@ class VideoPlayerActivity : AppCompatActivity(),
     internal lateinit var composeOverlayManager: com.fanchen.fam4k007.manager.compose.ComposeOverlayManager
     internal lateinit var screenshotManager: com.fam4k007.videoplayer.manager.ScreenshotManager
     internal lateinit var skipIntroOutroManager: com.fanchen.fam4k007.manager.SkipIntroOutroManager
-    internal lateinit var thumbnailManager: com.fam4k007.videoplayer.manager.VideoThumbnailManager
 
     internal lateinit var mpvView: CustomMPVView
     internal lateinit var danmakuView: com.fam4k007.videoplayer.danmaku.DanmakuPlayerView
@@ -611,11 +610,6 @@ class VideoPlayerActivity : AppCompatActivity(),
         controlsManager?.cleanup()
         gestureHandler?.cleanup()
         filePickerManager?.cleanup()
-        
-        // 释放缩略图资源
-        if (::thumbnailManager.isInitialized) {
-            thumbnailManager.release()
-        }
     }
 
     override fun onImportSubtitle() {

@@ -628,9 +628,6 @@ internal fun VideoPlayerActivity.initializeManagers() {
     // 初始化截图管理器
     screenshotManager = com.fam4k007.videoplayer.manager.ScreenshotManager(this)
 
-    // 初始化缩略图管理器
-    thumbnailManager = com.fam4k007.videoplayer.manager.VideoThumbnailManager(this)
-
     // 初始化片头片尾管理器
     skipIntroOutroManager = com.fanchen.fam4k007.manager.SkipIntroOutroManager(
         this,

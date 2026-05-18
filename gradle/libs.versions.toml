@@ -55,6 +55,9 @@ aboutLibraries = "11.2.3"
 # Serialization
 kotlinxSerialization = "1.7.3"
 
+# FrameScout
+framescout = "1.0.2"
+
 # Dependency Injection (未来使用)
 koin = "4.0.0"
 
@@ -115,6 +118,9 @@ aboutlibraries-compose = { module = "com.mikepenz:aboutlibraries-compose", versi
 
 # Serialization
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+
+# FrameScout
+framescout = { module = "com.github.AKhalil609:FrameScout", version.ref = "framescout" }
 
 # Koin (未来使用)
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }

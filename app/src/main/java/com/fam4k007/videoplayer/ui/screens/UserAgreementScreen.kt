@@ -1,15 +1,11 @@
 package com.fam4k007.videoplayer.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,92 +19,80 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fam4k007.videoplayer.R
+import com.fam4k007.videoplayer.ui.theme.spacing
 
 /**
- * Compose 用户协议界面
- * 提供现代化的Material Design 3风格的用户协议展示
+ * 用户协议界面 - 现代 Material 3 风格
+ * 首次启动时全屏展示，用户必须同意才能继续使用
+ *
+ * @param showActions 是否显示交互元素（复选框、同意/拒绝按钮），预览模式设为 false
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserAgreementScreen(
     onAgree: () -> Unit,
-    onDecline: () -> Unit
+    onDecline: () -> Unit,
+    showActions: Boolean = true
 ) {
     var hasScrolledToBottom by remember { mutableStateOf(false) }
     var isChecked by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
 
-    // 检测是否滚动到底部
+    // 检测滚动到底部
     LaunchedEffect(scrollState.value, scrollState.maxValue) {
         if (scrollState.maxValue > 0 && scrollState.value >= scrollState.maxValue - 50) {
             hasScrolledToBottom = true
         }
     }
 
-    // 按钮启用动画
-    val buttonAlpha by animateFloatAsState(
-        targetValue = if (isChecked && hasScrolledToBottom) 1f else 0.5f,
-        animationSpec = tween(300)
-    )
+    val canAgree = isChecked && hasScrolledToBottom
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
-                        MaterialTheme.colorScheme.surface
-                    )
-                )
-            )
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = MaterialTheme.spacing.medium)
+            .padding(top = MaterialTheme.spacing.large)
     ) {
-        Column(
+        // 头部
+        AgreementHeader(isPreview = !showActions)
+
+        Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
+
+        // 协议内容卡片
+        Card(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp)
+                .weight(1f)
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            // 头部
-            AgreementHeader()
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 协议内容卡片
-            Card(
+            Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(MaterialTheme.spacing.medium)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(scrollState)
-                        .padding(20.dp)
-                ) {
-                    AgreementContent()
-                }
+                AgreementContent(showFullContent = showActions)
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        if (showActions) {
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
 
             // 滚动提示
             AnimatedVisibility(
@@ -119,7 +103,7 @@ fun UserAgreementScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp),
+                        .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -131,7 +115,7 @@ fun UserAgreementScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "请向下滚动阅读完整协议",
+                        text = "请向下滑动阅读完整协议",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
@@ -139,11 +123,13 @@ fun UserAgreementScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
+
             // 复选框
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Checkbox(
@@ -164,11 +150,12 @@ fun UserAgreementScreen(
                         append("以上所有条款，同意遵守本协议的所有内容")
                     },
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.alpha(if (hasScrolledToBottom) 1f else 0.5f)
+                    color = if (hasScrolledToBottom) MaterialTheme.colorScheme.onSurface
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
 
             // 按钮区域
             Row(
@@ -181,18 +168,9 @@ fun UserAgreementScreen(
                     modifier = Modifier
                         .weight(1f)
                         .height(50.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.error
-                    ),
-                    border = ButtonDefaults.outlinedButtonBorder.copy(
-                        width = 1.5.dp,
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.error,
-                                MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
-                            )
-                        )
                     )
                 ) {
                     Text(
@@ -205,12 +183,11 @@ fun UserAgreementScreen(
                 // 同意按钮
                 Button(
                     onClick = onAgree,
-                    enabled = isChecked && hasScrolledToBottom,
+                    enabled = canAgree,
                     modifier = Modifier
                         .weight(1f)
-                        .height(50.dp)
-                        .alpha(buttonAlpha),
-                    shape = RoundedCornerShape(12.dp),
+                        .height(50.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -231,44 +208,57 @@ fun UserAgreementScreen(
             }
         }
     }
+
+    Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 }
 
+
 @Composable
-private fun AgreementHeader() {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // 应用图标或Logo
-        Image(
-            painter = painterResource(id = R.drawable.app_icon),
-            contentDescription = "应用图标",
-            modifier = Modifier
-                .size(80.dp)
-                .clip(RoundedCornerShape(16.dp))
-        )
-        
-        Spacer(modifier = Modifier.height(12.dp))
-        
+private fun AgreementHeader(isPreview: Boolean = false) {
+    if (isPreview) {
+        // 预览模式：左上角对齐，大字体，无图标
         Text(
             text = "用户服务协议与隐私政策",
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
-        
-        Spacer(modifier = Modifier.height(4.dp))
-        
-        Text(
-            text = "欢迎使用小喵player！",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+    } else {
+        // 启动模式：居中带图标
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.app_icon),
+                contentDescription = "应用图标",
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(20.dp))
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "用户服务协议与隐私政策",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "欢迎使用小喵player！",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 
 @Composable
-private fun AgreementContent() {
+private fun AgreementContent(showFullContent: Boolean = true) {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -283,7 +273,7 @@ private fun AgreementContent() {
             BulletPoint("我们强烈反对且不纵容任何形式的盗版、非法转载、黑产及其他违法用途或行为")
         }
 
-        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
 
         // 隐私政策
         AgreementSection(
@@ -307,9 +297,16 @@ private fun AgreementContent() {
             )
             PermissionItem("管理所有文件权限", "用于扫描本地视频文件、保存字幕和弹幕文件")
             PermissionItem("网络权限", "用于在线播放、下载弹幕、WebDAV等功能")
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
+            SubTitle("【WebDAV 存储说明】")
+            BulletPoint("WebDAV 的账号、密码及服务器地址仅存储在本地")
+            BulletPoint("不会同步或上传到任何第三方服务器")
+            BulletPoint("您可随时在设置中清除已保存的 WebDAV 信息")
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             SubTitle("【登录信息安全】")
             Text(
                 text = "如您选择使用哔哩哔哩登录功能：",
@@ -323,7 +320,7 @@ private fun AgreementContent() {
             BulletPoint("应用卸载后，所有登录数据将自动永久销毁")
         }
 
-        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
 
         // 法律风险警告
         AgreementSection(
@@ -362,34 +359,66 @@ private fun AgreementContent() {
             BulletPoint("使用本应用获取的内容，其版权归原权利人所有")
         }
 
-        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+        if (showFullContent) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
 
-        // 用户承诺
-        AgreementSection(
-            icon = Icons.Default.CheckCircle,
-            title = "四、用户承诺",
-            iconTint = MaterialTheme.colorScheme.tertiary
+            // 用户承诺
+            AgreementSection(
+                icon = Icons.Default.CheckCircle,
+                title = "四、用户承诺",
+                iconTint = MaterialTheme.colorScheme.tertiary
+            ) {
+                Text(
+                    text = "点击\"同意并继续\"即表示您：",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                CheckPoint("已完整阅读并充分理解以上所有条款")
+                CheckPoint("同意遵守本协议的所有内容")
+                CheckPoint("承诺不将本应用用于任何违法或商业用途")
+                CheckPoint("理解并接受使用本应用的所有风险由您个人承担")
+                CheckPoint("同意开发者对本应用功能的滥用不承担任何责任")
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "点击\"拒绝\"将无法使用本应用。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 开源致谢
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "点击\"同意并继续\"即表示您：",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            CheckPoint("已完整阅读并充分理解以上所有条款")
-            CheckPoint("同意遵守本协议的所有内容")
-            CheckPoint("承诺不将本应用用于任何违法或商业用途")
-            CheckPoint("理解并接受使用本应用的所有风险由您个人承担")
-            CheckPoint("同意开发者对本应用功能的滥用不承担任何责任")
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "点击\"拒绝\"将无法使用本应用。",
+                text = "本应用使用了多个优秀的开源组件（详见「许可证书」）",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 协议更新说明
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "如协议内容发生更新，将在下次启动时重新展示，届时请您留意",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
 
@@ -408,7 +437,7 @@ private fun AgreementContent() {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "最后更新时间：2025年12月22日",
+                text = "最后更新时间：2026年5月18日",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
@@ -543,15 +572,7 @@ private fun WarningCard(content: @Composable ColumnScope.() -> Unit) {
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFFF6B6B).copy(alpha = 0.1f)
         ),
-        border = ButtonDefaults.outlinedButtonBorder.copy(
-            width = 1.dp,
-            brush = Brush.linearGradient(
-                colors = listOf(
-                    Color(0xFFFF6B6B).copy(alpha = 0.5f),
-                    Color(0xFFFF6B6B).copy(alpha = 0.3f)
-                )
-            )
-        )
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier.padding(12.dp),

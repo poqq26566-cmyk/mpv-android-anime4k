@@ -360,10 +360,6 @@ class PlayerViewModel(
     private val _speedBeforeLongPress = MutableStateFlow(1.0)
     val speedBeforeLongPress: StateFlow<Double> = _speedBeforeLongPress.asStateFlow()
     
-    // 是否已初始化缩略图
-    private val _isThumbnailInitialized = MutableStateFlow(false)
-    val isThumbnailInitialized: StateFlow<Boolean> = _isThumbnailInitialized.asStateFlow()
-    
     // 是否已自动加载字幕
     private val _hasAutoLoadedSubtitle = MutableStateFlow(false)
     val hasAutoLoadedSubtitle: StateFlow<Boolean> = _hasAutoLoadedSubtitle.asStateFlow()
@@ -1301,14 +1297,6 @@ class PlayerViewModel(
         _swipeSeekPreview.value = null
     }
 
-    
-    /**
-     * 标记缩略图已初始化
-     */
-    fun setThumbnailInitialized(initialized: Boolean) {
-        _isThumbnailInitialized.value = initialized
-        Logger.d(TAG, "Thumbnail initialized: $initialized")
-    }
     
     /**
      * 设置是否已自动加载字幕

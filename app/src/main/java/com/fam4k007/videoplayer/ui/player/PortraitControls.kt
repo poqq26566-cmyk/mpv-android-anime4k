@@ -340,10 +340,12 @@ fun PortraitBottomControls(
     val anime4KActive = anime4KMode != com.fam4k007.videoplayer.domain.player.Anime4KManager.Mode.OFF
 
     var anime4KBounds by remember { mutableStateOf(android.graphics.Rect()) }
+    var seekBarWidth by remember { mutableFloatStateOf(0f) }
+    val totalMs = (duration * 1000L).coerceAtLeast(1L)
 
-    Column(
-        modifier =
-            modifier
+    Box(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
                 .fillMaxWidth()
                 .background(
                     Brush.verticalGradient(
@@ -357,8 +359,8 @@ fun PortraitBottomControls(
                 )
                 .padding(horizontal = 12.dp, vertical = 6.dp)
                 .navigationBarsPadding(),
-    ) {
-        // ── Row 1: 精简辅控（置于进度条上方，贴近进度条）──
+        ) {
+            // ── Row 1: 精简辅控（置于进度条上方，贴近进度条）──
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
@@ -496,29 +498,38 @@ fun PortraitBottomControls(
                 modifier = Modifier.padding(end = 6.dp),
             )
 
-            val seekbarStyle = SeekbarStyle.fromName(seekbarStyleName)
-            CustomSeekbar(
-                progress = displayPosition,
-                duration = duration.toFloat().coerceAtLeast(1f),
-                seekbarStyle = seekbarStyle,
-                accentColor = MaterialTheme.colorScheme.primary,
-                paused = paused == true,
-                isDragging = isDragging,
-                onSeek = { newValue ->
-                    if (!isDragging) {
-                        isDragging = true
-                        viewModel.setSliderDragging(true)
+            // 进度条
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .onGloballyPositioned { coords ->
+                        seekBarWidth = coords.size.width.toFloat()
                     }
-                    sliderPosition = newValue
-                },
-                onSeekFinished = {
-                    sliderPosition?.let { pos -> viewModel.seekTo(pos.toInt()) }
-                    isDragging = false
-                    sliderPosition = null
-                    viewModel.setSliderDragging(false)
-                },
-                modifier = Modifier.weight(1f)
-            )
+            ) {
+                val seekbarStyle = SeekbarStyle.fromName(seekbarStyleName)
+                CustomSeekbar(
+                    progress = displayPosition,
+                    duration = duration.toFloat().coerceAtLeast(1f),
+                    seekbarStyle = seekbarStyle,
+                    accentColor = MaterialTheme.colorScheme.primary,
+                    paused = paused == true,
+                    isDragging = isDragging,
+                    onSeek = { newValue ->
+                        if (!isDragging) {
+                            isDragging = true
+                            viewModel.setSliderDragging(true)
+                        }
+                        sliderPosition = newValue
+                    },
+                    onSeekFinished = {
+                        sliderPosition?.let { pos -> viewModel.seekTo(pos.toInt()) }
+                        isDragging = false
+                        sliderPosition = null
+                        viewModel.setSliderDragging(false)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             Text(
                 text = formatTimeP(duration),
@@ -623,6 +634,7 @@ fun PortraitBottomControls(
             }
         }
     }
+}
 }
 
 // ================== 工具函数 ==================

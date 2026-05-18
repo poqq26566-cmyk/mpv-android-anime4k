@@ -33,6 +33,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.fam4k007.videoplayer.PlaybackHistoryManager
 import com.fam4k007.videoplayer.R
+import com.fam4k007.videoplayer.UserAgreementActivity
 import com.fam4k007.videoplayer.VideoPlayerActivity
 import com.fam4k007.videoplayer.domain.webdav.WebDavClient
 import com.fam4k007.videoplayer.domain.webdav.WebDavConfig
@@ -252,6 +253,9 @@ fun AppNavGraph(
                 },
                 onNavigateToCache = {
                     navController.navigate(AppScreen.CacheManagement)
+                },
+                onNavigateToUserAgreement = {
+                    context.startActivity(UserAgreementActivity.previewIntent(context))
                 },
                 onSendEmail = {
                     try {

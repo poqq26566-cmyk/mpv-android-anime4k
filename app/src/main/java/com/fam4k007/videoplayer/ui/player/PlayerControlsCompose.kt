@@ -247,22 +247,25 @@ fun BottomControlPanel(
         com.fam4k007.videoplayer.domain.player.Anime4KManager.Mode.C_PLUS -> "C+"
     }
     val anime4KActive = anime4KMode != com.fam4k007.videoplayer.domain.player.Anime4KManager.Mode.OFF
+    var seekBarWidth by remember { mutableFloatStateOf(0f) }
+    val totalMs = (duration * 1000L).coerceAtLeast(1L)
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                androidx.compose.ui.graphics.Brush.verticalGradient(
-                    colors = listOf(
-                        Color.Transparent,
-                        Color.Black.copy(alpha = 0.4f),
-                        Color.Black.copy(alpha = 0.7f)
+    Box(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.4f),
+                            Color.Black.copy(alpha = 0.7f)
+                        )
                     )
-                )
             )
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        // 进度条行
+        // 进度条行（含缩略图预览）
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -275,32 +278,40 @@ fun BottomControlPanel(
                 modifier = Modifier.padding(end = 8.dp)
             )
 
-            // 进度滑块（支持多种样式）
-            val seekbarStyle = SeekbarStyle.fromName(seekbarStyleName)
-            CustomSeekbar(
-                progress = displayPosition,
-                duration = duration.toFloat().coerceAtLeast(1f),
-                seekbarStyle = seekbarStyle,
-                accentColor = MaterialTheme.colorScheme.primary,
-                paused = paused == true,
-                isDragging = isDragging,
-                onSeek = { newValue ->
-                    if (!isDragging) {
-                        isDragging = true
-                        viewModel.setSliderDragging(true)
+            // 进度滑块 + 缩略图浮层
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .onGloballyPositioned { coords ->
+                        seekBarWidth = coords.size.width.toFloat()
                     }
-                    sliderPosition = newValue
-                },
-                onSeekFinished = {
-                    sliderPosition?.let { pos ->
-                        viewModel.seekTo(pos.toInt())
-                    }
-                    isDragging = false
-                    sliderPosition = null
-                    viewModel.setSliderDragging(false)
-                },
-                modifier = Modifier.weight(1f)
-            )
+            ) {
+                val seekbarStyle = SeekbarStyle.fromName(seekbarStyleName)
+                CustomSeekbar(
+                    progress = displayPosition,
+                    duration = duration.toFloat().coerceAtLeast(1f),
+                    seekbarStyle = seekbarStyle,
+                    accentColor = MaterialTheme.colorScheme.primary,
+                    paused = paused == true,
+                    isDragging = isDragging,
+                    onSeek = { newValue ->
+                        if (!isDragging) {
+                            isDragging = true
+                            viewModel.setSliderDragging(true)
+                        }
+                        sliderPosition = newValue
+                    },
+                    onSeekFinished = {
+                        sliderPosition?.let { pos ->
+                            viewModel.seekTo(pos.toInt())
+                        }
+                        isDragging = false
+                        sliderPosition = null
+                        viewModel.setSliderDragging(false)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             // 总时长
             Text(
@@ -527,6 +538,7 @@ fun BottomControlPanel(
                     )
                 }
             }
+        }
         }
     }
 }

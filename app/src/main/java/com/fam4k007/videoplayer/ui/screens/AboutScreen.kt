@@ -25,6 +25,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fam4k007.videoplayer.R
+import com.fam4k007.videoplayer.ui.components.ClickableItem
+import com.fam4k007.videoplayer.ui.components.SwitchItem
+import com.fam4k007.videoplayer.ui.theme.spacing
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,6 +38,7 @@ fun AboutScreen(
     onNavigateToLicense: () -> Unit,
     onNavigateToLogs: () -> Unit = {},
     onNavigateToCache: () -> Unit = {},
+    onNavigateToUserAgreement: () -> Unit = {},
     onSendEmail: () -> Unit
 ) {
     val context = LocalContext.current
@@ -148,7 +152,14 @@ fun AboutScreen(
                 }
             }
 
-            // 许可证书卡片
+            // ===== 信息 =====
+            Text(
+                text = "信息",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 6.dp)
+            )
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
@@ -157,46 +168,29 @@ fun AboutScreen(
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = onNavigateToLicense)
-                        .padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Description,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(32.dp)
-                    )
+                ClickableItem(
+                    title = "许可证书",
+                    subtitle = "查看开源许可",
+                    icon = Icons.Default.Description,
+                    onClick = onNavigateToLicense
+                )
 
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "许可证书",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "查看开源许可",
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.outline
-                    )
-                }
+                ClickableItem(
+                    title = "用户协议",
+                    subtitle = "预览用户服务协议与隐私政策",
+                    icon = Icons.Default.Lock,
+                    onClick = onNavigateToUserAgreement
+                )
             }
 
-            // 错误日志卡片
+            // ===== 工具 =====
+            Text(
+                text = "工具",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 6.dp)
+            )
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
@@ -205,46 +199,29 @@ fun AboutScreen(
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = onNavigateToLogs)
-                        .padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.BugReport,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(32.dp)
-                    )
+                ClickableItem(
+                    title = "错误日志",
+                    subtitle = "查看和导出错误日志",
+                    icon = Icons.Default.BugReport,
+                    onClick = onNavigateToLogs
+                )
 
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "错误日志",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "查看和导出错误日志",
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.outline
-                    )
-                }
+                ClickableItem(
+                    title = "缓存管理",
+                    subtitle = "查看和清除应用缓存",
+                    icon = Icons.Default.Storage,
+                    onClick = onNavigateToCache
+                )
             }
 
-            // 缓存管理卡片
+            // ===== 更新 =====
+            Text(
+                text = "更新",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 6.dp)
+            )
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
@@ -253,161 +230,43 @@ fun AboutScreen(
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = onNavigateToCache)
-                        .padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Storage,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.tertiary,
-                        modifier = Modifier.size(32.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "缓存管理",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "查看和清除应用缓存",
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.outline
-                    )
-                }
-            }
-
-            // 检查更新
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            scope.launch {
-                                try {
-                                    val result = com.fam4k007.videoplayer.utils.UpdateManager.checkForUpdate(context)
-                                    if (result != null) {
-                                        updateInfo = result
-                                        showUpdateDialog = true
-                                    } else {
-                                        android.widget.Toast.makeText(
-                                            context, "已是最新版本", android.widget.Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                } catch (e: Exception) {
+                ClickableItem(
+                    title = "检查更新",
+                    subtitle = "当前版本: $versionName",
+                    icon = Icons.Default.Update,
+                    onClick = {
+                        scope.launch {
+                            try {
+                                val result = com.fam4k007.videoplayer.utils.UpdateManager.checkForUpdate(context)
+                                if (result != null) {
+                                    updateInfo = result
+                                    showUpdateDialog = true
+                                } else {
                                     android.widget.Toast.makeText(
-                                        context, "检查更新失败: ${e.message}", android.widget.Toast.LENGTH_LONG
+                                        context, "已是最新版本", android.widget.Toast.LENGTH_SHORT
                                     ).show()
                                 }
+                            } catch (e: Exception) {
+                                android.widget.Toast.makeText(
+                                    context, "检查更新失败: ${e.message}", android.widget.Toast.LENGTH_LONG
+                                ).show()
                             }
                         }
-                        .padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Update,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(32.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "检查更新",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "当前版本: $versionName",
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
+                )
 
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.outline
-                    )
-                }
-            }
-
-            // 自动检查更新
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
                 val prefs = remember { com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(context) }
                 var autoCheck by remember { mutableStateOf(prefs.isAutoCheckUpdateEnabled()) }
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.size(32.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "自动检查更新",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = if (autoCheck) "启动后5秒自动检查" else "关闭后不再自动检查",
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                SwitchItem(
+                    title = "自动检查更新",
+                    subtitle = if (autoCheck) "启动后5秒自动检查" else "关闭后不再自动检查",
+                    checked = autoCheck,
+                    onCheckedChange = { enabled ->
+                        autoCheck = enabled
+                        prefs.setAutoCheckUpdateEnabled(enabled)
                     }
-
-                    Switch(
-                        checked = autoCheck,
-                        onCheckedChange = { enabled ->
-                            autoCheck = enabled
-                            prefs.setAutoCheckUpdateEnabled(enabled)
-                        }
-                    )
-                }
+                )
             }
 
         }

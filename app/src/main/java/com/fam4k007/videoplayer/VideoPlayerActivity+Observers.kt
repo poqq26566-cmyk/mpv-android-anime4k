@@ -36,15 +36,6 @@ internal fun VideoPlayerActivity.setupViewModelObservers() {
             if (duration > 0) {
                 this@setupViewModelObservers.currentPosition = position.toDouble()
                 this@setupViewModelObservers.duration = duration.toDouble()
-
-                // 初始化缩略图（仅一次）
-                if (!viewModel.isThumbnailInitialized.value) {
-                    videoUri?.let { uri ->
-                        val isWebDav = intent.getBooleanExtra("is_webdav", false)
-                        thumbnailManager.initializeVideo(uri, (duration * 1000L), isWebDav)
-                        viewModel.setThumbnailInitialized(true)
-                    }
-                }
             }
         }
     }
