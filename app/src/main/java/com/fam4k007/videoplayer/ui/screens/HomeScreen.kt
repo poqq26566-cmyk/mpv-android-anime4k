@@ -55,7 +55,6 @@ import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
 import com.fam4k007.videoplayer.remote.RemotePlaybackLauncher
 import com.fam4k007.videoplayer.remote.RemotePlaybackRequest
 import com.fam4k007.videoplayer.remote.RemoteUrlParser
-import com.fanchen.fam4k007.manager.compose.BiliBiliLoginActivity
 import org.koin.compose.koinInject
 
 /**
@@ -69,6 +68,7 @@ fun HomeScreen(
     onNavigateToVideoBrowser: () -> Unit = {},
     onNavigateToBiliBiliPlay: () -> Unit = {},
     onNavigateToTVBrowser: () -> Unit = {},
+    onNavigateToBiliBiliLogin: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val preferencesManager: PreferencesManager = koinInject()
@@ -102,13 +102,7 @@ fun HomeScreen(
         ) {
             // 顶部区域
             TopBar(
-                onLoginClick = {
-                    context.startActivity(Intent(context, BiliBiliLoginActivity::class.java))
-                    (context as? android.app.Activity)?.overridePendingTransition(
-                        R.anim.slide_in_right,
-                        R.anim.slide_out_left
-                    )
-                },
+                onLoginClick = onNavigateToBiliBiliLogin,
                 onSettingsClick = onNavigateToSettings
             )
             

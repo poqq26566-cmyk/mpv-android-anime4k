@@ -4,16 +4,14 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.fam4k007.videoplayer.navigation.AppNavGraph
+import com.fam4k007.videoplayer.preferences.PreferencesManager
+import com.fam4k007.videoplayer.ui.components.UpdateDialog
 import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import com.fam4k007.videoplayer.utils.UpdateManager
@@ -49,9 +47,12 @@ class MainActivity : BaseActivity() {
         }
         
         // 延迟检查更新（5秒后，避免阻塞启动）
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            checkForUpdateSilently()
-        }, 5000)
+        val prefs = PreferencesManager.getInstance(this)
+        if (prefs.isAutoCheckUpdateEnabled()) {
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                checkForUpdateSilently()
+            }, 5000)
+        }
         
         setupContent()
     }
@@ -74,13 +75,20 @@ class MainActivity : BaseActivity() {
                         historyManager = historyManager ?: PlaybackHistoryManager(activity),
                     )
                     
-                    // 更新弹窗
+                    // 更新弹窗 - 使用统一组件
                     if (showUpdateDialog && currentUpdateInfo != null) {
+                        val info = currentUpdateInfo!!
+                        val prefs = PreferencesManager.getInstance(activity)
+                        
                         UpdateDialog(
-                            updateInfo = currentUpdateInfo!!,
+                            updateInfo = info,
                             onDismiss = { showUpdateDialog = false },
                             onDownload = { url ->
                                 UpdateManager.openDownloadPage(activity, url)
+                                showUpdateDialog = false
+                            },
+                            onIgnore = {
+                                prefs.setIgnoredUpdateVersion(info.versionName)
                                 showUpdateDialog = false
                             }
                         )
@@ -90,62 +98,24 @@ class MainActivity : BaseActivity() {
         }
     }
     
-    @androidx.compose.runtime.Composable
-    private fun UpdateDialog(
-        updateInfo: UpdateManager.UpdateInfo,
-        onDismiss: () -> Unit,
-        onDownload: (String) -> Unit
-    ) {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface,
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
-            title = {
-                Text(
-                    text = "发现新版本 ${updateInfo.versionName}",
-                    style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
-                )
-            },
-            text = {
-                Text(
-                    text = if (updateInfo.releaseNotes.isNotEmpty()) {
-                        "更新内容：\n${updateInfo.releaseNotes}"
-                    } else {
-                        "发现新版本，是否立即下载？"
-                    },
-                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            confirmButton = {
-                androidx.compose.material3.Button(onClick = { onDownload(updateInfo.downloadUrl) }) {
-                    Text("立即下载")
-                }
-            },
-            dismissButton = {
-                androidx.compose.material3.TextButton(onClick = onDismiss) {
-                    Text("稍后提醒")
-                }
-            }
-        )
-    }
-    
+    /**
+     * 静默检查更新
+     * 如果用户已忽略此版本则不弹窗
+     */
     private fun checkForUpdateSilently() {
+        val prefs = PreferencesManager.getInstance(this)
+        val ignoredVersion = prefs.getIgnoredUpdateVersion()
+        
         lifecycleScope.launch {
             try {
                 val updateInfo = UpdateManager.checkForUpdate(this@MainActivity)
-                if (updateInfo != null) {
-                    showUpdateDialog(updateInfo)
+                if (updateInfo != null && updateInfo.versionName != ignoredVersion) {
+                    currentUpdateInfo = updateInfo
+                    showUpdateDialog = true
                 }
             } catch (e: Exception) {
                 // 静默失败
             }
         }
-    }
-    
-    private fun showUpdateDialog(updateInfo: UpdateManager.UpdateInfo) {
-        currentUpdateInfo = updateInfo
-        showUpdateDialog = true
     }
 }

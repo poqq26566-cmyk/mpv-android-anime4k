@@ -49,6 +49,7 @@ import com.fam4k007.videoplayer.ui.screens.DownloadScreen
 import com.fam4k007.videoplayer.ui.screens.FolderBrowserScreen
 import com.fam4k007.videoplayer.ui.screens.TVBrowserScreen
 import com.fam4k007.videoplayer.ui.screens.VideoListScreen
+import com.fam4k007.videoplayer.ui.screens.BiliBiliLoginScreen
 import com.fam4k007.videoplayer.ui.screens.HomeScreen
 import com.fam4k007.videoplayer.ui.screens.LicenseScreen
 import com.fam4k007.videoplayer.ui.screens.LogViewerScreen
@@ -119,6 +120,9 @@ fun AppNavGraph(
                 },
                 onNavigateToTVBrowser = {
                     navController.navigate(AppScreen.TVBrowser(initialUrl = ""))
+                },
+                onNavigateToBiliBiliLogin = {
+                    navController.navigate(AppScreen.BiliBiliLogin)
                 }
             )
         }
@@ -440,7 +444,16 @@ fun AppNavGraph(
 
         composable<AppScreen.BiliBiliPlay> {
             BiliBiliPlayScreen(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onNavigateToLogin = {
+                    navController.navigate(AppScreen.BiliBiliLogin)
+                }
+            )
+        }
+
+        composable<AppScreen.BiliBiliLogin> {
+            BiliBiliLoginScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

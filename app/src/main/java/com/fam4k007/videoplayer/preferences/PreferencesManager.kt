@@ -213,6 +213,44 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putString(AppConstants.Preferences.ANIME4K_LAST_MODE, mode).apply()
     }
     
+    // ==================== 更新相关 ====================
+    
+    /**
+     * 获取是否启用自动检查更新
+     */
+    fun isAutoCheckUpdateEnabled(): Boolean {
+        return sharedPreferences.getBoolean(
+            AppConstants.Preferences.AUTO_CHECK_UPDATE,
+            true  // 默认开启
+        )
+    }
+    
+    /**
+     * 设置自动检查更新开关
+     */
+    fun setAutoCheckUpdateEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.AUTO_CHECK_UPDATE, enabled).apply()
+    }
+    
+    /**
+     * 获取用户忽略的版本号
+     * @return 被忽略的 versionName，空字符串表示没有忽略任何版本
+     */
+    fun getIgnoredUpdateVersion(): String {
+        return sharedPreferences.getString(
+            AppConstants.Preferences.IGNORED_UPDATE_VERSION,
+            ""
+        ) ?: ""
+    }
+    
+    /**
+     * 设置忽略的版本号
+     * @param version 要忽略的版本名，空字符串清除忽略
+     */
+    fun setIgnoredUpdateVersion(version: String) {
+        sharedPreferences.edit().putString(AppConstants.Preferences.IGNORED_UPDATE_VERSION, version).apply()
+    }
+    
     // ==================== 双击手势设置 ====================
     
     /**

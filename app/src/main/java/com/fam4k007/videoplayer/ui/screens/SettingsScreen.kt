@@ -33,7 +33,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -51,9 +50,7 @@ import com.fam4k007.videoplayer.ui.theme.spacing
 import com.fam4k007.videoplayer.ui.screens.dialogs.DarkModeSelectionDialog
 import com.fam4k007.videoplayer.ui.screens.dialogs.DisplayModeSelectionDialog
 import com.fam4k007.videoplayer.ui.screens.dialogs.ThemeSelectionDialog
-import com.fam4k007.videoplayer.utils.UpdateManager
 import com.fam4k007.videoplayer.preferences.PreferencesManager
-import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 /**
@@ -75,14 +72,10 @@ fun SettingsScreen(
     val authManager: BiliBiliAuthManager = koinInject()
     val preferencesManager: PreferencesManager = koinInject()
     val themeController = remember { ThemeController.from(context) }
-    val scope = rememberCoroutineScope()
     
     var showThemeDialog by remember { mutableStateOf(false) }
     var showDarkModeDialog by remember { mutableStateOf(false) }
     var showDisplayModeDialog by remember { mutableStateOf(false) }
-    var showUpdateDialog by remember { mutableStateOf(false) }
-    var updateInfo by remember { mutableStateOf<UpdateManager.UpdateInfo?>(null) }
-    var isCheckingUpdate by remember { mutableStateOf(false) }
     
     // 获取当前显示模式
     val currentDisplayMode = remember { mutableStateOf(preferencesManager.getVideoDisplayMode()) }
@@ -251,40 +244,6 @@ fun SettingsScreen(
                     )
                     
                     ClickableItem(
-                        title = "检查更新",
-                        subtitle = "当前版本: ${UpdateManager.getAppVersionName(context)}",
-                        icon = Icons.Default.Update,
-                        onClick = {
-                            if (!isCheckingUpdate) {
-                                isCheckingUpdate = true
-                                scope.launch {
-                                    try {
-                                        val result = UpdateManager.checkForUpdate(context)
-                                        isCheckingUpdate = false
-                                        if (result != null) {
-                                            updateInfo = result
-                                            showUpdateDialog = true
-                                        } else {
-                                            android.widget.Toast.makeText(
-                                                context,
-                                                "已是最新版本",
-                                                android.widget.Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    } catch (e: Exception) {
-                                        isCheckingUpdate = false
-                                        android.widget.Toast.makeText(
-                                            context,
-                                            "检查更新失败: ${e.message}",
-                                            android.widget.Toast.LENGTH_LONG
-                                        ).show()
-                                    }
-                                }
-                            }
-                        }
-                    )
-                    
-                    ClickableItem(
                         title = "关于",
                         subtitle = "应用信息与许可",
                         icon = Icons.Default.Info,
@@ -346,5 +305,4 @@ fun SettingsScreen(
         )
     }
     
-    // TODO: 实现更新对话框
 }

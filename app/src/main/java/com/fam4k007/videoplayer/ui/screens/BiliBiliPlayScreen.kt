@@ -1,6 +1,5 @@
 package com.fam4k007.videoplayer.ui.screens
 
-import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -24,7 +23,6 @@ import androidx.compose.ui.unit.sp
 import com.fam4k007.videoplayer.presentation.BiliBiliPlayViewModel
 import com.fam4k007.videoplayer.presentation.BiliPlayUiState
 import com.fam4k007.videoplayer.presentation.SimpleBangumiInfo
-import com.fanchen.fam4k007.manager.compose.BiliBiliLoginActivity
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -34,6 +32,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun BiliBiliPlayScreen(
     onBack: () -> Unit,
+    onNavigateToLogin: () -> Unit = {},
     viewModel: BiliBiliPlayViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
@@ -92,7 +91,7 @@ fun BiliBiliPlayScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("哔哩哔哩番剧播放", fontWeight = FontWeight.Bold) },
+                title = { Text("番剧播放", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -103,9 +102,7 @@ fun BiliBiliPlayScreen(
                 },
                 actions = {
                     if (!isLoggedIn) {
-                        TextButton(onClick = {
-                            context.startActivity(Intent(context, BiliBiliLoginActivity::class.java))
-                        }) {
+                        TextButton(onClick = onNavigateToLogin) {
                             Text("登录")
                         }
                     } else {

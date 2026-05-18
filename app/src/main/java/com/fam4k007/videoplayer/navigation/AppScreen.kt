@@ -72,6 +72,10 @@ sealed interface AppScreen {
     @Serializable
     data object BiliBiliPlay : AppScreen
 
+    /** B站登录页 */
+    @Serializable
+    data object BiliBiliLogin : AppScreen
+
     /** TV浏览器页 */
     @Serializable
     data class TVBrowser(val initialUrl: String = "") : AppScreen

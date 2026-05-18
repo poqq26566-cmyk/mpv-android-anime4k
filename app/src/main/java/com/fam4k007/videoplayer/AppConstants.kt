@@ -37,6 +37,10 @@ object AppConstants {
 
         // 播放历史记录 Key
         const val HISTORY_LIST = "history_list"
+
+        // 更新相关 Key
+        const val AUTO_CHECK_UPDATE = "auto_check_update"
+        const val IGNORED_UPDATE_VERSION = "ignored_update_version"
     }
 
     /**
