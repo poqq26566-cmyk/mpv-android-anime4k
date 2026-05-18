@@ -170,6 +170,28 @@ fun PlaybackSettingsScreen(
                 }
             }
 
+            // 自动连播
+            item {
+                PreferenceSectionHeader("自动连播")
+            }
+
+            item {
+                PreferenceCard {
+                    SwitchItem(
+                        title = "自动播放下一集",
+                        subtitle = if (settings.autoPlayNext) "当前视频结束后自动播放下一个视频" else "播放完当前视频后停止",
+                        checked = settings.autoPlayNext,
+                        onCheckedChange = { viewModel.setAutoPlayNext(it) }
+                    )
+                    SwitchItem(
+                        title = "播完退出播放器",
+                        subtitle = if (settings.closeAfterEOF) "播放完最后一个视频后自动关闭播放器" else "播完后停留在当前画面",
+                        checked = settings.closeAfterEOF,
+                        onCheckedChange = { viewModel.setCloseAfterEOF(it) }
+                    )
+                }
+            }
+
             // 画质增强
             item {
                 PreferenceSectionHeader("画质增强")

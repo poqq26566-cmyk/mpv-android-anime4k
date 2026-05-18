@@ -795,9 +795,13 @@ class VideoPlayerActivity : AppCompatActivity(),
      * 播放下一集
      */
     fun playNext() {
-        if (playlist.isEmpty()) return
+        if (playlist.isEmpty()) {
+            Log.d(TAG, "playNext: playlist is empty, cannot play next")
+            return
+        }
 
         val effectiveSize = if (playlistTotalCount > 0) playlistTotalCount else playlist.size
+        Log.d(TAG, "playNext: playlist.size=${playlist.size}, effectiveSize=$effectiveSize, playlistIndex=$playlistIndex, isShuffle=${viewModel.shuffleEnabled.value}")
 
         if (viewModel.shuffleEnabled.value) {
             if (shuffledIndices.isEmpty()) {
@@ -807,20 +811,28 @@ class VideoPlayerActivity : AppCompatActivity(),
             if (shuffledPosition < shuffledIndices.size - 1) {
                 shuffledPosition++
                 playlistIndex = shuffledIndices[shuffledPosition]
+                Log.d(TAG, "playNext(shuffle): shuffledPosition=$shuffledPosition, playlistIndex=$playlistIndex")
                 loadPlaylistItem(playlistIndex)
             } else if (viewModel.shouldRepeatPlaylist()) {
                 generateShuffledIndices()
                 shuffledPosition = 0
                 playlistIndex = shuffledIndices[0]
+                Log.d(TAG, "playNext(shuffle,loop): restart from ${shuffledIndices[0]}")
                 loadPlaylistItem(playlistIndex)
+            } else {
+                Log.d(TAG, "playNext(shuffle): no more items in shuffle list")
             }
         } else {
             if (playlistIndex < effectiveSize - 1) {
                 playlistIndex++
+                Log.d(TAG, "playNext: advancing to index $playlistIndex")
                 loadPlaylistItem(playlistIndex)
             } else if (viewModel.shouldRepeatPlaylist()) {
                 playlistIndex = 0
+                Log.d(TAG, "playNext: at end, repeat playlist -> back to index 0")
                 loadPlaylistItem(0)
+            } else {
+                Log.d(TAG, "playNext: at end of playlist, no repeat")
             }
         }
     }
@@ -883,12 +895,15 @@ class VideoPlayerActivity : AppCompatActivity(),
      */
     private fun loadPlaylistItemInternal(index: Int) {
         if (index < 0 || index >= playlist.size) {
-            Log.e(TAG, "Invalid playlist index: $index (playlist size: ${playlist.size})")
+            Log.e(TAG, "loadPlaylistItemInternal: Invalid index $index (playlist.size=${playlist.size})")
             return
         }
 
+        Log.d(TAG, "loadPlaylistItemInternal: loading index=$index, uri=${playlist[index]}")
+
         // 设置切换标志，防止 MPV 对旧视频发出的 END_FILE 事件触发级联切换
         isSwitchingVideo = true
+        Log.d(TAG, "loadPlaylistItemInternal: isSwitchingVideo set to true")
 
         // 保存当前视频的播放状态
         videoUri?.let { uri ->
@@ -939,13 +954,17 @@ class VideoPlayerActivity : AppCompatActivity(),
         // 释放旧弹幕
         danmakuManager.release()
 
+        Log.d(TAG, "loadPlaylistItemInternal: calling playbackEngine.loadVideo, position=$position")
+
         // 加载视频
         if (isOnline) {
             loadResolvedRemoteVideo(remotePlaybackRequest!!, position)
         } else {
+            playbackEngine?.resetEofDetection()
             playbackEngine?.loadVideo(uri, position)
             applyRememberedSpeed()
         }
+        Log.d(TAG, "loadPlaylistItemInternal: loadVideo called, waiting for MPV_EVENT_FILE_LOADED to reset isSwitchingVideo")
 
         // 设置当前视频 URI 给文件选择器
         filePickerManager.setCurrentVideoUri(uri)
@@ -986,8 +1005,12 @@ class VideoPlayerActivity : AppCompatActivity(),
 
         isHandlingEndOfFile = true
         try {
+            Log.d(TAG, "handleEndOfFile: playlist.size=${playlist.size}, playlistIndex=$playlistIndex, isShuffle=${viewModel.shuffleEnabled.value}")
+            Log.d(TAG, "handleEndOfFile: autoPlayNext=${preferencesManager.isAutoPlayNextEnabled()}, closeAfterEOF=${preferencesManager.isCloseAfterEndOfVideo()}, repeatCurrent=${viewModel.shouldRepeatCurrentFile()}, repeatPlaylist=${viewModel.shouldRepeatPlaylist()}")
+
             // 检查是否重复当前文件
             if (viewModel.shouldRepeatCurrentFile()) {
+                Log.d(TAG, "handleEndOfFile: repeating current file")
                 MPVLib.command("seek", "0", "absolute")
                 MPVLib.setPropertyBoolean("pause", false)
                 return
@@ -1000,15 +1023,17 @@ class VideoPlayerActivity : AppCompatActivity(),
                 } else {
                     playlistIndex < playlist.size - 1
                 }
+                Log.d(TAG, "handleEndOfFile: hasNextItem=$hasNextItem")
 
                 // 检查是否启用自动连播
                 val autoplayEnabled = preferencesManager.isAutoPlayNextEnabled()
 
                 if (hasNextItem && autoplayEnabled) {
+                    Log.d(TAG, "handleEndOfFile: has next AND autoplay enabled -> playNext()")
                     isSwitchingVideo = true
                     playNext()
                 } else if (viewModel.shouldRepeatPlaylist() && autoplayEnabled) {
-                    // 到达播放列表末尾且 repeat ALL：从头开始
+                    Log.d(TAG, "handleEndOfFile: no next but repeat playlist AND autoplay -> loop from start")
                     isSwitchingVideo = true
                     if (viewModel.shuffleEnabled.value) {
                         generateShuffledIndices()
@@ -1020,11 +1045,13 @@ class VideoPlayerActivity : AppCompatActivity(),
                         loadPlaylistItem(0)
                     }
                 } else if (preferencesManager.isCloseAfterEndOfVideo()) {
+                    Log.d(TAG, "handleEndOfFile: no autoplay -> finishAndRemoveTask")
                     finishAndRemoveTask()
+                } else {
+                    Log.d(TAG, "handleEndOfFile: no autoplay and no close -> stay on current")
                 }
-                // 如果自动连播关闭且 closeAfterEndOfVideo 关闭，则停留在当前视频
             } else {
-                // 单视频播放（无播放列表）
+                Log.d(TAG, "handleEndOfFile: single video, closeAfterEOF=${preferencesManager.isCloseAfterEndOfVideo()}")
                 if (preferencesManager.isCloseAfterEndOfVideo()) {
                     finishAndRemoveTask()
                 }

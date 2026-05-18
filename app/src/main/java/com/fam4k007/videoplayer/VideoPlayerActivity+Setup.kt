@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.Button
 import android.widget.ImageView
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import com.fam4k007.videoplayer.domain.player.Anime4KManager
@@ -50,6 +51,13 @@ internal fun VideoPlayerActivity.setupComposeTestLayer() {
                     darkMode = themeController.getDarkMode(),
                     amoledMode = themeController.getAmoledMode()
                 ) {
+                    // 监听文件加载完成事件，重置切换标志，确保自动连播可以继续
+                    LaunchedEffect(Unit) {
+                        viewModel.fileLoadCompleteEvent.collect {
+                            isSwitchingVideo = false
+                            Logger.d("VideoPlayerActivity", "File loaded, isSwitchingVideo reset to false")
+                        }
+                    }
                     PlayerControls(
                         viewModel = viewModel,
                         onBackPress = {

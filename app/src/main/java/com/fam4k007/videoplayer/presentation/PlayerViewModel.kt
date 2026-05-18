@@ -232,6 +232,10 @@ class PlayerViewModel(
     private val _playlistUris = MutableStateFlow<List<Uri>>(emptyList())
     val playlistUris: StateFlow<List<Uri>> = _playlistUris.asStateFlow()
     
+    // 文件加载完成事件（用于 Activity 重置切换标志）
+    private val _fileLoadCompleteEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val fileLoadCompleteEvent: SharedFlow<Unit> = _fileLoadCompleteEvent.asSharedFlow()
+
     // 上下集按钮状态（百分百复用 mpvEx hasNext/hasPrevious 算法）
     // hasNext: list not empty AND (repeat ALL OR index < size - 1)
     val hasPrevious: StateFlow<Boolean> = combine(_currentIndex, _playlistUris, _repeatMode) { idx, list, repeatMode ->
@@ -628,6 +632,7 @@ class PlayerViewModel(
             }
             6 -> { // MPV_EVENT_FILE_LOADED
                 Logger.d(TAG, "MPV: File loaded")
+                _fileLoadCompleteEvent.tryEmit(Unit)
             }
             7 -> { // MPV_EVENT_END_FILE
                 Logger.d(TAG, "MPV: End of file")

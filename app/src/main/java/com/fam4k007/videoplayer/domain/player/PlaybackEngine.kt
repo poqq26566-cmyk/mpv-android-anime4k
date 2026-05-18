@@ -74,6 +74,9 @@ class PlaybackEngine(
 
     private var isInitialized = false
 
+    /** 文件结束检测标志，防止重复触发 EOF */
+    private var eofHandled = false
+
     /**
      * 初始化 MPV 播放器
      * 注意：MPV的create和init已由CustomMPVView处理
@@ -88,7 +91,7 @@ class PlaybackEngine(
         return try {
             // 注册事件观察者
             MPVLib.addObserver(this)
-            
+
             isInitialized = true
             com.fam4k007.videoplayer.utils.Logger.d(TAG, "PlaybackEngine initialized successfully")
             true
@@ -97,6 +100,14 @@ class PlaybackEngine(
             eventCallback.onError("播放器初始化失败: ${e.message}")
             false
         }
+    }
+
+    /**
+     * 重置文件结束检测标志（每次加载新视频前调用）
+     */
+    fun resetEofDetection() {
+        eofHandled = false
+        Log.d(TAG, "EOF detection reset")
     }
 
     /**
@@ -600,6 +611,17 @@ class PlaybackEngine(
             if (duration > 0) {
                 eventCallback.onProgressUpdate(currentPosition, duration)
             }
+
+            // 通过进度检测文件结束（keep-open=yes 时 MPV_EVENT_END_FILE 不会触发）
+            // 当位置接近末尾且正在播放时，触发结束处理
+            // 注意：dur 必须 > 1.0，避免新视频加载时 duration=0 导致误触发
+            if (dur > 1.0 && pos >= dur - 0.5 && isPlaying && !eofHandled) {
+                eofHandled = true
+                Log.d(TAG, "End of file detected by progress (pos=$pos, dur=$dur), triggering onEndOfFile")
+                handler.post {
+                    eventCallback.onEndOfFile()
+                }
+            }
             
             // 检查缓冲状态
             checkBufferingState()
@@ -790,10 +812,11 @@ class PlaybackEngine(
                 }
             }
             7 -> { // MPV_EVENT_END_FILE
-                Log.d(TAG, "End of file")
+                // keep-open=yes 时此事件只会在切换视频时触发（卸载旧视频），不会在自然结束时触发
+                // 自然结束检测已由 updateProgress() 中的进度检测处理
+                Log.d(TAG, "End of file (ignored, progress-based detection handles EOF)")
                 handler.post {
                     isPlaying = false
-                    eventCallback.onEndOfFile()
                 }
             }
         }
