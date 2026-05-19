@@ -869,6 +869,70 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putString("video_list_sort_order", sortOrder).apply()
     }
     
+    // ==================== 弹幕文件选择器排序设置 ====================
+    
+    /**
+     * 获取弹幕文件选择器排序方式
+     * @return "NAME" 或 "DATE"
+     */
+    fun getDanmakuFileSortBy(): String {
+        return sharedPreferences.getString("danmaku_file_sort_by", "NAME") ?: "NAME"
+    }
+    
+    /**
+     * 保存弹幕文件选择器排序方式
+     */
+    fun setDanmakuFileSortBy(sortBy: String) {
+        sharedPreferences.edit().putString("danmaku_file_sort_by", sortBy).apply()
+    }
+    
+    /**
+     * 获取弹幕文件选择器排序顺序
+     * @return "ASCENDING" 或 "DESCENDING"
+     */
+    fun getDanmakuFileSortOrder(): String {
+        return sharedPreferences.getString("danmaku_file_sort_order", "ASCENDING") ?: "ASCENDING"
+    }
+    
+    /**
+     * 保存弹幕文件选择器排序顺序
+     */
+    fun setDanmakuFileSortOrder(sortOrder: String) {
+        sharedPreferences.edit().putString("danmaku_file_sort_order", sortOrder).apply()
+    }
+    
+    // ==================== 字幕文件选择器排序设置 ====================
+    
+    /**
+     * 获取字幕文件选择器排序方式
+     * @return "NAME" 或 "DATE"
+     */
+    fun getSubtitleFileSortBy(): String {
+        return sharedPreferences.getString("subtitle_file_sort_by", "NAME") ?: "NAME"
+    }
+    
+    /**
+     * 保存字幕文件选择器排序方式
+     */
+    fun setSubtitleFileSortBy(sortBy: String) {
+        sharedPreferences.edit().putString("subtitle_file_sort_by", sortBy).apply()
+    }
+    
+    /**
+     * 获取字幕文件选择器排序顺序
+     * @return "ASCENDING" 或 "DESCENDING"
+     */
+    fun getSubtitleFileSortOrder(): String {
+        return sharedPreferences.getString("subtitle_file_sort_order", "ASCENDING") ?: "ASCENDING"
+    }
+    
+    /**
+     * 保存字幕文件选择器排序顺序
+     */
+    fun setSubtitleFileSortOrder(sortOrder: String) {
+        sharedPreferences.edit().putString("subtitle_file_sort_order", sortOrder).apply()
+    }
+    
     // ==================== 字幕字体设置（全局） ====================
     
     /**

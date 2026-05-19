@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fam4k007.videoplayer.preferences.PreferencesManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -51,6 +54,44 @@ fun DanmakuFilePickerDialog(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+    val preferencesManager = remember { PreferencesManager.getInstance(context) }
+
+    // 排序状态 - 从 SharedPreferences 读取上次的排序设置
+    var sortBy by remember {
+        mutableStateOf(
+            when (preferencesManager.getDanmakuFileSortBy()) {
+                "DATE" -> SortBy.DATE
+                else -> SortBy.NAME
+            }
+        )
+    }
+    var sortOrder by remember {
+        mutableStateOf(
+            if (preferencesManager.getDanmakuFileSortOrder() == "DESCENDING")
+                SortOrder.DESCENDING
+            else
+                SortOrder.ASCENDING
+        )
+    }
+    var showSortMenu by remember { mutableStateOf(false) }
+
+    // 排序改变时保存到 SharedPreferences
+    LaunchedEffect(sortBy) {
+        val sortByName = when (sortBy) {
+            SortBy.NAME -> "NAME"
+            SortBy.DATE -> "DATE"
+            else -> "NAME"
+        }
+        preferencesManager.setDanmakuFileSortBy(sortByName)
+    }
+
+    LaunchedEffect(sortOrder) {
+        val orderName = when (sortOrder) {
+            SortOrder.ASCENDING -> "ASCENDING"
+            SortOrder.DESCENDING -> "DESCENDING"
+        }
+        preferencesManager.setDanmakuFileSortOrder(orderName)
+    }
 
     // 加载目录文件
     fun loadFiles(path: String, direction: Int = 0) {
@@ -59,15 +100,32 @@ fun DanmakuFilePickerDialog(
         try {
             val dir = File(path)
             if (dir.exists() && dir.isDirectory) {
-                val fileList = dir.listFiles()?.filter { file ->
+                val rawList = dir.listFiles()?.filter { file ->
                     // 显示文件夹和 .xml 文件
                     file.isDirectory || file.name.endsWith(".xml", ignoreCase = true)
-                }?.sortedWith(compareBy(
-                    { !it.isDirectory }, // 文件夹在前
-                    { it.name.lowercase() }
-                )) ?: emptyList()
+                } ?: emptyList()
                 
-                files = fileList
+                // 排序：文件夹始终在前（按名称升序），然后按用户选择的排序方式排序
+                val dirs = rawList.filter { it.isDirectory }.sortedBy { it.name.lowercase() }
+                val fileList = rawList.filter { !it.isDirectory }.let { files ->
+                    when (sortBy) {
+                        SortBy.NAME -> {
+                            if (sortOrder == SortOrder.ASCENDING)
+                                files.sortedBy { it.name.lowercase() }
+                            else
+                                files.sortedByDescending { it.name.lowercase() }
+                        }
+                        SortBy.DATE -> {
+                            if (sortOrder == SortOrder.ASCENDING)
+                                files.sortedBy { it.lastModified() }
+                            else
+                                files.sortedByDescending { it.lastModified() }
+                        }
+                        else -> files
+                    }
+                }
+                
+                files = dirs + fileList
                 currentPath = path
                 
                 // 滚动到顶部
@@ -90,6 +148,13 @@ fun DanmakuFilePickerDialog(
     LaunchedEffect(Unit) {
         isVisible = true
         loadFiles(currentPath, direction = 0)
+    }
+
+    // 当排序方式改变时，重新排序当前目录
+    LaunchedEffect(sortBy, sortOrder) {
+        if (currentPath.isNotEmpty()) {
+            loadFiles(currentPath, direction = 0)
+        }
     }
 
     // 处理返回键
@@ -204,21 +269,52 @@ fun DanmakuFilePickerDialog(
                                 }
                             )
 
-                            // 关闭按钮
-                            IconButton(
-                                onClick = {
-                                    isVisible = false
-                                    coroutineScope.launch {
-                                        delay(300)
-                                        onDismiss()
-                                    }
-                                }
+                            // 右侧按钮组（排序 + 关闭）
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = "✕",
-                                    fontSize = 20.sp,
-                                    color = Color(0xFFBBBBBB)
-                                )
+                                // 排序按钮
+                                Box {
+                                    IconButton(
+                                        onClick = { showSortMenu = !showSortMenu },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Sort,
+                                            contentDescription = "排序",
+                                            tint = Color(0xFF64B5F6),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+
+                                    // 排序菜单
+                                    DanmakuSortMenu(
+                                        expanded = showSortMenu,
+                                        onDismissRequest = { showSortMenu = false },
+                                        sortBy = sortBy,
+                                        sortOrder = sortOrder,
+                                        onSortByChange = { sortBy = it },
+                                        onSortOrderChange = { sortOrder = it }
+                                    )
+                                }
+
+                                // 关闭按钮
+                                IconButton(
+                                    onClick = {
+                                        isVisible = false
+                                        coroutineScope.launch {
+                                            delay(300)
+                                            onDismiss()
+                                        }
+                                    }
+                                ) {
+                                    Text(
+                                        text = "✕",
+                                        fontSize = 20.sp,
+                                        color = Color(0xFFBBBBBB)
+                                    )
+                                }
                             }
                         }
 
@@ -422,3 +518,88 @@ private fun FileItem(
         }
     }
 }
+
+/**
+ * 弹幕文件选择器的排序菜单
+ * 仅支持按文件名和添加时间排序
+ */
+@Composable
+private fun DanmakuSortMenu(
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    sortBy: SortBy,
+    sortOrder: SortOrder,
+    onSortByChange: (SortBy) -> Unit,
+    onSortOrderChange: (SortOrder) -> Unit
+) {
+    MaterialTheme(
+        colorScheme = darkColorScheme()
+    ) {
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = onDismissRequest,
+            modifier = Modifier
+                .background(Color(0xE6212121))
+                .width(160.dp)
+        ) {
+            // 排序方式分组
+            Text(
+                text = "排序方式",
+                fontSize = 11.sp,
+                color = Color(0x99FFFFFF),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            SortMenuItem(
+                text = "文件名",
+                isSelected = sortBy == SortBy.NAME,
+                onClick = {
+                    onSortByChange(SortBy.NAME)
+                    onDismissRequest()
+                }
+            )
+
+            SortMenuItem(
+                text = "添加时间",
+                isSelected = sortBy == SortBy.DATE,
+                onClick = {
+                    onSortByChange(SortBy.DATE)
+                    onDismissRequest()
+                }
+            )
+
+            Divider(
+                color = Color(0x33FFFFFF),
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+
+            // 排序顺序分组
+            Text(
+                text = "排序顺序",
+                fontSize = 11.sp,
+                color = Color(0x99FFFFFF),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            SortMenuItem(
+                text = "升序 ↑",
+                isSelected = sortOrder == SortOrder.ASCENDING,
+                onClick = {
+                    onSortOrderChange(SortOrder.ASCENDING)
+                    onDismissRequest()
+                }
+            )
+
+            SortMenuItem(
+                text = "降序 ↓",
+                isSelected = sortOrder == SortOrder.DESCENDING,
+                onClick = {
+                    onSortOrderChange(SortOrder.DESCENDING)
+                    onDismissRequest()
+                }
+            )
+        }
+    }
+}
+
