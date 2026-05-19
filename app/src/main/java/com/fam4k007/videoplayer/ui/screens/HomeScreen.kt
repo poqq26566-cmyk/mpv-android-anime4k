@@ -882,7 +882,7 @@ private fun flatScanAndPlayAllVideos(context: android.content.Context) {
 }
 
 /**
- * 扫描全部视频（不分文件夹）
+ * 扫描全部视频（不分文件夹），自动过滤黑名单文件夹中的视频
  */
 private fun scanAllVideosFlat(context: android.content.Context): List<com.fam4k007.videoplayer.VideoFileParcelable> {
     val videos = mutableListOf<com.fam4k007.videoplayer.VideoFileParcelable>()
@@ -896,6 +896,9 @@ private fun scanAllVideosFlat(context: android.content.Context): List<com.fam4k0
     )
     
     val sortOrder = "${android.provider.MediaStore.Video.Media.DATE_ADDED} DESC"
+    
+    // 获取黑名单文件夹列表
+    val blacklistedFolders = com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(context).getBlacklistedFolders()
     
     try {
         context.contentResolver.query(
@@ -916,6 +919,10 @@ private fun scanAllVideosFlat(context: android.content.Context): List<com.fam4k0
                 val path = cursor.getString(dataColumn)
                 val file = java.io.File(path)
                 if (!file.exists()) continue
+                
+                // 检查父文件夹是否在黑名单中
+                val parentPath = file.parent
+                if (parentPath != null && parentPath in blacklistedFolders) continue
                 
                 val id = cursor.getLong(idColumn)
                 val name = cursor.getString(nameColumn)

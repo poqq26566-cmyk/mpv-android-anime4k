@@ -106,17 +106,27 @@ class LibraryViewModel(
     /**
      * 扫描所有本地视频文件夹
      */
+    /**
+     * 过滤掉黑名单中的文件夹
+     */
+    private fun filterBlacklistedFolders(folders: List<VideoFolder>): List<VideoFolder> {
+        val blacklisted = preferencesManager.getBlacklistedFolders()
+        if (blacklisted.isEmpty()) return folders
+        return folders.filter { it.folderPath !in blacklisted }
+    }
+
     fun scanVideoFolders() {
         viewModelScope.launch {
             try {
                 _folderListState.value = _folderListState.value.copy(isLoading = true, error = null)
-                val folders = videoRepository.scanAllVideoFolders()
+                val allFolders = videoRepository.scanAllVideoFolders()
+                val folders = filterBlacklistedFolders(allFolders)
                 val sortedFolders = sortFolders(folders, _folderListState.value.sortType, _folderListState.value.sortOrder)
                 _folderListState.value = _folderListState.value.copy(
                     folders = sortedFolders,
                     isLoading = false
                 )
-                Logger.d(TAG, "Scanned ${folders.size} video folders")
+                Logger.d(TAG, "Scanned ${allFolders.size} video folders, filtered ${allFolders.size - folders.size} blacklisted")
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to scan video folders", e)
                 _folderListState.value = _folderListState.value.copy(
@@ -134,7 +144,8 @@ class LibraryViewModel(
         viewModelScope.launch {
             try {
                 _folderListState.value = _folderListState.value.copy(isRefreshing = true, error = null)
-                val folders = videoRepository.scanAllVideoFolders()
+                val allFolders = videoRepository.scanAllVideoFolders()
+                val folders = filterBlacklistedFolders(allFolders)
                 val sortedFolders = sortFolders(folders, _folderListState.value.sortType, _folderListState.value.sortOrder)
                 _folderListState.value = _folderListState.value.copy(
                     folders = sortedFolders,

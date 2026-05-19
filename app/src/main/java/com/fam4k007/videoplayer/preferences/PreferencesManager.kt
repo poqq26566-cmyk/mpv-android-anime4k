@@ -137,6 +137,31 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putString(AppConstants.Preferences.VIDEO_DISPLAY_MODE, mode).apply()
     }
     
+    // ==================== 文件夹黑名单 ====================
+    
+    /**
+     * 获取黑名单文件夹路径集合
+     * @return 被屏蔽的文件夹路径 Set
+     */
+    fun getBlacklistedFolders(): Set<String> {
+        return sharedPreferences.getStringSet(AppConstants.Preferences.FOLDER_BLACKLIST, emptySet())
+            ?: emptySet()
+    }
+    
+    /**
+     * 保存黑名单文件夹路径集合
+     */
+    fun setBlacklistedFolders(folders: Set<String>) {
+        sharedPreferences.edit().putStringSet(AppConstants.Preferences.FOLDER_BLACKLIST, folders).apply()
+    }
+    
+    /**
+     * 检查路径是否被黑名单屏蔽
+     */
+    fun isFolderBlacklisted(folderPath: String): Boolean {
+        return getBlacklistedFolders().contains(folderPath)
+    }
+    
     // ==================== 精确进度定位 ====================
     
     /**

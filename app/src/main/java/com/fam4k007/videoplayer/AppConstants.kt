@@ -31,6 +31,9 @@ object AppConstants {
         // 视频显示模式 Key
         const val VIDEO_DISPLAY_MODE = "video_display_mode"
         
+        // 文件夹黑名单 Key
+        const val FOLDER_BLACKLIST = "folder_blacklist"
+        
         // 双击手势设置 Key
         const val DOUBLE_TAP_MODE = "double_tap_mode"  // 0=暂停, 1=快进快退
         const val DOUBLE_TAP_SEEK_SECONDS = "double_tap_seek_seconds"  // 双击跳转秒数

@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -67,6 +68,7 @@ fun SettingsScreen(
     onNavigateToBiliBiliDanmaku: () -> Unit = {},
     onNavigateToDownload: () -> Unit = {},
     onNavigateToSubtitleSearch: () -> Unit = {},
+    onNavigateToFolderBlacklist: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val authManager: BiliBiliAuthManager = koinInject()
@@ -170,6 +172,13 @@ fun SettingsScreen(
                         },
                         icon = Icons.Default.VideoLibrary,
                         onClick = { showDisplayModeDialog = true }
+                    )
+                    
+                    ClickableItem(
+                        title = "文件夹黑名单",
+                        subtitle = "屏蔽指定文件夹，不再扫描其中的视频",
+                        icon = Icons.Default.Warning,
+                        onClick = onNavigateToFolderBlacklist
                     )
                 }
             }

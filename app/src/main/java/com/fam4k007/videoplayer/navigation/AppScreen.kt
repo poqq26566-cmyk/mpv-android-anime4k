@@ -24,6 +24,10 @@ sealed interface AppScreen {
     @Serializable
     data object PlaybackHistory : AppScreen
 
+    /** 文件夹黑名单页 */
+    @Serializable
+    data object FolderBlacklist : AppScreen
+
     /** 关于页 */
     @Serializable
     data object About : AppScreen

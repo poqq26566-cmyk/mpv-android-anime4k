@@ -56,6 +56,7 @@ import com.fam4k007.videoplayer.ui.screens.LicenseScreen
 import com.fam4k007.videoplayer.ui.screens.LogViewerScreen
 import com.fam4k007.videoplayer.ui.screens.PlaybackHistoryScreen
 import com.fam4k007.videoplayer.ui.screens.PlaybackSettingsScreen
+import com.fam4k007.videoplayer.ui.screens.FolderBlacklistScreen
 import com.fam4k007.videoplayer.ui.screens.SettingsScreen
 import com.fam4k007.videoplayer.ui.screens.SubtitleSearchScreen
 import com.fam4k007.videoplayer.ui.webdav.WebDavAccountListScreen
@@ -148,6 +149,9 @@ fun AppNavGraph(
                 },
                 onNavigateToSubtitleSearch = {
                     navController.navigate(AppScreen.SubtitleSearch)
+                },
+                onNavigateToFolderBlacklist = {
+                    navController.navigate(AppScreen.FolderBlacklist)
                 }
             )
         }
@@ -443,6 +447,12 @@ fun AppNavGraph(
                 onSelectMedia = { media -> viewModel.selectMedia(media) },
                 onDownload = { subtitle -> viewModel.downloadSubtitle(subtitle) },
                 onClearSelection = { viewModel.clearSelection() }
+            )
+        }
+
+        composable<AppScreen.FolderBlacklist> {
+            FolderBlacklistScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
