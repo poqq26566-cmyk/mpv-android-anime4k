@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 import org.koin.androidx.compose.KoinAndroidContext
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
@@ -38,6 +39,14 @@ class VideoBrowserComposeActivity : ComponentActivity() {
 
     private val preferencesManager: com.fam4k007.videoplayer.preferences.PreferencesManager by inject()
     private var themeRevision by mutableIntStateOf(0)
+    
+    // 用于跳转 Settings 授权后返回时关闭当前 Activity，回到首页重新进入
+    private val storagePermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        // 从 Settings 返回，直接关闭 Activity 回到首页
+        finish()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +55,12 @@ class VideoBrowserComposeActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setupContent()
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // 从 Settings 授权页面返回时触发重组，重新检查权限状态
+        themeRevision++
     }
 
     private fun setupContent() {
@@ -87,10 +102,10 @@ class VideoBrowserComposeActivity : ComponentActivity() {
             try {
                 val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
                 intent.data = Uri.parse("package:$packageName")
-                startActivity(intent)
+                storagePermissionLauncher.launch(intent)
             } catch (e: Exception) {
                 val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                startActivity(intent)
+                storagePermissionLauncher.launch(intent)
             }
         } else {
             ActivityCompat.requestPermissions(
@@ -109,14 +124,8 @@ class VideoBrowserComposeActivity : ComponentActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            setupContent()
+            themeRevision++
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        themeRevision++
-        setupContent()
     }
 
     private fun scanVideoFiles(callback: (List<VideoFolder>) -> Unit) {

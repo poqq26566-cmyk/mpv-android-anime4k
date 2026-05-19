@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -43,6 +44,7 @@ fun BiliBiliDanmakuScreen(
     var showProgressDialog by remember { mutableStateOf(false) }
     val primaryColor = MaterialTheme.colorScheme.primary
     val keyboardController = LocalSoftwareKeyboardController.current
+    val context = LocalContext.current
     
     // 当开始下载时显示进度弹窗
     LaunchedEffect(isDownloading) {
@@ -190,7 +192,10 @@ fun BiliBiliDanmakuScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (currentFolderUri != null) "已设置路径" else "设置路径",
+                            text = if (currentFolderUri != null) {
+                                val docFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, currentFolderUri!!)
+                                docFile?.name ?: "已设置路径"
+                            } else "设置路径",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             maxLines = 1,

@@ -24,14 +24,14 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
     // SharedPreferences用于持久化存储路径
     private val prefs = application.getSharedPreferences("bilibili_download", android.content.Context.MODE_PRIVATE)
     
-    // 存储路径
+    // 存储路径（无默认值，用户必须手动设置）
     private val _downloadPath = MutableStateFlow(
-        prefs.getString("download_path", File(application.getExternalFilesDir(null), "downloads").absolutePath) ?: File(application.getExternalFilesDir(null), "downloads").absolutePath
+        prefs.getString("download_path", "") ?: ""
     )
     val downloadPath: StateFlow<String> = _downloadPath
     
     private val _downloadPathDisplay = MutableStateFlow(
-        prefs.getString("download_path_display", "downloads") ?: "downloads"
+        prefs.getString("download_path_display", "") ?: ""
     )
     val downloadPathDisplay: StateFlow<String> = _downloadPathDisplay
 
@@ -75,6 +75,9 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
     // 获取下载目录
     private fun getDownloadDir(): File {
         val path = _downloadPath.value
+        if (path.isEmpty()) {
+            throw IllegalStateException("下载路径未设置")
+        }
         // 如果是content URI，使用默认路径
         val dir = if (path.startsWith("content://")) {
             File(getApplication<Application>().getExternalFilesDir(null), "downloads")
@@ -302,6 +305,12 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
     fun startSelectedDownloads() {
         val result = _parseResult.value ?: return
 
+        // 检查是否已设置下载路径
+        if (_downloadPath.value.isEmpty()) {
+            _parseError.value = "请先设置保存路径"
+            return
+        }
+
         if (_episodeList.value.isNotEmpty() && _selectedEpisodes.value.isNotEmpty()) {
             // 下载选中的集数
             _episodeList.value.filter { _selectedEpisodes.value.contains(it.episodeId) }
@@ -345,7 +354,7 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
                 val videoInfoResult = downloadManager.getMediaInfo(aid, cid)
                 if (videoInfoResult.isSuccess) {
                     val videoInfo = videoInfoResult.getOrThrow()
-                    val downloadDir = File(getApplication<Application>().getExternalFilesDir(null), "downloads")
+                    val downloadDir = File(_downloadPath.value)
                     downloadDir.mkdirs()
 
                     // 下载视频片段

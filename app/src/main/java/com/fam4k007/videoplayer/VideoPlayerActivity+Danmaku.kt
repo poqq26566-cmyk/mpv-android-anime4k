@@ -28,8 +28,7 @@ internal fun VideoPlayerActivity.loadDanmakuForVideo(videoUri: android.net.Uri) 
             val autoShow = history.danmuVisible
             val loaded = danmakuManager.loadDanmakuFile(
                 history.danmuPath,
-                autoShow = autoShow,
-                isPlaying = isPlaying
+                autoShow = autoShow
             )
 
             if (loaded) {
@@ -70,11 +69,11 @@ internal fun VideoPlayerActivity.autoFindAndLoadDanmaku(videoUri: android.net.Ur
         if (videoPath != null) {
             com.fam4k007.videoplayer.utils.Logger.d(TAG, "Auto-finding danmaku for: $videoPath")
 
-            // 自动加载弹幕，默认不显示（autoShow = false），由用户手动控制
+            // 自动加载弹幕并显示（autoShow = true），找到弹幕时自动显示
+            // 切集时弹幕状态会通过历史记录中的 danmuVisible 恢复
             val loaded = danmakuManager.loadDanmakuForVideo(
                 videoPath,
-                autoShow = false,  // 加载但不自动显示
-                isPlaying = isPlaying
+                autoShow = true  // 找到弹幕时自动显示
             )
 
             if (loaded) {
@@ -153,25 +152,14 @@ internal fun VideoPlayerActivity.loadNetworkDanmaku(episodeId: Int, animeTitle: 
 
                     Logger.d(TAG, "网络弹幕已保存到: ${danmakuFile.absolutePath}")
 
-                    // 加载弹幕
+                    // 加载弹幕（状态机自动处理启动时序）
                     val loaded = danmakuManager.loadDanmakuFile(danmakuFile.absolutePath, autoShow = true)
 
                     if (loaded) {
                         // 同步弹幕到当前播放位置
                         val currentPosition = (playbackEngine.currentPosition * 1000).toLong()
                         danmakuManager.seekTo(currentPosition)
-
-                        // 如果视频正在播放，立即启动弹幕
-                        if (isPlaying) {
-                            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                                danmakuManager.resume()
-                                Logger.d(TAG, "Network danmaku resumed (video playing)")
-                            }, 300)
-                        } else {
-                            Logger.d(TAG, "Network danmaku loaded but not started (video paused)")
-                        }
-
-                        Logger.d(TAG, "Network danmaku loaded and synced to position: $currentPosition")
+                        Logger.d(TAG, "Network danmaku loaded and synced to position: $currentPosition (state machine handles start)")
 
                         DialogUtils.showToastShort(
                             this@loadNetworkDanmaku,

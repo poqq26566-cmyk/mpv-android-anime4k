@@ -2,8 +2,6 @@ package com.fam4k007.videoplayer.domain.danmaku
 
 import android.content.Context
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import com.fam4k007.videoplayer.danmaku.DanmakuConfig
 import com.fam4k007.videoplayer.danmaku.DanmakuPlayerView
@@ -14,6 +12,10 @@ import java.io.File
 /**
  * 弹幕管理器
  * 负责弹幕的加载、控制、样式管理
+ * 使用状态机模式自动管理弹幕生命周期：
+ * - 当弹幕准备完成 (isPrepared) 且播放引擎正在播放 (isEnginePlaying) 时自动 start()
+ * - 当播放引擎暂停时自动 pause()
+ * 无需外部手动管理播放/暂停状态
  */
 class DanmakuManager(
     private val context: Context,
@@ -30,6 +32,12 @@ class DanmakuManager(
     
     // 播放引擎引用（用于提供播放位置）
     private var playbackEngine: PlaybackEngine? = null
+    
+    // ==================== 状态机 ====================
+    // 引擎播放状态（由 onPlaybackStateChanged 更新）
+    private var isEnginePlaying = false
+    // 弹幕是否已准备完成（由 onPreparedListener 回调更新）
+    private var isDanmakuPrepared = false
 
     /**
      * 初始化弹幕配置
@@ -62,10 +70,12 @@ class DanmakuManager(
     }
     
     /**
-     * 设置播放引擎（用于提供播放位置）
-     * 参考 DanDanPlay 的 ControlWrapper 设计
+     * 连接播放引擎（参考 DanDanPlay 的 ControlWrapper 设计）
+     * 自动建立弹幕与播放引擎的绑定关系：
+     * 1. 设置 PlaybackPositionProvider 用于进度同步
+     * 2. 注册 onPreparedListener 用于状态机驱动
      */
-    fun setPlaybackEngine(engine: PlaybackEngine) {
+    fun connectToEngine(engine: PlaybackEngine) {
         playbackEngine = engine
         
         // 创建 PlaybackPositionProvider 并设置到 DanmakuView
@@ -78,16 +88,73 @@ class DanmakuManager(
                 return engine.isPlaying
             }
         }
-        
         danmakuView.setPlaybackPositionProvider(provider)
-        Log.d(TAG, "PlaybackEngine set")
+        
+        // 注册弹幕准备完成回调（状态机驱动）
+        danmakuView.onPreparedListener = { onDanmakuPrepared() }
+        
+        Log.d(TAG, "connectToEngine: PlaybackEngine connected, prepared listener registered")
+    }
+    
+    /**
+     * 播放状态变化回调（由 ViewModel 状态监听器调用）
+     * 状态机核心：当播放状态变化时，自动同步弹幕的播放/暂停
+     */
+    fun onPlaybackStateChanged(isPlaying: Boolean) {
+        isEnginePlaying = isPlaying
+        syncDanmakuState()
+    }
+    
+    /**
+     * 弹幕准备完成回调（由 DanmakuPlayerView.onPreparedListener 调用）
+     * 状态机核心：当弹幕准备完成时，检查播放状态并自动启动
+     */
+    private fun onDanmakuPrepared() {
+        isDanmakuPrepared = true
+        Log.d(TAG, "onDanmakuPrepared: isEnginePlaying=$isEnginePlaying, trackSelected=${danmakuView.getTrackSelected()}")
+        syncDanmakuState()
+    }
+    
+    /**
+     * 状态机同步：检查弹幕和引擎的状态，自动控制弹幕播放/暂停
+     * 解决了弹幕启动的时序难题——无论 prepared 和 isPlaying 谁先到达，都能正确启动
+     *
+     * 关键设计：
+     * - 如果弹幕处于暂停状态（isPaused），用 resume() 恢复渲染
+     * - 否则用 start() 首次启动（DanmakuFlameMaster 的 start() 在已启动时会内部调用 resume()）
+     */
+    private fun syncDanmakuState() {
+        if (!isDanmakuPrepared) {
+            Log.d(TAG, "syncDanmakuState: danmaku not prepared yet, skipping")
+            return
+        }
+        if (!danmakuView.getTrackSelected()) {
+            Log.d(TAG, "syncDanmakuState: track not selected, skipping")
+            return
+        }
+        
+        if (isEnginePlaying) {
+            if (danmakuView.isPaused) {
+                // 之前被暂停了，用 resume 恢复
+                danmakuView.resumeDanmaku()
+                Log.d(TAG, "syncDanmakuState: auto-resumed (was paused, engine now playing)")
+            } else {
+                // 首次启动或已经播放中，start() 是安全的
+                danmakuView.startDanmaku()
+                Log.d(TAG, "syncDanmakuState: auto-started (engine playing)")
+            }
+        } else {
+            danmakuView.pauseDanmaku()
+            Log.d(TAG, "syncDanmakuState: auto-paused (engine paused)")
+        }
     }
 
     /**
      * 加载弹幕文件
      * 自动根据视频文件路径查找同名的 .xml 弹幕文件
+     * 启动时序由状态机自动管理，无需外部传入 isPlaying
      */
-    fun loadDanmakuForVideo(videoPath: String, autoShow: Boolean = true, isPlaying: Boolean = false): Boolean {
+    fun loadDanmakuForVideo(videoPath: String, autoShow: Boolean = true): Boolean {
         if (!isInitialized) {
             Log.e(TAG, "DanmakuManager not initialized")
             return false
@@ -103,26 +170,16 @@ class DanmakuManager(
             return false
         }
 
+        // 重置状态机，准备加载新弹幕
+        isDanmakuPrepared = false
+
         // 加载弹幕
         val loaded = danmakuView.loadDanmaku(danmakuFile.absolutePath)
         if (loaded) {
             currentDanmakuPath = danmakuFile.absolutePath
             // 参考 DanDanPlay: addTrack 成功后自动调用 selectTrack
-            // 注意：setTrackSelected 会根据 autoShow 参数决定可见性
             danmakuView.setTrackSelected(autoShow)
-            
-            // 【修复】如果视频正在播放且需要自动显示，立即启动弹幕
-            if (autoShow && isPlaying && isPrepared()) {
-                start()
-                Log.d(TAG, "Danmaku auto-started for playing video")
-            }
-            
-            // 根据参数决定是否自动显示
-            if (autoShow) {
-                Log.d(TAG, "Danmaku loaded, track selected and shown: ${danmakuFile.absolutePath}")
-            } else {
-                Log.d(TAG, "Danmaku loaded, track selected (hidden): ${danmakuFile.absolutePath}")
-            }
+            Log.d(TAG, "Danmaku loaded: ${danmakuFile.absolutePath}, autoShow=$autoShow (state machine will handle start)")
         }
         return loaded
     }
@@ -130,43 +187,23 @@ class DanmakuManager(
     /**
      * 加载指定的弹幕文件（用户手动选择或历史恢复）
      * 参考 DanDanPlay 的 addTrack 方法
+     * 启动时序由状态机自动管理（无需延迟重试）
      */
-    fun loadDanmakuFile(danmakuPath: String, autoShow: Boolean = true, isPlaying: Boolean = false): Boolean {
+    fun loadDanmakuFile(danmakuPath: String, autoShow: Boolean = true): Boolean {
         if (!isInitialized) {
             Log.e(TAG, "DanmakuManager not initialized")
             return false
         }
 
+        // 重置状态机，准备加载新弹幕
+        isDanmakuPrepared = false
+
         val loaded = danmakuView.loadDanmaku(danmakuPath)
         
-        // 如果加载成功，记录路径并设置轨道选中状态（参考 DanDanPlay 的 addTrack → selectTrack 流程）
         if (loaded) {
             currentDanmakuPath = danmakuPath
-            // 参考 DanDanPlay: addTrack 成功后自动调用 selectTrack
-            // 注意：setTrackSelected 会根据 autoShow 参数决定可见性
             danmakuView.setTrackSelected(autoShow)
-            
-            // 延迟等待弹幕准备完成后再启动渲染
-            // 直接调用 start() 会因 isPrepared()=false 被跳过
-            // 重启 App 时 provider.isPlaying() 也可能为 false，导致 prepared() 中不调 start()
-            if (autoShow) {
-                Handler(Looper.getMainLooper()).postDelayed({
-                    if (isPrepared()) {
-                        start()
-                        Log.d(TAG, "Danmaku auto-started for autoShow=true")
-                    } else {
-                        // 还没准备好，再等500ms
-                        Handler(Looper.getMainLooper()).postDelayed({
-                            if (isPrepared()) {
-                                start()
-                                Log.d(TAG, "Danmaku auto-started after retry")
-                            }
-                        }, 500)
-                    }
-                }, 300)
-            }
-            
-            Log.d(TAG, "Danmaku loaded and track selected: $danmakuPath, autoShow=$autoShow")
+            Log.d(TAG, "Danmaku loaded and track selected: $danmakuPath, autoShow=$autoShow (state machine will handle start)")
         }
         
         return loaded
@@ -390,6 +427,8 @@ class DanmakuManager(
      */
     fun release() {
         currentDanmakuPath = null
+        isDanmakuPrepared = false
+        isEnginePlaying = false
         danmakuView.releaseDanmaku()
     }
 

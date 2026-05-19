@@ -391,8 +391,8 @@ class VideoPlayerActivity : AppCompatActivity(),
         
         initializeManagers()
         
-        // 【优化】设置播放引擎，让弹幕可以自动同步播放位置（参考 DanDanPlay 的 ControlWrapper）
-        danmakuManager.setPlaybackEngine(playbackEngine)
+        // 连接播放引擎：弹幕状态机自动管理播放/暂停/seek（参考 DanDanPlay 的 ControlWrapper）
+        danmakuManager.connectToEngine(playbackEngine)
         
         handleVideoListIntent()
 
@@ -451,7 +451,6 @@ class VideoPlayerActivity : AppCompatActivity(),
         intent.putExtra(EXTRA_PORTRAIT_UI, nextPortrait)
         applyPortraitUiEnabled(nextPortrait)
         
-        // 手动旋转时不改变自动旋转状态
         if (!autoRotateEnabled) {
             // 自动旋转关闭时，锁定到对应的方向
             requestedOrientation = if (nextPortrait) {
@@ -460,7 +459,9 @@ class VideoPlayerActivity : AppCompatActivity(),
                 ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             }
         } else {
-            // 自动旋转开启时，临时改变方向，但保持自动旋转开启
+            // 手动旋转按钮会关闭自动旋转，锁定到当前方向
+            // 这样"更多"菜单中的自动旋转状态会同步更新为"关"
+            intent.putExtra(EXTRA_AUTO_ROTATE, false)
             requestedOrientation = if (nextPortrait) {
                 ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
             } else {

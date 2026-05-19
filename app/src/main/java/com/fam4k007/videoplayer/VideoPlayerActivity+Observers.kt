@@ -18,14 +18,8 @@ internal fun VideoPlayerActivity.setupViewModelObservers() {
             val isPlaying = paused != true
             this@setupViewModelObservers.isPlaying = isPlaying
 
-            // 弹幕同步（保持原有逻辑）
-            if (danmakuManager.isPrepared()) {
-                if (isPlaying) {
-                    danmakuManager.resume()
-                } else {
-                    danmakuManager.pause()
-                }
-            }
+            // 弹幕状态机同步（由 DanmakuManager 内部自动处理时序）
+            danmakuManager.onPlaybackStateChanged(isPlaying)
         }
     }
 
@@ -40,11 +34,14 @@ internal fun VideoPlayerActivity.setupViewModelObservers() {
         }
     }
 
-    // 监听播放速度变化
+    // 监听播放速度变化（同步到弹幕，覆盖长按倍速等所有途径）
     lifecycleScope.launch {
         var previousSpeed = 1.0f
         viewModel.speed.collect { speed ->
             com.fam4k007.videoplayer.utils.Logger.v(TAG, "【ViewModel】Speed changed to: ${speed}x")
+
+            // 同步弹幕倍速（覆盖底部菜单和长按两种入口）
+            danmakuManager.setSpeed(speed)
 
             // 速度变化时显示提示（排除初始值；恢复到1.0x时不显示，避免长按松手后误触发）
             if (previousSpeed != 1.0f && speed != previousSpeed && speed != 1.0f) {
@@ -101,23 +98,6 @@ internal fun VideoPlayerActivity.setupViewModelObservers() {
     lifecycleScope.launch {
         viewModel.danmakuVisible.collect { visible ->
             Logger.v(TAG, "【ViewModel】Danmaku visible: $visible")
-        }
-    }
-    
-    // 监听弹幕准备完成，自动启动渲染（兜底方案）
-    lifecycleScope.launch {
-        // 轮询等待弹幕准备完成且视频位置已更新，然后确保渲染已启动
-        // prepared() 回调中 start() 依赖 provider.isPlaying()，
-        // 但重启 App 时 MPV 可能尚未更新 isPlaying 状态，导致 start() 被跳过
-        while (true) {
-            if (danmakuManager.isPrepared() && viewModel.danmakuVisible.value) {
-                val currentPos = (currentPosition * 1000).toLong()
-                danmakuManager.seekTo(currentPos)
-                danmakuManager.start()
-                Logger.d(TAG, "Danmaku rendering ensured after prepared, seekTo=$currentPos")
-                break
-            }
-            kotlinx.coroutines.delay(100)
         }
     }
 

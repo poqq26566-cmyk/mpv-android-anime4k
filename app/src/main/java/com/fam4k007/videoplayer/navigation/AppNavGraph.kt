@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -350,6 +351,9 @@ fun AppNavGraph(
         composable<AppScreen.VideoBrowser> {
             val context = LocalContext.current
 
+            // 权限刷新触发器：每次从 Settings 返回时递增，强制重组重新检查权限
+            var permissionRefreshTrigger by remember { mutableIntStateOf(0) }
+
             // 检查存储权限（每次重组时检查）
             val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 Environment.isExternalStorageManager()
@@ -360,11 +364,22 @@ fun AppNavGraph(
                 ) == PackageManager.PERMISSION_GRANTED
             }
 
-            // 权限请求启动器（Android 10及以下）
+            // 权限请求启动器
+            // Android 11+：通过 StartActivityForResult 跳转 Settings，返回时触发重组检查权限
+            // Android 10-：通过 RequestPermission 请求
             val permissionLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.RequestPermission()
             ) { _ ->
-                // 权限结果会在重组时自动检查
+                permissionRefreshTrigger++
+            }
+            
+            val manageFilesLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.StartActivityForResult()
+            ) { _ ->
+                // 从 Settings 授权返回后，直接返回首页
+                // 下次再进入 VideoBrowser 时会重新检查权限，看到已授权的结果
+                permissionRefreshTrigger++
+                navController.popBackStack()
             }
 
             FolderBrowserScreen(
@@ -374,10 +389,10 @@ fun AppNavGraph(
                         try {
                             val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
                             intent.data = Uri.parse("package:${context.packageName}")
-                            context.startActivity(intent)
+                            manageFilesLauncher.launch(intent)
                         } catch (e: Exception) {
                             val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                            context.startActivity(intent)
+                            manageFilesLauncher.launch(intent)
                         }
                     } else {
                         permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)

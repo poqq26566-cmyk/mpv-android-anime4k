@@ -63,8 +63,8 @@ object DanmakuConfig {
     var maxScreenNum: Int = 0
         private set
     
-    // 使用 Choreographer 更新（高刷新率适配）
-    var updateInChoreographer: Boolean = false
+    // 使用 Choreographer 更新（高刷新率适配，适配 60/90/120Hz 屏幕）
+    var updateInChoreographer: Boolean = true
         private set
     
     // 弹幕调试模式

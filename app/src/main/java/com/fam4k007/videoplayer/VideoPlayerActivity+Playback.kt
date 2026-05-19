@@ -315,14 +315,6 @@ internal fun VideoPlayerActivity.resolveVideoTitle(uri: Uri): String {
         ?.takeIf { it.isNotBlank() }
         ?.let { return it }
 
-    val intentTitle = listOf("video_title", "title", "file_name", "video_name")
-        .asSequence()
-        .mapNotNull { key -> intent.getStringExtra(key) }
-        .firstOrNull { it.isNotBlank() }
-    if (!intentTitle.isNullOrBlank()) {
-        return intentTitle
-    }
-
     if (isRemotePlaybackUri(uri)) {
         val remoteName = uri.lastPathSegment
             ?.substringBefore("?")
