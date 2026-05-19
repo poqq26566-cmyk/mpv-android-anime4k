@@ -1111,19 +1111,48 @@ class PlaybackEngine(
     
     /**
      * 设置着色器列表（用于Anime4K等）
+     * 启用着色器时自动开启OpenGL渲染优化（PBO、直接渲染），提升性能
      */
     fun setShaderList(shaders: List<String>) {
         try {
             if (shaders.isEmpty()) {
                 MPVLib.setPropertyString("glsl-shaders", "")
+                // 关闭OpenGL优化（恢复默认）
+                setGlslOptimizations(false)
                 Log.d(TAG, "Cleared shader list")
             } else {
                 val shaderString = shaders.joinToString(":")
                 MPVLib.setPropertyString("glsl-shaders", shaderString)
+                // 开启OpenGL渲染优化：PBO加速+直接渲染
+                setGlslOptimizations(true)
                 Log.d(TAG, "Set shaders: $shaderString")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to set shader list", e)
+        }
+    }
+
+    /**
+     * OpenGL渲染优化开关
+     * - opengl-pbo=yes: 像素缓冲区对象，加速CPU→GPU纹理上传
+     * - opengl-early-flush=no: 延迟OpenGL刷新，减少同步开销
+     * - vd-lavc-dr=yes: 直接渲染，解码器直接写入GPU内存，减少内存拷贝
+     */
+    private fun setGlslOptimizations(enabled: Boolean) {
+        try {
+            if (enabled) {
+                MPVLib.setOptionString("opengl-pbo", "yes")
+                MPVLib.setOptionString("opengl-early-flush", "no")
+                MPVLib.setOptionString("vd-lavc-dr", "yes")
+                Log.d(TAG, "OpenGL optimizations enabled (PBO+DR)")
+            } else {
+                MPVLib.setOptionString("opengl-pbo", "no")
+                MPVLib.setOptionString("opengl-early-flush", "yes")
+                MPVLib.setOptionString("vd-lavc-dr", "no")
+                Log.d(TAG, "OpenGL optimizations disabled")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to set OpenGL optimizations", e)
         }
     }
 

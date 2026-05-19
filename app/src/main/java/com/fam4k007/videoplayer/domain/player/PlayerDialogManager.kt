@@ -136,7 +136,7 @@ class PlayerDialogManager(
         val screenWidth = activity.resources.displayMetrics.widthPixels
         val screenHeight = activity.resources.displayMetrics.heightPixels
         val margin = 8.dpToPx()
-        val popupGap = 10.dpToPx()
+        val popupGap = 1.dpToPx()
         val dialogWidth = popupWidth.coerceAtLeast(anchor.width)
         val dialogHeight = popupHeight
 
