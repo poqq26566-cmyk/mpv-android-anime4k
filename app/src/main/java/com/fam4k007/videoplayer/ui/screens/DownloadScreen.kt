@@ -63,7 +63,7 @@ fun DownloadScreen(
                     Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 )
                 val docFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, it)
-                val displayPath = docFile?.name ?: "自定义路径"
+                val displayPath = docFile?.name ?: "Custom Path"
                 viewModel.setDownloadPath(it.toString(), displayPath)
                 Log.d("DownloadActivity", "选择的文件夹: $it, 显示名称: $displayPath")
             } catch (e: Exception) {
@@ -77,7 +77,7 @@ fun DownloadScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        "哔哩哔哩视频下载",
+                        "Bilibili Video Download",
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -114,7 +114,7 @@ fun DownloadScreen(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            "下载 (${selectedEpisodes.size})",
+                            "Download (${selectedEpisodes.size})",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -150,7 +150,7 @@ fun DownloadScreen(
                         modifier = Modifier.padding(end = 12.dp)
                     )
                     Text(
-                        "下载内容仅供个人学习使用，请勿传播",
+                        "Downloaded content is for personal learning only",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
                         fontSize = 13.sp
@@ -177,7 +177,7 @@ fun DownloadScreen(
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                     placeholder = { 
                         Text(
-                            "粘贴 B站 视频或番剧链接...",
+                            "Paste Bilibili video or bangumi URL...",
                             fontSize = 14.sp
                         ) 
                     },
@@ -218,7 +218,7 @@ fun DownloadScreen(
                                 } else {
                                     Icon(
                                         Icons.Default.Send,
-                                        contentDescription = "解析",
+                                        contentDescription = "Parse",
                                         tint = if (videoUrl.isNotBlank()) 
                                             MaterialTheme.colorScheme.primary 
                                         else 
@@ -282,7 +282,7 @@ fun DownloadScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (downloadPath.isNotEmpty()) downloadPathDisplay else "设置路径",
+                            text = if (downloadPath.isNotEmpty()) downloadPathDisplay else "Set Path",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
                             maxLines = 1,
@@ -317,8 +317,8 @@ fun DownloadScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "下载管理",
-                            fontSize = 14.sp,
+                            text = "Manager",
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -372,7 +372,7 @@ fun DownloadScreen(
                                     ) {
                                         Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text("下载视频")
+                                        Text("Download Videos")
                                     }
                                 }
                             }
@@ -411,7 +411,7 @@ fun DownloadScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        "选择集数",
+                                        "Select Episodes",
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Medium,
                                         modifier = Modifier.weight(1f)
@@ -438,7 +438,7 @@ fun DownloadScreen(
                                         onClick = { viewModel.toggleAllEpisodes() }
                                     ) {
                                         Text(
-                                            if (selectedEpisodes.size == episodeList.size) "取消全选" else "全选",
+                                            if (selectedEpisodes.size == episodeList.size) "Deselect All" else "Select All",
                                             fontSize = 13.sp
                                         )
                                     }
@@ -488,7 +488,7 @@ fun DownloadScreen(
                                                 Spacer(modifier = Modifier.width(8.dp))
                                                 Column(modifier = Modifier.weight(1f)) {
                                                     Text(
-                                                        text = "第${episode.index}集",
+                                                        text = "Ep. ${episode.index}",
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                         fontSize = 12.sp

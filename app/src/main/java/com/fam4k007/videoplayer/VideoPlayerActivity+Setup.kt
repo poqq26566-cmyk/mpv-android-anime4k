@@ -293,7 +293,7 @@ internal fun VideoPlayerActivity.initializeManagers() {
     )
 
     if (!playbackEngine.initialize()) {
-        DialogUtils.showToastLong(this, "播放器初始化失败")
+        DialogUtils.showToastLong(this, "Player initialization failed")
         finish()
         return
     }

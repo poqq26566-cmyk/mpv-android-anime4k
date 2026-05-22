@@ -181,7 +181,7 @@ fun SubtitleSettingsDrawer(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "更多设置",
+                            text = "More Settings",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -223,7 +223,7 @@ fun SubtitleSettingsDrawer(
                         // 字幕延迟设置
                         item {
                             ExpandableSection(
-                                title = "字幕延迟设置",
+                                title = "Subtitle Delay",
                                 isExpanded = expandedSection == "delay",
                                 onToggle = { expandedSection = if (expandedSection == "delay") null else "delay" }
                             ) {
@@ -237,7 +237,7 @@ fun SubtitleSettingsDrawer(
                         // 字幕样式设置
                         item {
                             ExpandableSection(
-                                title = "字幕样式设置",
+                                title = "Subtitle Style",
                                 isExpanded = expandedSection == "style",
                                 onToggle = { expandedSection = if (expandedSection == "style") null else "style" }
                             ) {
@@ -259,7 +259,7 @@ fun SubtitleSettingsDrawer(
                         // 字幕杂项设置
                         item {
                             ExpandableSection(
-                                title = "字幕杂项设置",
+                                title = "Subtitle Misc",
                                 isExpanded = expandedSection == "misc",
                                 onToggle = { expandedSection = if (expandedSection == "misc") null else "misc" }
                             ) {
@@ -275,7 +275,7 @@ fun SubtitleSettingsDrawer(
                         // 字幕字体设置
                         item {
                             ExpandableSection(
-                                title = "字幕字体设置",
+                                title = "Subtitle Font",
                                 isExpanded = expandedSection == "font",
                                 onToggle = { expandedSection = if (expandedSection == "font") null else "font" }
                             ) {
@@ -409,7 +409,7 @@ fun SubtitleDelayContent(
         )
         
         Text(
-            text = "范围: -60.0 ~ +60.0 秒",
+            text = "Range: -60.0 ~ +60.0 s",
             fontSize = 11.sp,
             color = Color(0x99FFFFFF),
             modifier = Modifier.padding(top = 4.dp)
@@ -475,7 +475,7 @@ fun SubtitleDelayContent(
                 contentColor = Color(0xFF64B5F6)
             )
         ) {
-            Text("重置为 0")
+            Text("Reset to 0")
         }
     }
 }
@@ -524,7 +524,7 @@ fun SubtitleStyleContent(
                 modifier = Modifier.padding(end = 6.dp)
             )
             Text(
-                text = "若未生效，请在更多中开启样式覆盖",
+                text = "If not working, enable style override in More",
                 fontSize = 11.sp,
                 color = Color(0xFFCCCCCC),
                 maxLines = 1,
@@ -534,7 +534,7 @@ fun SubtitleStyleContent(
         
         // 字幕颜色
         ColorPickerSection(
-            title = "字幕颜色",
+            title = "Text Color",
             currentColor = currentTextColor,
             isExpanded = expandedColorSection == "text",
             onToggle = { expandedColorSection = if (expandedColorSection == "text") null else "text" },
@@ -551,7 +551,7 @@ fun SubtitleStyleContent(
         
         // 字幕背景颜色
         ColorPickerSection(
-            title = "背景颜色",
+            title = "Background Color",
             currentColor = currentBackColor,
             isExpanded = expandedColorSection == "background",
             onToggle = { expandedColorSection = if (expandedColorSection == "background") null else "background" },
@@ -568,7 +568,7 @@ fun SubtitleStyleContent(
         
         // 描边颜色
         ColorPickerSection(
-            title = "描边颜色",
+            title = "Border Color",
             currentColor = currentBorderColor,
             isExpanded = expandedColorSection == "border",
             onToggle = { expandedColorSection = if (expandedColorSection == "border") null else "border" },
@@ -615,7 +615,7 @@ fun SubtitleStyleContent(
             ),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("重置所有样式为默认值")
+            Text("Reset All to Default")
         }
     }
 }
@@ -849,7 +849,7 @@ fun BorderSizeSection(
             .padding(12.dp)
     ) {
         Text(
-            text = "描边粗细：${borderSize.toInt()}",
+            text = "Border Size: ${borderSize.toInt()}",
             fontSize = 14.sp,
             color = Color.White,
             fontWeight = FontWeight.Medium
@@ -883,7 +883,7 @@ fun BorderSizeSection(
                 contentColor = Color(0xFF64B5F6)
             )
         ) {
-            Text("重置为 3")
+            Text("Reset to 3")
         }
     }
 }
@@ -923,7 +923,7 @@ fun BorderStyleSection(
 
         // 三种模式的单选按钮（添加切换动画）
         BorderStyleOption(
-            title = "模式A",
+            title = "Mode A",
             description = "通过描边颜色项修改",
             isSelected = selectedStyle == "outline-and-shadow",
             onClick = {
@@ -935,7 +935,7 @@ fun BorderStyleSection(
         Spacer(modifier = Modifier.height(8.dp))
 
         BorderStyleOption(
-            title = "模式B",
+            title = "Mode B",
             description = "通过描边颜色项修改",
             isSelected = selectedStyle == "opaque-box",
             onClick = {
@@ -947,7 +947,7 @@ fun BorderStyleSection(
         Spacer(modifier = Modifier.height(8.dp))
 
         BorderStyleOption(
-            title = "模式C",
+            title = "Mode C",
             description = "通过背景颜色项修改",
             isSelected = selectedStyle == "background-box",
             onClick = {
@@ -1075,14 +1075,14 @@ fun SubtitleMiscContent(
     Column {
         // 字幕大小
         Text(
-            text = "字幕大小：${(animatedScale * 100).toInt()}%",
+            text = "Subtitle Size: ${(animatedScale * 100).toInt()}%",
             fontSize = 14.sp,
             color = Color.White,
             fontWeight = FontWeight.Medium
         )
         
         Text(
-            text = "范围: 50% ~ 300%",
+            text = "Range: 50% ~ 300%",
             fontSize = 11.sp,
             color = Color(0x99FFFFFF),
             modifier = Modifier.padding(top = 2.dp)
@@ -1109,14 +1109,14 @@ fun SubtitleMiscContent(
 
         // 字幕垂直位置
         Text(
-            text = "字幕垂直位置：${position.toInt()}",
+            text = "Vertical Position: ${position.toInt()}",
             fontSize = 14.sp,
             color = Color.White,
             fontWeight = FontWeight.Medium
         )
         
         Text(
-            text = "范围: 0 (顶部) ~ 100 (底部)",
+            text = "Range: 0 (Top) ~ 100 (Bottom)",
             fontSize = 11.sp,
             color = Color(0x99FFFFFF),
             modifier = Modifier.padding(top = 2.dp)

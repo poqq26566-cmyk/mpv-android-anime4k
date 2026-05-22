@@ -79,7 +79,7 @@ fun FolderBlacklistScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "文件夹黑名单",
+                        text = "Folder Blacklist",
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -105,7 +105,7 @@ fun FolderBlacklistScreen(
                 .padding(horizontal = MaterialTheme.spacing.medium)
         ) {
             Text(
-                text = "屏蔽文件夹后，APP将不再扫描其中的视频",
+                text = "Blocked folders will not be scanned for videos",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -126,7 +126,7 @@ fun FolderBlacklistScreen(
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "暂无黑名单文件夹",
+                            text = "No blacklisted folders",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -138,7 +138,7 @@ fun FolderBlacklistScreen(
                     verticalArrangement = Arrangement.spacedBy(0.dp)
                 ) {
                     item {
-                        PreferenceSectionHeader("已屏蔽的文件夹 (${blacklistedFolders.size})")
+                        PreferenceSectionHeader("Blocked Folders (${blacklistedFolders.size})")
                     }
 
                     items(blacklistedFolders.toList()) { folderPath ->
@@ -235,7 +235,7 @@ fun FolderBlacklistScreen(
                     )
                     Spacer(modifier = Modifier.padding(8.dp))
                     Text(
-                        text = "添加文件夹到黑名单",
+                        text = "Add folder to blacklist",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -250,7 +250,7 @@ fun FolderBlacklistScreen(
                         .padding(top = 8.dp)
                 ) {
                     Text(
-                        text = "清除所有黑名单文件夹",
+                        text = "Clear all blacklisted folders",
                         color = MaterialTheme.colorScheme.error
                     )
                 }
@@ -287,7 +287,7 @@ fun FolderBlacklistScreen(
                         showClearAllDialog = false
                     }
                 ) {
-                    Text("确认", color = MaterialTheme.colorScheme.error)
+                    Text("Confirm", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
@@ -357,7 +357,7 @@ private fun AddFolderBlacklistDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("选择要屏蔽的文件夹")
+            Text("Select folders to block")
         },
         text = {
             if (isLoading) {
@@ -367,10 +367,10 @@ private fun AddFolderBlacklistDialog(
                         .padding(32.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("正在扫描文件夹...")
+                    Text("Scanning folders...")
                 }
             } else if (folders.isEmpty()) {
-                Text("没有可添加的文件夹（所有视频文件夹已在黑名单中）")
+                Text("No folders to add (all video folders are already blacklisted)")
             } else {
                 LazyColumn(
                     modifier = Modifier
@@ -425,7 +425,7 @@ private fun AddFolderBlacklistDialog(
                 },
                 enabled = selectedPaths.isNotEmpty() && !isLoading
             ) {
-                Text("添加 (${selectedPaths.size})")
+                Text("Add (${selectedPaths.size})")
             }
         },
         dismissButton = {

@@ -74,7 +74,7 @@ fun BilibiliScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "哔哩哔哩",
+                        text = "Bilibili",
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -101,7 +101,7 @@ fun BilibiliScreen(
         ) {
             // 账号状态
             item {
-                PreferenceSectionHeader(title = "账号")
+                PreferenceSectionHeader(title = "Account")
             }
             
             item {
@@ -123,7 +123,7 @@ fun BilibiliScreen(
                                         .data(userInfo.face)
                                         .crossfade(true)
                                         .build(),
-                                    contentDescription = "用户头像",
+                                    contentDescription = "Avatar",
                                     modifier = Modifier
                                         .size(48.dp)
                                         .clip(CircleShape),
@@ -173,15 +173,15 @@ fun BilibiliScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Logout,
-                                    contentDescription = "退出登录",
+                                    contentDescription = "Logout",
                                     tint = MaterialTheme.colorScheme.error
                                 )
                             }
                         }
                     } else {
                         ClickableItem(
-                            title = "登录哔哩哔哩",
-                            subtitle = "登录后可使用番剧播放、下载等功能",
+                            title = "Login to Bilibili",
+                            subtitle = "Login to access bangumi playback, downloads, etc.",
                             icon = Icons.Default.Login,
                             onClick = {
                                 onNavigateToLogin()
@@ -193,7 +193,7 @@ fun BilibiliScreen(
             
             // 播放功能
             item {
-                PreferenceSectionHeader(title = "播放")
+                PreferenceSectionHeader(title = "Playback")
             }
             
             item {
@@ -224,14 +224,14 @@ fun BilibiliScreen(
             
             // 下载功能
             item {
-                PreferenceSectionHeader(title = "下载")
+                PreferenceSectionHeader(title = "Download")
             }
             
             item {
                 PreferenceCard {
                     ClickableItem(
-                        title = "弹幕下载",
-                        subtitle = "下载B站视频弹幕",
+                        title = "Danmaku Download",
+                        subtitle = "Download Bilibili danmaku",
                         icon = Icons.Default.Comment,
                         enabled = isLoggedIn,
                         onClick = {
@@ -252,8 +252,8 @@ fun BilibiliScreen(
                     )
                     
                     ClickableItem(
-                        title = "视频下载",
-                        subtitle = "下载B站视频/番剧到本地",
+                        title = "Video Download",
+                        subtitle = "Download Bilibili videos/bangumi",
                         icon = Icons.Default.Download,
                         enabled = isLoggedIn,
                         onClick = {

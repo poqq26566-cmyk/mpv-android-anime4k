@@ -50,10 +50,10 @@ fun AboutScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("关于", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text("About", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -101,7 +101,7 @@ fun AboutScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "小喵Player",
+                            text = "Meow Player",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -130,7 +130,7 @@ fun AboutScreen(
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.ic_email),
-                                contentDescription = "发送邮件",
+                                contentDescription = "Send Email",
                                 modifier = Modifier.size(28.dp)
                             )
                         }
@@ -154,7 +154,7 @@ fun AboutScreen(
 
             // ===== 信息 =====
             Text(
-                text = "信息",
+                text = "Info",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 6.dp)
@@ -169,15 +169,15 @@ fun AboutScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 ClickableItem(
-                    title = "许可证书",
-                    subtitle = "查看开源许可",
+                    title = "Licenses",
+                    subtitle = "View open source licenses",
                     icon = Icons.Default.Description,
                     onClick = onNavigateToLicense
                 )
 
                 ClickableItem(
-                    title = "用户协议",
-                    subtitle = "预览用户服务协议与隐私政策",
+                    title = "User Agreement",
+                    subtitle = "View user agreement & privacy policy",
                     icon = Icons.Default.Lock,
                     onClick = onNavigateToUserAgreement
                 )
@@ -185,7 +185,7 @@ fun AboutScreen(
 
             // ===== 工具 =====
             Text(
-                text = "工具",
+                text = "Tools",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 6.dp)
@@ -200,15 +200,15 @@ fun AboutScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 ClickableItem(
-                    title = "错误日志",
-                    subtitle = "查看和导出错误日志",
+                    title = "Error Logs",
+                    subtitle = "View and export error logs",
                     icon = Icons.Default.BugReport,
                     onClick = onNavigateToLogs
                 )
 
                 ClickableItem(
-                    title = "缓存管理",
-                    subtitle = "查看和清除应用缓存",
+                    title = "Cache Management",
+                    subtitle = "View and clear app cache",
                     icon = Icons.Default.Storage,
                     onClick = onNavigateToCache
                 )
@@ -216,7 +216,7 @@ fun AboutScreen(
 
             // ===== 更新 =====
             Text(
-                text = "更新",
+                text = "Updates",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 6.dp)
@@ -231,8 +231,8 @@ fun AboutScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 ClickableItem(
-                    title = "检查更新",
-                    subtitle = "当前版本: $versionName",
+                    title = "Check Updates",
+                    subtitle = "Current version: $versionName",
                     icon = Icons.Default.Update,
                     onClick = {
                         scope.launch {
@@ -243,12 +243,12 @@ fun AboutScreen(
                                     showUpdateDialog = true
                                 } else {
                                     android.widget.Toast.makeText(
-                                        context, "已是最新版本", android.widget.Toast.LENGTH_SHORT
+                                        context, "Already up to date", android.widget.Toast.LENGTH_SHORT
                                     ).show()
                                 }
                             } catch (e: Exception) {
                                 android.widget.Toast.makeText(
-                                    context, "检查更新失败: ${e.message}", android.widget.Toast.LENGTH_LONG
+                                    context, "Update check failed: ${e.message}", android.widget.Toast.LENGTH_LONG
                                 ).show()
                             }
                         }
@@ -259,8 +259,8 @@ fun AboutScreen(
                 var autoCheck by remember { mutableStateOf(prefs.isAutoCheckUpdateEnabled()) }
 
                 SwitchItem(
-                    title = "自动检查更新",
-                    subtitle = if (autoCheck) "启动后5秒自动检查" else "关闭后不再自动检查",
+                    title = "Auto Check Updates",
+                    subtitle = if (autoCheck) "Check 5s after launch" else "Off",
                     checked = autoCheck,
                     onCheckedChange = { enabled ->
                         autoCheck = enabled

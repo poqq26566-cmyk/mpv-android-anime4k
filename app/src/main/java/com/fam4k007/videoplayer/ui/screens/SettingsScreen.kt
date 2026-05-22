@@ -87,7 +87,7 @@ fun SettingsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "设置",
+                        text = "Settings",
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -95,7 +95,7 @@ fun SettingsScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = "Back"
                         )
                     }
                 },
@@ -114,14 +114,14 @@ fun SettingsScreen(
         ) {
             // 外观设置
             item {
-                PreferenceSectionHeader(title = "外观")
+                PreferenceSectionHeader(title = "Appearance")
             }
             
             item {
                 PreferenceCard {
                     val currentTheme = themeController.getCurrentTheme()
                     ClickableItem(
-                        title = "应用主题",
+                        title = "App Theme",
                         subtitle = stringResource(currentTheme.titleRes),
                         icon = Icons.Default.Palette,
                         onClick = { showThemeDialog = true }
@@ -129,12 +129,12 @@ fun SettingsScreen(
                     
                     val currentDarkMode = themeController.getDarkMode()
                     ClickableItem(
-                        title = "暗色模式",
+                        title = "Dark Mode",
                         subtitle = when (currentDarkMode) {
-                            DarkMode.Light -> "关闭"
-                            DarkMode.Dark -> "开启"
-                            DarkMode.Amoled -> "AMOLED模式"
-                            DarkMode.System -> "跟随系统"
+                            DarkMode.Light -> "Off"
+                            DarkMode.Dark -> "On"
+                            DarkMode.Amoled -> "AMOLED Mode"
+                            DarkMode.System -> "Follow System"
                         },
                         icon = Icons.Default.DarkMode,
                         onClick = { showDarkModeDialog = true }
@@ -144,39 +144,39 @@ fun SettingsScreen(
             
             // 播放设置
             item {
-                PreferenceSectionHeader(title = "播放")
+                PreferenceSectionHeader(title = "Playback")
             }
             
             item {
                 PreferenceCard {
                     ClickableItem(
-                        title = "播放设置",
-                        subtitle = "调整播放相关参数",
+                        title = "Playback Settings",
+                        subtitle = "Adjust playback parameters",
                         icon = Icons.Default.Settings,
                         onClick = onNavigateToPlaybackSettings
                     )
                     
                     ClickableItem(
-                        title = "播放历史记录",
-                        subtitle = "查看最近播放的视频",
+                        title = "Playback History",
+                        subtitle = "View recently played videos",
                         icon = Icons.Default.History,
                         onClick = onNavigateToPlaybackHistory
                     )
                     
                     ClickableItem(
-                        title = "视频显示模式",
+                        title = "Video Display Mode",
                         subtitle = when (currentDisplayMode.value) {
-                            "folder" -> "文件夹视图"
-                            "flat" -> "视频列表"
-                            else -> "文件夹视图"
+                            "folder" -> "Folder View"
+                            "flat" -> "Video List"
+                            else -> "Folder View"
                         },
                         icon = Icons.Default.VideoLibrary,
                         onClick = { showDisplayModeDialog = true }
                     )
                     
                     ClickableItem(
-                        title = "文件夹黑名单",
-                        subtitle = "屏蔽指定文件夹，不再扫描其中的视频",
+                        title = "Folder Blacklist",
+                        subtitle = "Exclude folders from video scanning",
                         icon = Icons.Default.Warning,
                         onClick = onNavigateToFolderBlacklist
                     )
@@ -185,14 +185,14 @@ fun SettingsScreen(
             
             // 下载功能
             item {
-                PreferenceSectionHeader(title = "下载")
+                PreferenceSectionHeader(title = "Download")
             }
             
             item {
                 PreferenceCard {
                     ClickableItem(
-                        title = "哔哩哔哩弹幕下载",
-                        subtitle = "下载B站视频弹幕",
+                        title = "Bilibili Danmaku Download",
+                        subtitle = "Download Bilibili danmaku",
                         icon = Icons.Default.Comment,
                         onClick = {
                             if (authManager.isLoggedIn()) {
@@ -200,7 +200,7 @@ fun SettingsScreen(
                             } else {
                                 android.widget.Toast.makeText(
                                     context,
-                                    "请先在主页左上角登录哔哩哔哩账号",
+                                    "Please log in to Bilibili from the home page first",
                                     android.widget.Toast.LENGTH_SHORT
                                 ).show()
                             }
@@ -208,8 +208,8 @@ fun SettingsScreen(
                     )
                     
                     ClickableItem(
-                        title = "哔哩哔哩视频下载",
-                        subtitle = "下载B站视频/番剧",
+                        title = "Bilibili Video Download",
+                        subtitle = "Download Bilibili videos/bangumi",
                         icon = Icons.Default.Download,
                         onClick = {
                             if (authManager.isLoggedIn()) {
@@ -217,7 +217,7 @@ fun SettingsScreen(
                             } else {
                                 android.widget.Toast.makeText(
                                     context,
-                                    "请先在主页左上角登录哔哩哔哩账号",
+                                    "Please log in to Bilibili from the home page first",
                                     android.widget.Toast.LENGTH_SHORT
                                 ).show()
                             }
@@ -225,8 +225,8 @@ fun SettingsScreen(
                     )
                     
                     ClickableItem(
-                        title = "字幕搜索下载",
-                        subtitle = "搜索并下载在线字幕",
+                        title = "Subtitle Search",
+                        subtitle = "Search and download online subtitles",
                         icon = Icons.Default.Subtitles,
                         onClick = {
                             onNavigateToSubtitleSearch()
@@ -237,14 +237,14 @@ fun SettingsScreen(
             
             // 其他
             item {
-                PreferenceSectionHeader(title = "其他")
+                PreferenceSectionHeader(title = "Other")
             }
             
             item {
                 PreferenceCard {
                     ClickableItem(
-                        title = "使用说明",
-                        subtitle = "点击跳转外部在线文档查看",
+                        title = "User Guide",
+                        subtitle = "View online documentation",
                         icon = Icons.Default.Help,
                         onClick = {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.kdocs.cn/l/cjEzoxiyxaHT"))
@@ -253,8 +253,8 @@ fun SettingsScreen(
                     )
                     
                     ClickableItem(
-                        title = "关于",
-                        subtitle = "应用信息与许可",
+                        title = "About",
+                        subtitle = "App info and licenses",
                         icon = Icons.Default.Info,
                         onClick = onNavigateToAbout
                     )
@@ -307,7 +307,7 @@ fun SettingsScreen(
                 showDisplayModeDialog = false
                 android.widget.Toast.makeText(
                     context,
-                    "已切换到${if (mode == "folder") "文件夹视图" else "视频列表"}模式",
+                    "Switched to ${if (mode == "folder") "Folder View" else "Video List"} mode",
                     android.widget.Toast.LENGTH_SHORT
                 ).show()
             }

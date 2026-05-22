@@ -306,14 +306,14 @@ class VideoPlayerActivity : AppCompatActivity(),
             
         } catch (e: Exception) {
             Log.e(TAG, "Error parsing video URI", e)
-            DialogUtils.showToastShort(this, "解析视频地址失败: ${e.message}")
+            DialogUtils.showToastShort(this, "Failed to parse video URL: ${e.message}")
             finish()
             return
         }
         
         if (videoUri == null) {
             Log.e(TAG, "Video URI is null")
-            DialogUtils.showToastShort(this, "无效的视频路径")
+            DialogUtils.showToastShort(this, "Invalid video path")
             finish()
             return
         }
@@ -381,7 +381,7 @@ class VideoPlayerActivity : AppCompatActivity(),
             }, 100) // 延迟 100ms 确保 MPV 完全就绪
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize MPV", e)
-            DialogUtils.showToastLong(this, "播放器初始化失败: ${e.message}\n\n如果问题持续存在，请重启应用")
+            DialogUtils.showToastLong(this, "Player initialization failed: ${e.message}\n\nPlease restart the app if the issue persists")
             finish()
             return
         }
@@ -651,7 +651,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                 // 获取当前视频文件路径
                 val uri = videoUri
                 if (uri == null) {
-                    DialogUtils.showToastShort(this@VideoPlayerActivity, "无法获取视频URI")
+                    DialogUtils.showToastShort(this@VideoPlayerActivity, "Failed to get video URI")
                     return@launch
                 }
                 
@@ -677,18 +677,18 @@ class VideoPlayerActivity : AppCompatActivity(),
                 }
                 
                 if (videoPath.isNullOrEmpty()) {
-                    DialogUtils.showToastShort(this@VideoPlayerActivity, "无法获取视频文件路径")
+                    DialogUtils.showToastShort(this@VideoPlayerActivity, "Failed to get video file path")
                     return@launch
                 }
                 
                 val videoFile = File(videoPath)
                 if (!videoFile.exists()) {
-                    DialogUtils.showToastShort(this@VideoPlayerActivity, "视频文件不存在: $videoPath")
+                    DialogUtils.showToastShort(this@VideoPlayerActivity, "Video file not found: $videoPath")
                     return@launch
                 }
                 
                 // 显示匹配提示
-                DialogUtils.showToastShort(this@VideoPlayerActivity, "正在匹配弹幕，请稍候...")
+                DialogUtils.showToastShort(this@VideoPlayerActivity, "Matching danmaku, please wait...")
                 
                 val api = com.fam4k007.videoplayer.dandanplay.DanDanPlayApi()
                 
@@ -711,7 +711,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                 )
                 
                 if (!matchResponse.isMatched || matchResponse.matches.isNullOrEmpty()) {
-                    DialogUtils.showToastLong(this@VideoPlayerActivity, "未找到匹配的弹幕")
+                    DialogUtils.showToastLong(this@VideoPlayerActivity, "No matching danmaku found")
                     return@launch
                 }
                 
@@ -730,7 +730,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                 
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to match danmaku", e)
-                DialogUtils.showToastLong(this@VideoPlayerActivity, "匹配失败: ${e.message}")
+                DialogUtils.showToastLong(this@VideoPlayerActivity, "Matching failed: ${e.message}")
             }
         }
     }

@@ -45,7 +45,7 @@ fun CacheManagementScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("缓存管理", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text("Cache Management", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -98,7 +98,7 @@ fun CacheManagementScreen(
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "总缓存",
+                                text = "Total Cache",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -142,7 +142,7 @@ fun CacheManagementScreen(
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "缩略图缓存",
+                                text = "Thumbnail Cache",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -191,7 +191,7 @@ fun CacheManagementScreen(
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "其他缓存",
+                                text = "Other Cache",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -234,7 +234,7 @@ fun CacheManagementScreen(
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("清除所有缓存", fontSize = 16.sp)
+                        Text("Clear All Cache", fontSize = 16.sp)
                     }
                 }
             }

@@ -256,7 +256,7 @@ fun SubtitleFilePickerDialog(
                             // 动态标题：根目录显示文件名，非根目录显示返回按钮
                             val isRootPath = currentPath == "/storage/emulated/0" || currentPath == "/"
                             Text(
-                                text = if (isRootPath) "选择字幕文件" else "← 返回上级",
+                                text = if (isRootPath) "Select Subtitle File" else "← Back",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (isRootPath) Color.White else Color(0xFF64B5F6),
@@ -403,7 +403,7 @@ fun SubtitleFilePickerDialog(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = "该目录下没有字幕文件",
+                                        text = "No subtitle files in this directory",
                                         fontSize = 16.sp,
                                         color = Color(0xFF999999),
                                         textAlign = TextAlign.Center
@@ -558,14 +558,14 @@ private fun SubtitleSortMenu(
         ) {
             // 排序方式分组
             Text(
-                text = "排序方式",
+                text = "Sort By",
                 fontSize = 11.sp,
                 color = Color(0x99FFFFFF),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
             SortMenuItem(
-                text = "文件名",
+                text = "File Name",
                 isSelected = sortBy == SortBy.NAME,
                 onClick = {
                     onSortByChange(SortBy.NAME)
@@ -574,7 +574,7 @@ private fun SubtitleSortMenu(
             )
 
             SortMenuItem(
-                text = "添加时间",
+                text = "Date Added",
                 isSelected = sortBy == SortBy.DATE,
                 onClick = {
                     onSortByChange(SortBy.DATE)
@@ -590,14 +590,14 @@ private fun SubtitleSortMenu(
 
             // 排序顺序分组
             Text(
-                text = "排序顺序",
+                text = "Sort Order",
                 fontSize = 11.sp,
                 color = Color(0x99FFFFFF),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
             SortMenuItem(
-                text = "升序 ↑",
+                text = "Ascending ↑",
                 isSelected = sortOrder == SortOrder.ASCENDING,
                 onClick = {
                     onSortOrderChange(SortOrder.ASCENDING)
@@ -606,7 +606,7 @@ private fun SubtitleSortMenu(
             )
 
             SortMenuItem(
-                text = "降序 ↓",
+                text = "Descending ↓",
                 isSelected = sortOrder == SortOrder.DESCENDING,
                 onClick = {
                     onSortOrderChange(SortOrder.DESCENDING)

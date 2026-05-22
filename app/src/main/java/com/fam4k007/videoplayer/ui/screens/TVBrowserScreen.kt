@@ -60,7 +60,7 @@ fun TVBrowserScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = if (state.showUrlBar) "输入网址" else state.currentTitle,
+                            text = if (state.showUrlBar) "Enter URL" else state.currentTitle,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -75,7 +75,7 @@ fun TVBrowserScreen(
                         IconButton(onClick = { viewModel.toggleUrlBar() }) {
                             Icon(
                                 if (state.showUrlBar) Icons.Default.Close else Icons.Default.Search,
-                                if (state.showUrlBar) "关闭地址栏" else "打开地址栏"
+                                if (state.showUrlBar) "Close URL Bar" else "Open URL Bar"
                             )
                         }
                         // 播放按钮 - 智能选择最佳视频
@@ -86,7 +86,7 @@ fun TVBrowserScreen(
                             ) {
                                 Icon(
                                     Icons.Default.PlayCircle,
-                                    "播放视频"
+                                    "Play Video"
                                 )
                             }
                             // 右上角红点提示
@@ -126,7 +126,7 @@ fun TVBrowserScreen(
                             value = state.urlInput,
                             onValueChange = { viewModel.updateUrlInput(it) },
                             modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text("输入网址") },
+                            placeholder = { Text("Enter URL") },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                             keyboardActions = KeyboardActions(onGo = { viewModel.navigateToUrl() }),
@@ -134,13 +134,13 @@ fun TVBrowserScreen(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     if (state.urlInput.isNotEmpty()) {
                                         IconButton(onClick = { viewModel.clearUrlInput() }) {
-                                            Icon(Icons.Default.Clear, "清除")
+                                            Icon(Icons.Default.Clear, "Clear")
                                         }
                                     }
                                     IconButton(onClick = { viewModel.navigateToUrl() }) {
                                         Icon(
                                             Icons.Default.Send,
-                                            "前往",
+                                            "Go",
                                             tint = if (state.urlInput.isNotEmpty())
                                                 MaterialTheme.colorScheme.primary
                                             else
@@ -255,7 +255,7 @@ internal fun WebView.setupWebView(
                 Log.d("TVBrowser", "Page started: $it")
 
                 // 页面开始加载，准备检测新页面
-                val title = view?.title ?: "TV浏览器"
+                val title = view?.title ?: "TV Browser"
                 onPageUrlChanged(it, title)
             }
         }

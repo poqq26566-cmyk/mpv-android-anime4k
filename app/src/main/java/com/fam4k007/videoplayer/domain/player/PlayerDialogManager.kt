@@ -391,7 +391,7 @@ class PlayerDialogManager(
             }
 
             if (audioTracks.isEmpty()) {
-                DialogUtils.showToastShort(activity, "没有可用的音频轨道")
+                DialogUtils.showToastShort(activity, "No audio tracks available")
                 return
             }
 
@@ -408,7 +408,7 @@ class PlayerDialogManager(
             showPopupDialogAtLastAnchor(
                 items,
                 currentTrackIndex,
-                title = "音频轨道",
+                title = "Audio Track",
                 showAbove = false,
                 useFixedHeight = false,
                 showScrollHint = false,
@@ -417,12 +417,12 @@ class PlayerDialogManager(
             ) { position ->
                 val trackId = audioTracks[position].first
                 playbackEngine.selectAudioTrack(trackId)
-                DialogUtils.showToastShort(activity, "已切换到: ${items[position]}")
+                DialogUtils.showToastShort(activity, "Switched to: ${items[position]}")
                 Log.d(TAG, "Audio track changed to: $trackId")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show audio track dialog", e)
-            DialogUtils.showToastShort(activity, "获取音频轨道失败")
+            DialogUtils.showToastShort(activity, "Failed to get audio tracks")
         }
     }
 
@@ -432,7 +432,7 @@ class PlayerDialogManager(
     fun showDecoderDialog() {
         val activity = activityRef.get() ?: return
 
-        val items = listOf("硬件解码", "软件解码")
+        val items = listOf("Hardware Decode", "Software Decode")
         val currentDecoder = preferencesManager.getHardwareDecoder()
         val currentSelection = if (currentDecoder) 0 else 1
 
@@ -444,7 +444,7 @@ class PlayerDialogManager(
         showPopupDialogAtLastAnchor(
             items,
             currentSelection,
-            title = "解码方式",
+            title = "Decoder",
             showAbove = false,
             useFixedHeight = false,
             showScrollHint = false,
@@ -454,7 +454,7 @@ class PlayerDialogManager(
             val newDecoder = (position == 0)
             preferencesManager.setHardwareDecoder(newDecoder)
             playbackEngine.setHardwareDecoding(newDecoder)
-            DialogUtils.showToastShort(activity, "已切换到${items[position]}")
+            DialogUtils.showToastShort(activity, "Switched to ${items[position]}")
             Log.d(TAG, "Decoder changed to: ${if (newDecoder) "hardware" else "software"}")
         }
     }
@@ -465,7 +465,7 @@ class PlayerDialogManager(
     fun showAspectRatioDialog(currentAspect: VideoAspect) {
         val activity = activityRef.get() ?: return
 
-        val items = listOf("适应屏幕", "拉伸", "裁剪")
+        val items = listOf("Fit", "Stretch", "Crop")
         val currentSelection = when (currentAspect) {
             VideoAspect.FIT -> 0
             VideoAspect.STRETCH -> 1
@@ -475,7 +475,7 @@ class PlayerDialogManager(
         showPopupDialogAtLastAnchor(
             items,
             currentSelection,
-            title = "画面比例",
+            title = "Aspect Ratio",
             showAbove = false,
             useFixedHeight = false,
             showScrollHint = false
@@ -488,7 +488,7 @@ class PlayerDialogManager(
             }
             playbackEngine.changeVideoAspect(newAspect)
             (activity as? VideoAspectCallback)?.onVideoAspectChanged(newAspect)
-            DialogUtils.showToastShort(activity, "画面比例：${items[position]}")
+            DialogUtils.showToastShort(activity, "Aspect ratio: ${items[position]}")
             Log.d(TAG, "Video aspect changed to: ${newAspect.displayName}")
         }
     }
@@ -606,12 +606,12 @@ class PlayerDialogManager(
     fun showSubtitleDialog() {
         val activity = activityRef.get() ?: return
 
-        val menuItems = listOf("字幕轨道", "外挂字幕", "更多设置")
+        val menuItems = listOf("Subtitle Track", "External Subtitle", "More Settings")
 
         showPopupDialogAtLastAnchor(
             menuItems,
             selectedPosition = -1,
-            title = "字幕",
+            title = "Subtitle",
             showAbove = false,
             useFixedHeight = false,
             showScrollHint = false
@@ -646,14 +646,14 @@ class PlayerDialogManager(
                     
                     // 添加"关闭字幕"选项
                     val currentId = MPVLib.getPropertyInt("sid") ?: -1
-                    trackList.add(Triple(-1, "关闭字幕", currentId == -1))
+                    trackList.add(Triple(-1, "Disable Subtitles", currentId == -1))
                     
                     // 添加ViewModel提供的轨道
                     vmTracks.forEach { track ->
                         val displayName = buildString {
                             track.lang?.let { append("$it") }
                             track.title?.let { append(" $it") }
-                            if (track.external) append(" [外挂]")
+                            if (track.external) append(" [External]")
                         }
                         trackList.add(Triple(track.id, displayName, track.selected))
                     }
@@ -674,7 +674,7 @@ class PlayerDialogManager(
             showPopupDialogAtLastAnchor(
                 trackNames,
                 currentSelection,
-                title = "字幕轨道",
+                title = "Subtitle Track",
                 showAbove = false,
                 useFixedHeight = false,
                 showScrollHint = false
@@ -691,7 +691,7 @@ class PlayerDialogManager(
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show subtitle track dialog", e)
-            DialogUtils.showToastShort(activity, "获取字幕轨道失败")
+            DialogUtils.showToastShort(activity, "Failed to get subtitle tracks")
         }
     }
 
@@ -836,7 +836,7 @@ class PlayerDialogManager(
         showPopupDialogAtLastAnchor(
             speeds,
             currentSelection,
-            title = "播放速度",
+            title = "Playback Speed",
             showAbove = true,
             useFixedHeight = true,
             showScrollHint = true,
@@ -844,7 +844,7 @@ class PlayerDialogManager(
         ) { position ->
             val newSpeed = speedValues[position]
             dialogCallback?.onSpeedChanged(newSpeed)
-            DialogUtils.showToastShort(activity, "播放速度：${speeds[position]}")
+            DialogUtils.showToastShort(activity, "Speed: ${speeds[position]}")
         }
     }
 
@@ -865,13 +865,13 @@ class PlayerDialogManager(
         )
         
         val modeNames = listOf(
-            "关 - 原始画质",
-            "A - 强力重建",
-            "B - 柔和重建",
-            "C - 降噪处理",
-            "A+ - 双重强化",
-            "B+ - 双重柔和",
-            "C+ - 降噪强化"
+            "Off - Original",
+            "A - Sharp Reconstruct",
+            "B - Soft Reconstruct",
+            "C - Denoise",
+            "A+ - Dual Enhancement",
+            "B+ - Dual Soft",
+            "C+ - Dual Denoise"
         )
         
         val currentSelection = modes.indexOf(currentMode)
@@ -880,7 +880,7 @@ class PlayerDialogManager(
         showPopupDialogAtLastAnchor(
             modeNames,
             currentSelection,
-            title = "Anime4K 模式",
+            title = "Anime4K Mode",
             showAbove = true,  // 横屏和竖屏都显示在上方
             useFixedHeight = true,
             showScrollHint = true
@@ -888,7 +888,7 @@ class PlayerDialogManager(
             val selectedMode = modes[position]
             val enabled = selectedMode != Anime4KManager.Mode.OFF
             dialogCallback?.onAnime4KChanged(enabled, selectedMode, Anime4KManager.Quality.BALANCED)
-            DialogUtils.showToastShort(activity, "超分模式：${modeNames[position]}")
+            DialogUtils.showToastShort(activity, "Upscale mode: ${modeNames[position]}")
         }
     }
 
@@ -909,17 +909,17 @@ class PlayerDialogManager(
         val hasChapters = chapterCount > 0
         
         // 动态显示样式覆盖状态
-        val assOverrideText = if (assOverrideEnabled) "样式覆盖：开" else "样式覆盖：关"
+        val assOverrideText = if (assOverrideEnabled) "Style Override: On" else "Style Override: Off"
         val autoRotateEnabled =
             (activity as? MoreOptionsCallback)?.isAutoRotateEnabled() == true
-        val autoRotateText = if (autoRotateEnabled) "自动旋转：开" else "自动旋转：关"
+        val autoRotateText = if (autoRotateEnabled) "Auto Rotate: On" else "Auto Rotate: Off"
         
         // 根据是否有章节动态构建菜单项
         val items = mutableListOf<String>()
         if (hasChapters) {
-            items.add("章节")
+            items.add("Chapters")
         }
-        items.addAll(listOf("截图", "音轨", "解码", "片头片尾", assOverrideText, autoRotateText))
+        items.addAll(listOf("Screenshot", "Audio Track", "Decoder", "Skip Intro/Outro", assOverrideText, autoRotateText))
         
         // 根据屏幕方向决定对齐方式：竖屏靠右对齐，横屏居中
         val configuration = activity.resources.configuration
@@ -930,7 +930,7 @@ class PlayerDialogManager(
         showPopupDialogAtLastAnchor(
             items,
             selectedPosition = -1,
-            title = "更多选项",
+            title = "More Options",
             showAbove = false,
             useFixedHeight = true,
             showScrollHint = true,
@@ -990,13 +990,13 @@ class PlayerDialogManager(
         try {
             val chapterCount = MPVLib.getPropertyInt("chapters") ?: 0
             if (chapterCount <= 0) {
-                DialogUtils.showToastShort(activity, "此视频没有章节信息")
+                DialogUtils.showToastShort(activity, "No chapter info for this video")
                 return
             }
 
             val chapters = mutableListOf<String>()
             for (i in 0 until chapterCount) {
-                val title = MPVLib.getPropertyString("chapter-list/$i/title") ?: "章节 ${i + 1}"
+                val title = MPVLib.getPropertyString("chapter-list/$i/title") ?: "Chapter ${i + 1}"
                 chapters.add(title)
             }
 
@@ -1012,7 +1012,7 @@ class PlayerDialogManager(
             showPopupDialogAtLastAnchor(
                 chapters,
                 currentChapter,
-                title = "章节",
+                title = "Chapters",
                 showAbove = false,
                 useFixedHeight = true,
                 showScrollHint = true,
@@ -1030,7 +1030,7 @@ class PlayerDialogManager(
                     Log.e(TAG, "Failed to sync danmaku on chapter jump", e)
                 }
                 
-                DialogUtils.showToastShort(activity, "已跳转到: ${chapters[position]}")
+                DialogUtils.showToastShort(activity, "Jumped to: ${chapters[position]}")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show chapter dialog", e)
@@ -1045,16 +1045,16 @@ class PlayerDialogManager(
 
         // 简化的菜单项：移除了显示/隐藏选项，合并弹幕来源
         val menuItems = listOf(
-            "选择弹幕",
-            "匹配弹幕",
-            "弹幕轨道",
-            "弹幕设置"
+            "Select Danmaku",
+            "Match Danmaku",
+            "Danmaku Track",
+            "Danmaku Settings"
         )
 
         showPopupDialogAtLastAnchor(
             menuItems,
             selectedPosition = -1,
-            title = "弹幕",
+            title = "Danmaku",
             showAbove = false,
             useFixedHeight = false,
             showScrollHint = false
@@ -1075,14 +1075,14 @@ class PlayerDialogManager(
         val activity = activityRef.get() ?: return
 
         val sourceItems = listOf(
-            "本地弹幕",
-            "网络弹幕"
+            "Local Danmaku",
+            "Online Danmaku"
         )
 
         showPopupDialogAtLastAnchor(
             sourceItems,
             selectedPosition = -1,
-            title = "弹幕来源",
+            title = "Danmaku Source",
             showAbove = false,
             useFixedHeight = false,
             showScrollHint = false
@@ -1102,7 +1102,7 @@ class PlayerDialogManager(
         
         val currentPath = danmakuManager.getCurrentDanmakuPath()
         if (currentPath == null) {
-            DialogUtils.showToastShort(activity, "未加载弹幕文件")
+            DialogUtils.showToastShort(activity, "No danmaku file loaded")
             return
         }
         
@@ -1111,7 +1111,7 @@ class PlayerDialogManager(
         
         val menuItems = listOf(
             "✓ $fileName",
-            "取消弹幕轨道"
+            "Disable Danmaku Track"
         )
         
         // 根据trackSelected状态确定选中项：true=0（弹幕轨道），false=1（取消弹幕轨道）
@@ -1120,7 +1120,7 @@ class PlayerDialogManager(
         showPopupDialogAtLastAnchor(
             menuItems,
             selectedPosition = selectedIndex,
-            title = "弹幕轨道",
+            title = "Danmaku Track",
             showAbove = false,
             useFixedHeight = false,
             showScrollHint = false
@@ -1128,7 +1128,7 @@ class PlayerDialogManager(
             when (position) {
                 0 -> {
                     // 保持当前轨道,不做任何操作
-                    DialogUtils.showToastShort(activity, "弹幕轨道已选中")
+                    DialogUtils.showToastShort(activity, "Danmaku track selected")
                 }
                 1 -> {
                     // 取消弹幕轨道(类似 DanDanPlay 的 removeTrack)
@@ -1136,7 +1136,7 @@ class PlayerDialogManager(
                     danmakuManager.setVisibility(false)
                     com.fam4k007.videoplayer.danmaku.DanmakuConfig.setEnabled(false)
                     (activity as? DanmakuDialogCallback)?.onDanmakuVisibilityChanged(false)
-                    DialogUtils.showToastShort(activity, "已取消弹幕轨道")
+                    DialogUtils.showToastShort(activity, "Danmaku track deselected")
                 }
             }
         }

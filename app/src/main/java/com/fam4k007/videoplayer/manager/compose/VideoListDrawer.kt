@@ -220,7 +220,7 @@ fun VideoListDrawer(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "视频列表",
+                                text = "Video List",
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -284,7 +284,7 @@ fun VideoListDrawer(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "共 ${sortedVideoList.size} 个视频",
+                                text = "${sortedVideoList.size} videos",
                                 fontSize = 13.sp,
                                 color = Color(0xB3FFFFFF)
                             )
@@ -407,7 +407,7 @@ fun VideoListItem(
                 // 当前播放标记
                 if (isCurrentPlaying) {
                     Text(
-                        text = "播放中",
+                        text = "Playing",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF64B5F6),
@@ -537,7 +537,7 @@ fun DropdownMenuWithStyle(
             )
             
             SortMenuItem(
-                text = "大小",
+                text = "Size",
                 isSelected = sortBy == SortBy.SIZE,
                 onClick = {
                     onSortByChange(SortBy.SIZE)
@@ -546,7 +546,7 @@ fun DropdownMenuWithStyle(
             )
             
             SortMenuItem(
-                text = "时长",
+                text = "Duration",
                 isSelected = sortBy == SortBy.DURATION,
                 onClick = {
                     onSortByChange(SortBy.DURATION)

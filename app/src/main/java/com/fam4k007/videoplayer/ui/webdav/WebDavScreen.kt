@@ -49,7 +49,7 @@ fun WebDavAccountListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("WebDAV 账户管理", fontWeight = FontWeight.Bold) },
+                title = { Text("WebDAV Accounts", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -65,7 +65,7 @@ fun WebDavAccountListScreen(
                 onClick = { viewModel.showAddDialog() },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "添加账户")
+                Icon(Icons.Default.Add, contentDescription = "Add Account")
             }
         }
     ) { paddingValues ->
@@ -108,11 +108,11 @@ fun WebDavAccountListScreen(
             onDismissRequest = { viewModel.cancelDeleteAccount() },
             shape = RoundedCornerShape(28.dp),
             containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("删除账户") },
-            text = { Text("确定要删除账户 \"${deleteAccount.displayName}\" 吗？") },
+            title = { Text("Delete Account") },
+            text = { Text("Delete account \"${deleteAccount.displayName}\"?") },
             confirmButton = {
                 TextButton(onClick = { viewModel.confirmDeleteAccount() }) {
-                    Text("删除", color = MaterialTheme.colorScheme.error)
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
@@ -144,14 +144,14 @@ private fun EmptyAccountsView(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "暂无 WebDAV 账户",
+            text = "No WebDAV accounts",
             fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "点击右下角添加按钮配置账户",
+            text = "Tap the + button to add an account",
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
         )
@@ -159,7 +159,7 @@ private fun EmptyAccountsView(
         Button(onClick = onAddClick) {
             Icon(Icons.Default.Add, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("添加账户")
+            Text("Add Account")
         }
     }
 }
@@ -213,7 +213,7 @@ private fun WebDavAccountCard(
                 if (!account.isAnonymous && account.account.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "账号: ${account.account}",
+                        text = "Account: ${account.account}",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -251,7 +251,7 @@ private fun WebDavAddAccountDialog(
         onDismissRequest = { viewModel.dismissAddDialog() },
         title = {
             Text(
-                text = "添加 WebDAV 账户",
+                text = "Add WebDAV Account",
                 fontWeight = FontWeight.Bold
             )
         },
@@ -263,8 +263,8 @@ private fun WebDavAddAccountDialog(
                 OutlinedTextField(
                     value = state.displayName,
                     onValueChange = { viewModel.updateDisplayName(it) },
-                    label = { Text("显示名称") },
-                    placeholder = { Text("如: 我的网盘") },
+                    label = { Text("Display Name") },
+                    placeholder = { Text("e.g. My Cloud Drive") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     shape = RoundedCornerShape(20.dp)
@@ -273,7 +273,7 @@ private fun WebDavAddAccountDialog(
                 OutlinedTextField(
                     value = state.serverUrl,
                     onValueChange = { viewModel.updateServerUrl(it) },
-                    label = { Text("服务器地址") },
+                    label = { Text("Server URL") },
                     placeholder = { Text("http://example.com/dav/") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -288,13 +288,13 @@ private fun WebDavAddAccountDialog(
                     FilterChip(
                         selected = !state.isAnonymous,
                         onClick = { viewModel.setAnonymous(false) },
-                        label = { Text("账号登录") },
+                        label = { Text("Account Login") },
                         modifier = Modifier.weight(1f)
                     )
                     FilterChip(
                         selected = state.isAnonymous,
                         onClick = { viewModel.setAnonymous(true) },
-                        label = { Text("匿名访问") },
+                        label = { Text("Anonymous") },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -303,8 +303,8 @@ private fun WebDavAddAccountDialog(
                     OutlinedTextField(
                         value = state.account,
                         onValueChange = { viewModel.updateAccount(it) },
-                        label = { Text("账号") },
-                        placeholder = { Text("用户名") },
+                        label = { Text("Username") },
+                        placeholder = { Text("Username") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = RoundedCornerShape(20.dp)
@@ -312,8 +312,8 @@ private fun WebDavAddAccountDialog(
                     OutlinedTextField(
                         value = state.password,
                         onValueChange = { viewModel.updatePassword(it) },
-                        label = { Text("密码") },
-                        placeholder = { Text("密码") },
+                        label = { Text("Password") },
+                        placeholder = { Text("Password") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         visualTransformation = if (state.passwordVisible)
@@ -326,7 +326,7 @@ private fun WebDavAddAccountDialog(
                             IconButton(onClick = { viewModel.togglePasswordVisible() }) {
                                 Icon(
                                     imageVector = if (state.passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                    contentDescription = if (state.passwordVisible) "隐藏密码" else "显示密码"
+                                    contentDescription = if (state.passwordVisible) "Hide Password" else "Show Password"
                                 )
                             }
                         }
@@ -350,11 +350,11 @@ private fun WebDavAddAccountDialog(
                                 strokeWidth = 2.dp
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("测试中...")
+                            Text("Testing...")
                         } else {
                             Icon(Icons.Default.Wifi, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("测试连接")
+                            Text("Test Connection")
                         }
                     }
                     state.testResult?.let { result ->
@@ -381,7 +381,7 @@ private fun WebDavAddAccountDialog(
                 onClick = { viewModel.saveAccount() },
                 shape = RoundedCornerShape(20.dp)
             ) {
-                Text("保存")
+                Text("Save")
             }
         },
         dismissButton = {
@@ -497,7 +497,7 @@ fun WebDavBrowserScreen(
                         ) {
                             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                             Text(
-                                text = "加载中...",
+                                text = "Loading...",
                                 fontSize = 14.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -519,7 +519,7 @@ fun WebDavBrowserScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = state.error ?: "未知错误",
+                            text = state.error ?: "Unknown error",
                             fontSize = 16.sp,
                             color = MaterialTheme.colorScheme.error
                         )

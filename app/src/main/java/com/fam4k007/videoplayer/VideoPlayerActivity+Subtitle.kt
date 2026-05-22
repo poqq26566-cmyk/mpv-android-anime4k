@@ -145,10 +145,10 @@ internal fun VideoPlayerActivity.autoLoadSubtitleIfExists(videoUri: android.net.
             // 设置标志，防止 restoreSubtitlePreferences 重复加载
             viewModel.setHasAutoLoadedSubtitle(true)
 
-            DialogUtils.showToastShort(this, "已自动加载字幕: ${foundSubtitle.name}")
+            DialogUtils.showToastShort(this, "Auto-loaded subtitle: ${foundSubtitle.name}")
         } catch (e: Exception) {
             com.fam4k007.videoplayer.utils.Logger.w(TAG, "Failed to auto-load subtitle", e)
-            DialogUtils.showToastShort(this, "字幕加载失败: ${e.message}")
+            DialogUtils.showToastShort(this, "Subtitle loading failed: ${e.message}")
         }
 
         com.fam4k007.videoplayer.utils.Logger.d(TAG, "===== Auto-load subtitle end =====")

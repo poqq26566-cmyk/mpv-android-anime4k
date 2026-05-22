@@ -280,7 +280,7 @@ class DanDanPlayApi {
         try {
             val file = java.io.File(filePath)
             if (!file.exists()) {
-                throw IllegalArgumentException("文件不存在: $filePath")
+                throw IllegalArgumentException("File not found: $filePath")
             }
 
             val fileSize = file.length()

@@ -65,7 +65,7 @@ fun BiliBiliDanmakuScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("哔哩哔哩弹幕下载", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text("Bilibili Danmaku Download", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -103,7 +103,7 @@ fun BiliBiliDanmakuScreen(
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                     placeholder = { 
                         Text(
-                            if (currentFolderUri != null) "粘贴 B站 视频或番剧链接..." else "请先设置保存路径",
+                            if (currentFolderUri != null) "Paste Bilibili video or bangumi URL..." else "Please set a save path first",
                             fontSize = 14.sp
                         ) 
                     },
@@ -138,7 +138,7 @@ fun BiliBiliDanmakuScreen(
                             ) {
                                 Icon(
                                     Icons.Default.Send,
-                                    contentDescription = "下载",
+                                    contentDescription = "Download",
                                     tint = if (currentFolderUri != null && url.isNotBlank()) 
                                         primaryColor 
                                     else 
@@ -194,8 +194,8 @@ fun BiliBiliDanmakuScreen(
                         Text(
                             text = if (currentFolderUri != null) {
                                 val docFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, currentFolderUri!!)
-                                docFile?.name ?: "已设置路径"
-                            } else "设置路径",
+                                docFile?.name ?: "Path Set"
+                            } else "Set Path",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             maxLines = 1,
@@ -233,7 +233,7 @@ fun BiliBiliDanmakuScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (downloadWholeSeason) "整季下载" else "单集下载",
+                            text = if (downloadWholeSeason) "Season" else "Single",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             color = if (currentFolderUri != null) 
@@ -296,7 +296,7 @@ private fun DownloadModeDialog(
         tonalElevation = 0.dp,
         title = {
             Text(
-                text = "下载模式",
+                text = "Download Mode",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -327,13 +327,13 @@ private fun DownloadModeDialog(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "整季下载",
+                            text = "Download Season",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "下载该番剧所有集数",
+                            text = "Download all episodes of this season",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -364,13 +364,13 @@ private fun DownloadModeDialog(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "单集下载",
+                            text = "Single Episode",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "只下载当前视频",
+                            text = "Download only current video",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -401,7 +401,7 @@ private fun DownloadProgressDialog(
         tonalElevation = 0.dp,
         title = { 
             Text(
-                text = if (isCompleted) "下载完成" else "下载中",
+                text = if (isCompleted) "Completed" else "Downloading",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             ) 
@@ -523,7 +523,7 @@ private fun DownloadProgressDialog(
                             )
                         }
                         Text(
-                            text = "成功",
+                            text = "Success",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -552,7 +552,7 @@ private fun DownloadProgressDialog(
                             )
                         }
                         Text(
-                            text = "失败",
+                            text = "Failed",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -566,7 +566,7 @@ private fun DownloadProgressDialog(
                     onClick = onDismiss,
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("完成")
+                    Text("Done")
                 }
             }
         }

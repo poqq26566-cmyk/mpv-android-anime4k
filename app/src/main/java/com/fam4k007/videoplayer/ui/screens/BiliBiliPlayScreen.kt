@@ -54,14 +54,14 @@ fun BiliBiliPlayScreen(
             onDismissRequest = { showLogoutDialog = false },
             title = {
                 Text(
-                    text = "退出登录",
+                    text = "Logout",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )
             },
             text = {
                 Text(
-                    text = "确定要退出当前账号吗？",
+                    text = "Logout from current account?",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -72,7 +72,7 @@ fun BiliBiliPlayScreen(
                         viewModel.logout()
                         isLoggedIn = false
                         showLogoutDialog = false
-                        Toast.makeText(context, "已退出登录", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Logged out", Toast.LENGTH_SHORT).show()
                     }
                 ) {
                     Text("确定")
@@ -91,7 +91,7 @@ fun BiliBiliPlayScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("番剧播放", fontWeight = FontWeight.Bold) },
+                title = { Text("Bangumi Playback", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -103,7 +103,7 @@ fun BiliBiliPlayScreen(
                 actions = {
                     if (!isLoggedIn) {
                         TextButton(onClick = onNavigateToLogin) {
-                            Text("登录")
+                            Text("Login")
                         }
                     } else {
                         TextButton(onClick = { showLogoutDialog = true }) {
@@ -112,7 +112,7 @@ fun BiliBiliPlayScreen(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Text(
-                                    text = viewModel.getUserName() ?: "已登录",
+                                    text = viewModel.getUserName() ?: "Logged In",
                                     fontSize = 14.sp
                                 )
                                 Text("⚙", fontSize = 16.sp)
@@ -152,7 +152,7 @@ fun BiliBiliPlayScreen(
                         value = inputUrl,
                         onValueChange = { inputUrl = it },
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text("输入B站番剧链接") },
+                        placeholder = { Text("Enter Bilibili bangumi URL") },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -171,7 +171,7 @@ fun BiliBiliPlayScreen(
                     ) {
                         Icon(
                             Icons.Default.Send,
-                            contentDescription = "解析",
+                            contentDescription = "Parse",
                             tint = if (inputUrl.isNotBlank())
                                 MaterialTheme.colorScheme.primary
                             else
@@ -186,7 +186,7 @@ fun BiliBiliPlayScreen(
                 when (val state = uiState) {
                     is BiliPlayUiState.Idle -> {
                         Text(
-                            text = "请输入番剧链接",
+                            text = "Please enter a bangumi URL",
                             modifier = Modifier
                                 .align(Alignment.Center)
                                 .padding(32.dp),
@@ -214,7 +214,7 @@ fun BiliBiliPlayScreen(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(onClick = { viewModel.parseUrl(inputUrl) }) {
-                                Text("重试")
+                                Text("Retry")
                             }
                         }
                     }
@@ -257,7 +257,7 @@ private fun BangumiDetailView(
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(bangumi.title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("共 ${bangumi.episodes.size} 集", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("${bangumi.episodes.size} episodes", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

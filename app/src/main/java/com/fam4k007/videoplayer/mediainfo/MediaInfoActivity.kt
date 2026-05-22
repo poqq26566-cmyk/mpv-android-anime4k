@@ -76,7 +76,7 @@ class MediaInfoActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         val videoUri = intent.getStringExtra(EXTRA_VIDEO_URI) ?: ""
-        val videoName = intent.getStringExtra(EXTRA_VIDEO_NAME) ?: "未知视频"
+        val videoName = intent.getStringExtra(EXTRA_VIDEO_NAME) ?: "Unknown Video"
 
         setContent {
             val revision = themeRevision
@@ -135,7 +135,7 @@ fun MediaInfoScreen(
                 title = {
                     Column {
                         Text(
-                            text = "媒体信息",
+                            text = "Media Info",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -153,7 +153,7 @@ fun MediaInfoScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.Default.ArrowBack,
-                            "返回",
+                            "Back",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -173,7 +173,7 @@ fun MediaInfoScreen(
                                 ) {
                                     Icon(
                                         Icons.Default.ContentCopy,
-                                        "复制",
+                                        "Copy",
                                         tint = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
@@ -188,7 +188,7 @@ fun MediaInfoScreen(
                                 ) {
                                     Icon(
                                         Icons.Default.Share,
-                                        "分享",
+                                        "Share",
                                         tint = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
@@ -223,7 +223,7 @@ fun MediaInfoScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "加载失败",
+                            text = "Load Failed",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -247,12 +247,12 @@ fun MediaInfoScreen(
                             Tab(
                                 selected = selectedTabIndex == 0,
                                 onClick = { selectedTabIndex = 0 },
-                                text = { Text("详细信息", color = MaterialTheme.colorScheme.onSurface) }
+                                text = { Text("Details", color = MaterialTheme.colorScheme.onSurface) }
                             )
                             Tab(
                                 selected = selectedTabIndex == 1,
                                 onClick = { selectedTabIndex = 1 },
-                                text = { Text("原始信息", color = MaterialTheme.colorScheme.onSurface) },
+                                text = { Text("Raw Info", color = MaterialTheme.colorScheme.onSurface) },
                                 enabled = state.fullTextContent != null
                             )
                         }
@@ -313,72 +313,72 @@ private fun MediaInfoContent(mediaInfo: MediaInfoHelper.MediaInfoData) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // 通用信息
-        InfoSection(title = "通用信息") {
+        InfoSection(title = "General") {
             val general = mediaInfo.general
-            if (general.format.isNotEmpty()) InfoRow("格式", general.format)
-            if (general.formatVersion.isNotEmpty()) InfoRow("格式版本", general.formatVersion)
-            if (general.fileSize.isNotEmpty()) InfoRow("文件大小", general.fileSize)
-            if (general.duration.isNotEmpty()) InfoRow("时长", general.duration)
-            if (general.overallBitRate.isNotEmpty()) InfoRow("总比特率", general.overallBitRate)
-            if (general.frameRate.isNotEmpty()) InfoRow("帧率", general.frameRate)
-            if (general.title.isNotEmpty()) InfoRow("标题", general.title)
-            if (general.writingApplication.isNotEmpty()) InfoRow("编码应用", general.writingApplication)
-            if (general.writingLibrary.isNotEmpty()) InfoRow("编码库", general.writingLibrary)
-            if (general.encodedDate.isNotEmpty()) InfoRow("编码日期", general.encodedDate)
+            if (general.format.isNotEmpty()) InfoRow("Format", general.format)
+            if (general.formatVersion.isNotEmpty()) InfoRow("Format Version", general.formatVersion)
+            if (general.fileSize.isNotEmpty()) InfoRow("File Size", general.fileSize)
+            if (general.duration.isNotEmpty()) InfoRow("Duration", general.duration)
+            if (general.overallBitRate.isNotEmpty()) InfoRow("Overall Bitrate", general.overallBitRate)
+            if (general.frameRate.isNotEmpty()) InfoRow("Frame Rate", general.frameRate)
+            if (general.title.isNotEmpty()) InfoRow("Title", general.title)
+            if (general.writingApplication.isNotEmpty()) InfoRow("Encoding App", general.writingApplication)
+            if (general.writingLibrary.isNotEmpty()) InfoRow("Encoding Library", general.writingLibrary)
+            if (general.encodedDate.isNotEmpty()) InfoRow("Encoded Date", general.encodedDate)
         }
 
         // 视频流信息
         mediaInfo.videoStreams.forEachIndexed { index, stream ->
-            InfoSection(title = "视频流 #${index + 1}") {
-                if (stream.format.isNotEmpty()) InfoRow("编码", stream.format)
-                if (stream.formatProfile.isNotEmpty()) InfoRow("配置", stream.formatProfile)
+            InfoSection(title = "Video Stream #${index + 1}") {
+                if (stream.format.isNotEmpty()) InfoRow("Codec", stream.format)
+                if (stream.formatProfile.isNotEmpty()) InfoRow("Profile", stream.formatProfile)
                 if (stream.width.isNotEmpty() && stream.height.isNotEmpty()) {
-                    InfoRow("分辨率", "${stream.width} × ${stream.height}")
+                    InfoRow("Resolution", "${stream.width} × ${stream.height}")
                 }
-                if (stream.displayAspectRatio.isNotEmpty()) InfoRow("宽高比", stream.displayAspectRatio)
-                if (stream.frameRate.isNotEmpty()) InfoRow("帧率", stream.frameRate)
-                if (stream.frameRateMode.isNotEmpty()) InfoRow("帧率模式", stream.frameRateMode)
-                if (stream.bitRate.isNotEmpty()) InfoRow("比特率", stream.bitRate)
-                if (stream.bitDepth.isNotEmpty()) InfoRow("位深度", stream.bitDepth)
-                if (stream.colorSpace.isNotEmpty()) InfoRow("色彩空间", stream.colorSpace)
-                if (stream.chromaSubsampling.isNotEmpty()) InfoRow("色度子采样", stream.chromaSubsampling)
-                if (stream.hdrFormat.isNotEmpty()) InfoRow("HDR格式", stream.hdrFormat)
-                if (stream.maxCLL.isNotEmpty()) InfoRow("最大内容亮度", stream.maxCLL)
-                if (stream.maxFALL.isNotEmpty()) InfoRow("最大帧平均亮度", stream.maxFALL)
-                if (stream.encodingLibrary.isNotEmpty()) InfoRow("编码库", stream.encodingLibrary)
-                if (stream.streamSize.isNotEmpty()) InfoRow("流大小", stream.streamSize)
-                if (stream.duration.isNotEmpty()) InfoRow("时长", stream.duration)
+                if (stream.displayAspectRatio.isNotEmpty()) InfoRow("Aspect Ratio", stream.displayAspectRatio)
+                if (stream.frameRate.isNotEmpty()) InfoRow("Frame Rate", stream.frameRate)
+                if (stream.frameRateMode.isNotEmpty()) InfoRow("Frame Rate Mode", stream.frameRateMode)
+                if (stream.bitRate.isNotEmpty()) InfoRow("Bitrate", stream.bitRate)
+                if (stream.bitDepth.isNotEmpty()) InfoRow("Bit Depth", stream.bitDepth)
+                if (stream.colorSpace.isNotEmpty()) InfoRow("Color Space", stream.colorSpace)
+                if (stream.chromaSubsampling.isNotEmpty()) InfoRow("Chroma Subsampling", stream.chromaSubsampling)
+                if (stream.hdrFormat.isNotEmpty()) InfoRow("HDR Format", stream.hdrFormat)
+                if (stream.maxCLL.isNotEmpty()) InfoRow("Max CLL", stream.maxCLL)
+                if (stream.maxFALL.isNotEmpty()) InfoRow("Max FALL", stream.maxFALL)
+                if (stream.encodingLibrary.isNotEmpty()) InfoRow("Encoding Library", stream.encodingLibrary)
+                if (stream.streamSize.isNotEmpty()) InfoRow("Stream Size", stream.streamSize)
+                if (stream.duration.isNotEmpty()) InfoRow("Duration", stream.duration)
             }
         }
 
         // 音频流信息
         mediaInfo.audioStreams.forEachIndexed { index, stream ->
-            InfoSection(title = "音频流 #${index + 1}") {
-                if (stream.format.isNotEmpty()) InfoRow("编码", stream.format)
-                if (stream.channels.isNotEmpty()) InfoRow("声道", stream.channels)
-                if (stream.channelLayout.isNotEmpty()) InfoRow("声道布局", stream.channelLayout)
-                if (stream.samplingRate.isNotEmpty()) InfoRow("采样率", stream.samplingRate)
-                if (stream.bitRate.isNotEmpty()) InfoRow("比特率", stream.bitRate)
-                if (stream.language.isNotEmpty()) InfoRow("语言", stream.language)
-                if (stream.title.isNotEmpty()) InfoRow("标题", stream.title)
-                if (stream.compressionMode.isNotEmpty()) InfoRow("压缩模式", stream.compressionMode)
-                if (stream.delay.isNotEmpty()) InfoRow("延迟", stream.delay)
-                if (stream.streamSize.isNotEmpty()) InfoRow("流大小", stream.streamSize)
-                if (stream.duration.isNotEmpty()) InfoRow("时长", stream.duration)
+            InfoSection(title = "Audio Stream #${index + 1}") {
+                if (stream.format.isNotEmpty()) InfoRow("Codec", stream.format)
+                if (stream.channels.isNotEmpty()) InfoRow("Channels", stream.channels)
+                if (stream.channelLayout.isNotEmpty()) InfoRow("Channel Layout", stream.channelLayout)
+                if (stream.samplingRate.isNotEmpty()) InfoRow("Sample Rate", stream.samplingRate)
+                if (stream.bitRate.isNotEmpty()) InfoRow("Bitrate", stream.bitRate)
+                if (stream.language.isNotEmpty()) InfoRow("Language", stream.language)
+                if (stream.title.isNotEmpty()) InfoRow("Title", stream.title)
+                if (stream.compressionMode.isNotEmpty()) InfoRow("Compression", stream.compressionMode)
+                if (stream.delay.isNotEmpty()) InfoRow("Delay", stream.delay)
+                if (stream.streamSize.isNotEmpty()) InfoRow("Stream Size", stream.streamSize)
+                if (stream.duration.isNotEmpty()) InfoRow("Duration", stream.duration)
             }
         }
 
         // 字幕流信息
         mediaInfo.textStreams.forEachIndexed { index, stream ->
-            InfoSection(title = "字幕流 #${index + 1}") {
-                if (stream.format.isNotEmpty()) InfoRow("格式", stream.format)
-                if (stream.codecId.isNotEmpty()) InfoRow("编码ID", stream.codecId)
-                if (stream.language.isNotEmpty()) InfoRow("语言", stream.language)
-                if (stream.title.isNotEmpty()) InfoRow("标题", stream.title)
-                if (stream.muxingMode.isNotEmpty()) InfoRow("混流模式", stream.muxingMode)
-                if (stream.countOfElements.isNotEmpty()) InfoRow("元素数量", stream.countOfElements)
-                if (stream.streamSize.isNotEmpty()) InfoRow("流大小", stream.streamSize)
-                if (stream.duration.isNotEmpty()) InfoRow("时长", stream.duration)
+            InfoSection(title = "Subtitle Stream #${index + 1}") {
+                if (stream.format.isNotEmpty()) InfoRow("Format", stream.format)
+                if (stream.codecId.isNotEmpty()) InfoRow("Codec ID", stream.codecId)
+                if (stream.language.isNotEmpty()) InfoRow("Language", stream.language)
+                if (stream.title.isNotEmpty()) InfoRow("Title", stream.title)
+                if (stream.muxingMode.isNotEmpty()) InfoRow("Muxing Mode", stream.muxingMode)
+                if (stream.countOfElements.isNotEmpty()) InfoRow("Elements", stream.countOfElements)
+                if (stream.streamSize.isNotEmpty()) InfoRow("Stream Size", stream.streamSize)
+                if (stream.duration.isNotEmpty()) InfoRow("Duration", stream.duration)
             }
         }
     }
@@ -441,9 +441,9 @@ private suspend fun copyToClipboard(context: Context, text: String, fileName: St
     withContext(Dispatchers.Main) {
         try {
             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("媒体信息 - $fileName", text)
+            val clip = ClipData.newPlainText("Media Info - $fileName", text)
             clipboard.setPrimaryClip(clip)
-            Toast.makeText(context, "已复制到剪贴板", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Toast.makeText(context, "复制失败: ${e.message}", Toast.LENGTH_SHORT).show()
         }
@@ -458,7 +458,7 @@ private suspend fun shareMediaInfo(context: Context, text: String, fileName: Str
                 putExtra(Intent.EXTRA_SUBJECT, "媒体信息 - $fileName")
                 putExtra(Intent.EXTRA_TEXT, text)
             }
-            context.startActivity(Intent.createChooser(intent, "分享媒体信息"))
+            context.startActivity(Intent.createChooser(intent, "Share Media Info"))
         } catch (e: Exception) {
             Toast.makeText(context, "分享失败: ${e.message}", Toast.LENGTH_SHORT).show()
         }

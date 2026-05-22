@@ -47,7 +47,7 @@ fun LibraryScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "视频库",
+                        text = "Video Library",
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -74,7 +74,7 @@ fun LibraryScreen(
         ) {
             // 本地视频
             item {
-                PreferenceSectionHeader(title = "本地视频")
+                PreferenceSectionHeader(title = "Local Videos")
             }
             
             item {
@@ -100,7 +100,7 @@ fun LibraryScreen(
                             // TODO: 实现所有视频列表
                             android.widget.Toast.makeText(
                                 context,
-                                "此功能正在开发中",
+                                "This feature is under development",
                                 android.widget.Toast.LENGTH_SHORT
                             ).show()
                         }

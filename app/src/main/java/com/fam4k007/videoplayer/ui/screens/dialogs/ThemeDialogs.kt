@@ -41,7 +41,7 @@ fun ThemeSelectionDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "选择主题",
+                text = "Select Theme",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
@@ -118,7 +118,7 @@ fun DarkModeSelectionDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "暗色模式",
+                text = "Dark Mode",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
@@ -129,10 +129,10 @@ fun DarkModeSelectionDialog(
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.smaller)
             ) {
                 val modes = listOf(
-                    DarkMode.Light to "关闭",
-                    DarkMode.Dark to "开启",
+                    DarkMode.Light to "Off",
+                    DarkMode.Dark to "On",
                     DarkMode.Amoled to "AMOLED模式",
-                    DarkMode.System to "跟随系统"
+                    DarkMode.System to "Follow System"
                 )
                 
                 modes.forEach { (mode, label) ->

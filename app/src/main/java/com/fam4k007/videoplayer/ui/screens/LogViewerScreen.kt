@@ -57,7 +57,7 @@ fun LogViewerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("错误日志", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text("Error Logs", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -87,7 +87,7 @@ fun LogViewerScreen(
                     content = uiState.selectedLog!!,
                     onCopy = {
                         copyToClipboard(context, uiState.selectedLog!!)
-                        Toast.makeText(context, "已复制到剪贴板", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
                     }
                 )
             } else {
@@ -105,7 +105,7 @@ fun LogViewerScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "日志文件 (${uiState.logFiles.size})",
+                                text = "Log Files (${uiState.logFiles.size})",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
@@ -119,7 +119,7 @@ fun LogViewerScreen(
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("清空全部")
+                                    Text("Clear All")
                                 }
                             }
                         }
@@ -158,7 +158,7 @@ fun LogViewerScreen(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("清空")
+                    Text("Clear")
                 }
             },
             dismissButton = {
@@ -261,7 +261,7 @@ private fun LogContentView(
         ) {
             Icon(
                 imageVector = Icons.Default.ContentCopy,
-                contentDescription = "复制全部"
+                contentDescription = "Copy All"
             )
         }
     }
@@ -283,7 +283,7 @@ private fun EmptyState() {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "暂无错误日志",
+            text = "No error logs",
             fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

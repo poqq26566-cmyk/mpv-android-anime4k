@@ -40,9 +40,13 @@ sealed interface AppScreen {
     @Serializable
     data object CacheManagement : AppScreen
 
-        /** 开源许可页 */
-        @Serializable
-        data object License : AppScreen
+        /** 用户协议页 */
+    @Serializable
+    data object UserAgreement : AppScreen
+
+    /** 开源许可页 */
+    @Serializable
+    data object License : AppScreen
 
     /** WebDAV 账户列表页 */
     @Serializable

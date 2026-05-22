@@ -134,7 +134,7 @@ class FilePickerManager(
                 val success = subtitleManager.addExternalSubtitleFromPath(filePath)
                 
                 if (success) {
-                    DialogUtils.showToastShort(activity, "字幕导入成功")
+                    DialogUtils.showToastShort(activity, "Subtitle imported successfully")
                     
                     // 保存外挂字幕路径到历史记录
                     currentVideoUri?.let { videoUri ->
@@ -142,11 +142,11 @@ class FilePickerManager(
                         Log.d(TAG, "Saved external subtitle path: $filePath")
                     }
                 } else {
-                    DialogUtils.showToastLong(activity, "字幕导入失败")
+                    DialogUtils.showToastLong(activity, "Subtitle import failed")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to import subtitle", e)
-                DialogUtils.showToastLong(activity, "字幕导入失败: ${e.message}")
+                DialogUtils.showToastLong(activity, "Subtitle import failed: ${e.message}")
             }
         }
     }
@@ -162,7 +162,7 @@ class FilePickerManager(
             Log.d(TAG, "Subtitle file selected: $uri")
             val success = subtitleManager.addExternalSubtitle(activity, uri)
             if (success) {
-                DialogUtils.showToastShort(activity, "字幕导入成功")
+                DialogUtils.showToastShort(activity, "Subtitle imported successfully")
                 
                 // 保存外挂字幕路径
                 currentVideoUri?.let { videoUri ->
@@ -173,7 +173,7 @@ class FilePickerManager(
                     }
                 }
             } else {
-                DialogUtils.showToastLong(activity, "字幕导入失败")
+                DialogUtils.showToastLong(activity, "Subtitle import failed")
             }
         } else {
             Log.d(TAG, "Subtitle picker cancelled")
@@ -199,7 +199,7 @@ class FilePickerManager(
             try {
                 // 直接加载弹幕文件
                 withContext(Dispatchers.Main) {
-                    DialogUtils.showToastShort(activity, "弹幕导入成功")
+                    DialogUtils.showToastShort(activity, "Danmaku imported successfully")
                     
                     // 加载弹幕文件
                     val loaded = danmakuManager.loadDanmakuFile(filePath, autoShow = true)
@@ -227,7 +227,7 @@ class FilePickerManager(
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to import danmaku", e)
                 withContext(Dispatchers.Main) {
-                    DialogUtils.showToastLong(activity, "弹幕导入失败: ${e.message}")
+                    DialogUtils.showToastLong(activity, "Danmaku import failed: ${e.message}")
                 }
             }
         }
@@ -253,7 +253,7 @@ class FilePickerManager(
                     // 切回主线程处理UI和播放器操作
                     withContext(Dispatchers.Main) {
                         if (danmakuPath != null) {
-                            DialogUtils.showToastShort(activity, "弹幕导入成功")
+                            DialogUtils.showToastShort(activity, "Danmaku imported successfully")
                             
                             // 加载弹幕文件（autoShow=true 会设置track为选中状态）
                             val loaded = danmakuManager.loadDanmakuFile(danmakuPath, autoShow = true)
@@ -279,7 +279,7 @@ class FilePickerManager(
                                 Log.d(TAG, "Danmu info updated in history, visible=${danmakuManager.isVisible()}")
                             }
                         } else {
-                            DialogUtils.showToastLong(activity, "弹幕导入失败")
+                            DialogUtils.showToastLong(activity, "Danmaku import failed")
                         }
                         
                         // 恢复播放状态（必须在主线程）
@@ -290,7 +290,7 @@ class FilePickerManager(
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to import danmaku", e)
                     withContext(Dispatchers.Main) {
-                        DialogUtils.showToastLong(activity, "弹幕导入失败: ${e.message}")
+                        DialogUtils.showToastLong(activity, "Danmaku import failed: ${e.message}")
                         
                         // 发生异常也要恢复播放状态
                         if (wasPlayingBeforeDanmakuPicker) {

@@ -27,7 +27,7 @@ fun LicenseScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("开源许可", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+                title = { Text("Open Source Licenses", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -63,14 +63,14 @@ fun LicenseScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "📦 感谢开源社区",
+                        text = "Thanks to the Open Source Community",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "本应用使用了多个优秀的开源库",
+                        text = "This app uses several excellent open source libraries",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

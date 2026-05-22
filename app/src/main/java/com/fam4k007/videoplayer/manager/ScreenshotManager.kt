@@ -31,7 +31,7 @@ class ScreenshotManager(private val activity: Activity) {
     fun takeScreenshot() {
         try {
             // 立即提示用户
-            DialogUtils.showToastShort(activity, "已保存")
+            DialogUtils.showToastShort(activity, "Saved")
             
             // 后台静默保存
             CoroutineScope(Dispatchers.IO).launch {
@@ -54,7 +54,7 @@ class ScreenshotManager(private val activity: Activity) {
             
         } catch (e: Exception) {
             Log.e(TAG, "Screenshot failed", e)
-            DialogUtils.showToastShort(activity, "截图失败: ${e.message}")
+            DialogUtils.showToastShort(activity, "Screenshot failed: ${e.message}")
         }
     }
     

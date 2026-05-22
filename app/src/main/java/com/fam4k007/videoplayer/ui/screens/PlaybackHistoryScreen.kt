@@ -59,7 +59,7 @@ fun PlaybackHistoryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("播放历史", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text("Playback History", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -68,7 +68,7 @@ fun PlaybackHistoryScreen(
                 actions = {
                     if (uiState.historyList.isNotEmpty()) {
                         IconButton(onClick = { showClearDialog = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "清空全部")
+                            Icon(Icons.Default.Delete, contentDescription = "Clear All")
                         }
                     }
                 },
@@ -105,7 +105,7 @@ fun PlaybackHistoryScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "暂无播放历史",
+                            text = "No playback history",
                             fontSize = 16.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -153,14 +153,14 @@ fun PlaybackHistoryScreen(
             onDismissRequest = { showClearDialog = false },
             title = {
                 Text(
-                    text = "清空历史",
+                    text = "Clear History",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
                 )
             },
             text = {
                 Text(
-                    text = "确定要清空所有播放历史吗？此操作不可恢复。",
+                    text = "Clear all playback history? This action cannot be undone.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -194,14 +194,14 @@ fun PlaybackHistoryScreen(
             onDismissRequest = { itemToDelete = null },
             title = {
                 Text(
-                    text = "删除记录",
+                    text = "Delete Record",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
                 )
             },
             text = {
                 Text(
-                    text = "确定要删除《${item.fileName}》的播放记录吗？",
+                    text = "Delete playback record for ${item.fileName}?",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -216,7 +216,7 @@ fun PlaybackHistoryScreen(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("删除")
+                    Text("Delete")
                 }
             },
             dismissButton = {
@@ -339,7 +339,7 @@ private fun HistoryCard(
             IconButton(onClick = onDeleteClick) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "删除",
+                    contentDescription = "Delete",
                     tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
                 )
             }
@@ -357,9 +357,9 @@ private fun formatDuration(positionMs: Long): String {
     val secs = seconds % 60
 
     return if (hours > 0) {
-        String.format("已播放 %02d:%02d:%02d", hours, minutes, secs)
+        String.format("Played %02d:%02d:%02d", hours, minutes, secs)
     } else {
-        String.format("已播放 %02d:%02d", minutes, secs)
+        String.format("Played %02d:%02d", minutes, secs)
     }
 }
 

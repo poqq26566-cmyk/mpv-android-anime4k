@@ -88,7 +88,7 @@ internal fun VideoPlayerActivity.showVideoListDrawer() {
     val videoList = viewModel.videoList.value
     // 如果没有视频列表，提示用户
     if (videoList.isEmpty()) {
-        DialogUtils.showToastShort(this, "当前没有可用的视频列表")
+        DialogUtils.showToastShort(this, "No video list available")
         return
     }
 

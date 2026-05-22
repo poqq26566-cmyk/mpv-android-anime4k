@@ -97,7 +97,7 @@ class PlaybackEngine(
             true
         } catch (e: Exception) {
             Log.e(TAG, "MPV initialization failed", e)
-            eventCallback.onError("播放器初始化失败: ${e.message}")
+            eventCallback.onError("Player initialization failed: ${e.message}")
             false
         }
     }
@@ -184,7 +184,7 @@ class PlaybackEngine(
                     if (videoCodec == null || videoCodec == "null") {
                         Log.w(TAG, "⚠️ Video codec is null - this file may be audio-only or corrupted")
                         handler.post {
-                            eventCallback.onError("视频流无效或文件损坏")
+                            eventCallback.onError("Invalid video stream or corrupted file")
                         }
                     }
                 } catch (e: Exception) {
@@ -196,7 +196,7 @@ class PlaybackEngine(
             handler.post(updateProgressRunnable)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load video", e)
-            eventCallback.onError("加载视频失败: ${e.message}")
+            eventCallback.onError("Failed to load video: ${e.message}")
         }
     }
 
@@ -219,7 +219,7 @@ class PlaybackEngine(
             loadRemoteInternal(actualUrl, httpHeaders, startPosition)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load video from URL", e)
-            eventCallback.onError("加载视频失败: ${e.message}")
+            eventCallback.onError("Failed to load video: ${e.message}")
         }
     }
 
@@ -240,7 +240,7 @@ class PlaybackEngine(
             loadRemoteInternal(request.url, normalizedHeaders, startPosition)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load remote request", e)
-            eventCallback.onError("加载视频失败: ${e.message}")
+            eventCallback.onError("Failed to load video: ${e.message}")
         }
     }
     
@@ -403,7 +403,7 @@ class PlaybackEngine(
         } catch (e: Exception) {
             Log.e(TAG, "Failed to toggle playback state", e)
             isPlaying = !isPlaying // 恢复状态
-            eventCallback.onError("播放状态切换失败: ${e.message}")
+            eventCallback.onError("Failed to toggle playback: ${e.message}")
         }
     }
 
@@ -421,7 +421,7 @@ class PlaybackEngine(
         } catch (e: Exception) {
             Log.e(TAG, "Failed to set playback state", e)
             // 不反转状态，保留当前状态
-            eventCallback.onError("播放状态设置失败: ${e.message}")
+            eventCallback.onError("Failed to set playback state: ${e.message}")
         }
     }
 
@@ -451,7 +451,7 @@ class PlaybackEngine(
             Log.d(TAG, "Seek to: $safePosition (mode: $seekMode, requested: $position)")
         } catch (e: Exception) {
             Log.e(TAG, "Seek failed", e)
-            eventCallback.onError("快进失败: ${e.message}")
+            eventCallback.onError("Seek failed: ${e.message}")
         }
     }
 
@@ -492,7 +492,7 @@ class PlaybackEngine(
             }, 100)
         } catch (e: Exception) {
             Log.e(TAG, "Seek by failed", e)
-            eventCallback.onError("快进失败: ${e.message}")
+            eventCallback.onError("Seek failed: ${e.message}")
         }
     }
 
@@ -583,7 +583,7 @@ class PlaybackEngine(
             Log.d(TAG, "Applied shaders: $shaderChain")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to apply shaders", e)
-            eventCallback.onError("应用着色器失败: ${e.message}")
+            eventCallback.onError("Failed to apply shader: ${e.message}")
         }
     }
 

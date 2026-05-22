@@ -54,6 +54,7 @@ import com.fam4k007.videoplayer.ui.screens.VideoListScreen
 import com.fam4k007.videoplayer.ui.screens.BiliBiliLoginScreen
 import com.fam4k007.videoplayer.ui.screens.HomeScreen
 import com.fam4k007.videoplayer.ui.screens.LicenseScreen
+import com.fam4k007.videoplayer.ui.screens.UserAgreementScreen
 import com.fam4k007.videoplayer.ui.screens.LogViewerScreen
 import com.fam4k007.videoplayer.ui.screens.PlaybackHistoryScreen
 import com.fam4k007.videoplayer.ui.screens.PlaybackSettingsScreen
@@ -260,7 +261,7 @@ fun AppNavGraph(
                     navController.navigate(AppScreen.CacheManagement)
                 },
                 onNavigateToUserAgreement = {
-                    context.startActivity(UserAgreementActivity.previewIntent(context))
+                    navController.navigate(AppScreen.UserAgreement)
                 },
                 onSendEmail = {
                     try {
@@ -294,6 +295,15 @@ fun AppNavGraph(
             val viewModel = koinViewModel<com.fam4k007.videoplayer.presentation.CacheManagementViewModel>()
             CacheManagementScreen(
                 viewModel = viewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        
+        composable<AppScreen.UserAgreement> {
+            UserAgreementScreen(
+                showActions = false,
+                onAgree = { navController.popBackStack() },
+                onDecline = { navController.popBackStack() },
                 onBack = { navController.popBackStack() }
             )
         }

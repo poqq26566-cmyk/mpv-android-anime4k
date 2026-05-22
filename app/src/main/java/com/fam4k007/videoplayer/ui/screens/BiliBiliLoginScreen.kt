@@ -77,7 +77,7 @@ fun BiliBiliLoginScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "登录 Bilibili",
+                        "Login to Bilibili",
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -146,7 +146,7 @@ private fun QRCodeLoginTab(
         Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
         Text(
-            text = "使用 bilibili 官方 App 扫码登录",
+            text = "Scan QR code with Bilibili official app",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -155,7 +155,7 @@ private fun QRCodeLoginTab(
 
         if (state is LoginUiState.ShowQRCode) {
             Text(
-                text = "剩余有效时间: $leftTime 秒",
+                text = "Time remaining: $leftTime s",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -170,12 +170,12 @@ private fun QRCodeLoginTab(
             TextButton(onClick = { viewModel.refreshQRCode() }) {
                 Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("刷新二维码", style = MaterialTheme.typography.labelMedium)
+                Text("Refresh QR", style = MaterialTheme.typography.labelMedium)
             }
             TextButton(onClick = { viewModel.saveQRCodeToGallery(context) }) {
                 Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("保存到相册", style = MaterialTheme.typography.labelMedium)
+                Text("Save to Gallery", style = MaterialTheme.typography.labelMedium)
             }
             TextButton(onClick = {
                 if (state is LoginUiState.ShowQRCode) {
@@ -184,7 +184,7 @@ private fun QRCodeLoginTab(
             }) {
                 Icon(Icons.Default.OpenInBrowser, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("打开哔哩哔哩", style = MaterialTheme.typography.labelMedium)
+                Text("Open Bilibili", style = MaterialTheme.typography.labelMedium)
             }
         }
 
@@ -227,25 +227,25 @@ private fun QRCodeLoginTab(
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                         color = when (currentStatus) {
-                            "等待扫码..." -> MaterialTheme.colorScheme.onSurfaceVariant
-                            "已扫码，等待确认..." -> MaterialTheme.colorScheme.primary
-                            "二维码已过期" -> MaterialTheme.colorScheme.error
+                            "Waiting for scan..." -> MaterialTheme.colorScheme.onSurfaceVariant
+                            "Scanned, waiting for confirmation..." -> MaterialTheme.colorScheme.primary
+                            "QR code expired" -> MaterialTheme.colorScheme.error
                             else -> MaterialTheme.colorScheme.onSurface
                         },
                         textAlign = TextAlign.Center
                     )
                 }
 
-                if (state.status == "二维码已过期") {
+                if (state.status == "QR code expired") {
                     Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
                     Button(onClick = { viewModel.refreshQRCode() }) {
-                        Text("刷新二维码")
+                        Text("Refresh QR")
                     }
                 }
 
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
                 Text(
-                    text = "请务必在官方渠道下载安装本应用。",
+                    text = "Please download and install the app from official channels.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                     textAlign = TextAlign.Center,
@@ -278,7 +278,7 @@ private fun LoadingContent() {
     ) {
         CircularProgressIndicator(modifier = Modifier.size(48.dp), color = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
-        Text("正在生成二维码...", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Generating QR code...", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -301,11 +301,11 @@ private fun LoggedInContent(
             text = { Text("确定要退出当前B站账号吗？") },
             confirmButton = {
                 TextButton(onClick = { showLogoutConfirm = false; onLogout() }) {
-                    Text("退出", color = MaterialTheme.colorScheme.error)
+                    Text("Logout", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutConfirm = false }) { Text("取消") }
+                TextButton(onClick = { showLogoutConfirm = false }) { Text("Cancel") }
             }
         )
     }
@@ -341,7 +341,7 @@ private fun LoggedInContent(
                             .data(userInfo.face)
                             .crossfade(true)
                             .build(),
-                        contentDescription = "用户头像",
+                        contentDescription = "Avatar",
                         modifier = Modifier
                             .size(56.dp)
                             .clip(CircleShape),
@@ -390,7 +390,7 @@ private fun LoggedInContent(
                             )
                             Spacer(modifier = Modifier.width(3.dp))
                             Text(
-                                text = if (userInfo.vipType >= 2) "年度大会员" else "大会员",
+                                text = if (userInfo.vipType >= 2) "Annual VIP" else "VIP",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -431,7 +431,7 @@ private fun ErrorContent(message: String, onRetry: () -> Unit) {
         Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
         Text(text = message, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
-        Button(onClick = onRetry) { Text("重试") }
+        Button(onClick = onRetry) { Text("Retry") }
     }
 }
 
@@ -465,12 +465,12 @@ private fun openWithBilibiliApp(context: Context, qrUrl: String) {
         }
 
         // 用系统Chooser打开，如果有多个App能处理会弹出选择器
-        val chooser = Intent.createChooser(intent, "选择要使用的应用")
+        val chooser = Intent.createChooser(intent, "Choose an app")
         context.startActivity(chooser)
     } catch (e: android.content.ActivityNotFoundException) {
-        Toast.makeText(context, "未检测到哔哩哔哩 App", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Bilibili app not detected", Toast.LENGTH_SHORT).show()
     } catch (e: Exception) {
-        Toast.makeText(context, "打开失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Failed to open: ${e.message}", Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -507,9 +507,9 @@ class LoginViewModel(private val authManager: BiliBiliAuthManager) : ViewModel()
             _uiState.value = LoginUiState.Loading
             _qrCodeLeftTime.value = 180
             authManager.generateQRCode().onSuccess { qrCodeInfo ->
-                _uiState.value = LoginUiState.ShowQRCode(qrCodeInfo, "等待扫码...")
+                _uiState.value = LoginUiState.ShowQRCode(qrCodeInfo, "Waiting for scan...")
             }.onFailure { e ->
-                _uiState.value = LoginUiState.Error(e.message ?: "生成二维码失败")
+                _uiState.value = LoginUiState.Error(e.message ?: "Failed to generate QR code")
             }
         }
     }
@@ -531,13 +531,13 @@ class LoginViewModel(private val authManager: BiliBiliAuthManager) : ViewModel()
                 when (val result = authManager.pollQRCodeStatus(qrcodeKey)) {
                     is LoginResult.Success -> {
                         delay(500)
-                        val userInfo = authManager.getUserInfo() ?: UserInfo(mid = 0, uname = "B站用户", face = "", vipStatus = 0, vipType = 0)
+                        val userInfo = authManager.getUserInfo() ?: UserInfo(mid = 0, uname = "Bilibili User", face = "", vipStatus = 0, vipType = 0)
                         _uiState.value = LoginUiState.LoggedIn(userInfo)
                         pollingJob?.cancel(); return@launch
                     }
-                    is LoginResult.WaitingScan -> updateStatus("等待扫码...")
-                    is LoginResult.WaitingConfirm -> updateStatus("已扫码，等待确认...")
-                    is LoginResult.Expired -> { updateStatus("二维码已过期"); pollingJob?.cancel(); return@launch }
+                    is LoginResult.WaitingScan -> updateStatus("Waiting for scan...")
+                    is LoginResult.WaitingConfirm -> updateStatus("Scanned, waiting for confirmation...")
+                    is LoginResult.Expired -> { updateStatus("QR code expired"); pollingJob?.cancel(); return@launch }
                     is LoginResult.Failed -> { _uiState.value = LoginUiState.Error(result.message); pollingJob?.cancel(); return@launch }
                 }
             }
@@ -550,7 +550,7 @@ class LoginViewModel(private val authManager: BiliBiliAuthManager) : ViewModel()
             try {
                 val state = _uiState.value
                 if (state !is LoginUiState.ShowQRCode) return@launch
-                val bitmap = generateQRCodeBitmap(state.qrCodeInfo.url, 440) ?: run { Toast.makeText(context, "生成二维码图片失败", Toast.LENGTH_SHORT).show(); return@launch }
+                val bitmap = generateQRCodeBitmap(state.qrCodeInfo.url, 440) ?: run { Toast.makeText(context, "Failed to generate QR code image", Toast.LENGTH_SHORT).show(); return@launch }
                 val fileName = "BiliLogin_QR_${System.currentTimeMillis()}.png"
                 val contentValues = ContentValues().apply {
                     put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
@@ -574,12 +574,12 @@ class LoginViewModel(private val authManager: BiliBiliAuthManager) : ViewModel()
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                         val saved = MediaStore.Images.Media.insertImage(resolver, bitmap, fileName, "Bilibili Login QR Code")
                         if (saved != null) Toast.makeText(context, "二维码已保存到相册", Toast.LENGTH_SHORT).show()
-                        else Toast.makeText(context, "保存失败", Toast.LENGTH_SHORT).show()
+                        else Toast.makeText(context, "Save failed", Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
                 com.fam4k007.videoplayer.utils.Logger.e("BiliLogin", "Save QR error", e)
-                Toast.makeText(context, "保存失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Save failed: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }

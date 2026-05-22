@@ -49,14 +49,14 @@ fun PlaybackSettingsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "播放设置",
+                        "Playback Settings",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "返回")
+                        Icon(Icons.Default.ArrowBack, "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -73,20 +73,20 @@ fun PlaybackSettingsScreen(
         ) {
             // 进度控制
             item {
-                PreferenceSectionHeader("进度控制")
+                PreferenceSectionHeader("Seek Controls")
             }
 
             item {
                 PreferenceCard {
                     SwitchItem(
-                        title = "精确进度定位",
-                        subtitle = if (settings.preciseSeeking) "定位更准确但可能较慢" else "定位更快但使用关键帧",
+                        title = "Precise Seeking",
+                        subtitle = if (settings.preciseSeeking) "More accurate but may be slower" else "Faster but uses keyframes",
                         checked = settings.preciseSeeking,
                         onCheckedChange = { viewModel.setPreciseSeeking(it) }
                     )
                     TextItem(
-                        title = "快进/快退时长",
-                        value = "${settings.seekTime}秒",
+                        title = "Seek Duration",
+                        value = "${settings.seekTime}s",
                         onClick = { showSeekTimeDialog = true }
                     )
                 }
@@ -94,7 +94,7 @@ fun PlaybackSettingsScreen(
 
             // 进度条样式
             item {
-                PreferenceSectionHeader("进度条样式")
+                PreferenceSectionHeader("Seekbar Style")
             }
 
             item {
@@ -108,7 +108,7 @@ fun PlaybackSettingsScreen(
 
             // 手势控制
             item {
-                PreferenceSectionHeader("手势控制")
+                PreferenceSectionHeader("Gesture Controls")
             }
 
             item {
@@ -120,8 +120,8 @@ fun PlaybackSettingsScreen(
                     // 只有在快进/快退模式时才显示秒数设置
                     if (settings.doubleTapMode == 1) {
                         TextItem(
-                            title = "双击跳转时长",
-                            value = "${settings.doubleTapSeekSeconds}秒",
+                            title = "Double-tap Seek Duration",
+                            value = "${settings.doubleTapSeekSeconds}s",
                             onClick = { showDoubleTapSeekDialog = true }
                         )
                     }
@@ -130,14 +130,14 @@ fun PlaybackSettingsScreen(
 
             // 音量控制
             item {
-                PreferenceSectionHeader("音量控制")
+                PreferenceSectionHeader("Volume Controls")
             }
 
             item {
                 PreferenceCard {
                     SwitchItem(
-                        title = "音量增强",
-                        subtitle = if (settings.volumeBoost) "音量可超过100%,最高300%" else "音量范围限制在1-100%",
+                        title = "Volume Boost",
+                        subtitle = if (settings.volumeBoost) "Volume can exceed 100%, up to 300%" else "Volume limited to 1-100%",
                         checked = settings.volumeBoost,
                         onCheckedChange = { viewModel.setVolumeBoost(it) }
                     )
@@ -146,24 +146,24 @@ fun PlaybackSettingsScreen(
 
             // 倍速控制
             item {
-                PreferenceSectionHeader("倍速控制")
+                PreferenceSectionHeader("Speed Controls")
             }
 
             item {
                 PreferenceCard {
                     SwitchItem(
-                        title = "记忆播放倍速",
-                        subtitle = if (settings.rememberSpeed) "始终使用上次设置的播放倍速" else "每次切换视频恢复到1倍速",
+                        title = "Remember Playback Speed",
+                        subtitle = if (settings.rememberSpeed) "Always use last set speed" else "Reset to 1x on each video",
                         checked = settings.rememberSpeed,
                         onCheckedChange = { viewModel.setRememberSpeed(it) }
                     )
                     TextItem(
-                        title = "自定义倍速选项",
-                        value = "点击设置",
+                        title = "Speed Presets",
+                        value = "Tap to set",
                         onClick = { showSpeedPresetsDialog = true }
                     )
                     TextItem(
-                        title = "长按倍速",
+                        title = "Long-press Speed",
                         value = String.format("%.1fx", settings.longPressSpeed),
                         onClick = { showSpeedDialog = true }
                     )
@@ -172,20 +172,20 @@ fun PlaybackSettingsScreen(
 
             // 自动连播
             item {
-                PreferenceSectionHeader("自动连播")
+                PreferenceSectionHeader("Auto Play")
             }
 
             item {
                 PreferenceCard {
                     SwitchItem(
-                        title = "自动播放下一集",
-                        subtitle = if (settings.autoPlayNext) "当前视频结束后自动播放下一个视频" else "播放完当前视频后停止",
+                        title = "Auto Play Next",
+                        subtitle = if (settings.autoPlayNext) "Automatically play next video" else "Stop after current video",
                         checked = settings.autoPlayNext,
                         onCheckedChange = { viewModel.setAutoPlayNext(it) }
                     )
                     SwitchItem(
-                        title = "播完退出播放器",
-                        subtitle = if (settings.closeAfterEOF) "播放完最后一个视频后自动关闭播放器" else "播完后停留在当前画面",
+                        title = "Exit Player After Playback",
+                        subtitle = if (settings.closeAfterEOF) "Auto close player after last video" else "Stay on current screen",
                         checked = settings.closeAfterEOF,
                         onCheckedChange = { viewModel.setCloseAfterEOF(it) }
                     )
@@ -194,14 +194,14 @@ fun PlaybackSettingsScreen(
 
             // 画质增强
             item {
-                PreferenceSectionHeader("画质增强")
+                PreferenceSectionHeader("Image Enhancement")
             }
 
             item {
                 PreferenceCard {
                     SwitchItem(
-                        title = "记忆超分模式",
-                        subtitle = if (settings.anime4KMemory) "记住上次使用的Anime4K模式" else "每次播放都从关闭状态开始",
+                        title = "Remember Upscale Mode",
+                        subtitle = if (settings.anime4KMemory) "Remember last used Anime4K mode" else "Always start with Anime4K off",
                         checked = settings.anime4KMemory,
                         onCheckedChange = { viewModel.setAnime4KMemory(it) }
                     )
@@ -273,7 +273,7 @@ private fun DoubleTapModeCard(
             )
     ) {
         Text(
-            "双击手势",
+            "Double-tap Gesture",
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
@@ -301,14 +301,14 @@ private fun DoubleTapModeCard(
             Spacer(Modifier.width(12.dp))
             Column {
                 Text(
-                    "暂停/播放",
+                    "Pause/Play",
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (currentMode == 0) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurface,
                     fontWeight = if (currentMode == 0) FontWeight.SemiBold else FontWeight.Normal
                 )
                 Text(
-                    "双击任意位置暂停或播放",
+                    "Double-tap anywhere to pause or play",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -338,14 +338,14 @@ private fun DoubleTapModeCard(
             Spacer(Modifier.width(12.dp))
             Column {
                 Text(
-                    "快进/快退",
+                    "Seek Forward/Backward",
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (currentMode == 1) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurface,
                     fontWeight = if (currentMode == 1) FontWeight.SemiBold else FontWeight.Normal
                 )
                 Text(
-                    "双击左半屏快退，右半屏快进",
+                    "Double-tap left to rewind, right to fast-forward",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -367,7 +367,7 @@ private fun SeekTimeDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                "快进/快退时长",
+                "Seek Duration",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
@@ -394,7 +394,7 @@ private fun SeekTimeDialog(
                         )
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            "${seconds}秒",
+                            "${seconds}s",
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (selected == seconds) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurface,
@@ -406,12 +406,12 @@ private fun SeekTimeDialog(
         },
         confirmButton = {
             Button(onClick = { onConfirm(selected) }) {
-                Text("确定")
+                Text("OK")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text("Cancel")
             }
         },
         shape = RoundedCornerShape(28.dp),
@@ -432,7 +432,7 @@ private fun DoubleTapSeekDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                "双击跳转时长",
+                "Double-tap Seek Duration",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
@@ -459,7 +459,7 @@ private fun DoubleTapSeekDialog(
                         )
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            "${seconds}秒",
+                            "${seconds}s",
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (selected == seconds) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurface,
@@ -471,12 +471,12 @@ private fun DoubleTapSeekDialog(
         },
         confirmButton = {
             Button(onClick = { onConfirm(selected) }) {
-                Text("确定")
+                Text("OK")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text("Cancel")
             }
         },
         shape = RoundedCornerShape(28.dp),
@@ -497,7 +497,7 @@ private fun SpeedDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                "长按倍速",
+                "Long-press Speed",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
@@ -536,12 +536,12 @@ private fun SpeedDialog(
         },
         confirmButton = {
             Button(onClick = { onConfirm(selected) }) {
-                Text("确定")
+                Text("OK")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text("Cancel")
             }
         },
         shape = RoundedCornerShape(28.dp),
@@ -581,7 +581,7 @@ private fun SpeedPresetsDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "自定义倍速选项",
+                        "Speed Presets",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -596,7 +596,7 @@ private fun SpeedPresetsDialog(
                         }
                     ) {
                         Text(
-                            if (allSelected) "取消全选" else "全选",
+                            if (allSelected) "Deselect All" else "Select All",
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -604,7 +604,7 @@ private fun SpeedPresetsDialog(
 
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "1倍速强制勾选",
+                    "1x speed is fixed",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -677,19 +677,19 @@ private fun SpeedPresetsDialog(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("取消")
+                        Text("Cancel")
                     }
 
                     Button(
                         onClick = {
                             viewModel.setCustomSpeedPresets(selectedPresets.value)
-                            Toast.makeText(context, "倍速选项已保存", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Speed presets saved", Toast.LENGTH_SHORT).show()
                             onDismiss()
                         },
                         modifier = Modifier.weight(1f),
                         enabled = selectedPresets.value.contains("1.0")
                     ) {
-                        Text("保存")
+                        Text("Save")
                     }
                 }
             }
@@ -711,7 +711,7 @@ private fun SeekbarStyleCard(
             )
     ) {
         Text(
-            "进度条样式",
+            "Seekbar Style",
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
@@ -748,9 +748,9 @@ private fun SeekbarStyleCard(
                     )
                     Text(
                         when (style) {
-                            SeekbarStyle.Standard -> "经典细轨，配合圆点指示器，简约清晰"
-                            SeekbarStyle.Wavy -> "动态波浪动画，播放时律动起伏，生动流畅"
-                            SeekbarStyle.Thick -> "宽幅轨道，便于触摸操作，沉稳醒目"
+                            SeekbarStyle.Standard -> "Classic thin track with dot indicator, clean and clear"
+                            SeekbarStyle.Wavy -> "Dynamic wave animation, lively and smooth"
+                            SeekbarStyle.Thick -> "Wide track, easy to touch, bold and clear"
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant

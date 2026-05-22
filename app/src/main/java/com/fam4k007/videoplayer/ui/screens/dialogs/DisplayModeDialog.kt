@@ -39,15 +39,15 @@ fun DisplayModeSelectionDialog(
 ) {
     var selectedMode by remember { mutableStateOf(currentMode) }
     val options = listOf(
-        "folder" to "文件夹视图",
-        "flat" to "视频列表"
+        "folder" to "Folder View",
+        "flat" to "Video List"
     )
     
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "视频显示模式",
+                text = "Video Display Mode",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
@@ -86,12 +86,12 @@ fun DisplayModeSelectionDialog(
         },
         confirmButton = {
             Button(onClick = { onModeSelected(selectedMode) }) {
-                Text("确定")
+                Text("OK")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text("Cancel")
             }
         },
         modifier = modifier,

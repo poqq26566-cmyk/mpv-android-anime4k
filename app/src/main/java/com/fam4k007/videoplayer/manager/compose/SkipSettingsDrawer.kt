@@ -123,7 +123,7 @@ fun SkipSettingsDrawer(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "片头片尾设置",
+                                text = "Skip Intro/Outro Settings",
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -224,14 +224,14 @@ private fun AutoSkipChapterContent(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "自动跳过章节",
+                    text = "Auto Skip Chapters",
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color.White
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "利用视频章节信息自动跳到正片（优先级高于手动时间设置）",
+                    text = "Auto-jump to main content using chapter info (overrides manual settings)",
                     fontSize = 12.sp,
                     color = Color(0x88FFFFFF),
                     lineHeight = 16.sp

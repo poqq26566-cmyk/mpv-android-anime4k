@@ -50,7 +50,7 @@ internal fun VideoPlayerActivity.loadDanmakuForVideo(videoUri: android.net.Uri) 
         }
     } catch (e: Exception) {
         Log.e(TAG, "Error loading danmaku", e)
-        DialogUtils.showToastShort(this, "弹幕加载失败: ${e.message}")
+        DialogUtils.showToastShort(this, "Danmaku loading failed: ${e.message}")
     }
 }
 
@@ -86,7 +86,7 @@ internal fun VideoPlayerActivity.autoFindAndLoadDanmaku(videoUri: android.net.Ur
                     val fileName = danmakuPath?.substringAfterLast("/") ?: "弹幕文件"
 
                     // 显示加载成功提示，提醒用户需要手动显示
-                    DialogUtils.showToastShort(this, "已加载弹幕: $fileName\n点击弹幕按钮显示")
+                    DialogUtils.showToastShort(this, "Danmaku loaded: $fileName\nTap danmaku button to show")
 
                     // 根据实际的 trackSelected 状态更新Compose弹幕按钮
                     val isTrackSelected = danmakuManager.getTrackSelected()
@@ -126,7 +126,7 @@ internal fun VideoPlayerActivity.loadNetworkDanmaku(episodeId: Int, animeTitle: 
     lifecycleScope.launch {
         try {
             // 显示加载提示
-            DialogUtils.showToastShort(this@loadNetworkDanmaku, "正在加载弹幕...")
+            DialogUtils.showToastShort(this@loadNetworkDanmaku, "Loading danmaku...")
 
             // 获取弹幕
             val api = com.fam4k007.videoplayer.dandanplay.DanDanPlayApi()
@@ -177,7 +177,7 @@ internal fun VideoPlayerActivity.loadNetworkDanmaku(episodeId: Int, animeTitle: 
                             Logger.d(TAG, "Network danmaku updated in history")
                         }
                     } else {
-                        DialogUtils.showToastLong(this@loadNetworkDanmaku, "弹幕加载失败")
+                        DialogUtils.showToastLong(this@loadNetworkDanmaku, "Danmaku loading failed")
                     }
                 },
                 onFailure = { e ->
@@ -189,7 +189,7 @@ internal fun VideoPlayerActivity.loadNetworkDanmaku(episodeId: Int, animeTitle: 
             )
         } catch (e: Exception) {
             Logger.e(TAG, "Failed to load network danmaku", e)
-            DialogUtils.showToastLong(this@loadNetworkDanmaku, "弹幕加载异常: ${e.message}")
+            DialogUtils.showToastLong(this@loadNetworkDanmaku, "Danmaku loading error: ${e.message}")
         }
     }
 }

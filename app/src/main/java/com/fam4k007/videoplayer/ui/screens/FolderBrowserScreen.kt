@@ -79,7 +79,7 @@ fun FolderBrowserScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "文件夹",
+                        "Folders",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -88,7 +88,7 @@ fun FolderBrowserScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = "Back"
                         )
                     }
                 },
@@ -103,13 +103,13 @@ fun FolderBrowserScreen(
                         }) {
                             Icon(
                                 imageVector = if (isEditMode) Icons.Default.Close else Icons.Default.Edit,
-                                contentDescription = if (isEditMode) "退出编辑" else "编辑"
+                                contentDescription = if (isEditMode) "Exit Edit" else "Edit"
                             )
                         }
                         IconButton(onClick = { showSortDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.Sort,
-                                contentDescription = "排序"
+                                contentDescription = "Sort"
                             )
                         }
                     }
@@ -138,7 +138,7 @@ fun FolderBrowserScreen(
                     }
                 }
                 folderListState.folders.isEmpty() -> {
-                    EmptyState("未找到视频文件夹")
+                    EmptyState("No video folders found")
                 }
                 else -> {
                     Box(modifier = Modifier.fillMaxSize()) {
@@ -236,7 +236,7 @@ fun FolderBrowserScreen(
                                 containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor = MaterialTheme.colorScheme.onPrimary
                             ) {
-                                Icon(Icons.Default.Refresh, "刷新")
+                                Icon(Icons.Default.Refresh, "Refresh")
                             }
                         }
                     }
@@ -439,7 +439,7 @@ private fun FolderItem(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "${folder.videoCount} 个视频",
+                    text = "${folder.videoCount} videos",
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -477,7 +477,7 @@ private fun PermissionPrompt(onRequestPermission: () -> Unit) {
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "需要存储权限",
+                text = "Storage Permission Required",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
@@ -486,7 +486,7 @@ private fun PermissionPrompt(onRequestPermission: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "请授予存储权限以浏览视频文件",
+                text = "Grant storage permission to browse video files",
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -499,7 +499,7 @@ private fun PermissionPrompt(onRequestPermission: () -> Unit) {
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-                Text("授予权限")
+                Text("Grant Permission")
             }
         }
     }
@@ -543,7 +543,7 @@ private fun SortDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "排序方式",
+                text = "Sort By",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold
             )
@@ -551,22 +551,22 @@ private fun SortDialog(
         text = {
             Column {
                 SortOption(
-                    text = "名称 (升序)",
+                    text = "Name (Ascending)",
                     isSelected = currentSortType == "NAME" && currentSortOrder == "ASCENDING",
                     onClick = { onSortSelected("NAME", "ASCENDING") }
                 )
                 SortOption(
-                    text = "名称 (降序)",
+                    text = "Name (Descending)",
                     isSelected = currentSortType == "NAME" && currentSortOrder == "DESCENDING",
                     onClick = { onSortSelected("NAME", "DESCENDING") }
                 )
                 SortOption(
-                    text = "视频数量 (升序)",
+                    text = "Video Count (Ascending)",
                     isSelected = currentSortType == "VIDEO_COUNT" && currentSortOrder == "ASCENDING",
                     onClick = { onSortSelected("VIDEO_COUNT", "ASCENDING") }
                 )
                 SortOption(
-                    text = "视频数量 (降序)",
+                    text = "Video Count (Descending)",
                     isSelected = currentSortType == "VIDEO_COUNT" && currentSortOrder == "DESCENDING",
                     onClick = { onSortSelected("VIDEO_COUNT", "DESCENDING") }
                 )
@@ -574,7 +574,7 @@ private fun SortDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text("Cancel")
             }
         },
         shape = RoundedCornerShape(28.dp),

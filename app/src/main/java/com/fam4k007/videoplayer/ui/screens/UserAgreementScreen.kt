@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Security
@@ -42,7 +43,8 @@ import com.fam4k007.videoplayer.ui.theme.spacing
 fun UserAgreementScreen(
     onAgree: () -> Unit,
     onDecline: () -> Unit,
-    showActions: Boolean = true
+    showActions: Boolean = true,
+    onBack: (() -> Unit)? = null
 ) {
     var hasScrolledToBottom by remember { mutableStateOf(false) }
     var isChecked by remember { mutableStateOf(false) }
@@ -66,7 +68,7 @@ fun UserAgreementScreen(
             .padding(top = MaterialTheme.spacing.large)
     ) {
         // 头部
-        AgreementHeader(isPreview = !showActions)
+        AgreementHeader(isPreview = !showActions, onBack = onBack)
 
         Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
@@ -115,7 +117,7 @@ fun UserAgreementScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "请向下滑动阅读完整协议",
+                        text = "Scroll down to read the full agreement",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
@@ -143,11 +145,11 @@ fun UserAgreementScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = buildAnnotatedString {
-                        append("我已完整阅读并")
+                        append("I have read and fully ")
                         withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
-                            append("充分理解")
+                            append("understand")
                         }
-                        append("以上所有条款，同意遵守本协议的所有内容")
+                        append("all terms above, and agree to abide by this agreement")
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (hasScrolledToBottom) MaterialTheme.colorScheme.onSurface
@@ -174,7 +176,7 @@ fun UserAgreementScreen(
                     )
                 ) {
                     Text(
-                        text = "拒绝",
+                        text = "Decline",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -214,15 +216,27 @@ fun UserAgreementScreen(
 
 
 @Composable
-private fun AgreementHeader(isPreview: Boolean = false) {
+private fun AgreementHeader(isPreview: Boolean = false, onBack: (() -> Unit)? = null) {
     if (isPreview) {
-        // 预览模式：左上角对齐，大字体，无图标
-        Text(
-            text = "用户服务协议与隐私政策",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        // 预览模式：带返回按钮
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+            Text(
+                text = "User Agreement",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+        }
     } else {
         // 启动模式：居中带图标
         Column(
@@ -240,8 +254,8 @@ private fun AgreementHeader(isPreview: Boolean = false) {
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "用户服务协议与隐私政策",
-                style = MaterialTheme.typography.headlineSmall,
+                text = "User Agreement",
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -249,7 +263,7 @@ private fun AgreementHeader(isPreview: Boolean = false) {
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "欢迎使用小喵player！",
+                text = "Welcome to Meow Player!",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -265,12 +279,12 @@ private fun AgreementContent(showFullContent: Boolean = true) {
         // 重要声明
         AgreementSection(
             icon = Icons.Default.Warning,
-            title = "一、重要声明",
+            title = "I. Important Notice",
             iconTint = MaterialTheme.colorScheme.error
         ) {
-            BulletPoint("本应用完全免费且开源，遵守 GPL-3.0-or-later 开源协议")
-            BulletPoint("本应用旨在学习技术与测试代码，切勿滥用")
-            BulletPoint("我们强烈反对且不纵容任何形式的盗版、非法转载、黑产及其他违法用途或行为")
+            BulletPoint("This app is completely free and open source, licensed under GPL-3.0-or-later")
+            BulletPoint("This app is intended for learning and testing purposes only")
+            BulletPoint("We strongly oppose and do not condone any form of piracy, illegal redistribution, or other unlawful activities")
         }
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
@@ -278,46 +292,46 @@ private fun AgreementContent(showFullContent: Boolean = true) {
         // 隐私政策
         AgreementSection(
             icon = Icons.Default.Security,
-            title = "二、隐私政策",
+            title = "II. Privacy Policy",
             iconTint = MaterialTheme.colorScheme.primary
         ) {
-            SubTitle("【数据收集】")
-            CheckPoint("本应用不收集任何用户个人信息")
-            CheckPoint("本应用不上传任何数据到服务器（我们没有服务器）")
-            CheckPoint("本应用不分享用户数据给任何第三方")
-            CheckPoint("所有功能均在本地设备上运行")
+            SubTitle("[Data Collection]")
+            CheckPoint("We do NOT collect any personal information")
+            CheckPoint("We do NOT upload any data to any server (we have no servers)")
+            CheckPoint("We do NOT share user data with any third party")
+            CheckPoint("All features run locally on your device")
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            SubTitle("【权限说明】")
+            SubTitle("[Permissions]")
             Text(
-                text = "本应用需要申请以下权限：",
+                text = "This app requires the following permissions:",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            PermissionItem("管理所有文件权限", "用于扫描本地视频文件、保存字幕和弹幕文件")
-            PermissionItem("网络权限", "用于在线播放、下载弹幕、WebDAV等功能")
+            PermissionItem("Manage All Files", "Scan local video files, save subtitles and danmaku files")
+            PermissionItem("Network", "Online playback, danmaku download, WebDAV, etc.")
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            SubTitle("【WebDAV 存储说明】")
-            BulletPoint("WebDAV 的账号、密码及服务器地址仅存储在本地")
-            BulletPoint("不会同步或上传到任何第三方服务器")
-            BulletPoint("您可随时在设置中清除已保存的 WebDAV 信息")
+            SubTitle("[WebDAV Storage]")
+            BulletPoint("WebDAV credentials and server addresses are stored locally only")
+            BulletPoint("They are never synced or uploaded to any third-party server")
+            BulletPoint("You can clear saved WebDAV info anytime in Settings")
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            SubTitle("【登录信息安全】")
+            SubTitle("[Login Security]")
             Text(
-                text = "如您选择使用哔哩哔哩登录功能：",
+                text = "If you choose to use Bilibili login:",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            BulletPoint("登录凭证使用 AES-256 加密存储在本地")
-            BulletPoint("登录密钥由 Android KeyStore 硬件保护，应用无法导出")
-            BulletPoint("登录信息仅用于调用B站API，不会上传到任何其他地方")
-            BulletPoint("您可随时在设置中一键退出登录")
-            BulletPoint("应用卸载后，所有登录数据将自动永久销毁")
+            BulletPoint("Login credentials are encrypted with AES-256 and stored locally")
+            BulletPoint("Encryption keys are protected by Android KeyStore hardware")
+            BulletPoint("Login info is only used for Bilibili API calls, never uploaded elsewhere")
+            BulletPoint("You can log out anytime in Settings")
+            BulletPoint("All login data is permanently destroyed when the app is uninstalled")
         }
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
@@ -325,38 +339,38 @@ private fun AgreementContent(showFullContent: Boolean = true) {
         // 法律风险警告
         AgreementSection(
             icon = Icons.Default.Warning,
-            title = "三、法律风险警告",
+            title = "III. Legal Disclaimer",
             iconTint = Color(0xFFFF6B6B)
         ) {
             WarningCard {
-                SubTitle("【视频/番剧下载功能】")
+                SubTitle("[Video/Bangumi Download]")
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "⚠️ 重要警告：",
+                    text = "⚠️ Important Warning:",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFFF6B6B)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                BulletPoint("本功能仅供个人学习与技术交流使用")
-                BulletPoint("严禁用于任何商业用途")
-                BulletPoint("下载的视频内容版权归原作者所有")
-                BulletPoint("建议下载后24小时内删除")
+                BulletPoint("This feature is for personal learning and technical research only")
+                BulletPoint("Commercial use is strictly prohibited")
+                BulletPoint("Downloaded content is copyright of the original owner")
+                BulletPoint("It is recommended to delete downloaded content within 24 hours")
             }
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            SubTitle("【免责声明】")
-            BulletPoint("因使用本应用而产生的任何后果（包括但不限于非法用途、账号风控或其他损失），均由用户个人承担")
-            BulletPoint("与开发者无关，开发者概不负责")
-            BulletPoint("若因使用本应用下载功能进行商业活动而造成的法律风险，请用户自行承担")
+            SubTitle("[Disclaimer]")
+            BulletPoint("Any consequences arising from the use of this app are the sole responsibility of the user")
+            BulletPoint("The developer assumes no responsibility for any losses or damages")
+            BulletPoint("Users assume all legal risks associated with commercial use of download features")
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            SubTitle("【版权声明】")
-            BulletPoint("\"哔哩哔哩\" 及 \"Bilibili\" 名称、LOGO及相关图形是上海幻电信息科技有限公司的注册商标")
-            BulletPoint("本应用为独立的第三方工具，与哔哩哔哩及其关联公司无任何关联")
-            BulletPoint("使用本应用获取的内容，其版权归原权利人所有")
+            SubTitle("[Copyright]")
+            BulletPoint("\"Bilibili\" name, logo and related graphics are registered trademarks of Shanghai Hodei Information Technology Co., Ltd.")
+            BulletPoint("This app is an independent third-party tool with no affiliation to Bilibili")
+            BulletPoint("Content obtained through this app is copyright of the respective owners")
         }
 
         if (showFullContent) {
@@ -365,26 +379,26 @@ private fun AgreementContent(showFullContent: Boolean = true) {
             // 用户承诺
             AgreementSection(
                 icon = Icons.Default.CheckCircle,
-                title = "四、用户承诺",
+                title = "IV. User Agreement",
                 iconTint = MaterialTheme.colorScheme.tertiary
             ) {
                 Text(
-                    text = "点击\"同意并继续\"即表示您：",
+                    text = "By tapping \"Agree & Continue\", you confirm that:",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                CheckPoint("已完整阅读并充分理解以上所有条款")
-                CheckPoint("同意遵守本协议的所有内容")
-                CheckPoint("承诺不将本应用用于任何违法或商业用途")
-                CheckPoint("理解并接受使用本应用的所有风险由您个人承担")
-                CheckPoint("同意开发者对本应用功能的滥用不承担任何责任")
+                CheckPoint("You have read and fully understood all terms above")
+                CheckPoint("You agree to abide by all terms of this agreement")
+                CheckPoint("You will not use this app for any illegal or commercial purposes")
+                CheckPoint("You understand and accept that all risks are borne by you")
+                CheckPoint("You agree that the developer is not liable for misuse of this app")
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "点击\"拒绝\"将无法使用本应用。",
+                    text = "Tapping \"Decline\" will prevent you from using this app.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
@@ -400,7 +414,7 @@ private fun AgreementContent(showFullContent: Boolean = true) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "本应用使用了多个优秀的开源组件（详见「许可证书」）",
+                text = "This app uses several excellent open source components (see Licenses)",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -415,7 +429,7 @@ private fun AgreementContent(showFullContent: Boolean = true) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "如协议内容发生更新，将在下次启动时重新展示，届时请您留意",
+                text = "If this agreement is updated, it will be shown again on next launch. Please review it then.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -430,14 +444,14 @@ private fun AgreementContent(showFullContent: Boolean = true) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "感谢您的理解与配合！",
+                text = "Thank you for your understanding and cooperation!",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "最后更新时间：2026年5月18日",
+                text = "Last updated: 2026-05-18",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )

@@ -77,7 +77,7 @@ fun DownloadManagerScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text("下载管理", fontWeight = FontWeight.Bold)
+                    Text("Download Manager", fontWeight = FontWeight.Bold)
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -91,7 +91,7 @@ fun DownloadManagerScreen(
                     if (downloadItems.isNotEmpty()) {
                         var showMenu by remember { mutableStateOf(false) }
                         IconButton(onClick = { showMenu = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "更多")
+                            Icon(Icons.Default.MoreVert, contentDescription = "More")
                         }
                         DropdownMenu(
                             expanded = showMenu,
@@ -104,7 +104,7 @@ fun DownloadManagerScreen(
                             DropdownMenuItem(
                                 text = {
                                     Text(
-                                        "清除已完成",
+                                        "Clear Completed",
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Medium
                                     )
@@ -170,13 +170,13 @@ fun DownloadManagerScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "暂无下载任务",
+                        text = "No download tasks",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "在视频下载页解析链接后即可下载",
+                        text = "Parse a URL in the video download page to start",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                         textAlign = TextAlign.Center
@@ -203,9 +203,9 @@ fun DownloadManagerScreen(
                             .padding(bottom = 4.dp),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        StatChip("下载中", activeCount, MaterialTheme.colorScheme.primary)
-                        StatChip("已完成", completedCount, MaterialTheme.colorScheme.tertiary)
-                        StatChip("已暂停", pausedCount, MaterialTheme.colorScheme.secondary)
+                        StatChip("Downloading", activeCount, MaterialTheme.colorScheme.primary)
+                        StatChip("Completed", completedCount, MaterialTheme.colorScheme.tertiary)
+                        StatChip("Paused", pausedCount, MaterialTheme.colorScheme.secondary)
                     }
                 }
 
@@ -254,7 +254,7 @@ fun DownloadManagerScreen(
                             containerColor = MaterialTheme.colorScheme.surfaceContainer
                         )
                     ) {
-                        Text("仅清除记录", color = MaterialTheme.colorScheme.onSurface)
+                        Text("Clear Records Only", color = MaterialTheme.colorScheme.onSurface)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
@@ -268,7 +268,7 @@ fun DownloadManagerScreen(
                             containerColor = MaterialTheme.colorScheme.errorContainer
                         )
                     ) {
-                        Text("删除文件并清除", color = MaterialTheme.colorScheme.onErrorContainer)
+                        Text("Delete Files & Clear", color = MaterialTheme.colorScheme.onErrorContainer)
                     }
                 }
             },
@@ -288,7 +288,7 @@ fun DownloadManagerScreen(
             containerColor = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(28.dp),
             title = {
-                Text("删除任务", fontWeight = FontWeight.Bold)
+                Text("Delete Task", fontWeight = FontWeight.Bold)
             },
             text = {
                 Column {
@@ -311,7 +311,7 @@ fun DownloadManagerScreen(
                             containerColor = MaterialTheme.colorScheme.surfaceContainer
                         )
                     ) {
-                        Text("仅移除记录", color = MaterialTheme.colorScheme.onSurface)
+                        Text("Remove Record Only", color = MaterialTheme.colorScheme.onSurface)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
@@ -325,7 +325,7 @@ fun DownloadManagerScreen(
                             containerColor = MaterialTheme.colorScheme.errorContainer
                         )
                     ) {
-                        Text("删除文件并移除", color = MaterialTheme.colorScheme.onErrorContainer)
+                        Text("Delete File & Remove", color = MaterialTheme.colorScheme.onErrorContainer)
                     }
                 }
             },
@@ -374,13 +374,13 @@ private fun DownloadManagerItemCard(
 ) {
     var showDeleteConfirm by remember { mutableStateOf(false) }
     val statusText = when (item.status) {
-        "pending" -> "等待中"
-        "downloading" -> "下载中"
-        "paused" -> "已暂停"
-        "completed" -> "已完成"
-        "failed" -> "下载失败"
-        "merging" -> "合并中"
-        "cancelled" -> "已取消"
+        "pending" -> "Pending"
+        "downloading" -> "Downloading"
+        "paused" -> "Paused"
+        "completed" -> "Completed"
+        "failed" -> "Failed"
+        "merging" -> "Merging"
+        "cancelled" -> "Cancelled"
         else -> item.status
     }
     val statusColor = when (item.status) {
@@ -464,7 +464,7 @@ private fun DownloadManagerItemCard(
                     IconButton(onClick = onPause, modifier = Modifier.size(36.dp)) {
                         Icon(
                             Icons.Default.Pause,
-                            contentDescription = "暂停",
+                            contentDescription = "Pause",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
@@ -473,7 +473,7 @@ private fun DownloadManagerItemCard(
                     IconButton(onClick = onResume, modifier = Modifier.size(36.dp)) {
                         Icon(
                             Icons.Default.PlayArrow,
-                            contentDescription = "恢复",
+                            contentDescription = "Resume",
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )

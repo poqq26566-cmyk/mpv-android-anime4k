@@ -120,7 +120,7 @@ fun HomeScreen(
             
             // 播放本地视频按钮（给文本留出空间）
             GradientButton(
-                text = "播放本地视频",
+                text = "Play Local Video",
                 onClick = {
                     if (preferencesManager.getVideoDisplayMode() == "flat") {
                         flatScanAndPlayAllVideos(context)
@@ -191,13 +191,13 @@ fun TopBar(
         // 左上角登录按钮
         IconWithBackground(
             icon = Icons.Default.Person,
-            contentDescription = "登录",
+            contentDescription = "Login",
             onClick = onLoginClick
         )
         
         // 中间标题
         Text(
-            text = "小喵Player",
+            text = "Meow Player",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
@@ -206,7 +206,7 @@ fun TopBar(
         // 右上角设置按钮
         IconWithBackground(
             icon = Icons.Default.Settings,
-            contentDescription = "设置",
+            contentDescription = "Settings",
             onClick = onSettingsClick
         )
     }
@@ -230,7 +230,7 @@ fun LogoSection(
         // Logo 图片（直接显示图标，不带背景框）
         Icon(
             painter = painterResource(id = R.drawable.ic_continue_play),
-            contentDescription = "继续播放",
+            contentDescription = "Resume Playback",
             modifier = Modifier
                 .size(120.dp)
                 .shadow(
@@ -244,7 +244,7 @@ fun LogoSection(
                     } else {
                         android.widget.Toast.makeText(
                             context,
-                            "暂无播放记录",
+                            "No playback history",
                             android.widget.Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -260,7 +260,7 @@ fun LogoSection(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "继续播放: ${lastVideo.fileName}",
+                    text = "Resume: ${lastVideo.fileName}",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -344,7 +344,7 @@ fun RemoteUrlDialog(
             ) {
                 item {
                     Text(
-                        text = "播放网络视频",
+                        text = "Play Online Video",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -355,8 +355,8 @@ fun RemoteUrlDialog(
                     OutlinedTextField(
                         value = url,
                         onValueChange = { url = it },
-                        label = { Text("视频链接") },
-                        placeholder = { Text("https://example.com/video.mp4 或直接粘贴 curl / 请求头") },
+                        label = { Text("Video URL") },
+                        placeholder = { Text("https://example.com/video.mp4 or paste curl/headers") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 1,
                         maxLines = 3,
@@ -371,8 +371,8 @@ fun RemoteUrlDialog(
                     OutlinedTextField(
                         value = title,
                         onValueChange = { title = it },
-                        label = { Text("标题（可选）") },
-                        placeholder = { Text("为视频指定一个标题") },
+                        label = { Text("Title (optional)") },
+                        placeholder = { Text("Set a title for the video") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -388,7 +388,7 @@ fun RemoteUrlDialog(
                             contentDescription = null
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (showAdvanced) "收起高级设置" else "展开高级设置")
+                        Text(if (showAdvanced) "Hide Advanced" else "Show Advanced")
                     }
                 }
                 
@@ -397,8 +397,8 @@ fun RemoteUrlDialog(
                         OutlinedTextField(
                             value = referer,
                             onValueChange = { referer = it },
-                            label = { Text("Referer（可选）") },
-                            placeholder = { Text("HTTP Referer 头") },
+                            label = { Text("Referer (optional)") },
+                            placeholder = { Text("HTTP Referer header") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
@@ -408,8 +408,8 @@ fun RemoteUrlDialog(
                         OutlinedTextField(
                             value = origin,
                             onValueChange = { origin = it },
-                            label = { Text("Origin（可选）") },
-                            placeholder = { Text("HTTP Origin 头") },
+                            label = { Text("Origin (optional)") },
+                            placeholder = { Text("HTTP Origin header") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
@@ -419,7 +419,7 @@ fun RemoteUrlDialog(
                         OutlinedTextField(
                             value = cookie,
                             onValueChange = { cookie = it },
-                            label = { Text("Cookie（可选）") },
+                            label = { Text("Cookie (optional)") },
                             placeholder = { Text("HTTP Cookie") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
@@ -430,7 +430,7 @@ fun RemoteUrlDialog(
                         OutlinedTextField(
                             value = authorization,
                             onValueChange = { authorization = it },
-                            label = { Text("Authorization（可选）") },
+                            label = { Text("Authorization (optional)") },
                             placeholder = { Text("HTTP Authorization") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
@@ -441,7 +441,7 @@ fun RemoteUrlDialog(
                         OutlinedTextField(
                             value = userAgent,
                             onValueChange = { userAgent = it },
-                            label = { Text("User-Agent（可选）") },
+                            label = { Text("User-Agent (optional)") },
                             placeholder = { Text("HTTP User-Agent") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
@@ -459,7 +459,7 @@ fun RemoteUrlDialog(
                             onClick = onDismiss,
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("取消")
+                            Text("Cancel")
                         }
                         
                         Button(
@@ -503,7 +503,7 @@ fun RemoteUrlDialog(
                                 disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         ) {
-                            Text("播放")
+                            Text("Play")
                         }
                     }
                 }
@@ -594,7 +594,7 @@ fun ExpandableActionButton(
                                 
                                 ActionItem(
                                     icon = Icons.Default.Link,
-                                    label = "链接",
+                                    label = "URL",
                                     onClick = {
                                         showNetworkSubmenu = false
                                         onNetworkLinkClick()
@@ -604,13 +604,13 @@ fun ExpandableActionButton(
                                 // 主菜单
                                 ActionItem(
                                     icon = Icons.Default.Public,
-                                    label = "网络",
+                                    label = "Network",
                                     onClick = { showNetworkSubmenu = true }
                                 )
                                 
                                 ActionItem(
                                     icon = Icons.Default.VideoLibrary,
-                                    label = "哔哩哔哩番剧",
+                                    label = "Bilibili Bangumi",
                                     onClick = onBiliBiliClick
                                 )
                                 
@@ -641,7 +641,7 @@ fun ExpandableActionButton(
                 
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = if (isExpanded) "收起" else "展开",
+                    contentDescription = if (isExpanded) "Collapse" else "Expand",
                     tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier
                         .size(32.dp)
@@ -757,7 +757,7 @@ private fun continueLastPlay(
         com.fam4k007.videoplayer.utils.Logger.e("HomeScreen", "Failed to continue last play", e)
         android.widget.Toast.makeText(
             context,
-            "无法播放该视频: ${e.message}",
+            "Cannot play this video: ${e.message}",
             android.widget.Toast.LENGTH_SHORT
         ).show()
     }
@@ -857,7 +857,7 @@ private fun scanVideosInFolder(context: android.content.Context, folderPath: Str
  */
 private fun flatScanAndPlayAllVideos(context: android.content.Context) {
     kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.Main) {
-        val toast = android.widget.Toast.makeText(context, "正在扫描视频...", android.widget.Toast.LENGTH_SHORT)
+        val toast = android.widget.Toast.makeText(context, "Scanning videos...", android.widget.Toast.LENGTH_SHORT)
         toast.show()
         
         val videos = withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -865,13 +865,13 @@ private fun flatScanAndPlayAllVideos(context: android.content.Context) {
         }
         
         if (videos.isEmpty()) {
-            android.widget.Toast.makeText(context, "未找到视频文件", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(context, "No video files found", android.widget.Toast.LENGTH_SHORT).show()
             return@launch
         }
         
         val intent = Intent(context, com.fam4k007.videoplayer.VideoListComposeActivity::class.java)
-        intent.putExtra("folder_name", "所有视频")
-        intent.putExtra("folder_path", "所有视频")
+        intent.putExtra("folder_name", "All Videos")
+        intent.putExtra("folder_path", "All Videos")
         intent.putParcelableArrayListExtra("video_list", ArrayList(videos))
         context.startActivity(intent)
         (context as? android.app.Activity)?.overridePendingTransition(

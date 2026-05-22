@@ -72,7 +72,7 @@ fun SubtitleSearchScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("字幕搜索下载", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text("Subtitle Search", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -110,7 +110,7 @@ fun SubtitleSearchScreen(
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                     placeholder = { 
                         Text(
-                            if (currentFolderUri != null) "输入影片名称搜索字幕..." else "请先设置保存文件夹",
+                            if (currentFolderUri != null) "Enter movie name to search subtitles..." else "Please set a save folder first",
                             fontSize = 14.sp
                         ) 
                     },
@@ -200,10 +200,10 @@ fun SubtitleSearchScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         val displayPath = currentFolderUri?.let { uri ->
                             val docFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, uri)
-                            docFile?.name ?: "已设置路径"
+                            docFile?.name ?: "Path Set"
                         }
                         Text(
-                            text = displayPath ?: "设置文件夹",
+                            text = displayPath ?: "Set Folder",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
                             maxLines = 1,
@@ -241,7 +241,7 @@ fun SubtitleSearchScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "搜索选项",
+                            text = "Search Options",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             color = if (currentFolderUri != null) 
@@ -269,7 +269,7 @@ fun SubtitleSearchScreen(
                         ) {
                             CircularProgressIndicator(color = primaryColor)
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("搜索影片中...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Searching movies...", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                     // 显示媒体选择列表
@@ -299,7 +299,7 @@ fun SubtitleSearchScreen(
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = "已选择",
+                                            text = "Selected",
                                             fontSize = 12.sp,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -314,7 +314,7 @@ fun SubtitleSearchScreen(
                                     IconButton(onClick = onClearSelection) {
                                         Icon(
                                             Icons.Default.Close,
-                                            contentDescription = "取消选择",
+                                            contentDescription = "Deselect",
                                             tint = primaryColor
                                         )
                                     }
@@ -332,7 +332,7 @@ fun SubtitleSearchScreen(
                                 ) {
                                     CircularProgressIndicator(color = primaryColor)
                                     Spacer(modifier = Modifier.height(16.dp))
-                                    Text("搜索字幕中...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("Searching subtitles...", color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             } else if (searchResults.isEmpty()) {
                                 Column(
@@ -348,7 +348,7 @@ fun SubtitleSearchScreen(
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Text(
-                                        "未找到字幕",
+                                        "No subtitles found",
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = 16.sp
                                     )
@@ -392,7 +392,7 @@ private fun MediaResultList(
     ) {
         item {
             Text(
-                text = "选择影片 (${mediaList.size})",
+                text = "Select Movie (${mediaList.size})",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -477,7 +477,7 @@ private fun SubtitleResultList(
     ) {
         item {
             Text(
-                text = "字幕结果 (${subtitles.size})",
+                text = "Subtitle Results (${subtitles.size})",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -613,7 +613,7 @@ private fun SearchOptionsDialog(
             ) {
                 // 语言选项
                 Text(
-                    "字幕语言",
+                    "Language",
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -656,7 +656,7 @@ private fun SearchOptionsDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
                 )
                 Text(
-                    "字幕来源",
+                    "Source",
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -699,7 +699,7 @@ private fun SearchOptionsDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
                 )
                 Text(
-                    "字幕格式",
+                    "Format",
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -746,7 +746,7 @@ private fun SearchOptionsDialog(
                     )
                 }
             ) {
-                Text("确定")
+                Text("OK")
             }
         },
         dismissButton = {

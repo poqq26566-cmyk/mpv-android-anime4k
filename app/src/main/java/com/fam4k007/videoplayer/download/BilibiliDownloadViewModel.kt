@@ -76,7 +76,7 @@ class BilibiliDownloadViewModel(application: Application) : AndroidViewModel(app
     private fun getDownloadDir(): File {
         val path = _downloadPath.value
         if (path.isEmpty()) {
-            throw IllegalStateException("下载路径未设置")
+            throw IllegalStateException("Download path not set")
         }
         // 如果是content URI，使用默认路径
         val dir = if (path.startsWith("content://")) {

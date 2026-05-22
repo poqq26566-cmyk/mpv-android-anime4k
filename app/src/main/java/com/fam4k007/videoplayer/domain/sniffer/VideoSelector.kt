@@ -14,7 +14,7 @@ object VideoSelector {
      * 同格式内按质量评分排序
      */
     fun selectBest(videos: List<DetectedVideo>): DetectedVideo {
-        if (videos.isEmpty()) throw IllegalArgumentException("视频列表为空")
+        if (videos.isEmpty()) throw IllegalArgumentException("Video list is empty")
         if (videos.size == 1) return videos.first()
 
         // 优先选择流媒体清单（HLS / DASH）
