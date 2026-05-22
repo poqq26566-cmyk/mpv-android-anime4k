@@ -35,6 +35,30 @@ class Anime4KManager(private val context: Context) {
     private var currentQuality: Quality = Quality.BALANCED
     private var isInitialized = false  // 标记是否已初始化
 
+    // ===== 追加着色器开关（默认开启线条加深和细化，去模糊默认关闭）=====
+    // 基于社区证据：Issue #84（作者配置）和 Issue #216（社区配置）
+    @Volatile
+    var enableDarken: Boolean = true
+        private set
+    @Volatile
+    var enableThin: Boolean = true
+        private set
+    @Volatile
+    var enableDeblur: Boolean = false
+        private set
+
+    fun setDarkenEnabled(enabled: Boolean) {
+        enableDarken = enabled
+    }
+
+    fun setThinEnabled(enabled: Boolean) {
+        enableThin = enabled
+    }
+
+    fun setDeblurEnabled(enabled: Boolean) {
+        enableDeblur = enabled
+    }
+
     /**
      * 延迟初始化：只在首次使用时将着色器从assets复制到内部存储
      * 避免每次VideoPlayerActivity启动都执行I/O操作
@@ -169,9 +193,22 @@ class Anime4KManager(private val context: Context) {
             }
         }
 
+        // ===== 追加着色器模块（基于社区证据）=====
+        // 顺序：Deblur → Darken → Thin（来源 Issue #84 作者配置）
+        if (enableDeblur) {
+            shaders.add(getShaderPath("Anime4K_Deblur_DoG.glsl"))
+        }
+        if (enableDarken) {
+            shaders.add(getShaderPath("Anime4K_Darken_HQ.glsl"))
+        }
+        if (enableThin) {
+            shaders.add(getShaderPath("Anime4K_Thin_HQ.glsl"))
+        }
+
         // 用冒号连接所有着色器路径
         val chain = shaders.joinToString(":")
-        Log.d(TAG, "Shader chain for Mode $mode ($quality): $chain")
+        Log.d(TAG, "Shader chain for Mode $mode ($quality): $chain" +
+            " | darken=$enableDarken thin=$enableThin deblur=$enableDeblur")
         return chain
     }
 
