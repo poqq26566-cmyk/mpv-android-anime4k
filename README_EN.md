@@ -1,6 +1,6 @@
-# XiaoMiao Player - Local Anime Video Real-time Upscaling Player
+# Meow Player - Local Anime Video Real-time Upscaling Player
 
-**[中文版本](README.md) | [English Version](README_EN.md)**
+**[返回中文版本](README.md)**
 
 ---
 

@@ -170,4 +170,5 @@
     <color name="anime4k_text">#333333</color>
     <color name="anime4k_text_secondary">#666666</color>
     <color name="anime4k_divider">#E0E0E0</color>
+    <color name="dialog_title">#999999</color>
 </resources>

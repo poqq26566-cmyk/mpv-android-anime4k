@@ -6,22 +6,21 @@
 
 同时支持弹幕、字幕、手势控制、B站番剧在线播放等功能，也可作为通用本地视频播放器使用。
 
-## 📑 目录
+## 目录
 
-### 📋 项目信息
-- [声明](#声明) - 开源协议
-- [⚠️ 重要声明](#️-重要声明) - 使用须知
+### 项目信息
+- [声明](#声明) - 开源协议与使用须知
 
-### 🚀 开始使用
+### 开始使用
 - [快速开始](#快速开始) - 下载与安装
 - [功能特性](#功能特性) - 核心功能介绍
 - [功能截图](#功能截图) - 应用界面预览
 
-### 🔧 技术相关
+### 技术相关
 - [技术架构](#技术架构) - 技术栈说明
 - [致谢](#致谢) - 开源项目致谢
 
-### 🔒 隐私与文档
+### 隐私与文档
 - [隐私与第三方服务](#隐私与第三方服务) - 隐私政策与 API 说明
 - [技术文档](#技术文档) - 完整技术文档索引
 - [反馈与建议](#反馈与建议) - 问题反馈渠道
@@ -32,12 +31,8 @@
 
 > [!IMPORTANT]
 > 本项目遵守 [GPL-3.0-or-later](LICENSE) 开源协议，免费开源。
-> 
+>
 > **任何形式的二次分发必须继续开源、遵守相同协议、保留原作者及版权信息。**
-
----
-
-## ⚠️ 重要声明
 
 **本项目旨在学习技术与测试代码，切勿滥用！**
 
@@ -55,7 +50,7 @@
 
 ## 快速开始
 
-📥 **下载安装**：[GitHub Releases](https://github.com/azxcvn/mpv-android-anime4k/releases)
+**下载安装**：[GitHub Releases](https://github.com/azxcvn/mpv-android-anime4k/releases)
 
 > **系统要求**：Android 12 (API 31) 及以上，建议 8GB+ RAM
 
@@ -65,59 +60,57 @@
 
 ### 核心功能
 
-- 🎬 **视频播放**：支持主流视频格式（MP4、MKV、AVI 等）
-- 🌐 **网页嗅探**：内置 WebView，嗅探网页视频并一键播放
-- 📺 **B站番剧**：支持登录、在线播放、视频/番剧下载
-- ☁️ **WebDAV**：连接云端服务器，直接播放网络视频
-- 📂 **播放列表**：自动扫描、排序、分类管理
-- 📝 **字幕**：内嵌/外部字幕、自动加载、样式调整
-- 🔊 **音频**：多音轨切换、音量增强（精细到 0.1%）
-- 💬 **弹幕**：弹弹play 匹配、B站弹幕下载、样式自定义
-- 👆 **手势控制**：亮度、音量、进度调节，支持自定义
-- 🎨 **超分辨率**：Anime4K 实时视频超分
-- 🖼️ **其他**：截图保存、播放进度记忆
+- **视频播放**：支持主流视频格式（MP4、MKV、AVI 等）
+- **网页嗅探**：内置 WebView，嗅探网页视频并一键播放
+- **B站番剧**：支持登录、在线播放、视频/番剧下载
+- **WebDAV**：连接云端服务器，直接播放网络视频
+- **播放列表**：自动扫描、排序、分类管理
+- **字幕**：内嵌/外部字幕、自动加载、样式调整
+- **音频**：多音轨切换、音量增强
+- **弹幕**：弹弹play 匹配、B站弹幕下载、样式自定义
+- **手势控制**：亮度、音量、进度调节，支持自定义
+- **超分辨率**：Anime4K 实时视频超分
+- **其他**：截图保存、播放进度记忆
 
-📖 **查看完整功能说明**：[功能特性详细文档](docs/features.md)
+**查看完整功能说明**：[功能特性详细文档](docs/features.md)
 
 ---
 
 ## 功能截图
 
-### 📱 应用主界面（竖屏）
+### 应用主界面（竖屏）
 
-| 软件首页 | 视频列表 | 番剧解析 | 网页嗅探 |
+| APP首页 | 视频列表 | 番剧解析 | 网页嗅探 |
+|---------|----------|----------|----------|
+| <img src="docs/screenshots/APP首页.jpg" width="250"/> | <img src="docs/screenshots/视频列表页.jpg" width="250"/> | <img src="docs/screenshots/番剧解析页.jpg" width="250"/> | <img src="docs/screenshots/网页嗅探页.jpg" width="250"/> |
+
+| WebDAV | MediaInfo | 设置 | 主题 |
+|--------|-----------|------|------|
+| <img src="docs/screenshots/webdav页.jpg" width="250"/> | <img src="docs/screenshots/mediainfo.jpg" width="250"/> | <img src="docs/screenshots/设置页.jpg" width="250"/> | <img src="docs/screenshots/主题调整页.jpg" width="250"/> |
+
+### 播放器界面（横屏）
+
+| 播放主界面 | 弹幕系统 | 弹幕设置 | 手势控制 |
+|------------|----------|----------|----------|
+| <img src="docs/screenshots/播放主界面.jpg" width="250"/> | <img src="docs/screenshots/弹幕系统.jpg" width="250"/> | <img src="docs/screenshots/弹幕设置页.jpg" width="250"/> | <img src="docs/screenshots/手势控制.jpg" width="250"/> |
+
+| 更多菜单 | 字幕设置 | 记忆播放 | 超分功能 |
 |----------|----------|----------|----------|
-| <img src="docs/screenshots/软件首页.jpg" width="250"/> | <img src="docs/screenshots/视频列表界面.jpg" width="250"/> | <img src="docs/screenshots/哔哩哔哩番剧解析.jpg" width="250"/> | <img src="docs/screenshots/网页视频嗅探.jpg" width="250"/> |
-
-| WebDAV支持 | WebDAV详情 | 设置页面1 | 设置页面2 |
-|------------|------------|-----------|-----------|
-| <img src="docs/screenshots/webdav支持.jpg" width="250"/> | <img src="docs/screenshots/webdav支持2.jpg" width="250"/> | <img src="docs/screenshots/设置界面1.jpg" width="250"/> | <img src="docs/screenshots/设置界面2.jpg" width="250"/> |
-
-### 🎬 播放器界面（横屏）
-
-| 播放器主界面 | 弹幕功能 | 弹幕设置 | 字幕设置 |
-|--------------|----------|----------|----------|
-| <img src="docs/screenshots/播放器主界面.jpg" width="250"/> | <img src="docs/screenshots/弹幕支持.jpg" width="250"/> | <img src="docs/screenshots/弹幕设置.jpg" width="250"/> | <img src="docs/screenshots/字幕样式设置.jpg" width="250"/> |
-
-| 进度控制 | 记忆播放 | 更多菜单 | 超分功能 |
-|----------|----------|----------|----------|
-| <img src="docs/screenshots/拖动缩略图.jpg" width="250"/> | <img src="docs/screenshots/记忆播放.jpg" width="250"/> | <img src="docs/screenshots/更多菜单.jpg" width="250"/> | <img src="docs/screenshots/超分功能.jpg" width="250"/> |
+| <img src="docs/screenshots/更多菜单页.jpg" width="250"/> | <img src="docs/screenshots/更多设置.jpg" width="250"/> | <img src="docs/screenshots/记忆播放.jpg" width="250"/> | <img src="docs/screenshots/超分功能页.jpg" width="250"/> |
 
 ---
 
 ## 技术架构
 
-- **视频引擎**：libmpv（开源多媒体播放器库）
-- **UI 框架**：Android AppCompat
-- **编程语言**：Kotlin + Java
-- **最低 SDK**：28 (Android 9.0)
-- **编译 SDK**：34 (Android 14)
+基于 Manager 模式的半 MVVM 分层架构
+
+查看完整技术架构文档：[project_architecture.md](docs/project_architecture.md)
 
 ## 致谢
 
 本项目的诞生离不开以下开源项目和开发者的贡献，特此致谢！
 
-### 🏗️ 核心基础
+### 核心基础
 
 以下项目为本应用提供了核心技术支撑：
 
@@ -133,7 +126,7 @@
 - **[bilibili/DanmakuFlameMaster](https://github.com/bilibili/DanmakuFlameMaster)**  
   B站开源的 Android 弹幕引擎，本项目弹幕功能的核心
 
-### 🔧 算法与功能实现
+### 算法与功能实现
 
 以下项目为本应用的功能实现提供了重要参考：
 
@@ -141,7 +134,7 @@
   实时超分辨率算法，提供 GLSL 着色器文件
 
 - **[marlboro-advance/mpvEx](https://github.com/marlboro-advance/mpvEx)**  
-  参考了滑动算法以及整体交互逻辑
+  参考了滑动算法及其他功能
 
 - **[abdallahmehiz/mpvKt](https://github.com/abdallahmehiz/mpvKt)**  
   参考了手势控制、外部字幕导入等实现
@@ -158,7 +151,7 @@
 - **[qiusunshine/hikerView](https://github.com/qiusunshine/hikerView)**  
   参考了网页视频嗅探功能及反嗅探算法逻辑
 
-### 🌐 API 服务与文档
+### API 服务与文档
 
 感谢以下项目提供 API 服务和技术文档：
 
@@ -171,15 +164,15 @@
 - **[SocialSisterYi/bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect)**  
   收集整理了 B站公开 API，为本项目提供了宝贵的 API 参考文档
 
-### 💡 灵感来源
+### 灵感来源
 
 - **[Predidit/Kazumi](https://github.com/Predidit/Kazumi)**  
   项目的最初灵感和需求来源
 
-### 🎨 素材资源
+### 素材资源
 
 - **应用图标**：由 AI 生成
-- **播放器控制图标**：来自 [FLATICON](https://www.flaticon.com/)
+- **播放器控制图标**：来自 [Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons)
 - **其他 UI 图标**：Material Icons（Google 提供，遵循 Apache License 2.0）
 
 ---
@@ -220,6 +213,7 @@
 
 ## 技术文档
 
+- **[项目架构与技术栈](docs/project_architecture.md)** - 项目架构与技术栈说明
 - **[项目构建引导](docs/development_guide.md)** - 项目构建和 DanDanPlay API 配置教程
 - **[.nomedia 支持说明](docs/nomedia_support.md)** - .nomedia 文件处理机制
 - **[WebDAV 使用说明](docs/webdav使用说明.md)** - WebDAV 配置和使用教程
@@ -237,9 +231,9 @@
 
 遇到问题或有改进建议？欢迎通过以下方式反馈：
 
-- 💡 **功能建议与反馈**：[提交 Issue](https://github.com/azxcvn/mpv-android-anime4k/issues)
-- 📧 **联系作者**：[GitHub Profile](https://github.com/azxcvn)
+- **功能建议与反馈**：[提交 Issue](https://github.com/azxcvn/mpv-android-anime4k/issues)
+- **联系作者**：[GitHub Profile](https://github.com/azxcvn)
 
 ---
 
-**Last Updated:** 2026-04-02
+**Last Updated:** 2026-05-22

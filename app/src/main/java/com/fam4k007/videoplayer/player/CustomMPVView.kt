@@ -28,7 +28,9 @@ class CustomMPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context
         
         // 视频输出配置
         setVo("gpu")
-        MPVLib.setOptionString("hwdec", "auto")
+        // HW解码降级链: 优先硬解(HW+)→ 硬解复制模式(HW) → 软解(no)，避免auto在某些设备上卡死
+        MPVLib.setOptionString("hwdec", "mediacodec,mediacodec-copy,no")
+        MPVLib.setOptionString("hwdec-codecs", "all")
         MPVLib.setOptionString("ao", "audiotrack,opensles")
         
         // ========== 音量配置 ==========
@@ -56,7 +58,7 @@ class CustomMPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context
         MPVLib.setOptionString("slang", "zh,chi,zho,chs,cht,zh-CN,zh-TW,en,eng")
         
         // libass 字体配置（使用系统字体）
-        val preferencesManager = com.fam4k007.videoplayer.manager.PreferencesManager.getInstance(context)
+        val preferencesManager = com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(context)
         val systemFontName = preferencesManager.getSystemFontName()
         
         MPVLib.setOptionString("sub-font-provider", "auto")
@@ -86,15 +88,26 @@ class CustomMPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context
         MPVLib.setOptionString("hls-bitrate", "max")  // HLS使用最高码率
         MPVLib.setOptionString("http-allow-redirect", "yes")  // 允许HTTP重定向
         
-        // 缓存限制 - 针对m3u8等流媒体增大缓存
-        val cacheMegs = 128  // 增大到128MB
+        // 缓存限制 - 根据Android版本动态调整，兼顾性能和内存
+        val cacheMegs = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O_MR1) 128 else 64
         MPVLib.setOptionString("demuxer-max-bytes", "${cacheMegs * 1024 * 1024}")
-        MPVLib.setOptionString("demuxer-max-back-bytes", "${cacheMegs * 1024 * 1024}")
+        // 后向缓存（用于回退）可以小一些，节省内存
+        MPVLib.setOptionString("demuxer-max-back-bytes", "${(cacheMegs / 2) * 1024 * 1024}")
         MPVLib.setOptionString("cache", "yes")
         MPVLib.setOptionString("cache-secs", "180")  // 缓存180秒（3分钟）
 
         // 默认播放速度
         MPVLib.setOptionString("speed", "1.0")
+        
+        // 胶片颗粒用CPU处理，避免GPU渲染开销（省电+流畅）
+        MPVLib.setOptionString("vd-lavc-film-grain", "cpu")
+        
+        // 精确跳转设置与用户偏好同步
+        // Seek时：精确模式用absolute，非精确用absolute+keyframes（已在PlaybackEngine中实现）
+        // 这里设置MPV全局默认值，让hr-seek行为与用户偏好一致
+        val preciseSeek = preferencesManager.isPreciseSeekingEnabled()
+        MPVLib.setOptionString("hr-seek", if (preciseSeek) "yes" else "no")
+        MPVLib.setOptionString("hr-seek-framedrop", if (preciseSeek) "no" else "yes")
 
         Log.d(TAG, "MPV options initialized")
     }

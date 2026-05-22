@@ -1,148 +1,88 @@
 package com.fam4k007.videoplayer
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
-import androidx.core.view.WindowCompat
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.lifecycleScope
-import com.fam4k007.videoplayer.compose.BiliBiliDanmakuScreen
-import com.fam4k007.videoplayer.compose.DownloadProgress
-import com.fam4k007.videoplayer.danmaku.BiliBiliDanmakuDownloadManager
-import com.fam4k007.videoplayer.ui.theme.getThemeColors
-import com.fam4k007.videoplayer.utils.ThemeManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fam4k007.videoplayer.ui.screens.BiliBiliDanmakuScreen
+import com.fam4k007.videoplayer.ui.theme.ThemeController
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
+import com.fam4k007.videoplayer.ui.viewmodels.BiliBiliDanmakuViewModel
+import org.koin.androidx.compose.KoinAndroidContext
 
 class BiliBiliDanmakuComposeActivity : BaseActivity() {
 
-    private var savedFolderUri: Uri? = null
-    private lateinit var downloadManager: BiliBiliDanmakuDownloadManager
-    private var downloadProgress by mutableStateOf(DownloadProgress())
-    private var isDownloading by mutableStateOf(false)
+    private val viewModel: BiliBiliDanmakuViewModel by viewModels()
+    private var themeRevision by mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // 启用边到边显示
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-
-        downloadManager = BiliBiliDanmakuDownloadManager(this)
-
-        // 读取已保存的文件夹URI
-        val savedUriString = getSharedPreferences("bilibili_danmaku", MODE_PRIVATE)
-            .getString("save_directory_uri", null)
-        savedFolderUri = savedUriString?.let { Uri.parse(it) }
+        enableEdgeToEdge()
 
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this).themeName)
-            
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = themeColors.primary,
-                    onPrimary = themeColors.onPrimary,
-                    primaryContainer = themeColors.primaryVariant,
-                    secondary = themeColors.secondary,
-                    background = themeColors.background,
-                    onBackground = themeColors.onBackground,
-                    surface = themeColors.surface,
-                    surfaceVariant = themeColors.surfaceVariant,
-                    onSurface = themeColors.onSurface
-                )
-            ) {
-                BiliBiliDanmakuScreen(
-                    savedFolderUri = savedFolderUri,
-                    downloadProgress = downloadProgress,
-                    isDownloading = isDownloading,
-                    onBack = {
-                        finish()
-                        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-                    },
-                    onFolderSelected = { uri: Uri -> handleFolderSelected(uri) },
-                    onDownloadDanmaku = { url: String, downloadWholeSeason: Boolean ->
-                        startDownload(url, downloadWholeSeason)
-                    }
-                )
+            val revision = themeRevision
+            val savedFolderUri by viewModel.savedFolderUri.collectAsStateWithLifecycle()
+            val downloadProgress by viewModel.downloadProgress.collectAsStateWithLifecycle()
+            val isDownloading by viewModel.isDownloading.collectAsStateWithLifecycle()
+            val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+            val successMessage by viewModel.successMessage.collectAsStateWithLifecycle()
+            val downloadWholeSeason by viewModel.downloadWholeSeason.collectAsStateWithLifecycle()
+
+            // 处理错误消息
+            LaunchedEffect(errorMessage) {
+                errorMessage?.let {
+                    Toast.makeText(this@BiliBiliDanmakuComposeActivity, it, Toast.LENGTH_LONG).show()
+                    viewModel.clearErrorMessage()
+                }
             }
-        }
-    }
 
-    private fun handleFolderSelected(uri: Uri) {
-        try {
-            val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            contentResolver.takePersistableUriPermission(uri, flags)
+            // 处理成功消息
+            LaunchedEffect(successMessage) {
+                successMessage?.let {
+                    Toast.makeText(this@BiliBiliDanmakuComposeActivity, it, Toast.LENGTH_SHORT).show()
+                    viewModel.clearSuccessMessage()
+                }
+            }
 
-            getSharedPreferences("bilibili_danmaku", MODE_PRIVATE)
-                .edit()
-                .putString("save_directory_uri", uri.toString())
-                .apply()
-
-            savedFolderUri = uri
-            Toast.makeText(this, "文件夹设置成功", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            Toast.makeText(this, "设置失败: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun startDownload(url: String, downloadWholeSeason: Boolean) {
-        if (!downloadManager.isValidBilibiliUrl(url)) {
-            Toast.makeText(this, "请输入有效的B站视频/番剧链接", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        isDownloading = true
-        downloadProgress = DownloadProgress()
-        
-        lifecycleScope.launch {
-            try {
-                val result = withContext(Dispatchers.IO) {
-                    downloadManager.downloadDanmaku(url, savedFolderUri!!, downloadWholeSeason) { current, total, epTitle, success, fail ->
-                        launch(Dispatchers.Main) {
-                            downloadProgress = DownloadProgress(
-                                current = current,
-                                total = total,
-                                currentTitle = epTitle,
-                                successCount = success,
-                                failedCount = fail
-                            )
+            KoinAndroidContext {
+                val themeController = ThemeController.from(this@BiliBiliDanmakuComposeActivity)
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
+                ) {
+                    BiliBiliDanmakuScreen(
+                        savedFolderUri = savedFolderUri,
+                        downloadProgress = downloadProgress,
+                        isDownloading = isDownloading,
+                        downloadWholeSeason = downloadWholeSeason,
+                        onBack = {
+                            finish()
+                        },
+                        onFolderSelected = { uri ->
+                            viewModel.setFolderUri(uri, contentResolver)
+                        },
+                        onDownloadDanmaku = { url, wholeSeason ->
+                            viewModel.startDownload(url, wholeSeason)
+                        },
+                        onModeChanged = { wholeSeason ->
+                            viewModel.setDownloadMode(wholeSeason)
                         }
-                    }
+                    )
                 }
-
-                isDownloading = false
-                
-                when (result) {
-                    is BiliBiliDanmakuDownloadManager.DownloadResult.Success -> {
-                        Toast.makeText(
-                            this@BiliBiliDanmakuComposeActivity,
-                            "下载成功",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                    is BiliBiliDanmakuDownloadManager.DownloadResult.Error -> {
-                        Toast.makeText(
-                            this@BiliBiliDanmakuComposeActivity,
-                            "下载失败: ${result.message}",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
-            } catch (e: Exception) {
-                isDownloading = false
-                Toast.makeText(
-                    this@BiliBiliDanmakuComposeActivity,
-                    "下载失败: ${e.message}",
-                    Toast.LENGTH_LONG
-                ).show()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        themeRevision++
     }
 }

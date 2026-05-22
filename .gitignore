@@ -95,6 +95,7 @@ lint-results_files/
 
 # Kotlin
 *.kotlin_module
+.kotlin/
 
 # macOS
 .DS_Store

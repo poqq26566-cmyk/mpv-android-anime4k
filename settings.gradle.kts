@@ -1,0 +1,31 @@
+pluginManagement {
+    repositories {
+        // 使用阿里云镜像加速
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        // 本地库目录（用于 .aar 文件）
+        flatDir {
+            dirs("app/libs")
+        }
+        // 使用阿里云镜像加速
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        // JitPack 仓库（用于 MediaInfo 库）
+        maven { url = uri("https://jitpack.io") }
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "FAM4K007"
+include(":app")

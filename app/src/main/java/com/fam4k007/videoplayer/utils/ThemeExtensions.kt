@@ -74,7 +74,9 @@ fun Context.getThemeAttrColors(@AttrRes vararg attrResIds: Int): IntArray {
  * 判断当前是否为深色主题
  */
 fun Context.isDarkTheme(): Boolean {
-    return ThemeManager.isNightMode(this)
+    val nightMode = resources.configuration.uiMode and
+            android.content.res.Configuration.UI_MODE_NIGHT_MASK
+    return nightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES
 }
 
 /**

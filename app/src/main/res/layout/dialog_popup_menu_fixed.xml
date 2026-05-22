@@ -2,41 +2,42 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:minWidth="120dp"
     android:orientation="vertical"
     android:background="@drawable/bg_popup_menu"
-    android:paddingStart="8dp"
-    android:paddingEnd="8dp"
     android:paddingTop="6dp"
-    android:paddingBottom="6dp"
-    android:minWidth="100dp">
+    android:paddingBottom="6dp">
 
-    <!-- 固定高度144dp，用于选项多的按钮（字幕、倍速） -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nestedScrollViewPopup"
-        android:layout_width="match_parent"
-        android:layout_height="144dp"
+        android:layout_width="wrap_content"
+        android:layout_height="176dp"
         android:scrollbars="none"
-        android:scrollbarStyle="outsideOverlay"
-        android:fadeScrollbars="false">
+        android:overScrollMode="never">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewPopup"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:nestedScrollingEnabled="false"
-            android:overScrollMode="never"/>
+            android:overScrollMode="never"
+            android:paddingTop="4dp"
+            android:clipToPadding="false" />
+
     </androidx.core.widget.NestedScrollView>
 
-    <!-- 滑动提示 -->
     <TextView
-        android:id="@+id/scrollHint"
+        android:id="@+id/tvScrollHint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="可上下滑动"
-        android:textSize="11sp"
-        android:textColor="?attr/colorDialogTextSecondary"
         android:gravity="center"
-        android:paddingTop="8dp"
-        android:visibility="gone"/>
+        android:paddingTop="2dp"
+        android:paddingBottom="4dp"
+        android:text="@string/scroll_hint"
+        android:textColor="@color/dialog_title"
+        android:textSize="10sp"
+        android:visibility="gone" />
 
 </LinearLayout>
+ 
+ 

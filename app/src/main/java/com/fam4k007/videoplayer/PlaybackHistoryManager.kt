@@ -115,7 +115,9 @@ class PlaybackHistoryManager(private val context: Context) {
         fileName: String,
         position: Long,
         duration: Long,
-        folderName: String
+        folderName: String,
+        danmuPath: String? = null,
+        danmuVisible: Boolean = true
     ) {
         scope.launch {
             try {
@@ -125,7 +127,9 @@ class PlaybackHistoryManager(private val context: Context) {
                     position = position,
                     duration = duration,
                     lastPlayed = System.currentTimeMillis(),
-                    folderName = folderName
+                    folderName = folderName,
+                    danmuPath = danmuPath,
+                    danmuVisible = danmuVisible
                 )
                 
                 historyDao.insertOrUpdate(entity)

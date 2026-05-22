@@ -31,12 +31,19 @@ object AppConstants {
         // 视频显示模式 Key
         const val VIDEO_DISPLAY_MODE = "video_display_mode"
         
+        // 文件夹黑名单 Key
+        const val FOLDER_BLACKLIST = "folder_blacklist"
+        
         // 双击手势设置 Key
         const val DOUBLE_TAP_MODE = "double_tap_mode"  // 0=暂停, 1=快进快退
         const val DOUBLE_TAP_SEEK_SECONDS = "double_tap_seek_seconds"  // 双击跳转秒数
 
         // 播放历史记录 Key
         const val HISTORY_LIST = "history_list"
+
+        // 更新相关 Key
+        const val AUTO_CHECK_UPDATE = "auto_check_update"
+        const val IGNORED_UPDATE_VERSION = "ignored_update_version"
     }
 
     /**

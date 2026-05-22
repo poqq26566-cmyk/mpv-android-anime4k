@@ -4,55 +4,63 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.core.view.WindowCompat
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
-import com.fam4k007.videoplayer.compose.PlaybackHistoryScreen
-import com.fam4k007.videoplayer.ui.theme.getThemeColors
-import com.fam4k007.videoplayer.utils.ThemeManager
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
+import com.fam4k007.videoplayer.presentation.PlaybackHistoryViewModel
+import com.fam4k007.videoplayer.ui.screens.PlaybackHistoryScreen
+import com.fam4k007.videoplayer.ui.theme.ThemeController
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
+import org.koin.androidx.compose.KoinAndroidContext
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
+/**
+ * 播放历史页面
+ * 已迁移到新架构：Clean Architecture + MVVM + Koin
+ */
 class PlaybackHistoryComposeActivity : BaseActivity() {
+
+    private var themeRevision by mutableIntStateOf(0)
+    
+    // 通过 Koin 注入 ViewModel
+    private val viewModel: PlaybackHistoryViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // 启用边到边显示
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-
-        val historyManager = PlaybackHistoryManager(this)
+        enableEdgeToEdge()
 
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this).themeName)
-            
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = themeColors.primary,
-                    onPrimary = themeColors.onPrimary,
-                    primaryContainer = themeColors.primaryVariant,
-                    secondary = themeColors.secondary,
-                    background = themeColors.background,
-                    onBackground = themeColors.onBackground,
-                    surface = themeColors.surface,
-                    surfaceVariant = themeColors.surfaceVariant,
-                    onSurface = themeColors.onSurface
-                )
-            ) {
-                PlaybackHistoryScreen(
-                    historyManager = historyManager,
-                    onBack = {
-                        finish()
-                        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-                    },
-                    onPlayVideo = { uri, startPosition ->
-                        val intent = Intent(this, VideoPlayerActivity::class.java).apply {
-                            data = uri
-                            putExtra("lastPosition", startPosition)
+            val revision = themeRevision
+            KoinAndroidContext {
+                val themeController = ThemeController.from(this@PlaybackHistoryComposeActivity)
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
+                ) {
+                    PlaybackHistoryScreen(
+                        viewModel = viewModel,
+                        onBack = {
+                            finish()
+                        },
+                        onPlayVideo = { uri, startPosition ->
+                            val intent = Intent(this@PlaybackHistoryComposeActivity, VideoPlayerActivity::class.java).apply {
+                                data = uri
+                                putExtra("lastPosition", startPosition)
+                            }
+                            startActivity(intent)
                         }
-                        startActivity(intent)
-                        startActivityWithDefaultTransition()
-                    }
-                )
+                    )
+                }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        themeRevision++
+        // 页面恢复时重新加载历史记录
+        viewModel.loadHistory()
     }
 }

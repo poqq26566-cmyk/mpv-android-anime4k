@@ -6,7 +6,6 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
-import com.fam4k007.videoplayer.utils.ThemeManager
 
 /**
  * 基类 Activity
@@ -16,8 +15,6 @@ import com.fam4k007.videoplayer.utils.ThemeManager
 abstract class BaseActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // 应用主题
-        ThemeManager.applyTheme(this)
         super.onCreate(savedInstanceState)
     }
 

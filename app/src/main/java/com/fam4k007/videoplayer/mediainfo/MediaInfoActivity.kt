@@ -1,5 +1,7 @@
 package com.fam4k007.videoplayer.mediainfo
 
+import com.fam4k007.videoplayer.R
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -33,9 +35,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
-import com.fam4k007.videoplayer.ui.theme.getThemeColors
+import com.fam4k007.videoplayer.presentation.MediaInfoUiState
+import com.fam4k007.videoplayer.presentation.MediaInfoViewModel
+import com.fam4k007.videoplayer.ui.theme.ThemeController
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import com.fam4k007.videoplayer.utils.MediaInfoHelper
-import com.fam4k007.videoplayer.utils.ThemeManager
+import org.koin.androidx.compose.KoinAndroidContext
+import org.koin.androidx.compose.koinViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -45,6 +51,8 @@ import kotlinx.coroutines.withContext
  * 显示视频文件的详细信息
  */
 class MediaInfoActivity : ComponentActivity() {
+
+    private var themeRevision by mutableStateOf(0)
 
     companion object {
         private const val TAG = "MediaInfoActivity"
@@ -71,84 +79,54 @@ class MediaInfoActivity : ComponentActivity() {
         val videoName = intent.getStringExtra(EXTRA_VIDEO_NAME) ?: "未知视频"
 
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(this).themeName)
-            
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = themeColors.primary,
-                    onPrimary = themeColors.onPrimary,
-                    primaryContainer = themeColors.primaryVariant,
-                    secondary = themeColors.secondary,
-                    background = themeColors.background,
-                    onBackground = themeColors.onBackground,
-                    surface = themeColors.surface,
-                    surfaceVariant = themeColors.surfaceVariant,
-                    onSurface = themeColors.onSurface
-                )
-            ) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+            val revision = themeRevision
+            KoinAndroidContext {
+                val themeController = ThemeController.from(this@MediaInfoActivity)
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
                 ) {
-                    MediaInfoScreen(
-                        videoUri = videoUri,
-                        videoName = videoName,
-                        onBack = { finish() }
-                    )
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        MediaInfoScreen(
+                            videoUri = videoUri,
+                            videoName = videoName,
+                            onBack = {
+                                finish()
+                                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+                            }
+                        )
+                    }
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        themeRevision++
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MediaInfoScreen(
+fun MediaInfoScreen(
     videoUri: String,
     videoName: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: MediaInfoViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var isLoading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var mediaInfo by remember { mutableStateOf<MediaInfoHelper.MediaInfoData?>(null) }
-    var fullTextContent by remember { mutableStateOf<String?>(null) }
+    val uiState by viewModel.uiState.collectAsState()
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
     // 加载媒体信息
     LaunchedEffect(Unit) {
-        if (videoUri.isEmpty()) {
-            error = "无效的视频地址"
-            isLoading = false
-            return@LaunchedEffect
-        }
-
-        try {
-            val uri = Uri.parse(videoUri)
-            
-            // 加载详细信息
-            val result = MediaInfoHelper.getMediaInfo(context, uri, videoName)
-            result.onSuccess { info ->
-                mediaInfo = info
-                
-                // 生成文本内容用于复制/分享
-                val textResult = MediaInfoHelper.generateTextOutput(context, uri, videoName)
-                textResult.onSuccess { text ->
-                    fullTextContent = text
-                }
-                
-                isLoading = false
-            }.onFailure { e ->
-                error = e.message ?: "加载媒体信息失败"
-                isLoading = false
-                Log.e("MediaInfoActivity", "Failed to load media info", e)
-            }
-        } catch (e: Exception) {
-            error = e.message ?: "未知错误"
-            isLoading = false
-            Log.e("MediaInfoActivity", "Error in loading", e)
-        }
+        viewModel.loadMediaInfo(videoUri, videoName)
     }
 
     Scaffold(
@@ -160,12 +138,12 @@ private fun MediaInfoScreen(
                             text = "媒体信息",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Black
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = videoName,
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.Black.copy(alpha = 0.6f),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -176,41 +154,44 @@ private fun MediaInfoScreen(
                         Icon(
                             Icons.Default.ArrowBack,
                             "返回",
-                            tint = Color.Black
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 actions = {
-                    if (!isLoading && error == null && fullTextContent != null) {
-                        Row(modifier = Modifier.padding(end = 8.dp)) {
-                            // 复制按钮
-                            IconButton(
-                                onClick = {
-                                    scope.launch {
-                                        copyToClipboard(context, fullTextContent!!, videoName)
+                    if (uiState is MediaInfoUiState.Success) {
+                        val successState = uiState as MediaInfoUiState.Success
+                        if (successState.fullTextContent != null) {
+                            Row(modifier = Modifier.padding(end = 8.dp)) {
+                                // 复制按钮
+                                IconButton(
+                                    onClick = {
+                                        scope.launch {
+                                            copyToClipboard(context, successState.fullTextContent, videoName)
+                                        }
                                     }
+                                ) {
+                                    Icon(
+                                        Icons.Default.ContentCopy,
+                                        "复制",
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
                                 }
-                            ) {
-                                Icon(
-                                    Icons.Default.ContentCopy,
-                                    "复制",
-                                    tint = Color.Black
-                                )
-                            }
-                            
-                            // 分享按钮
-                            IconButton(
-                                onClick = {
-                                    scope.launch {
-                                        shareMediaInfo(context, fullTextContent!!, videoName)
+                                
+                                // 分享按钮
+                                IconButton(
+                                    onClick = {
+                                        scope.launch {
+                                            shareMediaInfo(context, successState.fullTextContent, videoName)
+                                        }
                                     }
+                                ) {
+                                    Icon(
+                                        Icons.Default.Share,
+                                        "分享",
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
                                 }
-                            ) {
-                                Icon(
-                                    Icons.Default.Share,
-                                    "分享",
-                                    tint = Color.Black
-                                )
                             }
                         }
                     }
@@ -227,13 +208,13 @@ private fun MediaInfoScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when {
-                isLoading -> {
+            when (val state = uiState) {
+                is MediaInfoUiState.Loading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-                error != null -> {
+                is MediaInfoUiState.Error -> {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -248,13 +229,13 @@ private fun MediaInfoScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = error ?: "未知错误",
+                            text = state.message,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
-                mediaInfo != null && fullTextContent != null -> {
+                is MediaInfoUiState.Success -> {
                     Column(modifier = Modifier.fillMaxSize()) {
                         // 标签页选择器
                         TabRow(
@@ -266,19 +247,20 @@ private fun MediaInfoScreen(
                             Tab(
                                 selected = selectedTabIndex == 0,
                                 onClick = { selectedTabIndex = 0 },
-                                text = { Text("详细信息", color = Color.Black) }
+                                text = { Text("详细信息", color = MaterialTheme.colorScheme.onSurface) }
                             )
                             Tab(
                                 selected = selectedTabIndex == 1,
                                 onClick = { selectedTabIndex = 1 },
-                                text = { Text("原始信息", color = Color.Black) }
+                                text = { Text("原始信息", color = MaterialTheme.colorScheme.onSurface) },
+                                enabled = state.fullTextContent != null
                             )
                         }
                         
                         // 标签页内容
                         when (selectedTabIndex) {
-                            0 -> MediaInfoContent(mediaInfo = mediaInfo!!)
-                            1 -> RawInfoContent(fullText = fullTextContent!!)
+                            0 -> MediaInfoContent(mediaInfo = state.mediaInfo)
+                            1 -> state.fullTextContent?.let { RawInfoContent(fullText = it) }
                         }
                     }
                 }
@@ -310,7 +292,7 @@ private fun RawInfoContent(fullText: String) {
                         fontFamily = FontFamily.Monospace,
                         lineHeight = 18.sp
                     ),
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
@@ -441,7 +423,7 @@ private fun InfoRow(label: String, value: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.Black,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(0.4f)
         )
         Text(
@@ -449,7 +431,7 @@ private fun InfoRow(label: String, value: String) {
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontFamily = FontFamily.Monospace
             ),
-            color = Color.Black,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(0.6f)
         )
     }

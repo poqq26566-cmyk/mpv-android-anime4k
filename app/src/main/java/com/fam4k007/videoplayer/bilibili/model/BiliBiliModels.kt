@@ -1,6 +1,12 @@
 package com.fam4k007.videoplayer.bilibili.model
 
 /**
+ * 番剧列表项（类型别名）
+ * 用于番剧列表展示，实际就是 BangumiCard
+ */
+typealias BangumiItem = BangumiCard
+
+/**
  * B站用户信息
  */
 data class UserInfo(

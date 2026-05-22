@@ -13,20 +13,22 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.ui.graphics.Color
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
-import com.fam4k007.videoplayer.compose.FolderBrowserScreen
-import com.fam4k007.videoplayer.ui.theme.getThemeColors
+import com.fam4k007.videoplayer.ui.screens.FolderBrowserScreen
+import com.fam4k007.videoplayer.ui.theme.ThemeController
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import com.fam4k007.videoplayer.utils.NoMediaChecker
-import com.fam4k007.videoplayer.utils.ThemeManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.android.ext.android.inject
+import org.koin.androidx.compose.KoinAndroidContext
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 
 class VideoBrowserComposeActivity : ComponentActivity() {
 
@@ -35,53 +37,54 @@ class VideoBrowserComposeActivity : ComponentActivity() {
         private const val PERMISSION_REQUEST_CODE = 1001
     }
 
-    private lateinit var preferencesManager: com.fam4k007.videoplayer.manager.PreferencesManager
+    private val preferencesManager: com.fam4k007.videoplayer.preferences.PreferencesManager by inject()
+    private var themeRevision by mutableIntStateOf(0)
+    
+    // 用于跳转 Settings 授权后返回时关闭当前 Activity，回到首页重新进入
+    private val storagePermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        // 从 Settings 返回，直接关闭 Activity 回到首页
+        finish()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         // 启用边到边显示，让内容可以绘制到状态栏区域
         enableEdgeToEdge()
-        
-        // 应用主题
-        val currentTheme = ThemeManager.getCurrentTheme(this)
-        setTheme(currentTheme.styleRes)
-
-        preferencesManager = com.fam4k007.videoplayer.manager.PreferencesManager.getInstance(this)
 
         setupContent()
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // 从 Settings 授权页面返回时触发重组，重新检查权限状态
+        themeRevision++
     }
 
     private fun setupContent() {
         val activity = this
         
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(activity).themeName)
-
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = themeColors.primary,
-                    onPrimary = themeColors.onPrimary,
-                    primaryContainer = themeColors.primaryVariant,
-                    secondary = themeColors.secondary,
-                    background = themeColors.background,
-                    onBackground = Color(0xFF212121),
-                    surface = themeColors.background,
-                    surfaceVariant = themeColors.surfaceVariant,
-                    onSurface = Color(0xFF212121)
-                )
-            ) {
-                FolderBrowserScreen(
-                    hasPermission = checkPermissions(),
-                    onRequestPermission = { requestStoragePermission() },
-                    onScanVideos = { callback -> scanVideoFiles(callback) },
-                    onNavigateBack = { 
-                        finish()
-                        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
-                    },
-                    onOpenFolder = { folder -> openVideoList(folder) },
-                    preferencesManager = preferencesManager
-                )
+            val revision = themeRevision
+            KoinAndroidContext {
+                val themeController = ThemeController.from(activity)
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
+                ) {
+                    FolderBrowserScreen(
+                        hasPermission = checkPermissions(),
+                        onRequestPermission = { requestStoragePermission() },
+                        onNavigateBack = { 
+                            finish()
+                            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+                        },
+                        onOpenFolder = { folder -> openVideoList(folder) }
+                    )
+                }
             }
         }
     }
@@ -99,10 +102,10 @@ class VideoBrowserComposeActivity : ComponentActivity() {
             try {
                 val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
                 intent.data = Uri.parse("package:$packageName")
-                startActivity(intent)
+                storagePermissionLauncher.launch(intent)
             } catch (e: Exception) {
                 val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                startActivity(intent)
+                storagePermissionLauncher.launch(intent)
             }
         } else {
             ActivityCompat.requestPermissions(
@@ -113,20 +116,16 @@ class VideoBrowserComposeActivity : ComponentActivity() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onRequestPermissionsResult(
         requestCode: Int,
-        permissions: Array<out String>,
+        permissions: Array<String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            setupContent()
+            themeRevision++
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        setupContent()
     }
 
     private fun scanVideoFiles(callback: (List<VideoFolder>) -> Unit) {
@@ -232,9 +231,6 @@ class VideoBrowserComposeActivity : ComponentActivity() {
         val intent = Intent(this, VideoListComposeActivity::class.java)
         intent.putExtra("folder_name", folder.folderName)
         intent.putExtra("folder_path", folder.folderPath)
-        intent.putParcelableArrayListExtra("video_list", ArrayList(folder.videos.map {
-            VideoFileParcelable(it.uri, it.name, it.path, it.size, it.duration, it.dateAdded)
-        }))
         startActivity(intent)
         overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
     }

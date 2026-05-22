@@ -72,7 +72,7 @@ class SubtitleDownloadManager(private val context: Context) {
             
             Log.d(TAG, "开始搜索媒体: $query")
             
-            val url = "$baseUrl/api/tmdb/search?q=${URLEncoder.encode(query, "UTF-8")}"
+            val url = "$baseUrl/api/tmdb/search?q=${URLEncoder.encode(query, "UTF-8")}&key=${URLEncoder.encode(apiKey, "UTF-8")}"
             val request = Request.Builder().url(url).build()
             
             val response = client.newCall(request).execute()

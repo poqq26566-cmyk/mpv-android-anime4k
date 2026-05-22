@@ -57,6 +57,9 @@ class DanmakuPlayerView @JvmOverloads constructor(
     
     // 播放位置提供器（用于 prepared 回调中自动同步）
     private var positionProvider: PlaybackPositionProvider? = null
+    
+    // 弹幕准备完成回调（由 DanmakuManager 注册，用于状态机驱动）
+    var onPreparedListener: (() -> Unit)? = null
 
     init {
         // 显示 FPS（调试用）
@@ -76,37 +79,27 @@ class DanmakuPlayerView @JvmOverloads constructor(
                 danmakuLoaded = true
                 Log.d(TAG, "Danmaku prepared, trackSelected=$trackSelected, isShown=$isShown")
                 
-                // 参考 DanDanPlay：在 prepared 中自动同步到当前播放位置
+                // 应用待处理的 seek 位置（优先级最高）
                 if (pendingSeekPosition != INVALID_POSITION) {
-                    // 有待应用的seek位置，优先使用它
                     seekTo(pendingSeekPosition)
                     pendingSeekPosition = INVALID_POSITION
                     Log.d(TAG, "Applied pending seek position")
                 } else {
-                    // 没有 pending seek，且轨道已选中，自动同步到当前播放位置
-                    // 【重要】这里解决了显示弹幕时自动同步的问题
+                    // 没有 pending seek，同步到当前播放位置
                     positionProvider?.let { provider ->
-                        if (provider.isPlaying() && trackSelected) {
+                        if (trackSelected) {
                             val currentPosition = provider.getCurrentPosition()
                             seekTo(currentPosition + DanmakuConfig.offsetTime)
-                            Log.d(TAG, "Auto synced to current position: $currentPosition ms")
+                            Log.d(TAG, "Synced to current position: $currentPosition ms")
                         }
                     }
                 }
                 
-                // 根据 trackSelected 状态应用可见性
+                // 设置可见性
                 setDanmuVisible(trackSelected)
                 
-                // 【修复】如果轨道已选中且视频正在播放，立即启动弹幕
-                // 这样可以处理在视频播放中途加载弹幕的情况
-                positionProvider?.let { provider ->
-                    if (trackSelected && provider.isPlaying()) {
-                        start()
-                        Log.d(TAG, "Danmaku auto-started after prepared (video is playing)")
-                    } else {
-                        Log.d(TAG, "Danmaku prepared, waiting for playback state change to start")
-                    }
-                }
+                // 通知 DanmakuManager 弹幕已准备完成（状态机会决定是否 start）
+                onPreparedListener?.invoke()
             }
 
             override fun updateTimer(timer: DanmakuTimer?) {
@@ -254,7 +247,8 @@ class DanmakuPlayerView @JvmOverloads constructor(
         currentDanmakuPath = null
         danmakuLoaded = false
         pendingSeekPosition = INVALID_POSITION
-        positionProvider = null
+        // 注意：不清除 positionProvider，它由外部 DanmakuManager.setPlaybackEngine() 设置
+        // 清除后会导致 prepared() 回调中无法调用 start()，弹幕不会自动启动
         hide()
         clear()
         clearDanmakusOnScreen()
@@ -412,9 +406,13 @@ class DanmakuPlayerView @JvmOverloads constructor(
 
     /**
      * 设置播放倍速（用于倍速播放时同步弹幕）
+     * 使用 DanmakuFlameMaster 的 setSpeed() 加速/减速时间轴，
+     * 使弹幕的出现时机和滚动速度都与视频倍速同步。
+     * 参考 DanDanPlay 的 DanmuController.setSpeed() 实现方式。
+     * 注意：不调整 setScrollSpeedFactor()，避免与用户设置的弹幕基础速度冲突。
      */
     fun setPlaybackSpeed(speed: Float) {
         danmakuContext.setSpeed(speed)
-        Log.d(TAG, "Playback speed set to: $speed")
+        Log.d(TAG, "Playback speed set to: $speed (timeline accelerated via setSpeed)")
     }
 }

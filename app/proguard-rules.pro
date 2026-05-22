@@ -70,7 +70,7 @@
 # 6. 保护设置管理和常量类（防止 SharedPreferences 键名被混淆）
 -keep class com.fam4k007.videoplayer.AppConstants { *; }
 -keep class com.fam4k007.videoplayer.AppConstants$** { *; }
--keep class com.fam4k007.videoplayer.manager.PreferencesManager { *; }
+-keep class com.fam4k007.videoplayer.preferences.PreferencesManager { *; }
 
 # 7. 保护数据类
 -keep class com.fam4k007.videoplayer.VideoFolder { *; }
@@ -292,4 +292,4 @@
 
 # 保护 SubtitleSearchActivity 和 SubtitleSearchScreen
 -keep class com.fam4k007.videoplayer.SubtitleSearchActivity { *; }
--keep class com.fam4k007.videoplayer.compose.SubtitleSearchScreen { *; }
+-keep class com.fam4k007.videoplayer.ui.screens.SubtitleSearchScreen { *; }

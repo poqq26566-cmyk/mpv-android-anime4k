@@ -6,6 +6,11 @@ import com.google.gson.annotations.SerializedName
  * DanDanPlay API 数据模型
  */
 
+/**
+ * 动漫类型别名（用于简化引用）
+ */
+typealias Anime = AnimeSearchInfo
+
 // 搜索动漫请求
 data class SearchAnimeRequest(
     val anime: String,

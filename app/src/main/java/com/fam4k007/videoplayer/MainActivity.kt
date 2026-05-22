@@ -4,26 +4,23 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
-import com.fam4k007.videoplayer.compose.HomeScreen
-import com.fam4k007.videoplayer.ui.theme.getThemeColors
-import com.fam4k007.videoplayer.utils.ThemeManager
+import androidx.navigation.compose.rememberNavController
+import com.fam4k007.videoplayer.navigation.AppNavGraph
+import com.fam4k007.videoplayer.preferences.PreferencesManager
+import com.fam4k007.videoplayer.ui.components.UpdateDialog
+import com.fam4k007.videoplayer.ui.theme.ThemeController
+import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import com.fam4k007.videoplayer.utils.UpdateManager
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.KoinAndroidContext
 
 class MainActivity : BaseActivity() {
     
-    private var historyManager: PlaybackHistoryManager? = null  // 改为可空类型，延迟初始化
-    private var lastThemeName: String? = null
-    private var needsRefresh = false
+    private var historyManager: PlaybackHistoryManager? = null
     
     // 更新弹窗状态
     private var showUpdateDialog by mutableStateOf(false)
@@ -31,14 +28,13 @@ class MainActivity : BaseActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
-        ThemeManager.applyTheme(this)
         super.onCreate(savedInstanceState)
         
         // 检查用户是否已同意协议
         if (!UserAgreementActivity.isAgreed(this)) {
-            // 未同意，跳转到协议页面
             val intent = Intent(this, UserAgreementActivity::class.java)
             startActivity(intent)
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
             finish()
             return
         }
@@ -47,147 +43,79 @@ class MainActivity : BaseActivity() {
         android.os.Looper.myQueue().addIdleHandler {
             historyManager = PlaybackHistoryManager(this)
             com.fam4k007.videoplayer.utils.Logger.d("MainActivity", "PlaybackHistoryManager initialized in idle")
-            false  // 返回false表示只执行一次
+            false
         }
-        
-        lastThemeName = ThemeManager.getCurrentTheme(this).themeName
         
         // 延迟检查更新（5秒后，避免阻塞启动）
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            checkForUpdateSilently()
-        }, 5000)
+        val prefs = PreferencesManager.getInstance(this)
+        if (prefs.isAutoCheckUpdateEnabled()) {
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                checkForUpdateSilently()
+            }, 5000)
+        }
         
         setupContent()
-    }
-    
-    override fun onResume() {
-        super.onResume()
-        // 检查主题是否改变
-        val currentThemeName = ThemeManager.getCurrentTheme(this).themeName
-        if (lastThemeName != null && lastThemeName != currentThemeName) {
-            lastThemeName = currentThemeName
-            needsRefresh = false
-            recreate() // 主题改变，重新创建 Activity
-        } else if (needsRefresh) {
-            // 播放记录可能已更新，刷新界面
-            needsRefresh = false
-            setupContent()
-        }
-    }
-    
-    override fun onPause() {
-        super.onPause()
-        // 离开主页时标记需要刷新
-        needsRefresh = true
     }
     
     private fun setupContent() {
         val activity = this
         
         setContent {
-            val themeColors = getThemeColors(ThemeManager.getCurrentTheme(activity).themeName)
-
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = themeColors.primary,
-                    onPrimary = themeColors.onPrimary,
-                    primaryContainer = themeColors.primaryVariant,
-                    secondary = themeColors.secondary,
-                    background = themeColors.background,
-                    onBackground = themeColors.onBackground,
-                    surface = themeColors.surface,
-                    surfaceVariant = themeColors.surfaceVariant,
-                    onSurface = themeColors.onSurface
-                )
-            ) {
-                HomeScreen(
-                    historyManager = historyManager ?: PlaybackHistoryManager(activity),
-                    onNavigateToSettings = {
-                        startActivity(Intent(activity, SettingsComposeActivity::class.java))
-                        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
-                    }
-                )
+            KoinAndroidContext {
+                val themeController = ThemeController.from(activity)
+                val navController = rememberNavController()
                 
-                // 更新弹窗
-                if (showUpdateDialog && currentUpdateInfo != null) {
-                    UpdateDialog(
-                        updateInfo = currentUpdateInfo!!,
-                        onDismiss = { showUpdateDialog = false },
-                        onDownload = { url ->
-                            UpdateManager.openDownloadPage(activity, url)
-                            showUpdateDialog = false
-                        }
+                VideoPlayerTheme(
+                    appTheme = themeController.getCurrentTheme(),
+                    darkMode = themeController.getDarkMode(),
+                    amoledMode = themeController.getAmoledMode()
+                ) {
+                    AppNavGraph(
+                        navController = navController,
+                        historyManager = historyManager ?: PlaybackHistoryManager(activity),
                     )
+                    
+                    // 更新弹窗 - 使用统一组件
+                    if (showUpdateDialog && currentUpdateInfo != null) {
+                        val info = currentUpdateInfo!!
+                        val prefs = PreferencesManager.getInstance(activity)
+                        
+                        UpdateDialog(
+                            updateInfo = info,
+                            onDismiss = { showUpdateDialog = false },
+                            onDownload = { url ->
+                                UpdateManager.openDownloadPage(activity, url)
+                                showUpdateDialog = false
+                            },
+                            onIgnore = {
+                                prefs.setIgnoredUpdateVersion(info.versionName)
+                                showUpdateDialog = false
+                            }
+                        )
+                    }
                 }
             }
         }
     }
     
     /**
-     * 更新对话框 Composable
-     */
-    @androidx.compose.runtime.Composable
-    private fun UpdateDialog(
-        updateInfo: UpdateManager.UpdateInfo,
-        onDismiss: () -> Unit,
-        onDownload: (String) -> Unit
-    ) {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            containerColor = androidx.compose.ui.graphics.Color.White,
-            title = {
-                Text(
-                    text = "发现新版本 ${updateInfo.versionName}",
-                    color = androidx.compose.ui.graphics.Color(0xFF222222)
-                )
-            },
-            text = {
-                Text(
-                    text = if (updateInfo.releaseNotes.isNotEmpty()) {
-                        "更新内容：\n${updateInfo.releaseNotes}"
-                    } else {
-                        "发现新版本，是否立即下载？"
-                    },
-                    color = androidx.compose.ui.graphics.Color(0xFF666666)
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { onDownload(updateInfo.downloadUrl) }) {
-                    Text("立即下载", color = androidx.compose.ui.graphics.Color(0xFF1A73E8))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text("稍后提醒", color = androidx.compose.ui.graphics.Color(0xFF666666))
-                }
-            }
-        )
-    }
-    
-    /**
-     * 静默检查更新（后台执行，有新版本时弹窗提示）
+     * 静默检查更新
+     * 如果用户已忽略此版本则不弹窗
      */
     private fun checkForUpdateSilently() {
+        val prefs = PreferencesManager.getInstance(this)
+        val ignoredVersion = prefs.getIgnoredUpdateVersion()
+        
         lifecycleScope.launch {
             try {
                 val updateInfo = UpdateManager.checkForUpdate(this@MainActivity)
-                if (updateInfo != null) {
-                    // 有新版本，显示更新对话框
-                    showUpdateDialog(updateInfo)
+                if (updateInfo != null && updateInfo.versionName != ignoredVersion) {
+                    currentUpdateInfo = updateInfo
+                    showUpdateDialog = true
                 }
-                // 没有更新或检查失败时，不做任何提示
             } catch (e: Exception) {
-                // 静默失败，不打扰用户
+                // 静默失败
             }
         }
     }
-    
-    /**
-     * 显示更新对话框
-     */
-    private fun showUpdateDialog(updateInfo: UpdateManager.UpdateInfo) {
-        currentUpdateInfo = updateInfo
-        showUpdateDialog = true
-    }
 }
-
