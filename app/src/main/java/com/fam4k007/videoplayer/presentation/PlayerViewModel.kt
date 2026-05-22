@@ -1431,32 +1431,76 @@ class PlayerViewModel(
         Logger.d(TAG, "Speed changed to: ${speed}x")
     }
     
+    // ==================== Seek 防抖合并（参考 mpvEx coalesceSeek）====================
+    private var seekCoalesceJob: Job? = null
+    private var pendingSeekOffset = 0
+    private val seekCoalesceDelayMs = 60L  // 60ms 防抖窗口，期间累积多次点击的偏移量
+
     /**
-     * Seek到指定位置
+     * 防抖合并的 seekBy（参考 mpvEx）
+     * 快速连续点击时，将多次偏移量累加后只执行一次 seek，避免 MPV 过载
+     */
+    private fun coalesceSeek(offset: Int) {
+        pendingSeekOffset += offset
+        seekCoalesceJob?.cancel()
+        seekCoalesceJob = viewModelScope.launch {
+            delay(seekCoalesceDelayMs)
+            val toApply = pendingSeekOffset
+            pendingSeekOffset = 0
+            if (toApply != 0) {
+                // 临时启用精确跳转（参考 mpvEx 动态 hr-seek 管理）
+                val hrSeekEnabled = playerRepository.isPreciseSeekingEnabled()
+                if (!hrSeekEnabled) {
+                    MPVLib.setPropertyString("hr-seek", "yes")
+                }
+                // 使用 mpv 原生相对跳转 "relative+exact"（参考 mpvKt/mpvEx）
+                // 避免在 Kotlin 层做位置计算，由 MPV 内部处理偏移
+                MPVLib.command("seek", toApply.toString(), "relative+exact")
+                if (!hrSeekEnabled) {
+                    MPVLib.setPropertyString("hr-seek", "no")
+                }
+                Logger.d(TAG, "Seek coalesced: $toApply (relative+exact, hr-seek=$hrSeekEnabled)")
+            }
+        }
+    }
+
+    /**
+     * Seek到指定位置（绝对位置跳转，用于进度条、滑动手势）
      */
     fun seekTo(position: Int) {
-        MPVLib.setPropertyInt("time-pos", position)
+        val safePosition = position.coerceAtLeast(0)
+        val hrSeekEnabled = playerRepository.isPreciseSeekingEnabled()
+        if (!hrSeekEnabled) {
+            MPVLib.setPropertyString("hr-seek", "yes")
+        }
+        MPVLib.command("seek", safePosition.toString(), "absolute+exact")
+        if (!hrSeekEnabled) {
+            MPVLib.setPropertyString("hr-seek", "no")
+        }
         // 发射Seek事件，通知Activity同步弹幕进度
-        _seekEvent.tryEmit(position)
-        Logger.d(TAG, "Seek to: $position")
+        _seekEvent.tryEmit(safePosition)
+        Logger.d(TAG, "Seek to: $safePosition (absolute+exact, hr-seek=$hrSeekEnabled)")
     }
     
     /**
-     * 相对Seek（前进/后退）
+     * 相对Seek（前进/后退按钮）
+     * 使用 mpv 原生相对跳转 "relative+exact" + 防抖合并
      * @param seconds 偏移秒数
-     * @param atTop 指示器是否显示在顶部（true=按钮点击显示在顶部，false=双击手势显示在侧边）
+     * @param atTop 指示器是否显示在顶部
      */
     fun seekRelative(seconds: Int, atTop: Boolean = true) {
-        val currentPos = position.value
-        val newPos = (currentPos + seconds).coerceAtLeast(0)
-        seekTo(newPos)
+        // 使用防抖合并的 seek（参考 mpvEx coalesceSeek 算法）
+        coalesceSeek(seconds)
         
         // 显示seek指示器
         _seekOffset.value = seconds
         _seekIndicatorShown.value = true
         _seekIndicatorAtTop.value = atTop
         
-        // 1秒后自动隐藏
+        // 发射Seek事件用于弹幕同步
+        _seekEvent.tryEmit(position.value + seconds)
+        
+        // 1秒后自动隐藏指示器
         viewModelScope.launch {
             delay(1000)
             _seekIndicatorShown.value = false
