@@ -92,11 +92,11 @@
 
 | 播放主界面 | 弹幕系统 | 弹幕设置 | 手势控制 |
 |------------|----------|----------|----------|
-| <img src="docs/screenshots/播放主界面.jpg" width="250"/> | <img src="docs/screenshots/弹幕系统.jpg" width="250"/> | <img src="docs/screenshots/弹幕设置.jpg" width="250"/> | <img src="docs/screenshots/手势控制.jpg" width="250"/> |
+| <img src="docs/screenshots/播放主界面.jpg" width="250"/> | <img src="docs/screenshots/弹幕系统.jpg" width="250"/> | <img src="docs/screenshots/弹幕设置页.jpg" width="250"/> | <img src="docs/screenshots/手势控制.jpg" width="250"/> |
 
-| 更多菜单 | 更多设置 | 记忆播放 | 超分功能 |
+| 更多菜单 | 字幕设置 | 记忆播放 | 超分功能 |
 |----------|----------|----------|----------|
-| <img src="docs/screenshots/更多菜单.jpg" width="250"/> | <img src="docs/screenshots/更多设置.jpg" width="250"/> | <img src="docs/screenshots/记忆播放.jpg" width="250"/> | <img src="docs/screenshots/超分功能.jpg" width="250"/> |
+| <img src="docs/screenshots/更多菜单页.jpg" width="250"/> | <img src="docs/screenshots/更多设置.jpg" width="250"/> | <img src="docs/screenshots/记忆播放.jpg" width="250"/> | <img src="docs/screenshots/超分功能页.jpg" width="250"/> |
 
 ---
 
