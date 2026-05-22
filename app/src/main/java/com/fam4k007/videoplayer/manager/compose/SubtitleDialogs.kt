@@ -1,4 +1,4 @@
-package com.fanchen.fam4k007.manager.compose
+package com.fam4k007.videoplayer.manager.compose
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -73,7 +73,7 @@ fun SubtitleSettingsDrawer(
     onBorderColorChange: (String) -> Unit,
     onBackColorChange: (String) -> Unit,
     onBorderStyleChange: (String) -> Unit,
-    composeOverlayManager: com.fanchen.fam4k007.manager.compose.ComposeOverlayManager,
+    composeOverlayManager: ComposeOverlayManager,
     onDismiss: () -> Unit
 ) {
     var expandedSection by remember { mutableStateOf<String?>(null) }
@@ -1178,7 +1178,7 @@ fun QuickButton(text: String, onClick: () -> Unit) {
  * 字幕字体设置内容
  */
 @Composable
-fun SubtitleFontContent(composeOverlayManager: com.fanchen.fam4k007.manager.compose.ComposeOverlayManager) {
+fun SubtitleFontContent(composeOverlayManager: ComposeOverlayManager) {
     val context = LocalContext.current
     val preferencesManager = remember { 
         com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(context)

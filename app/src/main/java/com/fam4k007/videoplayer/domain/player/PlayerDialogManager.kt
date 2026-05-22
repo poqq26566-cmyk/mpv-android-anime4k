@@ -33,7 +33,7 @@ class PlayerDialogManager(
     private val danmakuManager: DanmakuManager,
     private val anime4KManager: Anime4KManager,
     private val preferencesManager: PreferencesManager,
-    private val composeOverlayManager: com.fanchen.fam4k007.manager.compose.ComposeOverlayManager,
+    private val composeOverlayManager: com.fam4k007.videoplayer.manager.compose.ComposeOverlayManager,
     private val controlsManagerRef: WeakReference<PlayerControlsManager>,
     private val viewModelRef: WeakReference<PlayerViewModel>? = null  // 新增：用于ViewModel数据访问
 ) {

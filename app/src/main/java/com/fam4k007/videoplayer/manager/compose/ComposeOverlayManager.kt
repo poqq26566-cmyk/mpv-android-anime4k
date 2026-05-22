@@ -1,4 +1,4 @@
-package com.fanchen.fam4k007.manager.compose
+package com.fam4k007.videoplayer.manager.compose
 
 import android.content.Context
 import android.view.ViewGroup

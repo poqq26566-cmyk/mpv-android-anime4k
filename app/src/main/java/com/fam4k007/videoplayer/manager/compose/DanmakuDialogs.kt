@@ -1,4 +1,4 @@
-package com.fanchen.fam4k007.manager.compose
+package com.fam4k007.videoplayer.manager.compose
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler

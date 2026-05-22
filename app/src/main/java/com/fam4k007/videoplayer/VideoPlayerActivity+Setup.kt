@@ -568,7 +568,7 @@ internal fun VideoPlayerActivity.initializeManagers() {
     }
 
     // 初始化Compose管理器（必须在dialogManager之前）
-    composeOverlayManager = com.fanchen.fam4k007.manager.compose.ComposeOverlayManager(
+    composeOverlayManager = com.fam4k007.videoplayer.manager.compose.ComposeOverlayManager(
         context = this,
         lifecycleOwner = this,
         rootView = findViewById(android.R.id.content)
@@ -629,7 +629,7 @@ internal fun VideoPlayerActivity.initializeManagers() {
     screenshotManager = com.fam4k007.videoplayer.manager.ScreenshotManager(this)
 
     // 初始化片头片尾管理器
-    skipIntroOutroManager = com.fanchen.fam4k007.manager.SkipIntroOutroManager(
+    skipIntroOutroManager = com.fam4k007.videoplayer.manager.SkipIntroOutroManager(
         this,
         preferencesManager,
         composeOverlayManager

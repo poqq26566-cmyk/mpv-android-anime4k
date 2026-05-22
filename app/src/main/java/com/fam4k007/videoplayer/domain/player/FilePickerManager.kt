@@ -11,7 +11,7 @@ import com.fam4k007.videoplayer.domain.player.PlaybackEngine
 import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.domain.subtitle.SubtitleManager
 import com.fam4k007.videoplayer.utils.DialogUtils
-import com.fanchen.fam4k007.manager.compose.ComposeOverlayManager
+import com.fam4k007.videoplayer.manager.compose.ComposeOverlayManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

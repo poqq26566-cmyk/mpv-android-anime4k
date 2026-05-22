@@ -104,9 +104,9 @@ class VideoPlayerActivity : AppCompatActivity(),
     internal lateinit var danmakuManager: com.fam4k007.videoplayer.domain.danmaku.DanmakuManager
     internal lateinit var dialogManager: PlayerDialogManager
     internal lateinit var filePickerManager: FilePickerManager
-    internal lateinit var composeOverlayManager: com.fanchen.fam4k007.manager.compose.ComposeOverlayManager
+    internal lateinit var composeOverlayManager: com.fam4k007.videoplayer.manager.compose.ComposeOverlayManager
     internal lateinit var screenshotManager: com.fam4k007.videoplayer.manager.ScreenshotManager
-    internal lateinit var skipIntroOutroManager: com.fanchen.fam4k007.manager.SkipIntroOutroManager
+    internal lateinit var skipIntroOutroManager: com.fam4k007.videoplayer.manager.SkipIntroOutroManager
 
     internal lateinit var mpvView: CustomMPVView
     internal lateinit var danmakuView: com.fam4k007.videoplayer.danmaku.DanmakuPlayerView

@@ -1,8 +1,8 @@
-package com.fanchen.fam4k007.manager
+package com.fam4k007.videoplayer.manager
 
 import android.content.Context
 import android.util.Log
-import com.fanchen.fam4k007.manager.compose.ComposeOverlayManager
+import com.fam4k007.videoplayer.manager.compose.ComposeOverlayManager
 import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.utils.DialogUtils
 
