@@ -44,6 +44,10 @@ sealed interface AppScreen {
         @Serializable
         data object License : AppScreen
 
+    /** 用户协议页 */
+    @Serializable
+    data object UserAgreement : AppScreen
+
     /** WebDAV 账户列表页 */
     @Serializable
     data object WebDavAccounts : AppScreen

@@ -34,7 +34,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.fam4k007.videoplayer.PlaybackHistoryManager
 import com.fam4k007.videoplayer.R
-import com.fam4k007.videoplayer.UserAgreementActivity
 import com.fam4k007.videoplayer.VideoPlayerActivity
 import com.fam4k007.videoplayer.domain.webdav.WebDavClient
 import com.fam4k007.videoplayer.domain.webdav.WebDavConfig
@@ -55,6 +54,7 @@ import com.fam4k007.videoplayer.ui.screens.BiliBiliLoginScreen
 import com.fam4k007.videoplayer.ui.screens.HomeScreen
 import com.fam4k007.videoplayer.ui.screens.LicenseScreen
 import com.fam4k007.videoplayer.ui.screens.LogViewerScreen
+import com.fam4k007.videoplayer.ui.screens.UserAgreementScreen
 import com.fam4k007.videoplayer.ui.screens.PlaybackHistoryScreen
 import com.fam4k007.videoplayer.ui.screens.PlaybackSettingsScreen
 import com.fam4k007.videoplayer.ui.screens.FolderBlacklistScreen
@@ -260,7 +260,7 @@ fun AppNavGraph(
                     navController.navigate(AppScreen.CacheManagement)
                 },
                 onNavigateToUserAgreement = {
-                    context.startActivity(UserAgreementActivity.previewIntent(context))
+                    navController.navigate(AppScreen.UserAgreement)
                 },
                 onSendEmail = {
                     try {
@@ -301,6 +301,14 @@ fun AppNavGraph(
         composable<AppScreen.License> {
             LicenseScreen(
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<AppScreen.UserAgreement> {
+            UserAgreementScreen(
+                showActions = false,
+                onAgree = { navController.popBackStack() },
+                onDecline = { navController.popBackStack() }
             )
         }
 
