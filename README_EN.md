@@ -4,12 +4,11 @@ An Android local video player based on libmpv. The core feature is the open-sour
 
 Also supports danmaku, subtitles, gesture controls, Bilibili bangumi online playback, and other features, and can be used as a general-purpose local video player.
 
-## 📑 Table of Contents
+## Table of Contents
 
 - [License](#license)
-- [⚠️ Important Notice](#️-important-notice)
+- [Important Notice](#important-notice)
 - [Features](#features)
-- [Screenshots](#screenshots)
 - [Technical Architecture](#technical-architecture)
 - [Acknowledgments](#acknowledgments)
 - [Privacy & Third-Party Services](#privacy--third-party-services)
@@ -27,7 +26,7 @@ Also supports danmaku, subtitles, gesture controls, Bilibili bangumi online play
 
 ---
 
-## ⚠️ Important Notice
+## Important Notice
 
 **This project is intended for learning and testing purposes only. Please do not abuse it!**
 
@@ -47,43 +46,21 @@ We strongly oppose and do not condone any form of piracy, illegal distribution, 
 
 ### Core Features
 
-- 🎬 **Video Playback**: Supports mainstream formats (MP4, MKV, AVI, etc.)
-- 🌐 **Web Sniffing**: Built-in WebView to sniff and play web videos
-- 📺 **Bilibili**: Login, online streaming, video/bangumi download
-- ☁️ **WebDAV**: Connect to cloud servers, stream network videos
-- 📂 **Playlists**: Auto scan, sort, and categorize
-- 📝 **Subtitles**: Embedded/external subtitles, auto-load, style adjustment
-- 🔊 **Audio**: Multi-track switching, volume boost (0.1% precision)
-- 💬 **Danmaku**: DanDanPlay matching, Bilibili danmaku download, style customization
-- 👆 **Gestures**: Brightness, volume, progress control, customizable
-- 🎨 **Upscaling**: Anime4K real-time video upscaling
-- 🖼️ **Others**: Screenshot saving, playback progress memory
+- **Video Playback**: Supports mainstream formats (MP4, MKV, AVI, etc.)
+- **Web Sniffing**: Built-in WebView to sniff and play web videos
+- **Bilibili**: Login, online streaming, video/bangumi download
+- **WebDAV**: Connect to cloud servers, stream network videos
+- **Playlists**: Auto scan, sort, and categorize
+- **Subtitles**: Embedded/external subtitles, auto-load, style adjustment
+- **Audio**: Multi-track switching, volume boost (0.1% precision)
+- **Danmaku**: DanDanPlay matching, Bilibili danmaku download, style customization
+- **Gestures**: Brightness, volume, progress control, customizable
+- **Upscaling**: Anime4K real-time video upscaling
+- **Others**: Screenshot saving, playback progress memory
 
-📖 **Full Feature Documentation**: [Feature Details](docs/features.md)
+**Full Feature Documentation**: [Feature Details](docs/features.md)
 
 ---
-
-## Screenshots
-
-### 📱 Application Interface (Portrait)
-
-| Home | Video List | Bangumi | Web Sniffing |
-|------|------------|---------|--------------|
-| <img src="docs/screenshots/软件首页.jpg" width="250"/> | <img src="docs/screenshots/视频列表界面.jpg" width="250"/> | <img src="docs/screenshots/哔哩哔哩番剧解析.jpg" width="250"/> | <img src="docs/screenshots/网页视频嗅探.jpg" width="250"/> |
-
-| WebDAV | WebDAV Details | Settings 1 | Settings 2 |
-|--------|----------------|------------|------------|
-| <img src="docs/screenshots/webdav支持.jpg" width="250"/> | <img src="docs/screenshots/webdav支持2.jpg" width="250"/> | <img src="docs/screenshots/设置界面1.jpg" width="250"/> | <img src="docs/screenshots/设置界面2.jpg" width="250"/> |
-
-### 🎬 Player Interface (Landscape)
-
-| Player | Danmaku | Danmaku Settings | Subtitle Settings |
-|--------|---------|------------------|-------------------|
-| <img src="docs/screenshots/播放器主界面.jpg" width="250"/> | <img src="docs/screenshots/弹幕支持.jpg" width="250"/> | <img src="docs/screenshots/弹幕设置.jpg" width="250"/> | <img src="docs/screenshots/字幕样式设置.jpg" width="250"/> |
-
-| Progress | Resume Play | More Menu | Upscaling |
-|----------|-------------|-----------|-----------|
-| <img src="docs/screenshots/拖动缩略图.jpg" width="250"/> | <img src="docs/screenshots/记忆播放.jpg" width="250"/> | <img src="docs/screenshots/更多菜单.jpg" width="250"/> | <img src="docs/screenshots/超分功能.jpg" width="250"/> |
 
 ---
 
@@ -99,7 +76,7 @@ We strongly oppose and do not condone any form of piracy, illegal distribution, 
 
 This project would not be possible without the contributions of the following open-source projects and developers!
 
-### 🏗️ Core Foundation
+### Core Foundation
 
 The following projects provide core technical support for this application:
 
@@ -115,7 +92,7 @@ The following projects provide core technical support for this application:
 - **[bilibili/DanmakuFlameMaster](https://github.com/bilibili/DanmakuFlameMaster)**  
   Bilibili's open-source Android danmaku engine, the core of this project's danmaku functionality
 
-### 🔧 Algorithms & Feature Implementation
+### Algorithms & Feature Implementation
 
 The following projects provided important references for the implementation of this application's features:
 
@@ -140,7 +117,7 @@ The following projects provided important references for the implementation of t
 - **[qiusunshine/hikerView](https://github.com/qiusunshine/hikerView)**  
   Referenced web video sniffing functionality and anti-sniffing algorithm logic
 
-### 🌐 API Services & Documentation
+### API Services & Documentation
 
 Thanks to the following projects for providing API services and technical documentation:
 
@@ -153,12 +130,12 @@ Thanks to the following projects for providing API services and technical docume
 - **[SocialSisterYi/bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect)**  
   Collected and organized Bilibili's public APIs, provided valuable API reference documentation for this project
 
-### 💡 Inspiration
+### Inspiration
 
 - **[Predidit/Kazumi](https://github.com/Predidit/Kazumi)**  
   The original inspiration and requirements for this project
 
-### 🎨 Assets
+### Assets
 
 - **App Icon**: Generated by AI
 - **Player Control Icons**: From [FLATICON](https://www.flaticon.com/)
@@ -219,8 +196,8 @@ The app requests the following permissions:
 
 Encountered an issue or have improvement suggestions? Welcome to provide feedback through the following channels:
 
-- 💡 **Feature Suggestions & Feedback**: [Submit an Issue](https://github.com/azxcvn/mpv-android-anime4k/issues)
-- 📧 **Contact Author**: [GitHub Profile](https://github.com/azxcvn)
+- **Feature Suggestions & Feedback**: [Submit an Issue](https://github.com/azxcvn/mpv-android-anime4k/issues)
+- **Contact Author**: [GitHub Profile](https://github.com/azxcvn)
 
 ---
 
