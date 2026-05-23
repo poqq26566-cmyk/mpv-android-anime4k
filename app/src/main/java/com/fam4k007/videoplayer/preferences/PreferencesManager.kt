@@ -200,6 +200,25 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putBoolean(AppConstants.Preferences.VOLUME_BOOST_ENABLED, enabled).apply()
     }
     
+    // ==================== 控制系统音量 ====================
+    
+    /**
+     * 获取是否控制系统音量（开启后退出播放不恢复进入前的音量）
+     */
+    fun isControlSystemVolume(): Boolean {
+        return sharedPreferences.getBoolean(
+            AppConstants.Preferences.CONTROL_SYSTEM_VOLUME,
+            false  // 默认关闭（退出时恢复音量）
+        )
+    }
+    
+    /**
+     * 保存控制系统音量设置
+     */
+    fun setControlSystemVolume(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.CONTROL_SYSTEM_VOLUME, enabled).apply()
+    }
+    
     // ==================== Anime4K 超分模式记忆 ====================
     
     /**

@@ -31,6 +31,7 @@ class WebDavViewModel(
     data class AccountListState(
         val accounts: List<WebDavAccount> = emptyList(),
         val showAddDialog: Boolean = false,
+        val editingAccountId: String? = null,  // 正在编辑的账户ID，null表示新增模式
         val accountToDelete: WebDavAccount? = null
     )
 
@@ -48,11 +49,24 @@ class WebDavViewModel(
     }
 
     fun showAddDialog() {
-        _accountListState.value = _accountListState.value.copy(showAddDialog = true)
+        resetAddAccountState()
+        _accountListState.value = _accountListState.value.copy(showAddDialog = true, editingAccountId = null)
+    }
+
+    fun showEditDialog(account: WebDavAccount) {
+        _addAccountState.value = AddAccountState(
+            displayName = account.displayName,
+            serverUrl = account.serverUrl,
+            account = account.account,
+            password = account.password,
+            isAnonymous = account.isAnonymous
+        )
+        _accountListState.value = _accountListState.value.copy(showAddDialog = true, editingAccountId = account.id)
     }
 
     fun dismissAddDialog() {
-        _accountListState.value = _accountListState.value.copy(showAddDialog = false)
+        _accountListState.value = _accountListState.value.copy(showAddDialog = false, editingAccountId = null)
+        resetAddAccountState()
     }
 
     fun onAccountAdded() {
@@ -167,6 +181,7 @@ class WebDavViewModel(
 
     fun saveAccount() {
         val state = _addAccountState.value
+        val editingId = _accountListState.value.editingAccountId
 
         when {
             state.displayName.isEmpty() -> {
@@ -187,19 +202,39 @@ class WebDavViewModel(
             }
         }
 
-        val newAccount = WebDavAccount(
-            displayName = state.displayName,
-            serverUrl = if (state.serverUrl.endsWith("/")) state.serverUrl else "${state.serverUrl}/",
-            account = state.account,
-            password = state.password,
-            isAnonymous = state.isAnonymous
-        )
+        val serverUrl = if (state.serverUrl.endsWith("/")) state.serverUrl else "${state.serverUrl}/"
 
-        if (repository.addAccount(newAccount)) {
-            onAccountAdded()
-            resetAddAccountState()
+        if (editingId != null) {
+            // 编辑模式：更新已有账户
+            val updatedAccount = WebDavAccount(
+                id = editingId,
+                displayName = state.displayName,
+                serverUrl = serverUrl,
+                account = state.account,
+                password = state.password,
+                isAnonymous = state.isAnonymous
+            )
+            if (repository.updateAccount(updatedAccount)) {
+                onAccountAdded()
+                resetAddAccountState()
+            } else {
+                _addAccountState.value = state.copy(saveError = "❌ 更新失败，账户不存在")
+            }
         } else {
-            _addAccountState.value = state.copy(saveError = "❌ 该账户已存在")
+            // 新增模式
+            val newAccount = WebDavAccount(
+                displayName = state.displayName,
+                serverUrl = serverUrl,
+                account = state.account,
+                password = state.password,
+                isAnonymous = state.isAnonymous
+            )
+            if (repository.addAccount(newAccount)) {
+                onAccountAdded()
+                resetAddAccountState()
+            } else {
+                _addAccountState.value = state.copy(saveError = "❌ 该账户已存在")
+            }
         }
     }
 
@@ -343,7 +378,7 @@ class WebDavViewModel(
     }
 
     private fun <T> naturalComparator(selector: (T) -> String): Comparator<T> {
-        return Comparator { a, b -> compareNatural(selector(a), selector(b)) }
+        return Comparator { a, b -> compareNatural(selector(a).orEmpty(), selector(b).orEmpty()) }
     }
 
     private fun compareNatural(str1: String, str2: String): Int {

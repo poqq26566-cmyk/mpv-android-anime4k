@@ -531,6 +531,18 @@ class PlayerRepository(
     
     // ==================== 音量增强 ====================
     
+    // ==================== 控制系统音量 ====================
+    
+    fun isControlSystemVolume(): Boolean {
+        return preferencesManager.isControlSystemVolume()
+    }
+    
+    fun setControlSystemVolume(enabled: Boolean) {
+        preferencesManager.setControlSystemVolume(enabled)
+    }
+    
+    // ==================== 音量增强 ====================
+    
     /**
      * 是否启用音量增强
      */

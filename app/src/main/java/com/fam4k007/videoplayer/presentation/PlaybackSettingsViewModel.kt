@@ -56,6 +56,7 @@ class PlaybackSettingsViewModel(
                     
                     // 音量控制
                     volumeBoost = playerRepository.isVolumeBoostEnabled(),
+                    controlSystemVolume = playerRepository.isControlSystemVolume(),
                     
                     // 倍速控制
                     rememberSpeed = playerRepository.isRememberSpeedEnabled(),
@@ -158,6 +159,21 @@ class PlaybackSettingsViewModel(
                 Logger.d(TAG, "Set volume boost: $enabled")
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to set volume boost", e)
+            }
+        }
+    }
+    
+    /**
+     * 设置控制系统音量
+     */
+    fun setControlSystemVolume(enabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setControlSystemVolume(enabled)
+                _playbackSettings.value = _playbackSettings.value.copy(controlSystemVolume = enabled)
+                Logger.d(TAG, "Set control system volume: $enabled")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set control system volume", e)
             }
         }
     }
@@ -287,6 +303,7 @@ data class PlaybackSettings(
     
     // 音量控制
     val volumeBoost: Boolean = false,
+    val controlSystemVolume: Boolean = false,
     
     // 倍速控制
     val rememberSpeed: Boolean = false,

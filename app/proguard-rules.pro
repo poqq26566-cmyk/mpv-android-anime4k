@@ -110,9 +110,13 @@
 # 忽略 javax.xml.stream (Android 不包含这些类，但 Simple XML 可以用其他方式解析)
 -dontwarn javax.xml.stream.**
 
-# 保护 WebDAV 相关类
--keep class com.fam4k007.videoplayer.webdav.** { *; }
--keepclassmembers class com.fam4k007.videoplayer.webdav.** { *; }
+# 保护 WebDAV 相关类（正确包路径）
+-keep class com.fam4k007.videoplayer.ui.webdav.** { *; }
+-keepclassmembers class com.fam4k007.videoplayer.ui.webdav.** { *; }
+-keep class com.fam4k007.videoplayer.domain.webdav.** { *; }
+-keepclassmembers class com.fam4k007.videoplayer.domain.webdav.** { *; }
+-keep class com.fam4k007.videoplayer.data.model.WebDavAccount { *; }
+-keepclassmembers class com.fam4k007.videoplayer.data.model.WebDavAccount { *; }
 
 # OkHttp (WebDAV 依赖)
 -keep class okhttp3.** { *; }
@@ -223,15 +227,17 @@
 -keep class com.fam4k007.videoplayer.bilibili.model.LoginResult { *; }
 -keep class com.fam4k007.videoplayer.bilibili.model.LoginResult$** { *; }
 
-# 保护 BiliBiliPlayActivity 中的所有内部类和数据类
+# 保护 BiliBiliPlayActivity 和番剧播放 ViewModel 中的数据类（Gson 反序列化需要）
 -keep class com.fam4k007.videoplayer.BiliBiliPlayActivity$** { *; }
--keep class com.fam4k007.videoplayer.PlayUiState { *; }
--keep class com.fam4k007.videoplayer.PlayUiState$** { *; }
--keep class com.fam4k007.videoplayer.SimpleBangumiInfo { *; }
--keep class com.fam4k007.videoplayer.SimpleEpisode { *; }
--keep class com.fam4k007.videoplayer.BangumiDetailResponse { *; }
--keep class com.fam4k007.videoplayer.BangumiDetailResult { *; }
--keep class com.fam4k007.videoplayer.EpisodeItem { *; }
+
+# 保护 BiliBiliPlayViewModel 中定义的数据类（Gson 反序列化需要）
+-keep class com.fam4k007.videoplayer.presentation.BiliPlayUiState { *; }
+-keep class com.fam4k007.videoplayer.presentation.BiliPlayUiState$** { *; }
+-keep class com.fam4k007.videoplayer.presentation.SimpleBangumiInfo { *; }
+-keep class com.fam4k007.videoplayer.presentation.SimpleEpisode { *; }
+-keep class com.fam4k007.videoplayer.presentation.BangumiDetailResponse { *; }
+-keep class com.fam4k007.videoplayer.presentation.BangumiDetailResult { *; }
+-keep class com.fam4k007.videoplayer.presentation.EpisodeItem { *; }
 
 # 保护 BiliBiliLoginActivity 中的 sealed class
 -keep class com.fanchen.fam4k007.manager.compose.LoginUiState { *; }

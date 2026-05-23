@@ -88,6 +88,7 @@ fun WebDavAccountListScreen(
                         WebDavAccountCard(
                             account = account,
                             onClick = { onAccountSelected(account) },
+                            onEditClick = { viewModel.showEditDialog(account) },
                             onDeleteClick = { viewModel.requestDeleteAccount(account) }
                         )
                     }
@@ -96,9 +97,12 @@ fun WebDavAccountListScreen(
         }
     }
 
-    // 添加账户对话框
+    // 添加/编辑账户对话框
     if (state.showAddDialog) {
-        WebDavAddAccountDialog(viewModel = viewModel)
+        WebDavAddAccountDialog(
+            viewModel = viewModel,
+            isEditMode = state.editingAccountId != null
+        )
     }
 
     // 删除确认对话框
@@ -171,6 +175,7 @@ private fun EmptyAccountsView(
 private fun WebDavAccountCard(
     account: WebDavAccount,
     onClick: () -> Unit,
+    onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
     Card(
@@ -213,13 +218,20 @@ private fun WebDavAccountCard(
                 if (!account.isAnonymous && account.account.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "账号: ${account.account}",
+                        text = "账号: ${account.account.orEmpty()}",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+            }
+            IconButton(onClick = onEditClick) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "编辑",
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
             IconButton(onClick = onDeleteClick) {
                 Icon(
@@ -238,12 +250,13 @@ private fun WebDavAccountCard(
 }
 
 /**
- * 添加账户对话框
+ * 添加/编辑账户对话框
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun WebDavAddAccountDialog(
-    viewModel: WebDavViewModel
+    viewModel: WebDavViewModel,
+    isEditMode: Boolean = false
 ) {
     val state by viewModel.addAccountState.collectAsState()
 
@@ -251,7 +264,7 @@ private fun WebDavAddAccountDialog(
         onDismissRequest = { viewModel.dismissAddDialog() },
         title = {
             Text(
-                text = "添加 WebDAV 账户",
+                text = if (isEditMode) "编辑 WebDAV 账户" else "添加 WebDAV 账户",
                 fontWeight = FontWeight.Bold
             )
         },
@@ -381,7 +394,7 @@ private fun WebDavAddAccountDialog(
                 onClick = { viewModel.saveAccount() },
                 shape = RoundedCornerShape(20.dp)
             ) {
-                Text("保存")
+                Text(if (isEditMode) "保存" else "保存")
             }
         },
         dismissButton = {
@@ -677,7 +690,7 @@ private fun WebDavFileCard(
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = file.name,
+                    text = file.name.ifEmpty { "(无名称)" },
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,

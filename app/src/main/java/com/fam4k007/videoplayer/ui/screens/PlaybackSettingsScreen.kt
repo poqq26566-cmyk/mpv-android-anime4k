@@ -136,6 +136,12 @@ fun PlaybackSettingsScreen(
             item {
                 PreferenceCard {
                     SwitchItem(
+                        title = "控制系统音量",
+                        subtitle = if (settings.controlSystemVolume) "播放中调节的音量退出后保留" else "退出播放后恢复进入前的音量",
+                        checked = settings.controlSystemVolume,
+                        onCheckedChange = { viewModel.setControlSystemVolume(it) }
+                    )
+                    SwitchItem(
                         title = "音量增强",
                         subtitle = if (settings.volumeBoost) "音量可超过100%,最高300%" else "音量范围限制在1-100%",
                         checked = settings.volumeBoost,
