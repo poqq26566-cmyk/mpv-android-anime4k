@@ -209,18 +209,23 @@ fun AppNavGraph(
                     onNavigateBack = { navController.popBackStack() },
                     onPlayVideo = { file, client ->
                         // 构建包含认证信息的 URL
-                        val fileUrl = if (client.config.isAnonymous || client.config.account.isEmpty()) {
+                        val fileUrl = if (client.config.isAnonymous || client.config.account.isNullOrEmpty()) {
                             client.getFileUrl(file.path)
                         } else {
                             val uri = Uri.parse(client.config.serverUrl)
                             val scheme = uri.scheme
                             val host = uri.host
-                            val port = if (uri.port != -1) ":${uri.port}" else ""
-                            val username = Uri.encode(client.config.account)
-                            val password = Uri.encode(client.config.password)
-                            val basePath = uri.path ?: "/"
-                            val encodedPath = file.path.split("/").joinToString("/") { Uri.encode(it) }
-                            "$scheme://$username:$password@$host$port$basePath$encodedPath"
+                            if (scheme.isNullOrEmpty() || host.isNullOrEmpty()) {
+                                // URL 解析失败，降级使用普通 URL
+                                client.getFileUrl(file.path)
+                            } else {
+                                val port = if (uri.port != -1) ":${uri.port}" else ""
+                                val username = Uri.encode(client.config.account.orEmpty())
+                                val password = Uri.encode(client.config.password.orEmpty())
+                                val basePath = uri.path ?: "/"
+                                val encodedPath = file.path.split("/").joinToString("/") { Uri.encode(it) }
+                                "$scheme://$username:$password@$host$port$basePath$encodedPath"
+                            }
                         }
 
                         val intent = Intent(context, VideoPlayerActivity::class.java).apply {

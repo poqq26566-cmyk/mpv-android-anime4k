@@ -55,10 +55,10 @@ class WebDavViewModel(
 
     fun showEditDialog(account: WebDavAccount) {
         _addAccountState.value = AddAccountState(
-            displayName = account.displayName,
-            serverUrl = account.serverUrl,
-            account = account.account,
-            password = account.password,
+            displayName = account.displayName.orEmpty(),
+            serverUrl = account.serverUrl.orEmpty(),
+            account = account.account.orEmpty(),
+            password = account.password.orEmpty(),
             isAnonymous = account.isAnonymous
         )
         _accountListState.value = _accountListState.value.copy(showAddDialog = true, editingAccountId = account.id)
@@ -278,9 +278,9 @@ class WebDavViewModel(
     fun initBrowser(account: WebDavAccount) {
         val client = WebDavClient(
             WebDavConfig(
-                serverUrl = account.serverUrl,
-                account = account.account,
-                password = account.password,
+                serverUrl = account.serverUrl.orEmpty(),
+                account = account.account.orEmpty(),
+                password = account.password.orEmpty(),
                 isAnonymous = account.isAnonymous
             )
         )

@@ -135,9 +135,9 @@ class WebDavRepository(
      */
     fun createClient(account: WebDavAccount): WebDavClient {
         val config = WebDavConfig(
-            serverUrl = account.serverUrl,
-            account = account.account,
-            password = account.password,
+            serverUrl = account.serverUrl.orEmpty(),
+            account = account.account.orEmpty(),
+            password = account.password.orEmpty(),
             isAnonymous = account.isAnonymous
         )
         return WebDavClient(config)

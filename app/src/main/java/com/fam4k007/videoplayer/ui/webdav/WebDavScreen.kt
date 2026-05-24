@@ -113,7 +113,7 @@ fun WebDavAccountListScreen(
             shape = RoundedCornerShape(28.dp),
             containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("删除账户") },
-            text = { Text("确定要删除账户 \"${deleteAccount.displayName}\" 吗？") },
+            text = { Text("确定要删除账户 \"${deleteAccount.displayName.orEmpty()}\" 吗？") },
             confirmButton = {
                 TextButton(onClick = { viewModel.confirmDeleteAccount() }) {
                     Text("删除", color = MaterialTheme.colorScheme.error)
@@ -200,7 +200,7 @@ private fun WebDavAccountCard(
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = account.displayName,
+                    text = account.displayName.orEmpty(),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -209,13 +209,13 @@ private fun WebDavAccountCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = account.serverUrl,
+                    text = account.serverUrl.orEmpty(),
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (!account.isAnonymous && account.account.isNotEmpty()) {
+                if (!account.isAnonymous && account.account.orEmpty().isNotEmpty()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "账号: ${account.account.orEmpty()}",
@@ -456,7 +456,7 @@ fun WebDavBrowserScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            account.displayName,
+                            account.displayName.orEmpty(),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold
                         )
