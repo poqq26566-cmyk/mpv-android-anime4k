@@ -46,7 +46,11 @@
     public static final ** CREATOR;
 }
 
-# 4. 保护自定义 View（防止 CustomMPVView 被混淆）
+# 4. 保护 Gson 序列化模型（DanDanPlay API）
+# DanDanPlayApi 使用 Gson 反射反序列化 JSON，混淆后字段名不匹配导致解析失败
+-keep class com.fam4k007.videoplayer.dandanplay.** { *; }
+
+# 5. 保护自定义 View（防止 CustomMPVView 被混淆）
 -keep public class * extends android.view.View {
     public <init>(android.content.Context);
     public <init>(android.content.Context, android.util.AttributeSet);

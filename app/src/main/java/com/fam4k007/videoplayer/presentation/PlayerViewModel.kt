@@ -343,6 +343,10 @@ class PlayerViewModel(
     // 是否为在线视频
     private val _isOnlineVideo = MutableStateFlow(false)
     val isOnlineVideo: StateFlow<Boolean> = _isOnlineVideo.asStateFlow()
+
+    // 实时下载网速（KB/s），仅在线播放时有效
+    private val _downloadSpeedKbps = MutableStateFlow(0)
+    val downloadSpeedKbps: StateFlow<Int> = _downloadSpeedKbps.asStateFlow()
     
     // 加载动画显示状态（在线视频缓冲/加载时显示）
     private val _isLoading = MutableStateFlow(false)
@@ -548,6 +552,24 @@ class PlayerViewModel(
             }
         }
         
+        // 轮询更新网速（仅在线视频）
+        viewModelScope.launch {
+            while (isActive && mpvInitialized) {
+                if (_isOnlineVideo.value) {
+                    try {
+                        // cache-speed 返回的是字节/秒，除以 1024 转 KB/s
+                        val speedBytes = MPVLib.getPropertyInt("cache-speed") ?: 0
+                        _downloadSpeedKbps.value = speedBytes / 1024
+                    } catch (_: Exception) {
+                        _downloadSpeedKbps.value = 0
+                    }
+                } else {
+                    if (_downloadSpeedKbps.value != 0) _downloadSpeedKbps.value = 0
+                }
+                delay(1000)
+            }
+        }
+
         // 轮询更新高精度时长
         durationPollingJob = viewModelScope.launch {
             var lastDuration = 0

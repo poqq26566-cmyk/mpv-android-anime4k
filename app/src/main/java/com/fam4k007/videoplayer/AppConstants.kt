@@ -45,6 +45,9 @@ object AppConstants {
         // 章节进度条 Key
         const val CHAPTER_BAR_ENABLED = "chapter_bar_enabled"
 
+        // MPV 解码器预设
+        const val MPV_PROFILE = "mpv_profile"
+
         // 文件扫描 Key
         const val NOMEDIA_ENABLED = "nomedia_enabled"
         const val SCAN_HIDDEN_FOLDERS = "scan_hidden_folders"

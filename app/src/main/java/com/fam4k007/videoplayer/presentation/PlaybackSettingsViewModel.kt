@@ -74,7 +74,10 @@ class PlaybackSettingsViewModel(
                     closeAfterEOF = playerRepository.isCloseAfterEndOfVideo(),
 
                     // 章节控制
-                    chapterBarEnabled = playerRepository.isChapterBarEnabled()
+                    chapterBarEnabled = playerRepository.isChapterBarEnabled(),
+
+                    // MPV 解码器预设
+                    mpvProfile = playerRepository.getMpvProfile()
                 )
                 _playbackSettings.value = settings
                 Logger.d(TAG, "Loaded playback settings")
@@ -307,6 +310,23 @@ class PlaybackSettingsViewModel(
             }
         }
     }
+
+    // ==================== MPV 解码器预设 ====================
+
+    /**
+     * 设置 MPV 解码器预设
+     */
+    fun setMpvProfile(profile: String) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setMpvProfile(profile)
+                _playbackSettings.value = _playbackSettings.value.copy(mpvProfile = profile)
+                Logger.d(TAG, "Set MPV profile: $profile")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set MPV profile", e)
+            }
+        }
+    }
 }
 
 /**
@@ -341,5 +361,8 @@ data class PlaybackSettings(
     val closeAfterEOF: Boolean = true,
 
     // 章节控制
-    val chapterBarEnabled: Boolean = true
+    val chapterBarEnabled: Boolean = true,
+
+    // MPV 解码器预设
+    val mpvProfile: String = "fast"
 )

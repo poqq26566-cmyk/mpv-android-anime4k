@@ -156,7 +156,7 @@ fun SettingsScreen(
                 PreferenceCard {
                     ClickableItem(
                         title = "播放设置",
-                        subtitle = "调整播放相关参数",
+                        subtitle = "修改与播放有关的参数配置",
                         icon = Icons.Default.Settings,
                         onClick = onNavigateToPlaybackSettings
                     )

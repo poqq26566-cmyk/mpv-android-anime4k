@@ -198,6 +198,9 @@ fun PlayerControls(
         // 暂停指示器（暂停时在屏幕中央短暂显示后淡出）
         PauseIndicator(viewModel = viewModel)
 
+        // 实时网速显示（仅在线播放时显示，屏幕右侧中间位置）
+        DownloadSpeedOverlay(viewModel = viewModel)
+
         // 加载动画（在线视频缓冲/加载时显示，覆盖在所有控件之上）
         LoadingOverlay(viewModel = viewModel)
     }
@@ -782,7 +785,7 @@ fun TopControlPanel(
                     )
                 )
             )
-            .padding(start = 4.dp, top = 18.dp, end = 100.dp, bottom = 6.dp),
+            .padding(start = 4.dp, top = 18.dp, end = 80.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 返回按钮
@@ -1209,6 +1212,44 @@ fun PauseIndicator(
                 modifier = Modifier.size(90.dp)
             )
         }
+    }
+}
+
+/**
+ * 实时网速显示
+ * 仅在线播放时、且控制面板可见时显示，位于屏幕右侧中间位置
+ */
+@Composable
+fun DownloadSpeedOverlay(
+    viewModel: PlayerViewModel,
+    modifier: Modifier = Modifier
+) {
+    val isOnline by viewModel.isOnlineVideo.collectAsState()
+    val speedKbps by viewModel.downloadSpeedKbps.collectAsState()
+    val controlsShown by viewModel.controlsShown.collectAsState()
+
+    if (!isOnline || speedKbps <= 0 || !controlsShown) return
+
+    val speedText = if (speedKbps >= 1024) {
+        String.format("%.1f MB/s", speedKbps / 1024.0)
+    } else {
+        "$speedKbps KB/s"
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        Text(
+            text = speedText,
+            color = Color.White.copy(alpha = 0.7f),
+            fontSize = 11.sp,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 12.dp)
+                .background(
+                    color = Color.Black.copy(alpha = 0.35f),
+                    shape = RoundedCornerShape(6.dp)
+                )
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        )
     }
 }
 

@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import android.content.Intent
 import android.widget.Toast
 import com.fam4k007.videoplayer.presentation.PlaybackSettingsViewModel
 import com.fam4k007.videoplayer.ui.components.PreferenceCard
@@ -43,6 +44,8 @@ fun PlaybackSettingsScreen(
     var showSpeedDialog by remember { mutableStateOf(false) }
     var showDoubleTapSeekDialog by remember { mutableStateOf(false) }
     var showSpeedPresetsDialog by remember { mutableStateOf(false) }
+    var showRestartDialog by remember { mutableStateOf(false) }
+    var pendingProfile by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -88,6 +91,24 @@ fun PlaybackSettingsScreen(
                         title = "快进/快退时长",
                         value = "${settings.seekTime}秒",
                         onClick = { showSeekTimeDialog = true }
+                    )
+                }
+            }
+
+            // MPV 解码器预设
+            item {
+                PreferenceSectionHeader("MPV 解码器")
+            }
+
+            item {
+                PreferenceCard {
+                    MpvProfileCard(
+                        currentProfile = settings.mpvProfile,
+                        onProfileChange = { profile ->
+                            viewModel.setMpvProfile(profile)
+                            pendingProfile = profile
+                            showRestartDialog = true
+                        }
                     )
                 }
             }
@@ -279,6 +300,48 @@ fun PlaybackSettingsScreen(
         )
     }
 
+    // MPV 解码器预设变更 — 重启确认对话框
+    if (showRestartDialog) {
+        AlertDialog(
+            onDismissRequest = { showRestartDialog = false },
+            title = {
+                Text(
+                    "需要重启应用",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Text(
+                    "修改解码器预设需要重启应用才能生效。是否立即重启？",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showRestartDialog = false
+                        val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+                        launchIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(launchIntent)
+                        (context as? android.app.Activity)?.finish()
+                    }
+                ) {
+                    Text("重启", fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRestartDialog = false }) {
+                    Text("稍后", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }
 
 @Composable
@@ -713,6 +776,80 @@ private fun SpeedPresetsDialog(
                     ) {
                         Text("保存")
                     }
+                }
+            }
+        }
+    }
+}
+
+/** 解码器预设信息 */
+private data class MpvProfileOption(
+    val value: String,
+    val displayName: String,
+    val description: String
+)
+
+private val mpvProfileOptions = listOf(
+    MpvProfileOption("fast", "Fast", "硬解 + bilinear 缩放，整体功耗最低（推荐）"),
+    MpvProfileOption("default", "Default", "默认配置，平衡画质与性能"),
+    MpvProfileOption("high-quality", "High Quality", "高质量渲染，使用 ewa_lanczossharp 缩放"),
+    MpvProfileOption("gpu-hq", "GPU HQ", "GPU 高质量模式，开启去条带等后处理"),
+    MpvProfileOption("low-latency", "Low Latency", "低延迟模式，适合直播/在线流媒体"),
+    MpvProfileOption("sw-fast", "SW Fast", "强制软解，GPU 负载最低但 CPU 功耗最高"),
+)
+
+@Composable
+private fun MpvProfileCard(
+    currentProfile: String,
+    onProfileChange: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = MaterialTheme.spacing.medium,
+                vertical = MaterialTheme.spacing.small
+            )
+    ) {
+        Text(
+            "解码器预设",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        mpvProfileOptions.forEach { option ->
+            val isSelected = currentProfile == option.value
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onProfileChange(option.value) }
+                    .padding(vertical = MaterialTheme.spacing.small, horizontal = MaterialTheme.spacing.small),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
+                    selected = isSelected,
+                    onClick = { onProfileChange(option.value) },
+                    modifier = Modifier.size(24.dp),
+                    colors = RadioButtonDefaults.colors(
+                        selectedColor = MaterialTheme.colorScheme.primary,
+                        unselectedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    )
+                )
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text(
+                        option.displayName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        option.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }

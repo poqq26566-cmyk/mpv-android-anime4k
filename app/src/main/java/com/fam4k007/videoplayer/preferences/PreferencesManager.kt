@@ -1342,6 +1342,23 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putBoolean(AppConstants.Preferences.CHAPTER_BAR_ENABLED, enabled).apply()
     }
 
+    // ==================== MPV 解码器预设 ====================
+
+    /**
+     * 获取 MPV 解码器预设
+     * @return "fast", "default", "high-quality", "gpu-hq", "low-latency", "sw-fast"
+     */
+    fun getMpvProfile(): String {
+        return sharedPreferences.getString(AppConstants.Preferences.MPV_PROFILE, "fast") ?: "fast"
+    }
+
+    /**
+     * 设置 MPV 解码器预设
+     */
+    fun setMpvProfile(profile: String) {
+        sharedPreferences.edit().putString(AppConstants.Preferences.MPV_PROFILE, profile).apply()
+    }
+
     // ==================== 剩余时间显示 ====================
 
     /**

@@ -513,6 +513,22 @@ class PlayerRepository(
         preferencesManager.setSeekbarStyle(style)
     }
 
+    // ==================== MPV 解码器预设 ====================
+
+    /**
+     * 获取 MPV 解码器预设
+     */
+    fun getMpvProfile(): String {
+        return preferencesManager.getMpvProfile()
+    }
+
+    /**
+     * 设置 MPV 解码器预设
+     */
+    fun setMpvProfile(profile: String) {
+        preferencesManager.setMpvProfile(profile)
+    }
+
     /**
      * 是否启用播放倍速记忆
      */
