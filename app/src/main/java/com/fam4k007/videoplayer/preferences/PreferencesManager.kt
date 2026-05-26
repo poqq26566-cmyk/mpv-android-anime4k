@@ -1287,6 +1287,25 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putBoolean("close_after_eof", enabled).apply()
     }
 
+    // ==================== 章节进度条 ====================
+
+    /**
+     * 获取是否启用章节进度条
+     */
+    fun isChapterBarEnabled(): Boolean {
+        return sharedPreferences.getBoolean(
+            AppConstants.Preferences.CHAPTER_BAR_ENABLED,
+            true  // 默认启用
+        )
+    }
+
+    /**
+     * 设置章节进度条开关
+     */
+    fun setChapterBarEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.CHAPTER_BAR_ENABLED, enabled).apply()
+    }
+
     // ==================== 剩余时间显示 ====================
 
     /**

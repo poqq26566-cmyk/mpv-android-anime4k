@@ -360,7 +360,77 @@ class PlayerViewModel(
         _showRemainingTime.value = newValue
         playerRepository.setShowRemainingTimeEnabled(newValue)
     }
-    
+
+    // ==================== 章节管理 ====================
+
+    // 章节进度条开关（从 PreferencesManager 加载）
+    private val _chapterBarEnabled = MutableStateFlow(true)
+    val chapterBarEnabled: StateFlow<Boolean> = _chapterBarEnabled.asStateFlow()
+
+    /**
+     * 章节信息
+     */
+    data class Chapter(
+        val title: String,
+        val timeSeconds: Double
+    )
+
+    // 章节列表
+    private val _chapters = MutableStateFlow<List<Chapter>>(emptyList())
+    val chapters: StateFlow<List<Chapter>> = _chapters.asStateFlow()
+
+    // 当前所在章节索引
+    private val _currentChapterIndex = MutableStateFlow(-1)
+    val currentChapterIndex: StateFlow<Int> = _currentChapterIndex.asStateFlow()
+
+    // 当前章节名称（无章节时为 null）
+    val currentChapterName: StateFlow<String?> = combine(_chapters, _currentChapterIndex) { chapters, index ->
+        if (index in chapters.indices) chapters[index].title else null
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    // 是否有章节信息
+    val hasChapters: StateFlow<Boolean> = _chapters.map { it.isNotEmpty() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /**
+     * 更新章节列表（在文件加载时调用）
+     */
+    fun updateChapters(chapters: List<Pair<String, Double>>) {
+        _chapters.value = chapters.map { (title, time) -> Chapter(title, time) }
+        _currentChapterIndex.value = -1
+    }
+
+    /**
+     * 根据当前播放位置更新当前章节索引
+     */
+    fun updateCurrentChapter(positionSeconds: Double) {
+        val chapters = _chapters.value
+        if (chapters.isEmpty() || positionSeconds < 0) {
+            _currentChapterIndex.value = -1
+            return
+        }
+        // 从后往前找，找到最后一个 startTime <= positionSeconds 的章节
+        var index = -1
+        for (i in chapters.indices) {
+            if (chapters[i].timeSeconds <= positionSeconds) {
+                index = i
+            } else {
+                break
+            }
+        }
+        _currentChapterIndex.value = index
+    }
+
+    /**
+     * 跳转到指定章节
+     */
+    fun seekToChapter(index: Int) {
+        val chapters = _chapters.value
+        if (index in chapters.indices) {
+            seekTo(chapters[index].timeSeconds.toInt())
+        }
+    }
+
     // 保存的播放位置（用于恢复播放）
     private val _savedPosition = MutableStateFlow(0.0)
     val savedPosition: StateFlow<Double> = _savedPosition.asStateFlow()
@@ -445,6 +515,8 @@ class PlayerViewModel(
         _customSpeedPresets.value = parsedPresets
         // 加载剩余时间显示偏好
         _showRemainingTime.value = playerRepository.isShowRemainingTimeEnabled()
+        // 加载章节进度条开关
+        _chapterBarEnabled.value = playerRepository.isChapterBarEnabled()
     }
     
     // 轮询协程的Job
@@ -467,6 +539,7 @@ class PlayerViewModel(
                 try {
                     MPVLib.getPropertyDouble("time-pos")?.let {
                         _precisePosition.value = it
+                        updateCurrentChapter(it)
                     }
                 } catch (e: Exception) {
                     // 忽略错误，可能MPV还未初始化

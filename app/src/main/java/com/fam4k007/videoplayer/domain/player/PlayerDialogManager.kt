@@ -982,7 +982,7 @@ class PlayerDialogManager(
     }
 
     /**
-     * 显示章节选择对话框
+     * 显示章节列表面板（右侧抽屉式）
      */
     fun showChapterDialog() {
         val activity = activityRef.get() ?: return
@@ -994,46 +994,35 @@ class PlayerDialogManager(
                 return
             }
 
-            val chapters = mutableListOf<String>()
+            val chapters = mutableListOf<Pair<String, Double>>()
             for (i in 0 until chapterCount) {
                 val title = MPVLib.getPropertyString("chapter-list/$i/title") ?: "章节 ${i + 1}"
-                chapters.add(title)
+                val time = MPVLib.getPropertyDouble("chapter-list/$i/time") ?: 0.0
+                chapters.add(Pair(title, time))
             }
 
             val currentChapter = MPVLib.getPropertyInt("chapter") ?: 0
 
-            // 使用专门为Compose按钮设计的对话框显示方法
+            composeOverlayManager.showChapterDrawer(
+                chapters = chapters,
+                currentChapter = currentChapter,
+                onChapterClick = { position ->
+                    MPVLib.setPropertyInt("chapter", position)
 
-            // 根据屏幕方向决定对齐方式：竖屏靠右对齐，横屏居中
-            val configuration = activity.resources.configuration
-            val isPortrait = configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
-            val horizontalAlignment = if (isPortrait) PopupHorizontalAlignment.END else PopupHorizontalAlignment.CENTER
+                    // 同步弹幕位置
+                    try {
+                        val chapterTime = MPVLib.getPropertyDouble("chapter-list/$position/time") ?: 0.0
+                        danmakuManager.seekTo((chapterTime * 1000).toLong())
+                        Log.d(TAG, "Chapter jump: synced danmaku to ${chapterTime}s")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to sync danmaku on chapter jump", e)
+                    }
 
-            showPopupDialogAtLastAnchor(
-                chapters,
-                currentChapter,
-                title = "章节",
-                showAbove = false,
-                useFixedHeight = true,
-                showScrollHint = true,
-                horizontalAlignment = horizontalAlignment,
-                clampToScreen = false
-            ) { position ->
-                MPVLib.setPropertyInt("chapter", position)
-                
-                // 同步弹幕位置
-                try {
-                    val chapterTime = MPVLib.getPropertyDouble("chapter-list/$position/time") ?: 0.0
-                    danmakuManager.seekTo((chapterTime * 1000).toLong())
-                    Log.d(TAG, "Chapter jump: synced danmaku to ${chapterTime}s")
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to sync danmaku on chapter jump", e)
+                    DialogUtils.showToastShort(activity, "已跳转到: ${chapters[position].first}")
                 }
-                
-                DialogUtils.showToastShort(activity, "已跳转到: ${chapters[position]}")
-            }
+            )
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to show chapter dialog", e)
+            Log.e(TAG, "Failed to show chapter drawer", e)
         }
     }
 

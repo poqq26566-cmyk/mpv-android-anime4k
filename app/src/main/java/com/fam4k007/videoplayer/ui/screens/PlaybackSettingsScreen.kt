@@ -198,6 +198,22 @@ fun PlaybackSettingsScreen(
                 }
             }
 
+            // 章节控制
+            item {
+                PreferenceSectionHeader("章节控制")
+            }
+
+            item {
+                PreferenceCard {
+                    SwitchItem(
+                        title = "显示章节进度条",
+                        subtitle = if (settings.chapterBarEnabled) "进度条显示章节节点和当前章节名称" else "隐藏章节相关信息",
+                        checked = settings.chapterBarEnabled,
+                        onCheckedChange = { viewModel.setChapterBarEnabled(it) }
+                    )
+                }
+            }
+
             // 画质增强
             item {
                 PreferenceSectionHeader("画质增强")

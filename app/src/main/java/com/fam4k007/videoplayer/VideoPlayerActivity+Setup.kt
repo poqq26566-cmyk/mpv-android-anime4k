@@ -110,6 +110,9 @@ internal fun VideoPlayerActivity.setupComposeTestLayer() {
                             dialogManager.setLastAnchor(x, y, w, h)
                             dialogManager.showAnime4KModeDialog(anime4KMode)
                         },
+                        onChapterClick = { _, _, _, _ ->
+                            dialogManager.showChapterDialog()
+                        },
                         onDanmakuToggle = {
                             val hasLoadedDanmaku = danmakuManager.getCurrentDanmakuPath() != null
                             if (!hasLoadedDanmaku) {
@@ -253,6 +256,13 @@ internal fun VideoPlayerActivity.initializeManagers() {
 
                 // 重置片头片尾跳过标记
                 skipIntroOutroManager.resetFlags()
+
+                // 加载章节信息并更新 ViewModel（延迟确保 MPV 已解析章节数据）
+                Handler(Looper.getMainLooper()).postDelayed({
+                    val chapters = playbackEngine.getChapters()
+                    viewModel.updateChapters(chapters)
+                    com.fam4k007.videoplayer.utils.Logger.d(TAG, "Loaded ${chapters.size} chapters")
+                }, 300)
 
                 // 延迟标记视频准备好，确保视频真正开始播放
                 Handler(Looper.getMainLooper()).postDelayed({

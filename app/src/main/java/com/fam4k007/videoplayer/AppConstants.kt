@@ -42,6 +42,9 @@ object AppConstants {
         // 剩余时间显示 Key
         const val SHOW_REMAINING_TIME = "show_remaining_time"
 
+        // 章节进度条 Key
+        const val CHAPTER_BAR_ENABLED = "chapter_bar_enabled"
+
         // 播放历史记录 Key
         const val HISTORY_LIST = "history_list"
 

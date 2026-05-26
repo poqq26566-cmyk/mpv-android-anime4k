@@ -395,6 +395,20 @@ class PlayerRepository(
     }
     
     /**
+     * 获取是否启用章节进度条
+     */
+    fun isChapterBarEnabled(): Boolean {
+        return preferencesManager.isChapterBarEnabled()
+    }
+
+    /**
+     * 设置章节进度条开关
+     */
+    fun setChapterBarEnabled(enabled: Boolean) {
+        preferencesManager.setChapterBarEnabled(enabled)
+    }
+
+    /**
      * 获取是否显示剩余时间
      */
     fun isShowRemainingTimeEnabled(): Boolean {

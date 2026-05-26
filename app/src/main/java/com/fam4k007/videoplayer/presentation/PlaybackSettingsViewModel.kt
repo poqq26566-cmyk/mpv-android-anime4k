@@ -71,7 +71,10 @@ class PlaybackSettingsViewModel(
 
                     // 自动连播
                     autoPlayNext = playerRepository.isAutoPlayNextEnabled(),
-                    closeAfterEOF = playerRepository.isCloseAfterEndOfVideo()
+                    closeAfterEOF = playerRepository.isCloseAfterEndOfVideo(),
+
+                    // 章节控制
+                    chapterBarEnabled = playerRepository.isChapterBarEnabled()
                 )
                 _playbackSettings.value = settings
                 Logger.d(TAG, "Loaded playback settings")
@@ -256,6 +259,23 @@ class PlaybackSettingsViewModel(
         }
     }
 
+    // ==================== 章节控制 ====================
+
+    /**
+     * 设置章节进度条开关
+     */
+    fun setChapterBarEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setChapterBarEnabled(enabled)
+                _playbackSettings.value = _playbackSettings.value.copy(chapterBarEnabled = enabled)
+                Logger.d(TAG, "Set chapter bar enabled: $enabled")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set chapter bar", e)
+            }
+        }
+    }
+
     // ==================== 自动连播 ====================
 
     /**
@@ -318,5 +338,8 @@ data class PlaybackSettings(
 
     // 自动连播（百分百复用 mpvEx）
     val autoPlayNext: Boolean = true,
-    val closeAfterEOF: Boolean = true
+    val closeAfterEOF: Boolean = true,
+
+    // 章节控制
+    val chapterBarEnabled: Boolean = true
 )
