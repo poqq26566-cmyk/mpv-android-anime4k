@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+
 import androidx.compose.material.icons.filled.Comment
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Help
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Palette
@@ -69,6 +71,7 @@ fun SettingsScreen(
     onNavigateToDownload: () -> Unit = {},
     onNavigateToSubtitleSearch: () -> Unit = {},
     onNavigateToFolderBlacklist: () -> Unit = {},
+    onNavigateToMediaSettings: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val authManager: BiliBiliAuthManager = koinInject()
@@ -162,23 +165,28 @@ fun SettingsScreen(
                         icon = Icons.Default.History,
                         onClick = onNavigateToPlaybackHistory
                     )
-                    
-                    ClickableItem(
-                        title = "视频显示模式",
-                        subtitle = when (currentDisplayMode.value) {
-                            "folder" -> "文件夹视图"
-                            "flat" -> "视频列表"
-                            else -> "文件夹视图"
-                        },
-                        icon = Icons.Default.VideoLibrary,
-                        onClick = { showDisplayModeDialog = true }
-                    )
-                    
+                }
+            }
+            
+            // 媒体
+            item {
+                PreferenceSectionHeader(title = "媒体")
+            }
+            
+            item {
+                PreferenceCard {
                     ClickableItem(
                         title = "文件夹黑名单",
                         subtitle = "屏蔽指定文件夹，不再扫描其中的视频",
                         icon = Icons.Default.Warning,
                         onClick = onNavigateToFolderBlacklist
+                    )
+                    
+                    ClickableItem(
+                        title = "其他媒体设置",
+                        subtitle = ".nomedia 规则、隐藏文件夹扫描等",
+                        icon = Icons.Default.Star,
+                        onClick = onNavigateToMediaSettings
                     )
                 }
             }
@@ -313,5 +321,5 @@ fun SettingsScreen(
             }
         )
     }
-    
+
 }

@@ -924,6 +924,9 @@ private fun scanAllVideosFlat(context: android.content.Context): List<com.fam4k0
                 val parentPath = file.parent
                 if (parentPath != null && parentPath in blacklistedFolders) continue
                 
+                // 检查 ScanFilter（.nomedia 规则、隐藏文件夹）
+                if (com.fam4k007.videoplayer.utils.ScanFilter.shouldSkipFile(context, path)) continue
+                
                 val id = cursor.getLong(idColumn)
                 val name = cursor.getString(nameColumn)
                 val duration = cursor.getLong(durationColumn)
@@ -946,9 +949,65 @@ private fun scanAllVideosFlat(context: android.content.Context): List<com.fam4k0
                 )
             }
         }
+
+        // 补充扫描：当 .nomedia 关闭或隐藏文件夹开启时，MediaStore 可能遗漏文件
+        val prefs = com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(context)
+        if (!prefs.isNomediaEnabled() || prefs.isScanHiddenFoldersEnabled()) {
+            val knownPaths = videos.map { it.path }.toMutableSet()
+            val parentDirs = videos.map { java.io.File(it.path).parentFile?.absolutePath }.distinct().filterNotNull()
+            for (parentPath in parentDirs) {
+                val parentFile = java.io.File(parentPath)
+                if (!parentFile.exists() || !parentFile.isDirectory) continue
+                parentFile.listFiles()?.forEach { subDir ->
+                    if (!subDir.isDirectory || !subDir.canRead()) return@forEach
+                    // 隐藏文件夹
+                    if (prefs.isScanHiddenFoldersEnabled() && subDir.name.startsWith(".")) {
+                        scanSingleFolderFlat(subDir, knownPaths, videos, context)
+                    }
+                    // .nomedia 关闭时扫子目录
+                    if (!prefs.isNomediaEnabled()) {
+                        scanSingleFolderFlat(subDir, knownPaths, videos, context)
+                    }
+                }
+            }
+        }
     } catch (e: Exception) {
         com.fam4k007.videoplayer.utils.Logger.e("HomeScreen", "Failed to scan all videos", e)
     }
     
     return videos
+}
+
+/**
+ * 扫描单个文件夹中的视频（flat 模式补充扫描）
+ */
+private fun scanSingleFolderFlat(
+    dir: java.io.File,
+    knownPaths: MutableSet<String>,
+    videos: MutableList<com.fam4k007.videoplayer.VideoFileParcelable>,
+    context: android.content.Context
+) {
+    try {
+        if (!dir.exists() || !dir.isDirectory || !dir.canRead()) return
+        if (com.fam4k007.videoplayer.utils.ScanFilter.shouldSkipFolder(context, dir.absolutePath)) return
+        val files = dir.listFiles() ?: return
+        for (file in files) {
+            if (!file.isFile || !file.exists()) continue
+            val path = file.absolutePath
+            if (path in knownPaths) continue
+            if (com.fam4k007.videoplayer.utils.ScanFilter.shouldSkipFile(context, path)) continue
+            val ext = file.extension.lowercase()
+            if (ext in com.fam4k007.videoplayer.AppConstants.Files.SUPPORTED_VIDEO_EXTENSIONS) {
+                videos.add(com.fam4k007.videoplayer.VideoFileParcelable(
+                    uri = android.net.Uri.fromFile(file).toString(),
+                    name = file.name,
+                    path = path,
+                    size = file.length(),
+                    duration = 0L,
+                    dateAdded = file.lastModified() / 1000
+                ))
+                knownPaths.add(path)
+            }
+        }
+    } catch (_: Exception) { }
 }

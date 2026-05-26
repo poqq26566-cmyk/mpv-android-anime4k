@@ -1287,6 +1287,42 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putBoolean("close_after_eof", enabled).apply()
     }
 
+    // ==================== 文件扫描 ====================
+
+    /**
+     * 获取是否启用 .nomedia 规则
+     */
+    fun isNomediaEnabled(): Boolean {
+        return sharedPreferences.getBoolean(
+            AppConstants.Preferences.NOMEDIA_ENABLED,
+            true  // 默认启用（与系统行为一致）
+        )
+    }
+
+    /**
+     * 设置 .nomedia 规则开关
+     */
+    fun setNomediaEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.NOMEDIA_ENABLED, enabled).apply()
+    }
+
+    /**
+     * 获取是否扫描隐藏文件夹（以点号开头）
+     */
+    fun isScanHiddenFoldersEnabled(): Boolean {
+        return sharedPreferences.getBoolean(
+            AppConstants.Preferences.SCAN_HIDDEN_FOLDERS,
+            false  // 默认不扫描隐藏文件夹
+        )
+    }
+
+    /**
+     * 设置扫描隐藏文件夹开关
+     */
+    fun setScanHiddenFoldersEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.SCAN_HIDDEN_FOLDERS, enabled).apply()
+    }
+
     // ==================== 章节进度条 ====================
 
     /**

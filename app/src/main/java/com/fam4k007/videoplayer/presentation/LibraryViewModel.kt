@@ -11,6 +11,8 @@ import com.fam4k007.videoplayer.utils.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -138,12 +140,13 @@ class LibraryViewModel(
     }
     
     /**
-     * 刷新文件夹列表
+     * 刷新文件夹列表（触发 MediaStore 重新扫描 + 直接文件扫描）
      */
     fun refreshFolders() {
         viewModelScope.launch {
             try {
                 _folderListState.value = _folderListState.value.copy(isRefreshing = true, error = null)
+
                 val allFolders = videoRepository.scanAllVideoFolders()
                 val folders = filterBlacklistedFolders(allFolders)
                 val sortedFolders = sortFolders(folders, _folderListState.value.sortType, _folderListState.value.sortOrder)
@@ -302,15 +305,22 @@ class LibraryViewModel(
     
     // ==================== 视频搜索 ====================
     
+    private var searchJob: kotlinx.coroutines.Job? = null
+
     /**
-     * 搜索视频
+     * 搜索视频（带 300ms 防抖）
      */
     fun searchVideos(query: String) {
-        val filtered = filterVideos(_videoListState.value.videos, query)
-        _videoListState.value = _videoListState.value.copy(
-            searchQuery = query,
-            filteredVideos = filtered
-        )
+        // 取消上一次搜索
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(300)  // 防抖：用户停止输入 300ms 后再执行搜索
+            val filtered = filterVideos(_videoListState.value.videos, query)
+            _videoListState.value = _videoListState.value.copy(
+                searchQuery = query,
+                filteredVideos = filtered
+            )
+        }
     }
     
     private fun filterVideos(videos: List<VideoFileParcelable>, query: String): List<VideoFileParcelable> {

@@ -45,6 +45,10 @@ object AppConstants {
         // 章节进度条 Key
         const val CHAPTER_BAR_ENABLED = "chapter_bar_enabled"
 
+        // 文件扫描 Key
+        const val NOMEDIA_ENABLED = "nomedia_enabled"
+        const val SCAN_HIDDEN_FOLDERS = "scan_hidden_folders"
+
         // 播放历史记录 Key
         const val HISTORY_LIST = "history_list"
 
