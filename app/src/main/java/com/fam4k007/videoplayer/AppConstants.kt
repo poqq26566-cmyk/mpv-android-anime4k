@@ -39,6 +39,9 @@ object AppConstants {
         const val DOUBLE_TAP_MODE = "double_tap_mode"  // 0=暂停, 1=快进快退
         const val DOUBLE_TAP_SEEK_SECONDS = "double_tap_seek_seconds"  // 双击跳转秒数
 
+        // 剩余时间显示 Key
+        const val SHOW_REMAINING_TIME = "show_remaining_time"
+
         // 播放历史记录 Key
         const val HISTORY_LIST = "history_list"
 

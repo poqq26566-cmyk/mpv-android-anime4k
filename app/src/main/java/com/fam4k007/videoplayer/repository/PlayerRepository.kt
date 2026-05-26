@@ -395,6 +395,20 @@ class PlayerRepository(
     }
     
     /**
+     * 获取是否显示剩余时间
+     */
+    fun isShowRemainingTimeEnabled(): Boolean {
+        return preferencesManager.getShowRemainingTime()
+    }
+
+    /**
+     * 设置剩余时间显示开关
+     */
+    fun setShowRemainingTimeEnabled(enabled: Boolean) {
+        preferencesManager.setShowRemainingTime(enabled)
+    }
+
+    /**
      * 设置弹幕最大行数
      */
     fun setDanmakuMaxLines(maxLines: Int) {

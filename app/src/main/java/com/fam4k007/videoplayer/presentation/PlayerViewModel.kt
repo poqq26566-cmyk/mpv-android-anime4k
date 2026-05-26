@@ -356,7 +356,9 @@ class PlayerViewModel(
      * 切换剩余时间/总时长显示
      */
     fun toggleRemainingTimeDisplay() {
-        _showRemainingTime.value = !_showRemainingTime.value
+        val newValue = !_showRemainingTime.value
+        _showRemainingTime.value = newValue
+        playerRepository.setShowRemainingTimeEnabled(newValue)
     }
     
     // 保存的播放位置（用于恢复播放）
@@ -441,6 +443,8 @@ class PlayerViewModel(
             .takeIf { it.isNotEmpty() }
             ?: listOf(0.75f, 1.0f, 1.25f, 1.5f, 2.0f)
         _customSpeedPresets.value = parsedPresets
+        // 加载剩余时间显示偏好
+        _showRemainingTime.value = playerRepository.isShowRemainingTimeEnabled()
     }
     
     // 轮询协程的Job

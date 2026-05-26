@@ -1286,4 +1286,23 @@ class PreferencesManager private constructor(context: Context) {
     fun setCloseAfterEndOfVideo(enabled: Boolean) {
         sharedPreferences.edit().putBoolean("close_after_eof", enabled).apply()
     }
+
+    // ==================== 剩余时间显示 ====================
+
+    /**
+     * 获取是否显示剩余时间
+     */
+    fun getShowRemainingTime(): Boolean {
+        return sharedPreferences.getBoolean(
+            AppConstants.Preferences.SHOW_REMAINING_TIME,
+            false
+        )
+    }
+
+    /**
+     * 保存剩余时间显示设置
+     */
+    fun setShowRemainingTime(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.SHOW_REMAINING_TIME, enabled).apply()
+    }
 }
