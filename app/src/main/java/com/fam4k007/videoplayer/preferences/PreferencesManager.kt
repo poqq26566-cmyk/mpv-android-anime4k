@@ -10,7 +10,7 @@ import com.fam4k007.videoplayer.AppConstants
  */
 class PreferencesManager private constructor(context: Context) {
     
-    private val sharedPreferences: SharedPreferences = context.getSharedPreferences(
+    val sharedPreferences: SharedPreferences = context.getSharedPreferences(
         AppConstants.Preferences.PLAYER_PREFS,
         Context.MODE_PRIVATE
     )

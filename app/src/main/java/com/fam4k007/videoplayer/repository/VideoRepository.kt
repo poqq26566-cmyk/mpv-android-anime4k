@@ -3,14 +3,19 @@ package com.fam4k007.videoplayer.repository
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
+import com.fam4k007.videoplayer.AppConstants
 import com.fam4k007.videoplayer.VideoFileParcelable
+import com.fam4k007.videoplayer.VideoFolder
 import com.fam4k007.videoplayer.database.VideoDatabase
 import com.fam4k007.videoplayer.database.VideoCacheEntity
+import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.utils.Logger
 import com.fam4k007.videoplayer.utils.ScanFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * 视频数据仓库
@@ -578,6 +583,80 @@ class VideoRepository(
         } catch (e: Exception) {
             Logger.w(TAG, "扫描文件夹失败: ${dir.absolutePath}", e)
         }
+    }
+
+    // ==================== 文件夹列表缓存 ====================
+
+    /**
+     * 将扫描结果缓存到 SharedPreferences（JSON 格式）
+     * 下次打开 App 时先显示缓存数据，再后台刷新
+     */
+    suspend fun saveFolderCache(folders: List<VideoFolder>) = withContext(Dispatchers.IO) {
+        try {
+            val prefs = PreferencesManager.getInstance(context)
+            val jsonArray = JSONArray()
+            for (folder in folders) {
+                val obj = JSONObject()
+                obj.put("path", folder.folderPath)
+                obj.put("name", folder.folderName)
+                obj.put("count", folder.videoCount)
+                jsonArray.put(obj)
+            }
+            prefs.sharedPreferences.edit()
+                .putString(AppConstants.Preferences.FOLDER_CACHE, jsonArray.toString())
+                .putLong(AppConstants.Preferences.FOLDER_CACHE_TIME, System.currentTimeMillis())
+                .apply()
+            Logger.d(TAG, "已缓存 ${folders.size} 个文件夹")
+        } catch (e: Exception) {
+            Logger.w(TAG, "保存文件夹缓存失败", e)
+        }
+    }
+
+    /**
+     * 从缓存加载文件夹列表
+     * @return 缓存的文件夹列表，没有缓存则返回 null
+     */
+    suspend fun loadFolderCache(): List<VideoFolder>? = withContext(Dispatchers.IO) {
+        try {
+            val prefs = PreferencesManager.getInstance(context)
+            val json = prefs.sharedPreferences.getString(AppConstants.Preferences.FOLDER_CACHE, null)
+            if (json.isNullOrBlank()) return@withContext null
+
+            val cacheTime = prefs.sharedPreferences.getLong(AppConstants.Preferences.FOLDER_CACHE_TIME, 0)
+            val now = System.currentTimeMillis()
+            // 缓存超过 1 小时视为过期，但依然返回数据以便秒开（后台会刷新）
+            val isExpired = (now - cacheTime) > 3_600_000
+
+            val jsonArray = JSONArray(json)
+            val folders = mutableListOf<VideoFolder>()
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                folders.add(
+                    VideoFolder(
+                        folderPath = obj.getString("path"),
+                        folderName = obj.getString("name"),
+                        videoCount = obj.getInt("count"),
+                        videos = emptyList()
+                    )
+                )
+            }
+            Logger.d(TAG, "从缓存加载了 ${folders.size} 个文件夹 (过期=$isExpired)")
+            folders
+        } catch (e: Exception) {
+            Logger.w(TAG, "加载文件夹缓存失败", e)
+            null
+        }
+    }
+
+    /**
+     * 清除文件夹缓存
+     */
+    suspend fun clearFolderCache() = withContext(Dispatchers.IO) {
+        val prefs = PreferencesManager.getInstance(context)
+        prefs.sharedPreferences.edit()
+            .remove(AppConstants.Preferences.FOLDER_CACHE)
+            .remove(AppConstants.Preferences.FOLDER_CACHE_TIME)
+            .apply()
     }
 }
 
