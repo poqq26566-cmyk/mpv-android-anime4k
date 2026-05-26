@@ -8,9 +8,11 @@ import com.fam4k007.videoplayer.domain.webdav.WebDavClient
 import com.fam4k007.videoplayer.domain.webdav.WebDavConfig
 import com.fam4k007.videoplayer.repository.WebDavRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
@@ -263,17 +265,18 @@ class WebDavViewModel(
         )
 
         fun popPath(): Pair<BrowserState, String?> {
-            return if (pathStack.isEmpty()) {
-                copy() to null
-            } else {
-                copy(pathStack = pathStack.dropLast(1)) to
-                        (if (pathStack.size <= 1) "" else pathStack[pathStack.size - 2])
-            }
+            if (pathStack.isEmpty()) return copy() to null
+            // 栈顶是父级路径，pop 后应返回它作为目标路径
+            val parentPath = pathStack.last()
+            return copy(pathStack = pathStack.dropLast(1)) to parentPath
         }
     }
 
     private val _browserState = MutableStateFlow(BrowserState())
     val browserState: StateFlow<BrowserState> = _browserState.asStateFlow()
+
+    /** 当前正在进行的文件加载协程，用于在新的导航操作时取消旧请求 */
+    private var loadJob: Job? = null
 
     fun initBrowser(account: WebDavAccount) {
         val client = WebDavClient(
@@ -284,49 +287,72 @@ class WebDavViewModel(
                 isAnonymous = account.isAnonymous
             )
         )
-        _browserState.value = _browserState.value.copy(client = client)
+        // 取消旧的加载协程，完全重置浏览器状态
+        loadJob?.cancel()
+        _browserState.value = BrowserState(client = client)
         loadFiles("")
     }
 
+    /**
+     * 加载指定路径的文件列表
+     *
+     * 核心设计：每次调用前取消旧的 loadJob，保证只有最新的导航请求会生效。
+     * path 在 launch 时通过闭包捕获，完成时用 update 原子写入，
+     * 只更新 files/currentPath/error，不触碰 pathStack，避免覆盖导航操作。
+     */
     fun loadFiles(path: String) {
         val client = _browserState.value.client ?: return
-        _browserState.value = _browserState.value.copy(isLoading = true, error = null)
 
-        viewModelScope.launch {
+        // 取消旧的加载请求，避免旧请求完成时覆盖新状态
+        loadJob?.cancel()
+
+        _browserState.update { it.copy(isLoading = true, error = null) }
+
+        loadJob = viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
                 try {
                     client.listFiles(path)
                 } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
                     e.printStackTrace()
                     null
                 }
             }
 
             if (result == null) {
-                val (newState, fallbackPath) = _browserState.value.popPath()
-                _browserState.value = newState.copy(
-                    isLoading = false,
-                    error = "加载失败",
-                    currentPath = fallbackPath ?: ""
-                )
+                _browserState.update { current ->
+                    val (newState, fallbackPath) = current.popPath()
+                    newState.copy(
+                        isLoading = false,
+                        error = "加载失败",
+                        currentPath = fallbackPath ?: ""
+                    )
+                }
             } else {
-                val sorted = sortFiles(result, _browserState.value.sortType)
-                _browserState.value = _browserState.value.copy(
-                    files = sorted,
-                    isLoading = false,
-                    currentPath = path
-                )
+                val sortType = _browserState.value.sortType
+                val sorted = sortFiles(result, sortType)
+                _browserState.update { current ->
+                    current.copy(
+                        files = sorted,
+                        isLoading = false,
+                        currentPath = path
+                    )
+                }
             }
         }
     }
 
     fun navigateToFolder(path: String) {
+        // 加载中禁止操作，避免快速点击导致路径栈和 currentPath 错乱
+        if (_browserState.value.isLoading) return
         val state = _browserState.value
         _browserState.value = state.pushPath(state.currentPath)
         loadFiles(path)
     }
 
     fun navigateBack(): Boolean {
+        // 加载中禁止操作
+        if (_browserState.value.isLoading) return false
         val (newState, previousPath) = _browserState.value.popPath()
         return if (previousPath != null) {
             _browserState.value = newState
