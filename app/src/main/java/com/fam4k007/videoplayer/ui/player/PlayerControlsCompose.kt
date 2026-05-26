@@ -220,6 +220,7 @@ fun BottomControlPanel(
     val seekTimeSeconds by viewModel.seekTimeSeconds.collectAsState()
     val seekbarStyleName by viewModel.seekbarStyle.collectAsState()
     val customSpeedPresets by viewModel.customSpeedPresets.collectAsState()
+    val showRemainingTime by viewModel.showRemainingTime.collectAsState()
 
     // 检测屏幕方向
     val configuration = LocalContext.current.resources.configuration
@@ -313,12 +314,20 @@ fun BottomControlPanel(
                 )
             }
 
-            // 总时长
+            // 总时长/剩余时间（点击切换）
+            val durationText = if (showRemainingTime) {
+                val remaining = duration - displayPosition.toInt()
+                "-${formatTime(remaining)}"
+            } else {
+                formatTime(duration)
+            }
             Text(
-                text = formatTime(duration),
+                text = durationText,
                 color = Color.White,
                 fontSize = 14.sp,
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .clickable { viewModel.toggleRemainingTimeDisplay() }
             )
         }
 

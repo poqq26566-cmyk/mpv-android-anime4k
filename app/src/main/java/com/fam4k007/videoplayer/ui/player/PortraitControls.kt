@@ -319,6 +319,7 @@ fun PortraitBottomControls(
     val anime4KMode by viewModel.anime4KMode.collectAsState()
     val seekTimeSeconds by viewModel.seekTimeSeconds.collectAsState()
     val seekbarStyleName by viewModel.seekbarStyle.collectAsState()
+    val showRemainingTime by viewModel.showRemainingTime.collectAsState()
 
     // 拖动进度状态
     var sliderPosition by remember { mutableStateOf<Float?>(null) }
@@ -531,11 +532,20 @@ fun PortraitBottomControls(
                 )
             }
 
+            // 总时长/剩余时间（点击切换）
+            val durationText = if (showRemainingTime) {
+                val remaining = duration - displayPosition.toInt()
+                "-${formatTimeP(remaining)}"
+            } else {
+                formatTimeP(duration)
+            }
             Text(
-                text = formatTimeP(duration),
+                text = durationText,
                 color = Color.White,
                 fontSize = 12.sp,
-                modifier = Modifier.padding(start = 6.dp),
+                modifier = Modifier
+                    .padding(start = 6.dp)
+                    .clickable { viewModel.toggleRemainingTimeDisplay() }
             )
         }
 

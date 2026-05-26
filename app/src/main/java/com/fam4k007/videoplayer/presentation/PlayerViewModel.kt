@@ -348,6 +348,17 @@ class PlayerViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     
+    // 剩余时间显示切换状态（点击进度条右侧时间文本切换为剩余时间/总时长）
+    private val _showRemainingTime = MutableStateFlow(false)
+    val showRemainingTime: StateFlow<Boolean> = _showRemainingTime.asStateFlow()
+    
+    /**
+     * 切换剩余时间/总时长显示
+     */
+    fun toggleRemainingTimeDisplay() {
+        _showRemainingTime.value = !_showRemainingTime.value
+    }
+    
     // 保存的播放位置（用于恢复播放）
     private val _savedPosition = MutableStateFlow(0.0)
     val savedPosition: StateFlow<Double> = _savedPosition.asStateFlow()
