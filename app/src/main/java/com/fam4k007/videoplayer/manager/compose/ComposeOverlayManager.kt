@@ -20,6 +20,18 @@ class ComposeOverlayManager(
     // 弹窗显示状态回调
     var onPopupVisibilityChanged: ((Boolean) -> Unit)? = null
 
+    // 是否禁用动画（超分开启时由外部设置为 true，消除 GPU 额外负载）
+    var disableAnimations: Boolean = false
+
+    companion object {
+        /**
+         * 全局动画开关，供所有抽屉面板读取。
+         * 由 PlayerDialogManager 在超分模式变化时同步更新。
+         */
+        @Volatile
+        var globalDisableAnimations: Boolean = false
+    }
+
     /**
      * 设置Compose内容
      * @param content Composable内容

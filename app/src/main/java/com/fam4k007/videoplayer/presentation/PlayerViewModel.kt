@@ -1054,6 +1054,9 @@ class PlayerViewModel(
         _anime4KEnabled.value = enabled
         _anime4KMode.value = mode
         _anime4KQuality.value = quality
+        // 超分开启时全局禁用动画，消除 GPU 额外负载
+        com.fam4k007.videoplayer.manager.compose.ComposeOverlayManager.globalDisableAnimations =
+            enabled && mode != Anime4KManager.Mode.OFF
         Logger.d(TAG, "Anime4K: enabled=$enabled, mode=$mode, quality=$quality")
     }
     

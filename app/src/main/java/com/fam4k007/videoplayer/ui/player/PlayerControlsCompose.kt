@@ -59,6 +59,7 @@ fun PlayerControls(
     val paused by viewModel.paused.collectAsState()
     val controlsShown by viewModel.controlsShown.collectAsState()
     val areControlsLocked by viewModel.areControlsLocked.collectAsState()
+    val anime4KMode by viewModel.anime4KMode.collectAsState()
 
     // 当控制面板显示时，启动初始定时器
     LaunchedEffect(controlsShown, paused) {
@@ -66,6 +67,21 @@ fun PlayerControls(
             viewModel.resetAutoHideTimer()
         }
     }
+
+    // 超分启用时取消动画（避免 GPU 负载过高导致掉帧）
+    val hasAnimation = anime4KMode == com.fam4k007.videoplayer.domain.player.Anime4KManager.Mode.OFF
+    val animEnter = if (hasAnimation)
+        androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { -it })
+    else androidx.compose.animation.EnterTransition.None
+    val animExit = if (hasAnimation)
+        androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { -it })
+    else androidx.compose.animation.ExitTransition.None
+    val animEnterFromBottom = if (hasAnimation)
+        androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it })
+    else androidx.compose.animation.EnterTransition.None
+    val animExitToBottom = if (hasAnimation)
+        androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it })
+    else androidx.compose.animation.ExitTransition.None
 
     // 检测屏幕方向
     val configuration = LocalConfiguration.current
@@ -84,8 +100,8 @@ fun PlayerControls(
             // 顶部控制面板（带显示/隐藏动画）
             androidx.compose.animation.AnimatedVisibility(
                 visible = controlsShown && !areControlsLocked,
-                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { -it }),
-                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { -it }),
+                enter = animEnter,
+                exit = animExit,
                 modifier = Modifier.align(Alignment.TopCenter)
             ) {
                 PortraitTopBar(
@@ -102,8 +118,8 @@ fun PlayerControls(
             // 底部控制面板（带显示/隐藏动画）
             androidx.compose.animation.AnimatedVisibility(
                 visible = controlsShown && !areControlsLocked,
-                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it }),
-                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it }),
+                enter = animEnterFromBottom,
+                exit = animExitToBottom,
                 modifier = Modifier.align(Alignment.BottomCenter)
             ) {
                 PortraitBottomControls(
@@ -120,8 +136,8 @@ fun PlayerControls(
             // 顶部控制面板（带显示/隐藏动画）
             androidx.compose.animation.AnimatedVisibility(
                 visible = controlsShown && !areControlsLocked,
-                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { -it }),
-                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { -it }),
+                enter = animEnter,
+                exit = animExit,
                 modifier = Modifier.align(Alignment.TopCenter)
             ) {
                 TopControlPanel(
@@ -138,8 +154,8 @@ fun PlayerControls(
             // 底部控制面板（带显示/隐藏动画）
             androidx.compose.animation.AnimatedVisibility(
                 visible = controlsShown && !areControlsLocked,
-                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it }),
-                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it }),
+                enter = animEnterFromBottom,
+                exit = animExitToBottom,
                 modifier = Modifier.align(Alignment.BottomCenter)
             ) {
                 BottomControlPanel(

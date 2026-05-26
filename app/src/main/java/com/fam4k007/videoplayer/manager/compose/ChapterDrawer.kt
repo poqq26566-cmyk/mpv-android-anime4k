@@ -37,6 +37,9 @@ fun ChapterDrawer(
     var isVisible by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
+    // 超分开启时跳过所有动画
+    val skipAnim = com.fam4k007.videoplayer.manager.compose.ComposeOverlayManager.globalDisableAnimations
+
     // 启动时触发动画
     LaunchedEffect(Unit) {
         isVisible = true
@@ -69,14 +72,16 @@ fun ChapterDrawer(
         // 右侧抽屉
         AnimatedVisibility(
             visible = isVisible,
-            enter = slideInHorizontally(
-                initialOffsetX = { it },
-                animationSpec = tween(300, easing = FastOutSlowInEasing)
-            ) + fadeIn(animationSpec = tween(300)),
-            exit = slideOutHorizontally(
-                targetOffsetX = { it },
-                animationSpec = tween(250, easing = FastOutSlowInEasing)
-            ) + fadeOut(animationSpec = tween(250)),
+            enter = if (skipAnim) androidx.compose.animation.EnterTransition.None
+                    else slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(300, easing = FastOutSlowInEasing)
+                    ) + fadeIn(animationSpec = tween(300)),
+            exit = if (skipAnim) androidx.compose.animation.ExitTransition.None
+                   else slideOutHorizontally(
+                       targetOffsetX = { it },
+                       animationSpec = tween(250, easing = FastOutSlowInEasing)
+                   ) + fadeOut(animationSpec = tween(250)),
             modifier = Modifier.align(Alignment.CenterEnd)
         ) {
             Box(

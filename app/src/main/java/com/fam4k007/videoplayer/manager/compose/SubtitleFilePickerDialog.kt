@@ -53,6 +53,7 @@ fun SubtitleFilePickerDialog(
     var animationDirection by remember { mutableStateOf(0) } // -1=向左(进入子目录), 1=向右(返回上级), 0=无动画
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+    val skipAnim = com.fam4k007.videoplayer.manager.compose.ComposeOverlayManager.globalDisableAnimations
     val context = LocalContext.current
     val preferencesManager = remember { PreferencesManager.getInstance(context) }
 
@@ -203,14 +204,16 @@ fun SubtitleFilePickerDialog(
         // 右侧抽屉
         AnimatedVisibility(
             visible = isVisible,
-            enter = slideInHorizontally(
-                initialOffsetX = { it },
-                animationSpec = tween(300, easing = FastOutSlowInEasing)
-            ) + fadeIn(animationSpec = tween(300)),
-            exit = slideOutHorizontally(
-                targetOffsetX = { it },
-                animationSpec = tween(250, easing = FastOutSlowInEasing)
-            ) + fadeOut(animationSpec = tween(250)),
+            enter = if (skipAnim) androidx.compose.animation.EnterTransition.None
+                    else slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(300, easing = FastOutSlowInEasing)
+                    ) + fadeIn(animationSpec = tween(300)),
+            exit = if (skipAnim) androidx.compose.animation.ExitTransition.None
+                   else slideOutHorizontally(
+                       targetOffsetX = { it },
+                       animationSpec = tween(250, easing = FastOutSlowInEasing)
+                   ) + fadeOut(animationSpec = tween(250)),
             modifier = Modifier.align(Alignment.CenterEnd)
         ) {
             Box(
