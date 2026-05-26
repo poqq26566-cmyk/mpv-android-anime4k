@@ -36,6 +36,10 @@ sealed interface AppScreen {
     @Serializable
     data object About : AppScreen
 
+    /** 设备信息页 */
+    @Serializable
+    data object DeviceInfo : AppScreen
+
     /** 错误日志页 */
     @Serializable
     data object LogViewer : AppScreen

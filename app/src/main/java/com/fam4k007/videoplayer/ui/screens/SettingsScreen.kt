@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -72,6 +73,7 @@ fun SettingsScreen(
     onNavigateToSubtitleSearch: () -> Unit = {},
     onNavigateToFolderBlacklist: () -> Unit = {},
     onNavigateToMediaSettings: () -> Unit = {},
+    onNavigateToDeviceInfo: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val authManager: BiliBiliAuthManager = koinInject()
@@ -258,6 +260,13 @@ fun SettingsScreen(
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.kdocs.cn/l/cjEzoxiyxaHT"))
                             context.startActivity(intent)
                         }
+                    )
+
+                    ClickableItem(
+                        title = "设备信息",
+                        subtitle = "查看HDR支持、编解码器等硬件信息",
+                        icon = Icons.Default.Devices,
+                        onClick = onNavigateToDeviceInfo
                     )
                     
                     ClickableItem(

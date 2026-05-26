@@ -60,6 +60,7 @@ import com.fam4k007.videoplayer.ui.screens.PlaybackSettingsScreen
 import com.fam4k007.videoplayer.ui.screens.FolderBlacklistScreen
 import com.fam4k007.videoplayer.ui.screens.SettingsScreen
 import com.fam4k007.videoplayer.ui.screens.MediaSettingsScreen
+import com.fam4k007.videoplayer.ui.screens.DeviceInfoScreen
 import com.fam4k007.videoplayer.ui.screens.SubtitleSearchScreen
 import com.fam4k007.videoplayer.ui.webdav.WebDavAccountListScreen
 import com.fam4k007.videoplayer.ui.webdav.WebDavBrowserScreen
@@ -157,7 +158,16 @@ fun AppNavGraph(
                 },
                 onNavigateToMediaSettings = {
                     navController.navigate(AppScreen.MediaSettings)
+                },
+                onNavigateToDeviceInfo = {
+                    navController.navigate(AppScreen.DeviceInfo)
                 }
+            )
+        }
+
+        composable<AppScreen.DeviceInfo> {
+            DeviceInfoScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
