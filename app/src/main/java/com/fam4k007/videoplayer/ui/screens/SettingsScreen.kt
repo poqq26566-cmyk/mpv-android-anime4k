@@ -257,7 +257,7 @@ fun SettingsScreen(
                         subtitle = "点击跳转外部在线文档查看",
                         icon = Icons.Default.Help,
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.kdocs.cn/l/cjEzoxiyxaHT"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://docs.qq.com/doc/p/d190d78dc5ac1d3a718ea244775c34e8b1dc9559?nlc=1"))
                             context.startActivity(intent)
                         }
                     )
