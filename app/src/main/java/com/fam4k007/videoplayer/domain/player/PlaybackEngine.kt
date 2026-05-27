@@ -9,7 +9,9 @@ import com.fam4k007.videoplayer.remote.RemotePlaybackHeaders
 import com.fam4k007.videoplayer.remote.RemotePlaybackRequest
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVNode
+import android.util.Base64
 import java.lang.ref.WeakReference
+import java.net.URI
 
 // 架构说明：PlaybackEngine依赖CustomMPVView和VideoAspect（player层）
 // 原因：MPV播放器是原生View，必须通过CustomMPVView操作
@@ -293,14 +295,26 @@ class PlaybackEngine(
         headers: Map<String, String>,
         startPosition: Double
     ) {
-        currentFilePath = actualUrl
+        // 从 URL 中提取认证信息并转为 Authorization header
+        val (cleanUrl, urlAuthHeader) = extractUrlCredentials(actualUrl)
+        val mergedHeaders = if (urlAuthHeader != null) {
+            val mutable = LinkedHashMap(headers)
+            if (mutable["Authorization"].isNullOrBlank()) {
+                mutable["Authorization"] = urlAuthHeader
+            }
+            mutable
+        } else {
+            headers
+        }
+
+        currentFilePath = cleanUrl
 
         resetRemotePlaybackOptions()
-        applyRemoteHeaders(headers)
+        applyRemoteHeaders(mergedHeaders)
         applyStreamingOptions()
 
-        Log.d(TAG, "MPV loading URL: $actualUrl")
-        MPVLib.command("loadfile", actualUrl)
+        Log.d(TAG, "MPV loading URL: $cleanUrl")
+        MPVLib.command("loadfile", cleanUrl)
 
         scheduleAutoPlay()
         scheduleSeekRestore(startPosition)
@@ -310,6 +324,38 @@ class PlaybackEngine(
         handler.postDelayed({
             handler.post(updateProgressRunnable)
         }, 2000)
+    }
+
+    /**
+     * 从 URL 中提取 user:pass@host 格式的认证信息
+     * @return Pair(清理后的URL, Authorization header值)
+     */
+    private fun extractUrlCredentials(url: String): Pair<String, String?> {
+        try {
+            val uri = URI(url)
+            val userInfo = uri.userInfo
+            if (userInfo.isNullOrBlank()) {
+                return Pair(url, null)
+            }
+
+            val colonIndex = userInfo.indexOf(':')
+            if (colonIndex <= 0) {
+                return Pair(url, null)
+            }
+
+            val username = userInfo.substring(0, colonIndex)
+            val password = userInfo.substring(colonIndex + 1)
+            val credentials = "$username:$password"
+            val encoded = Base64.encodeToString(credentials.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
+
+            // 构建不含认证信息的 URL
+            val cleanUri = URI(uri.scheme, null, uri.host, uri.port, uri.path, uri.query, uri.fragment)
+            Log.d(TAG, "Extracted URL credentials, clean URL: ${cleanUri}")
+            return Pair(cleanUri.toString(), "Basic $encoded")
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to extract URL credentials: ${e.message}")
+            return Pair(url, null)
+        }
     }
 
     private fun resetRemotePlaybackOptions() {

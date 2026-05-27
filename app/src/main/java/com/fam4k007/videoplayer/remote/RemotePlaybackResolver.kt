@@ -7,9 +7,11 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.net.SocketTimeoutException
 import java.net.URLDecoder
+import java.net.URI
 import java.net.UnknownHostException
 import javax.net.ssl.SSLException
 import java.util.concurrent.TimeUnit
+import android.util.Base64
 
 object RemotePlaybackResolver {
 
@@ -94,9 +96,22 @@ object RemotePlaybackResolver {
         request: RemotePlaybackRequest,
         client: OkHttpClient = defaultClient
     ): ResolveResult = withContext(Dispatchers.IO) {
+        // 从 URL 中提取认证信息并合并到 headers
+        val (cleanUrl, urlAuthHeader) = extractUrlCredentials(request.url)
+        val mergedHeaders = if (urlAuthHeader != null) {
+            val mutable = LinkedHashMap(request.headers)
+            if (mutable["Authorization"].isNullOrBlank()) {
+                mutable["Authorization"] = urlAuthHeader
+            }
+            mutable
+        } else {
+            request.headers
+        }
+
         val normalizedRequest = request.copy(
+            url = cleanUrl,
             headers = RemotePlaybackHeaders.enrich(
-                headers = request.headers,
+                headers = mergedHeaders,
                 sourcePageUrl = request.sourcePageUrl
             )
         )
@@ -344,6 +359,38 @@ object RemotePlaybackResolver {
     internal fun supportsHttpProbe(url: String): Boolean {
         val scheme = url.substringBefore(':', "").trim().lowercase()
         return scheme in httpSchemes
+    }
+
+    /**
+     * 从 URL 中提取 user:pass@host 格式的认证信息
+     * @return Pair(清理后的URL, Authorization header值)
+     */
+    private fun extractUrlCredentials(url: String): Pair<String, String?> {
+        try {
+            val uri = URI(url)
+            val userInfo = uri.userInfo
+            if (userInfo.isNullOrBlank()) {
+                return Pair(url, null)
+            }
+
+            val colonIndex = userInfo.indexOf(':')
+            if (colonIndex <= 0) {
+                return Pair(url, null)
+            }
+
+            val username = userInfo.substring(0, colonIndex)
+            val password = userInfo.substring(colonIndex + 1)
+            val credentials = "$username:$password"
+            val encoded = Base64.encodeToString(credentials.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
+
+            // 构建不含认证信息的 URL
+            val cleanUri = URI(uri.scheme, null, uri.host, uri.port, uri.path, uri.query, uri.fragment)
+            Logger.d(TAG, "Extracted URL credentials, clean URL: ${cleanUri}")
+            return Pair(cleanUri.toString(), "Basic $encoded")
+        } catch (e: Exception) {
+            Logger.w(TAG, "Failed to extract URL credentials: ${e.message}")
+            return Pair(url, null)
+        }
     }
 
     internal fun classifyThrowable(throwable: Throwable): FailureReason {

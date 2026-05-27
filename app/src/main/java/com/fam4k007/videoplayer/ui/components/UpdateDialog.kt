@@ -28,6 +28,7 @@ fun UpdateDialog(
     updateInfo: UpdateManager.UpdateInfo,
     onDismiss: () -> Unit,
     onDownload: (String) -> Unit,
+    onSecondaryDownload: (String) -> Unit,
     onIgnore: () -> Unit
 ) {
     AlertDialog(
@@ -60,8 +61,14 @@ fun UpdateDialog(
             }
         },
         confirmButton = {
-            Button(onClick = { onDownload(updateInfo.downloadUrl) }) {
-                Text("立即下载")
+            Row {
+                TextButton(onClick = { onSecondaryDownload(updateInfo.secondaryDownloadUrl) }) {
+                    Text("备用下载", color = MaterialTheme.colorScheme.primary)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(onClick = { onDownload(updateInfo.downloadUrl) }) {
+                    Text("立即下载")
+                }
             }
         },
         dismissButton = {

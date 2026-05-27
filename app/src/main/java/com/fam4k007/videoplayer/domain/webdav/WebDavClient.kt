@@ -102,7 +102,9 @@ class WebDavClient(internal val config: WebDavConfig) {
             return resources
                 .drop(1)  // 跳过第一个资源（目录本身）
                 .mapNotNull { resource ->
-                    val name = resource.name ?: return@mapNotNull null
+                    val rawName = resource.name
+                    if (rawName.isNullOrBlank()) return@mapNotNull null
+                    val name = rawName.trim()
                     
                     // 构建相对路径
                     val relativePath = if (path.isEmpty() || path == "/") {
@@ -119,7 +121,7 @@ class WebDavClient(internal val config: WebDavConfig) {
                         modifiedTime = resource.modified?.time ?: 0L
                     )
                 }
-                .sortedWith(compareBy({ !it.isDirectory }, { it.name }))
+                .sortedWith(compareBy({ !it.isDirectory }, { it.name.orEmpty() }))
         } catch (e: Exception) {
             e.printStackTrace()
             throw e

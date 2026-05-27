@@ -17,6 +17,7 @@ import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import com.fam4k007.videoplayer.utils.Logger
 import com.fam4k007.videoplayer.utils.NoMediaChecker
+import com.fam4k007.videoplayer.utils.ScanFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -152,6 +153,7 @@ class VideoListComposeActivity : ComponentActivity() {
                     val file = File(path)
                     // 检查文件是否真实存在（MediaStore可能有过期数据）
                     if (!file.exists()) continue
+                    if (ScanFilter.shouldSkipFile(this@VideoListComposeActivity, path)) continue
                     if (path.substringBeforeLast("/") == folderPath) {
                         val id = cursor.getLong(idColumn)
                         val name = cursor.getString(nameColumn)

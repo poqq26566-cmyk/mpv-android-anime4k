@@ -47,6 +47,10 @@ class SettingsComposeActivity : ComponentActivity() {
                         },
                         onNavigateToAbout = {
                             startActivity(Intent(this@SettingsComposeActivity, AboutComposeActivity::class.java))
+                        },
+                        onNavigateToDeviceInfo = {
+                            // 在新导航系统中，通过 AppNavGraph 处理
+                            // 此处留空，因为 SettingsComposeActivity 是旧入口
                         }
                     )
                 }

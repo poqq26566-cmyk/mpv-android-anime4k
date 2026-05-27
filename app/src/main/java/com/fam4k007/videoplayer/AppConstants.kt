@@ -18,6 +18,7 @@ object AppConstants {
         // 播放设置 Key
         const val PRECISE_SEEKING = "precise_seeking"
         const val VOLUME_BOOST_ENABLED = "volume_boost_enabled"
+        const val CONTROL_SYSTEM_VOLUME = "control_system_volume"
         const val SEEK_TIME = "seek_time"
         const val LONG_PRESS_SPEED = "long_press_speed"
         const val ANIME4K_MEMORY_ENABLED = "anime4k_memory_enabled"
@@ -37,6 +38,21 @@ object AppConstants {
         // 双击手势设置 Key
         const val DOUBLE_TAP_MODE = "double_tap_mode"  // 0=暂停, 1=快进快退
         const val DOUBLE_TAP_SEEK_SECONDS = "double_tap_seek_seconds"  // 双击跳转秒数
+
+        // 剩余时间显示 Key
+        const val SHOW_REMAINING_TIME = "show_remaining_time"
+
+        // 章节进度条 Key
+        const val CHAPTER_BAR_ENABLED = "chapter_bar_enabled"
+
+        // MPV 解码器预设
+        const val MPV_PROFILE = "mpv_profile"
+
+        // 文件扫描 Key
+        const val NOMEDIA_ENABLED = "nomedia_enabled"
+        const val SCAN_HIDDEN_FOLDERS = "scan_hidden_folders"
+        const val FOLDER_CACHE = "folder_cache"          // 文件夹列表缓存（JSON）
+        const val FOLDER_CACHE_TIME = "folder_cache_time" // 缓存时间戳
 
         // 播放历史记录 Key
         const val HISTORY_LIST = "history_list"
@@ -113,7 +129,8 @@ object AppConstants {
         // 支持的视频文件扩展名
         val SUPPORTED_VIDEO_EXTENSIONS = arrayOf(
             "mp4", "mkv", "avi", "mov", "flv", "wmv", "webm", "m3u8", "mpd", "ts",
-            "3gp", "3g2", "mxf", "ogv", "m2ts", "mts"
+            "3gp", "3g2", "mxf", "ogv", "m2ts", "mts",
+            "rmvb", "rm", "m4v", "f4v", "mpg", "mpeg", "vob", "divx"
         )
 
         // 支持的字幕文件扩展名

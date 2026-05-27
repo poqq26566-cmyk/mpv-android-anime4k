@@ -25,6 +25,12 @@ class CustomMPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context
      */
     override fun initOptions() {
         Log.d(TAG, "Initializing MPV options")
+
+        // 应用用户选择的解码器预设（控制缩放算法、渲染质量等）
+        val prefsManager = com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(context)
+        val mpvProfile = prefsManager.getMpvProfile()
+        MPVLib.setOptionString("profile", mpvProfile)
+        Log.d(TAG, "Applied MPV profile: $mpvProfile")
         
         // 视频输出配置
         setVo("gpu")

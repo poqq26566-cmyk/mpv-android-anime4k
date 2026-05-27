@@ -56,6 +56,7 @@ class PlaybackSettingsViewModel(
                     
                     // 音量控制
                     volumeBoost = playerRepository.isVolumeBoostEnabled(),
+                    controlSystemVolume = playerRepository.isControlSystemVolume(),
                     
                     // 倍速控制
                     rememberSpeed = playerRepository.isRememberSpeedEnabled(),
@@ -70,7 +71,13 @@ class PlaybackSettingsViewModel(
 
                     // 自动连播
                     autoPlayNext = playerRepository.isAutoPlayNextEnabled(),
-                    closeAfterEOF = playerRepository.isCloseAfterEndOfVideo()
+                    closeAfterEOF = playerRepository.isCloseAfterEndOfVideo(),
+
+                    // 章节控制
+                    chapterBarEnabled = playerRepository.isChapterBarEnabled(),
+
+                    // MPV 解码器预设
+                    mpvProfile = playerRepository.getMpvProfile()
                 )
                 _playbackSettings.value = settings
                 Logger.d(TAG, "Loaded playback settings")
@@ -162,6 +169,21 @@ class PlaybackSettingsViewModel(
         }
     }
     
+    /**
+     * 设置控制系统音量
+     */
+    fun setControlSystemVolume(enabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setControlSystemVolume(enabled)
+                _playbackSettings.value = _playbackSettings.value.copy(controlSystemVolume = enabled)
+                Logger.d(TAG, "Set control system volume: $enabled")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set control system volume", e)
+            }
+        }
+    }
+    
     // ==================== 倍速控制 ====================
     
     /**
@@ -240,6 +262,23 @@ class PlaybackSettingsViewModel(
         }
     }
 
+    // ==================== 章节控制 ====================
+
+    /**
+     * 设置章节进度条开关
+     */
+    fun setChapterBarEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setChapterBarEnabled(enabled)
+                _playbackSettings.value = _playbackSettings.value.copy(chapterBarEnabled = enabled)
+                Logger.d(TAG, "Set chapter bar enabled: $enabled")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set chapter bar", e)
+            }
+        }
+    }
+
     // ==================== 自动连播 ====================
 
     /**
@@ -271,6 +310,23 @@ class PlaybackSettingsViewModel(
             }
         }
     }
+
+    // ==================== MPV 解码器预设 ====================
+
+    /**
+     * 设置 MPV 解码器预设
+     */
+    fun setMpvProfile(profile: String) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setMpvProfile(profile)
+                _playbackSettings.value = _playbackSettings.value.copy(mpvProfile = profile)
+                Logger.d(TAG, "Set MPV profile: $profile")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set MPV profile", e)
+            }
+        }
+    }
 }
 
 /**
@@ -287,6 +343,7 @@ data class PlaybackSettings(
     
     // 音量控制
     val volumeBoost: Boolean = false,
+    val controlSystemVolume: Boolean = false,
     
     // 倍速控制
     val rememberSpeed: Boolean = false,
@@ -301,5 +358,11 @@ data class PlaybackSettings(
 
     // 自动连播（百分百复用 mpvEx）
     val autoPlayNext: Boolean = true,
-    val closeAfterEOF: Boolean = true
+    val closeAfterEOF: Boolean = true,
+
+    // 章节控制
+    val chapterBarEnabled: Boolean = true,
+
+    // MPV 解码器预设
+    val mpvProfile: String = "fast"
 )

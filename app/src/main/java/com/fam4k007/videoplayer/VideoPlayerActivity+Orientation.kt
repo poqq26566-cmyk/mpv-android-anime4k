@@ -5,8 +5,8 @@ import android.content.pm.ActivityInfo
 import android.view.View
 
 private const val TAG = "VideoPlayerActivity"
-private const val EXTRA_PORTRAIT_UI = "portrait_ui"
-private const val EXTRA_AUTO_ROTATE = "auto_rotate"
+internal const val EXTRA_PORTRAIT_UI = "portrait_ui"
+internal const val EXTRA_AUTO_ROTATE = "auto_rotate"
 
 internal fun VideoPlayerActivity.applyPortraitUiEnabled(enabled: Boolean) {
     if (!intent.getBooleanExtra(EXTRA_AUTO_ROTATE, false)) {

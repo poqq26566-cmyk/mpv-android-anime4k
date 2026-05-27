@@ -46,5 +46,10 @@
     <string name="theme_monochrome">Monochrome</string>
 
     <!-- 弹出菜单 -->
-    <string name="scroll_hint">Scroll for more</string>
+    <string name="scroll_hint">可上下滑动</string>
+
+    <!-- 后台播放 -->
+    <string name="notification_channel_name">后台播放</string>
+    <string name="notification_channel_desc">在后台播放时显示播放控制</string>
+    <string name="notification_playing">正在播放</string>
 </resources>

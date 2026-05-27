@@ -20,6 +20,7 @@ import com.fam4k007.videoplayer.ui.screens.FolderBrowserScreen
 import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.VideoPlayerTheme
 import com.fam4k007.videoplayer.utils.NoMediaChecker
+import com.fam4k007.videoplayer.utils.ScanFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,6 +36,7 @@ class VideoBrowserComposeActivity : ComponentActivity() {
     companion object {
         private const val TAG = "VideoBrowserCompose"
         private const val PERMISSION_REQUEST_CODE = 1001
+        private const val MAX_SUPPLEMENTARY_FILES = 1000
     }
 
     private val preferencesManager: com.fam4k007.videoplayer.preferences.PreferencesManager by inject()
@@ -169,7 +171,7 @@ class VideoBrowserComposeActivity : ComponentActivity() {
                             val duration = it.getLong(durationColumn)
                             val dateAdded = it.getLong(dateColumn)
 
-                            if (NoMediaChecker.fileInNoMediaFolder(path)) {
+                            if (ScanFilter.shouldSkipFile(this@VideoBrowserComposeActivity, path)) {
                                 continue
                             }
 
@@ -198,6 +200,31 @@ class VideoBrowserComposeActivity : ComponentActivity() {
                         }
                     }
 
+                    // 补充扫描：当 .nomedia 关闭或隐藏文件夹扫描开启时，
+                    // MediaStore 会遗漏这些文件，需要用 File API 直接扫描补充
+                    val prefs = com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(this@VideoBrowserComposeActivity)
+                    val needSupplementaryScan = !prefs.isNomediaEnabled() || prefs.isScanHiddenFoldersEnabled()
+                    if (needSupplementaryScan) {
+                        val knownPaths = folderMap.values.flatten().map { it.path }.toMutableSet()
+                        // 只扫描已有文件夹的同级隐藏目录和子目录
+                        val parentDirs = folderMap.keys.map { java.io.File(it).parentFile?.absolutePath }.distinct().filterNotNull()
+                        for (parentPath in parentDirs) {
+                            val parentFile = java.io.File(parentPath)
+                            if (parentFile.exists() && parentFile.isDirectory) {
+                                parentFile.listFiles()?.forEach { subDir ->
+                                    if (!subDir.isDirectory || !subDir.canRead()) return@forEach
+                                    if (prefs.isScanHiddenFoldersEnabled() && subDir.name.startsWith(".")) {
+                                        scanSingleFolder(subDir, this@VideoBrowserComposeActivity, knownPaths, folderMap)
+                                    }
+                                    if (!prefs.isNomediaEnabled()) {
+                                        scanSingleFolder(subDir, this@VideoBrowserComposeActivity, knownPaths, folderMap)
+                                    }
+                                }
+                            }
+                        }
+                        Log.d(TAG, "补充扫描完成，共 ${folderMap.size} 个文件夹")
+                    }
+
                     val folders = mutableListOf<VideoFolder>()
                     folderMap.forEach { (path, videos) ->
                         val folderName = path.substringAfterLast("/")
@@ -224,6 +251,49 @@ class VideoBrowserComposeActivity : ComponentActivity() {
                 Log.e(TAG, "扫描视频文件失败", e)
                 callback(emptyList())
             }
+        }
+    }
+
+    /**
+     * 直接扫描目录（用于补充 MediaStore 遗漏的文件）
+     */
+    private fun scanSingleFolder(
+        dir: java.io.File,
+        context: android.content.Context,
+        knownPaths: MutableSet<String>,
+        folderMap: MutableMap<String, MutableList<VideoFile>>
+    ) {
+        try {
+            if (knownPaths.size >= MAX_SUPPLEMENTARY_FILES) return
+            if (!dir.exists() || !dir.isDirectory || !dir.canRead()) return
+            if (com.fam4k007.videoplayer.utils.ScanFilter.shouldSkipFolder(context, dir.absolutePath)) return
+
+            val files = dir.listFiles() ?: return
+            for (file in files) {
+                if (!file.isFile || !file.exists()) continue
+                val path = file.absolutePath
+                if (path in knownPaths) continue
+                if (knownPaths.size >= MAX_SUPPLEMENTARY_FILES) return
+                if (com.fam4k007.videoplayer.utils.ScanFilter.shouldSkipFile(context, path)) continue
+
+                val extension = file.extension.lowercase()
+                if (extension in com.fam4k007.videoplayer.AppConstants.Files.SUPPORTED_VIDEO_EXTENSIONS) {
+                    val folderPath = path.substringBeforeLast("/")
+                    val msDuration = com.fam4k007.videoplayer.utils.ScanFilter.queryDuration(context, path)
+                    val videoFile = VideoFile(
+                        uri = Uri.fromFile(file).toString(),
+                        name = file.name,
+                        path = path,
+                        size = file.length(),
+                        duration = msDuration,
+                        dateAdded = file.lastModified() / 1000
+                    )
+                    folderMap.getOrPut(folderPath) { mutableListOf() }.add(videoFile)
+                    knownPaths.add(path)
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "扫描文件夹失败: ${dir.absolutePath}", e)
         }
     }
 

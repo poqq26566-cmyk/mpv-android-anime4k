@@ -52,12 +52,14 @@ fun PlayerControls(
     onRestartFromBeginning: () -> Unit = {},
     onRotateClick: () -> Unit = {},
     onSpeedClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
+    onChapterClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
     // 收集ViewModel状态
     val paused by viewModel.paused.collectAsState()
     val controlsShown by viewModel.controlsShown.collectAsState()
     val areControlsLocked by viewModel.areControlsLocked.collectAsState()
+    val anime4KMode by viewModel.anime4KMode.collectAsState()
 
     // 当控制面板显示时，启动初始定时器
     LaunchedEffect(controlsShown, paused) {
@@ -65,6 +67,21 @@ fun PlayerControls(
             viewModel.resetAutoHideTimer()
         }
     }
+
+    // 超分启用时取消动画（避免 GPU 负载过高导致掉帧）
+    val hasAnimation = anime4KMode == com.fam4k007.videoplayer.domain.player.Anime4KManager.Mode.OFF
+    val animEnter = if (hasAnimation)
+        androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { -it })
+    else androidx.compose.animation.EnterTransition.None
+    val animExit = if (hasAnimation)
+        androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { -it })
+    else androidx.compose.animation.ExitTransition.None
+    val animEnterFromBottom = if (hasAnimation)
+        androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it })
+    else androidx.compose.animation.EnterTransition.None
+    val animExitToBottom = if (hasAnimation)
+        androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it })
+    else androidx.compose.animation.ExitTransition.None
 
     // 检测屏幕方向
     val configuration = LocalConfiguration.current
@@ -83,8 +100,8 @@ fun PlayerControls(
             // 顶部控制面板（带显示/隐藏动画）
             androidx.compose.animation.AnimatedVisibility(
                 visible = controlsShown && !areControlsLocked,
-                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { -it }),
-                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { -it }),
+                enter = animEnter,
+                exit = animExit,
                 modifier = Modifier.align(Alignment.TopCenter)
             ) {
                 PortraitTopBar(
@@ -101,8 +118,8 @@ fun PlayerControls(
             // 底部控制面板（带显示/隐藏动画）
             androidx.compose.animation.AnimatedVisibility(
                 visible = controlsShown && !areControlsLocked,
-                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it }),
-                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it }),
+                enter = animEnterFromBottom,
+                exit = animExitToBottom,
                 modifier = Modifier.align(Alignment.BottomCenter)
             ) {
                 PortraitBottomControls(
@@ -110,7 +127,8 @@ fun PlayerControls(
                     onAnime4KClick = onAnime4KClick,
                     onDanmakuToggle = onDanmakuToggle,
                     onRotateClick = onRotateClick,
-                    onSpeedClick = onSpeedClick
+                    onSpeedClick = onSpeedClick,
+                    onChapterClick = onChapterClick
                 )
             }
         } else {
@@ -118,8 +136,8 @@ fun PlayerControls(
             // 顶部控制面板（带显示/隐藏动画）
             androidx.compose.animation.AnimatedVisibility(
                 visible = controlsShown && !areControlsLocked,
-                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { -it }),
-                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { -it }),
+                enter = animEnter,
+                exit = animExit,
                 modifier = Modifier.align(Alignment.TopCenter)
             ) {
                 TopControlPanel(
@@ -136,8 +154,8 @@ fun PlayerControls(
             // 底部控制面板（带显示/隐藏动画）
             androidx.compose.animation.AnimatedVisibility(
                 visible = controlsShown && !areControlsLocked,
-                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it }),
-                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it }),
+                enter = animEnterFromBottom,
+                exit = animExitToBottom,
                 modifier = Modifier.align(Alignment.BottomCenter)
             ) {
                 BottomControlPanel(
@@ -146,6 +164,7 @@ fun PlayerControls(
                     onDanmakuToggle = onDanmakuToggle,
                     onRotateClick = onRotateClick,
                     onSpeedClick = onSpeedClick,
+                    onChapterClick = onChapterClick,
                     modifier = Modifier
                 )
             }
@@ -179,6 +198,9 @@ fun PlayerControls(
         // 暂停指示器（暂停时在屏幕中央短暂显示后淡出）
         PauseIndicator(viewModel = viewModel)
 
+        // 实时网速显示（仅在线播放时显示，屏幕右侧中间位置）
+        DownloadSpeedOverlay(viewModel = viewModel)
+
         // 加载动画（在线视频缓冲/加载时显示，覆盖在所有控件之上）
         LoadingOverlay(viewModel = viewModel)
     }
@@ -206,6 +228,7 @@ fun BottomControlPanel(
     onDanmakuToggle: () -> Unit = {},
     onRotateClick: () -> Unit = {},
     onSpeedClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
+    onChapterClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
     // 收集状态
@@ -220,6 +243,11 @@ fun BottomControlPanel(
     val seekTimeSeconds by viewModel.seekTimeSeconds.collectAsState()
     val seekbarStyleName by viewModel.seekbarStyle.collectAsState()
     val customSpeedPresets by viewModel.customSpeedPresets.collectAsState()
+    val showRemainingTime by viewModel.showRemainingTime.collectAsState()
+    val chapters by viewModel.chapters.collectAsState()
+    val currentChapterName by viewModel.currentChapterName.collectAsState()
+    val hasChapters by viewModel.hasChapters.collectAsState()
+    val chapterBarEnabled by viewModel.chapterBarEnabled.collectAsState()
 
     // 检测屏幕方向
     val configuration = LocalContext.current.resources.configuration
@@ -265,6 +293,49 @@ fun BottomControlPanel(
             )
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
+        // 章节名称行（仅在有章节信息且启用章节控制时显示）
+        if (hasChapters && chapterBarEnabled) {
+            var chapterBounds by remember { mutableStateOf(android.graphics.Rect()) }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .onGloballyPositioned { coords ->
+                            val r = coords.boundsInWindow()
+                            chapterBounds = android.graphics.Rect(
+                                r.left.toInt(), r.top.toInt(),
+                                r.right.toInt(), r.bottom.toInt()
+                            )
+                        }
+                        .clickable {
+                            chapterBounds.let { b ->
+                                onChapterClick(b.left, b.top, b.width(), b.height())
+                            }
+                            viewModel.resetAutoHideTimer()
+                        }
+                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = currentChapterName ?: "",
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.width(2.dp))
+                    Text(
+                        text = "❯",
+                        color = Color.White.copy(alpha = 0.6f),
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+
         // 进度条行（含缩略图预览）
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -287,6 +358,7 @@ fun BottomControlPanel(
                     }
             ) {
                 val seekbarStyle = SeekbarStyle.fromName(seekbarStyleName)
+                val chapterTimes = if (chapterBarEnabled) chapters.map { it.timeSeconds.toFloat() } else emptyList()
                 CustomSeekbar(
                     progress = displayPosition,
                     duration = duration.toFloat().coerceAtLeast(1f),
@@ -294,6 +366,11 @@ fun BottomControlPanel(
                     accentColor = MaterialTheme.colorScheme.primary,
                     paused = paused == true,
                     isDragging = isDragging,
+                    chapters = chapterTimes,
+                    onChapterClick = { index ->
+                        viewModel.seekToChapter(index)
+                        viewModel.resetAutoHideTimer()
+                    },
                     onSeek = { newValue ->
                         if (!isDragging) {
                             isDragging = true
@@ -313,12 +390,20 @@ fun BottomControlPanel(
                 )
             }
 
-            // 总时长
+            // 总时长/剩余时间（点击切换）
+            val durationText = if (showRemainingTime) {
+                val remaining = duration - displayPosition.toInt()
+                "-${formatTime(remaining)}"
+            } else {
+                formatTime(duration)
+            }
             Text(
-                text = formatTime(duration),
+                text = durationText,
                 color = Color.White,
                 fontSize = 14.sp,
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .clickable { viewModel.toggleRemainingTimeDisplay() }
             )
         }
 
@@ -700,7 +785,7 @@ fun TopControlPanel(
                     )
                 )
             )
-            .padding(start = 4.dp, top = 18.dp, end = 100.dp, bottom = 6.dp),
+            .padding(start = 4.dp, top = 18.dp, end = 80.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 返回按钮
@@ -1127,6 +1212,44 @@ fun PauseIndicator(
                 modifier = Modifier.size(90.dp)
             )
         }
+    }
+}
+
+/**
+ * 实时网速显示
+ * 仅在线播放时、且控制面板可见时显示，位于屏幕右侧中间位置
+ */
+@Composable
+fun DownloadSpeedOverlay(
+    viewModel: PlayerViewModel,
+    modifier: Modifier = Modifier
+) {
+    val isOnline by viewModel.isOnlineVideo.collectAsState()
+    val speedKbps by viewModel.downloadSpeedKbps.collectAsState()
+    val controlsShown by viewModel.controlsShown.collectAsState()
+
+    if (!isOnline || speedKbps <= 0 || !controlsShown) return
+
+    val speedText = if (speedKbps >= 1024) {
+        String.format("%.1f MB/s", speedKbps / 1024.0)
+    } else {
+        "$speedKbps KB/s"
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        Text(
+            text = speedText,
+            color = Color.White.copy(alpha = 0.7f),
+            fontSize = 11.sp,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 12.dp)
+                .background(
+                    color = Color.Black.copy(alpha = 0.35f),
+                    shape = RoundedCornerShape(6.dp)
+                )
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        )
     }
 }
 

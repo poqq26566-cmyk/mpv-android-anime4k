@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+
 import androidx.compose.material.icons.filled.Comment
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Help
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Palette
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -69,6 +72,8 @@ fun SettingsScreen(
     onNavigateToDownload: () -> Unit = {},
     onNavigateToSubtitleSearch: () -> Unit = {},
     onNavigateToFolderBlacklist: () -> Unit = {},
+    onNavigateToMediaSettings: () -> Unit = {},
+    onNavigateToDeviceInfo: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val authManager: BiliBiliAuthManager = koinInject()
@@ -150,8 +155,8 @@ fun SettingsScreen(
             item {
                 PreferenceCard {
                     ClickableItem(
-                        title = "Playback Settings",
-                        subtitle = "Adjust playback parameters",
+                        title = "播放设置",
+                        subtitle = "修改与播放有关的参数配置",
                         icon = Icons.Default.Settings,
                         onClick = onNavigateToPlaybackSettings
                     )
@@ -162,23 +167,28 @@ fun SettingsScreen(
                         icon = Icons.Default.History,
                         onClick = onNavigateToPlaybackHistory
                     )
-                    
-                    ClickableItem(
-                        title = "Video Display Mode",
-                        subtitle = when (currentDisplayMode.value) {
-                            "folder" -> "Folder View"
-                            "flat" -> "Video List"
-                            else -> "Folder View"
-                        },
-                        icon = Icons.Default.VideoLibrary,
-                        onClick = { showDisplayModeDialog = true }
-                    )
-                    
+                }
+            }
+            
+            // 媒体
+            item {
+                PreferenceSectionHeader(title = "媒体")
+            }
+            
+            item {
+                PreferenceCard {
                     ClickableItem(
                         title = "Folder Blacklist",
                         subtitle = "Exclude folders from video scanning",
                         icon = Icons.Default.Warning,
                         onClick = onNavigateToFolderBlacklist
+                    )
+                    
+                    ClickableItem(
+                        title = "其他媒体设置",
+                        subtitle = ".nomedia 规则、隐藏文件夹扫描等",
+                        icon = Icons.Default.Star,
+                        onClick = onNavigateToMediaSettings
                     )
                 }
             }
@@ -247,9 +257,16 @@ fun SettingsScreen(
                         subtitle = "View online documentation",
                         icon = Icons.Default.Help,
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.kdocs.cn/l/cjEzoxiyxaHT"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://docs.qq.com/doc/p/d190d78dc5ac1d3a718ea244775c34e8b1dc9559?nlc=1"))
                             context.startActivity(intent)
                         }
+                    )
+
+                    ClickableItem(
+                        title = "设备信息",
+                        subtitle = "查看HDR支持、编解码器等硬件信息",
+                        icon = Icons.Default.Devices,
+                        onClick = onNavigateToDeviceInfo
                     )
                     
                     ClickableItem(
@@ -313,5 +330,5 @@ fun SettingsScreen(
             }
         )
     }
-    
+
 }
