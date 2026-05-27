@@ -155,8 +155,8 @@ fun SettingsScreen(
             item {
                 PreferenceCard {
                     ClickableItem(
-                        title = "播放设置",
-                        subtitle = "修改与播放有关的参数配置",
+                        title = "Playback Settings",
+                        subtitle = "Configure playback-related parameters",
                         icon = Icons.Default.Settings,
                         onClick = onNavigateToPlaybackSettings
                     )
@@ -172,7 +172,7 @@ fun SettingsScreen(
             
             // 媒体
             item {
-                PreferenceSectionHeader(title = "媒体")
+                PreferenceSectionHeader(title = "Media")
             }
             
             item {
@@ -185,8 +185,8 @@ fun SettingsScreen(
                     )
                     
                     ClickableItem(
-                        title = "其他媒体设置",
-                        subtitle = ".nomedia 规则、隐藏文件夹扫描等",
+                        title = "Other Media Settings",
+                        subtitle = ".nomedia rules, hidden folder scanning, etc.",
                         icon = Icons.Default.Star,
                         onClick = onNavigateToMediaSettings
                     )
@@ -263,8 +263,8 @@ fun SettingsScreen(
                     )
 
                     ClickableItem(
-                        title = "设备信息",
-                        subtitle = "查看HDR支持、编解码器等硬件信息",
+                        title = "Device Info",
+                        subtitle = "View HDR support, codecs, and other hardware info",
                         icon = Icons.Default.Devices,
                         onClick = onNavigateToDeviceInfo
                     )

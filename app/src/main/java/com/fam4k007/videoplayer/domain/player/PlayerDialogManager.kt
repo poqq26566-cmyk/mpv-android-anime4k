@@ -919,7 +919,7 @@ class PlayerDialogManager(
         if (hasChapters) {
             items.add("Chapters")
         }
-        items.addAll(listOf("截图", "音轨", "解码", "听视频", "片头片尾", assOverrideText, autoRotateText))
+        items.addAll(listOf("Screenshot", "Audio Track", "Decoder", "Listen Only", "Intro/Outro", assOverrideText, autoRotateText))
         
         // 根据屏幕方向决定对齐方式：竖屏靠右对齐，横屏居中
         val configuration = activity.resources.configuration
@@ -997,7 +997,7 @@ class PlayerDialogManager(
 
             val chapters = mutableListOf<Pair<String, Double>>()
             for (i in 0 until chapterCount) {
-                val title = MPVLib.getPropertyString("chapter-list/$i/title") ?: "章节 ${i + 1}"
+                val title = MPVLib.getPropertyString("chapter-list/$i/title") ?: "Chapter ${i + 1}"
                 val time = MPVLib.getPropertyDouble("chapter-list/$i/time") ?: 0.0
                 chapters.add(Pair(title, time))
             }

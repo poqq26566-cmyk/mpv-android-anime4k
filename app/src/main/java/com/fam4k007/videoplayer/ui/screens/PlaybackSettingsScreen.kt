@@ -97,7 +97,7 @@ fun PlaybackSettingsScreen(
 
             // MPV 解码器预设
             item {
-                PreferenceSectionHeader("MPV 解码器")
+                PreferenceSectionHeader("MPV Decoder")
             }
 
             item {
@@ -157,14 +157,14 @@ fun PlaybackSettingsScreen(
             item {
                 PreferenceCard {
                     SwitchItem(
-                        title = "控制系统音量",
-                        subtitle = if (settings.controlSystemVolume) "播放中调节的音量退出后保留" else "退出播放后恢复进入前的音量",
+                        title = "Control System Volume",
+                        subtitle = if (settings.controlSystemVolume) "Volume changes persist after exit" else "Restore previous volume after exit",
                         checked = settings.controlSystemVolume,
                         onCheckedChange = { viewModel.setControlSystemVolume(it) }
                     )
                     SwitchItem(
-                        title = "音量增强",
-                        subtitle = if (settings.volumeBoost) "音量可超过100%,最高300%" else "音量范围限制在1-100%",
+                        title = "Volume Boost",
+                        subtitle = if (settings.volumeBoost) "Volume can exceed 100%, up to 300%" else "Volume limited to 1-100%",
                         checked = settings.volumeBoost,
                         onCheckedChange = { viewModel.setVolumeBoost(it) }
                     )
@@ -221,14 +221,14 @@ fun PlaybackSettingsScreen(
 
             // 章节控制
             item {
-                PreferenceSectionHeader("章节控制")
+                PreferenceSectionHeader("Chapter Controls")
             }
 
             item {
                 PreferenceCard {
                     SwitchItem(
-                        title = "显示章节进度条",
-                        subtitle = if (settings.chapterBarEnabled) "进度条显示章节节点和当前章节名称" else "隐藏章节相关信息",
+                        title = "Show Chapter Progress Bar",
+                        subtitle = if (settings.chapterBarEnabled) "Show chapter markers and current chapter name on progress bar" else "Hide chapter-related info",
                         checked = settings.chapterBarEnabled,
                         onCheckedChange = { viewModel.setChapterBarEnabled(it) }
                     )
@@ -313,7 +313,7 @@ fun PlaybackSettingsScreen(
             },
             text = {
                 Text(
-                    "修改解码器预设需要重启应用才能生效。是否立即重启？",
+                    "Changing the decoder preset requires restarting the app. Restart now?",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -790,12 +790,12 @@ private data class MpvProfileOption(
 )
 
 private val mpvProfileOptions = listOf(
-    MpvProfileOption("fast", "Fast", "硬解 + bilinear 缩放，整体功耗最低（推荐）"),
-    MpvProfileOption("default", "Default", "默认配置，平衡画质与性能"),
-    MpvProfileOption("high-quality", "High Quality", "高质量渲染，使用 ewa_lanczossharp 缩放"),
-    MpvProfileOption("gpu-hq", "GPU HQ", "GPU 高质量模式，开启去条带等后处理"),
-    MpvProfileOption("low-latency", "Low Latency", "低延迟模式，适合直播/在线流媒体"),
-    MpvProfileOption("sw-fast", "SW Fast", "强制软解，GPU 负载最低但 CPU 功耗最高"),
+    MpvProfileOption("fast", "Fast", "Hardware decode + bilinear scale, lowest power consumption (Recommended)"),
+    MpvProfileOption("default", "Default", "Balanced quality and performance"),
+    MpvProfileOption("high-quality", "High Quality", "High quality rendering with ewa_lanczossharp scaling"),
+    MpvProfileOption("gpu-hq", "GPU HQ", "GPU high quality mode with debanding and post-processing"),
+    MpvProfileOption("low-latency", "Low Latency", "Low latency mode for live/streaming"),
+    MpvProfileOption("sw-fast", "SW Fast", "Software decoding, lowest GPU load but highest CPU usage"),
 )
 
 @Composable
@@ -812,7 +812,7 @@ private fun MpvProfileCard(
             )
     ) {
         Text(
-            "解码器预设",
+            "Decoder Preset",
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface

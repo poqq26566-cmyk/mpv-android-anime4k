@@ -489,10 +489,10 @@ private fun formatFileSize(sizeBytes: Long): String {
  */
 private fun getSortText(sortBy: SortBy, sortOrder: SortOrder): String {
     val sortByText = when (sortBy) {
-        SortBy.NAME -> "文件名"
-        SortBy.SIZE -> "大小"
-        SortBy.DURATION -> "时长"
-        SortBy.DATE -> "添加时间"
+        SortBy.NAME -> "File Name"
+        SortBy.SIZE -> "Size"
+        SortBy.DURATION -> "Duration"
+        SortBy.DATE -> "Date Added"
     }
     val orderText = when (sortOrder) {
         SortOrder.ASCENDING -> "↑"
@@ -525,14 +525,14 @@ fun DropdownMenuWithStyle(
         ) {
             // 排序方式分组
             Text(
-                text = "排序方式",
+                text = "Sort By",
                 fontSize = 11.sp,
                 color = Color(0x99FFFFFF),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
             
             SortMenuItem(
-                text = "文件名",
+                text = "File Name",
                 isSelected = sortBy == SortBy.NAME,
                 onClick = {
                     onSortByChange(SortBy.NAME)
@@ -559,7 +559,7 @@ fun DropdownMenuWithStyle(
             )
             
             SortMenuItem(
-                text = "添加时间",
+                text = "Date Added",
                 isSelected = sortBy == SortBy.DATE,
                 onClick = {
                     onSortByChange(SortBy.DATE)
@@ -575,14 +575,14 @@ fun DropdownMenuWithStyle(
             
             // 排序顺序分组
             Text(
-                text = "排序顺序",
+                text = "Order",
                 fontSize = 11.sp,
                 color = Color(0x99FFFFFF),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
             
             SortMenuItem(
-                text = "升序 ↑",
+                text = "Ascending ↑",
                 isSelected = sortOrder == SortOrder.ASCENDING,
                 onClick = {
                     onSortOrderChange(SortOrder.ASCENDING)
@@ -591,7 +591,7 @@ fun DropdownMenuWithStyle(
             )
             
             SortMenuItem(
-                text = "降序 ↓",
+                text = "Descending ↓",
                 isSelected = sortOrder == SortOrder.DESCENDING,
                 onClick = {
                     onSortOrderChange(SortOrder.DESCENDING)

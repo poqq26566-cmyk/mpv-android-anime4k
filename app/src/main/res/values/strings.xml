@@ -46,7 +46,7 @@
     <string name="theme_monochrome">Monochrome</string>
 
     <!-- 弹出菜单 -->
-    <string name="scroll_hint">可上下滑动</string>
+    <string name="scroll_hint">Scroll up/down</string>
 
     <!-- 后台播放 -->
     <string name="notification_channel_name">后台播放</string>

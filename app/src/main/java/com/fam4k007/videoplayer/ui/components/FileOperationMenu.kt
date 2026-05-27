@@ -83,7 +83,7 @@ fun FileOperationMenu(
                 ) {
                     // 标题
                     Text(
-                        text = "文件操作",
+                        text = "File Operations",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -95,7 +95,7 @@ fun FileOperationMenu(
                     // 重命名
                     FileOperationItem(
                         icon = Icons.Default.Edit,
-                        text = "重命名",
+                        text = "Rename",
                         iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onRename
                     )
@@ -104,7 +104,7 @@ fun FileOperationMenu(
                     if (onCopy != null) {
                         FileOperationItem(
                             icon = Icons.Default.ContentCopy,
-                            text = "复制",
+                            text = "Copy",
                             iconTint = MaterialTheme.colorScheme.secondary,
                             onClick = onCopy
                         )
@@ -113,7 +113,7 @@ fun FileOperationMenu(
                     // 删除
                     FileOperationItem(
                         icon = Icons.Default.Delete,
-                        text = "删除",
+                        text = "Delete",
                         iconTint = Color(0xFFE53935),
                         onClick = onDelete
                     )
@@ -183,7 +183,7 @@ fun RenameDialog(
             onDismissRequest = onDismiss,
             title = {
                 Text(
-                    text = "重命名",
+                    text = "Rename",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -193,14 +193,14 @@ fun RenameDialog(
                     OutlinedTextField(
                         value = newName,
                         onValueChange = { newName = it },
-                        label = { Text("新名称") },
+                        label = { Text("New Name") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                     if (extension.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "扩展名：$extension",
+                            "Extension: $extension",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -216,12 +216,12 @@ fun RenameDialog(
                         }
                     }
                 ) {
-                    Text("确定")
+                    Text("OK")
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("取消")
+                    Text("Cancel")
                 }
             },
             shape = RoundedCornerShape(28.dp),
@@ -254,7 +254,7 @@ fun DeleteConfirmDialog(
             },
             title = {
                 Text(
-                    text = "确认删除",
+                    text = "Confirm Delete",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -262,7 +262,7 @@ fun DeleteConfirmDialog(
             text = {
                 Column {
                     Text(
-                        "确定要删除${if (isFolder) "文件夹" else "文件"}吗？",
+                        "Are you sure you want to delete this ${if (isFolder) "folder" else "file"}?",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -275,7 +275,7 @@ fun DeleteConfirmDialog(
                     if (isFolder) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "注意：文件夹内的所有文件也将被删除",
+                            "Note: All files inside the folder will also be deleted",
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -289,12 +289,12 @@ fun DeleteConfirmDialog(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("删除")
+                    Text("Delete")
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("取消")
+                    Text("Cancel")
                 }
             },
             shape = RoundedCornerShape(28.dp),
@@ -359,7 +359,7 @@ fun CopyDestinationDialog(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            "选择目标文件夹",
+                            "Select Destination Folder",
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -368,7 +368,7 @@ fun CopyDestinationDialog(
                         IconButton(onClick = onDismiss) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "关闭",
+                                contentDescription = "Close",
                                 tint = Color.White
                             )
                         }
@@ -395,7 +395,7 @@ fun CopyDestinationDialog(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "返回上一级",
+                                contentDescription = "Go Back",
                                 tint = if (File(currentPath).parent != null) 
                                     MaterialTheme.colorScheme.primary 
                                 else 
@@ -451,7 +451,7 @@ fun CopyDestinationDialog(
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        "此文件夹为空",
+                                        "This folder is empty",
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = 14.sp
                                     )
@@ -487,7 +487,7 @@ fun CopyDestinationDialog(
                             onClick = onDismiss,
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("取消")
+                            Text("Cancel")
                         }
                         Button(
                             onClick = { onConfirm(currentPath) },
@@ -496,7 +496,7 @@ fun CopyDestinationDialog(
                                 containerColor = MaterialTheme.colorScheme.primary
                             )
                         ) {
-                            Text("复制到这里")
+                            Text("Copy Here")
                         }
                     }
                 }

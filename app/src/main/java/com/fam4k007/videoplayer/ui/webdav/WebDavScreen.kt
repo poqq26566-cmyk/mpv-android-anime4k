@@ -121,7 +121,7 @@ fun WebDavAccountListScreen(
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.cancelDeleteAccount() }) {
-                    Text("取消")
+                    Text("Cancel")
                 }
             }
         )
@@ -264,7 +264,7 @@ private fun WebDavAddAccountDialog(
         onDismissRequest = { viewModel.dismissAddDialog() },
         title = {
             Text(
-                text = if (isEditMode) "编辑 WebDAV 账户" else "添加 WebDAV 账户",
+                text = if (isEditMode) "Edit WebDAV Account" else "Add WebDAV Account",
                 fontWeight = FontWeight.Bold
             )
         },
@@ -394,7 +394,7 @@ private fun WebDavAddAccountDialog(
                 onClick = { viewModel.saveAccount() },
                 shape = RoundedCornerShape(20.dp)
             ) {
-                Text(if (isEditMode) "保存" else "保存")
+                Text(if (isEditMode) "Save" else "Save")
             }
         },
         dismissButton = {
@@ -402,7 +402,7 @@ private fun WebDavAddAccountDialog(
                 onClick = { viewModel.dismissAddDialog() },
                 shape = RoundedCornerShape(20.dp)
             ) {
-                Text("取消")
+                Text("Cancel")
             }
         },
         shape = RoundedCornerShape(28.dp),

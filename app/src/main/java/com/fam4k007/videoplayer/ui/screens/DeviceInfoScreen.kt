@@ -71,7 +71,7 @@ fun DeviceInfoScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "设备信息",
+                        text = "Device Info",
                         fontWeight = FontWeight.Bold,
                     )
                 },
@@ -79,7 +79,7 @@ fun DeviceInfoScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = "Back"
                         )
                     }
                 },
@@ -87,7 +87,7 @@ fun DeviceInfoScreen(
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "刷新"
+                            contentDescription = "Refresh"
                         )
                     }
                 },
@@ -109,7 +109,7 @@ fun DeviceInfoScreen(
                 CircularProgressIndicator()
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "正在检测设备信息...",
+                    text = "Detecting device info...",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -137,7 +137,7 @@ fun DeviceInfoScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(onClick = { viewModel.refresh() }) {
-                    Text("重试")
+                    Text("Retry")
                 }
             }
         } else {
@@ -152,7 +152,7 @@ fun DeviceInfoScreen(
             ) {
                 // 概述说明
                 Text(
-                    text = "以下信息展示了当前设备的硬件能力，包括屏幕显示规格和硬件编解码器支持情况。",
+                    text = "The following info shows your device's hardware capabilities, including display specs and hardware codec support.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(
@@ -164,17 +164,17 @@ fun DeviceInfoScreen(
                 )
 
                 // ===== 基础设备信息 =====
-                SectionHeader(title = "设备信息")
+                SectionHeader(title = "Device Info")
                 InfoCard {
                     val info = uiState.basicInfo ?: return@InfoCard
-                    BasicInfoRow(label = "应用版本", value = info.appVersion)
-                    BasicInfoRow(label = "安卓版本", value = "${info.androidVersion} (API ${info.sdkLevel})")
-                    BasicInfoRow(label = "品牌", value = info.deviceBrand)
-                    BasicInfoRow(label = "制造商", value = info.deviceManufacturer)
-                    BasicInfoRow(label = "型号", value = "${info.deviceModel} (${info.deviceName})")
-                    BasicInfoRow(label = "MPV 版本", value = info.mpvVersion)
-                    BasicInfoRow(label = "FFmpeg 版本", value = info.ffmpegVersion)
-                    BasicInfoRow(label = "libplacebo 版本", value = info.libplaceboVersion)
+                    BasicInfoRow(label = "App Version", value = info.appVersion)
+                    BasicInfoRow(label = "Android Version", value = "${info.androidVersion} (API ${info.sdkLevel})")
+                    BasicInfoRow(label = "Brand", value = info.deviceBrand)
+                    BasicInfoRow(label = "Manufacturer", value = info.deviceManufacturer)
+                    BasicInfoRow(label = "Model", value = "${info.deviceModel} (${info.deviceName})")
+                    BasicInfoRow(label = "MPV Version", value = info.mpvVersion)
+                    BasicInfoRow(label = "FFmpeg Version", value = info.ffmpegVersion)
+                    BasicInfoRow(label = "libplacebo Version", value = info.libplaceboVersion)
                 }
 
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
@@ -182,19 +182,19 @@ fun DeviceInfoScreen(
                 val codecInfo = uiState.deviceCodecInfo ?: return@Column
 
                 // ===== HDR 支持 =====
-                SectionHeader(title = "HDR 支持")
+                SectionHeader(title = "HDR Support")
                 InfoCard {
                     val hdr = codecInfo.hdrCapabilities
                     HdrRow(label = "HDR10", supported = hdr.hdr10)
                     HdrRow(label = "HDR10+", supported = hdr.hdr10Plus)
                     HdrRow(label = "HLG", supported = hdr.hlg)
-                    HdrRow(label = "杜比视界 (Dolby Vision)", supported = hdr.dolbyVision)
+                    HdrRow(label = "Dolby Vision", supported = hdr.dolbyVision)
                 }
 
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
                 // ===== 10-bit 支持 =====
-                SectionHeader(title = "10-bit 支持")
+                SectionHeader(title = "10-bit Support")
                 InfoCard {
                     HdrRow(label = "HEVC Main10", supported = codecInfo.hevcMain10)
                     HdrRow(label = "AVC High10", supported = codecInfo.avcHigh10)
@@ -203,10 +203,10 @@ fun DeviceInfoScreen(
                 // ===== 杜比视界 Profile =====
                 if (codecInfo.dolbyVisionProfiles.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
-                    SectionHeader(title = "杜比视界 Profile")
+                    SectionHeader(title = "Dolby Vision Profiles")
                     InfoCard {
                         Text(
-                            text = "以下杜比视界 Profile 均被当前设备支持：",
+                            text = "The following Dolby Vision profiles are supported:",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(
@@ -224,13 +224,13 @@ fun DeviceInfoScreen(
 
                 // ===== 视频编码器 =====
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
-                SectionHeader(title = "视频编码器")
+                SectionHeader(title = "Video Encoders")
                 InfoCard {
                     if (codecInfo.videoCodecs.isEmpty()) {
-                        EmptyHint("未检测到视频编码器信息")
+                        EmptyHint("No video encoder info detected")
                     } else {
                         Text(
-                            text = "以下视频编码器均被当前设备硬件支持：",
+                            text = "The following video encoders are supported by hardware:",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(
@@ -248,13 +248,13 @@ fun DeviceInfoScreen(
 
                 // ===== 音频编码器 =====
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
-                SectionHeader(title = "音频编码器")
+                SectionHeader(title = "Audio Encoders")
                 InfoCard {
                     if (codecInfo.audioCodecs.isEmpty()) {
-                        EmptyHint("未检测到音频编码器信息")
+                        EmptyHint("No audio encoder info detected")
                     } else {
                         Text(
-                            text = "以下音频编码器均被当前设备硬件支持：",
+                            text = "The following audio encoders are supported by hardware:",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(
@@ -367,13 +367,13 @@ private fun HdrRow(label: String, supported: Boolean) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = if (supported) Icons.Default.CheckCircle else Icons.Default.HourglassEmpty,
-                contentDescription = if (supported) "支持" else "不支持",
+                contentDescription = if (supported) "Supported" else "Not Supported",
                 modifier = Modifier.size(20.dp),
                 tint = if (supported) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = if (supported) "支持" else "不支持",
+                text = if (supported) "Supported" else "Not Supported",
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
                 color = if (supported) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),

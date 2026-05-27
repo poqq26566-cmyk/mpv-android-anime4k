@@ -41,14 +41,14 @@ fun MediaSettingsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "其他媒体设置",
+                        "Other Media Settings",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "返回")
+                        Icon(Icons.Default.ArrowBack, "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -65,14 +65,14 @@ fun MediaSettingsScreen(
         ) {
             // 扫描规则
             item {
-                PreferenceSectionHeader("扫描规则")
+                PreferenceSectionHeader("Scan Rules")
             }
 
             item {
                 PreferenceCard {
                     SwitchItem(
-                        title = "启用 .nomedia 规则",
-                        subtitle = if (nomediaEnabled) "有 .nomedia 的文件夹不会被扫描" else "忽略 .nomedia 文件，全部扫描",
+                        title = "Enable .nomedia Rules",
+                        subtitle = if (nomediaEnabled) "Folders with .nomedia will not be scanned" else "Ignore .nomedia files, scan all folders",
                         checked = nomediaEnabled,
                         onCheckedChange = { enabled ->
                             nomediaEnabled = enabled
@@ -81,8 +81,8 @@ fun MediaSettingsScreen(
                     )
 
                     SwitchItem(
-                        title = "扫描隐藏文件夹",
-                        subtitle = if (scanHiddenEnabled) "允许扫描 .开头 的隐藏文件夹" else "跳过 .开头 的隐藏文件夹",
+                        title = "Scan Hidden Folders",
+                        subtitle = if (scanHiddenEnabled) "Allow scanning folders starting with ." else "Skip folders starting with .",
                         checked = scanHiddenEnabled,
                         onCheckedChange = { enabled ->
                             scanHiddenEnabled = enabled
@@ -94,7 +94,7 @@ fun MediaSettingsScreen(
 
             // 显示模式
             item {
-                PreferenceSectionHeader("显示模式")
+                PreferenceSectionHeader("Display Mode")
             }
 
             item {
@@ -135,7 +135,7 @@ private fun DisplayModeSelector(
             )
     ) {
         Text(
-            "视频显示模式",
+            "Video Display Mode",
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
@@ -143,8 +143,8 @@ private fun DisplayModeSelector(
         Spacer(Modifier.height(MaterialTheme.spacing.small))
 
         val modes = listOf(
-            "folder" to "文件夹视图",
-            "flat" to "视频列表"
+            "folder" to "Folder View",
+            "flat" to "Video List"
         )
 
         modes.forEach { (mode, label) ->
@@ -187,7 +187,7 @@ private fun DisplayModeSelector(
         if (flatDisabled) {
             Spacer(Modifier.height(MaterialTheme.spacing.small))
             Text(
-                text = "禁用 .nomedia 或开启隐藏文件夹扫描时，视频列表模式将无法完整扫描文件，且性能会大幅下降，故已禁用此切换。",
+                text = "When .nomedia is disabled or hidden folder scanning is enabled, Video List mode cannot scan completely and performance will degrade significantly. This option has been disabled.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
                 lineHeight = MaterialTheme.typography.bodySmall.lineHeight
