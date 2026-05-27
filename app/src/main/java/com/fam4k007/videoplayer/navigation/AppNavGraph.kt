@@ -34,7 +34,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.fam4k007.videoplayer.PlaybackHistoryManager
 import com.fam4k007.videoplayer.R
-import com.fam4k007.videoplayer.UserAgreementActivity
 import com.fam4k007.videoplayer.VideoPlayerActivity
 import com.fam4k007.videoplayer.domain.webdav.WebDavClient
 import com.fam4k007.videoplayer.domain.webdav.WebDavConfig
@@ -55,10 +54,13 @@ import com.fam4k007.videoplayer.ui.screens.BiliBiliLoginScreen
 import com.fam4k007.videoplayer.ui.screens.HomeScreen
 import com.fam4k007.videoplayer.ui.screens.LicenseScreen
 import com.fam4k007.videoplayer.ui.screens.LogViewerScreen
+import com.fam4k007.videoplayer.ui.screens.UserAgreementScreen
 import com.fam4k007.videoplayer.ui.screens.PlaybackHistoryScreen
 import com.fam4k007.videoplayer.ui.screens.PlaybackSettingsScreen
 import com.fam4k007.videoplayer.ui.screens.FolderBlacklistScreen
 import com.fam4k007.videoplayer.ui.screens.SettingsScreen
+import com.fam4k007.videoplayer.ui.screens.MediaSettingsScreen
+import com.fam4k007.videoplayer.ui.screens.DeviceInfoScreen
 import com.fam4k007.videoplayer.ui.screens.SubtitleSearchScreen
 import com.fam4k007.videoplayer.ui.webdav.WebDavAccountListScreen
 import com.fam4k007.videoplayer.ui.webdav.WebDavBrowserScreen
@@ -153,7 +155,25 @@ fun AppNavGraph(
                 },
                 onNavigateToFolderBlacklist = {
                     navController.navigate(AppScreen.FolderBlacklist)
+                },
+                onNavigateToMediaSettings = {
+                    navController.navigate(AppScreen.MediaSettings)
+                },
+                onNavigateToDeviceInfo = {
+                    navController.navigate(AppScreen.DeviceInfo)
                 }
+            )
+        }
+
+        composable<AppScreen.DeviceInfo> {
+            DeviceInfoScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<AppScreen.MediaSettings> {
+            MediaSettingsScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -209,18 +229,23 @@ fun AppNavGraph(
                     onNavigateBack = { navController.popBackStack() },
                     onPlayVideo = { file, client ->
                         // 构建包含认证信息的 URL
-                        val fileUrl = if (client.config.isAnonymous || client.config.account.isEmpty()) {
+                        val fileUrl = if (client.config.isAnonymous || client.config.account.isNullOrEmpty()) {
                             client.getFileUrl(file.path)
                         } else {
                             val uri = Uri.parse(client.config.serverUrl)
                             val scheme = uri.scheme
                             val host = uri.host
-                            val port = if (uri.port != -1) ":${uri.port}" else ""
-                            val username = Uri.encode(client.config.account)
-                            val password = Uri.encode(client.config.password)
-                            val basePath = uri.path ?: "/"
-                            val encodedPath = file.path.split("/").joinToString("/") { Uri.encode(it) }
-                            "$scheme://$username:$password@$host$port$basePath$encodedPath"
+                            if (scheme.isNullOrEmpty() || host.isNullOrEmpty()) {
+                                // URL 解析失败，降级使用普通 URL
+                                client.getFileUrl(file.path)
+                            } else {
+                                val port = if (uri.port != -1) ":${uri.port}" else ""
+                                val username = Uri.encode(client.config.account.orEmpty())
+                                val password = Uri.encode(client.config.password.orEmpty())
+                                val basePath = uri.path ?: "/"
+                                val encodedPath = file.path.split("/").joinToString("/") { Uri.encode(it) }
+                                "$scheme://$username:$password@$host$port$basePath$encodedPath"
+                            }
                         }
 
                         val intent = Intent(context, VideoPlayerActivity::class.java).apply {
@@ -260,7 +285,7 @@ fun AppNavGraph(
                     navController.navigate(AppScreen.CacheManagement)
                 },
                 onNavigateToUserAgreement = {
-                    context.startActivity(UserAgreementActivity.previewIntent(context))
+                    navController.navigate(AppScreen.UserAgreement)
                 },
                 onSendEmail = {
                     try {
@@ -301,6 +326,14 @@ fun AppNavGraph(
         composable<AppScreen.License> {
             LicenseScreen(
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<AppScreen.UserAgreement> {
+            UserAgreementScreen(
+                showActions = false,
+                onAgree = { navController.popBackStack() },
+                onDecline = { navController.popBackStack() }
             )
         }
 

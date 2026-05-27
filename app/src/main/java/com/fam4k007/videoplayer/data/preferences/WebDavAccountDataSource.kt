@@ -38,12 +38,23 @@ class WebDavAccountDataSource(context: Context) {
     
     /**
      * 获取所有账户
+     * 修复：Gson 反序列化可能将 null 赋给 Kotlin 非空字段，
+     * 导致后续 UI 层使用时 NPE 崩溃。此处对所有字段做防御性空安全处理。
      */
     fun getAllAccounts(): List<WebDavAccount> {
         val json = prefs.getString(KEY_ACCOUNTS, null) ?: return emptyList()
         return try {
             val type = object : TypeToken<List<WebDavAccount>>() {}.type
-            gson.fromJson(json, type)
+            val accounts: List<WebDavAccount> = gson.fromJson(json, type)
+            accounts.map { account ->
+                account.copy(
+                    id = account.id ?: java.util.UUID.randomUUID().toString(),
+                    displayName = account.displayName ?: "未命名账户",
+                    serverUrl = account.serverUrl ?: "",
+                    account = account.account ?: "",
+                    password = account.password ?: "",
+                )
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()

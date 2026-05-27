@@ -17,6 +17,7 @@ import com.fam4k007.videoplayer.domain.player.Anime4KManager
 import com.fam4k007.videoplayer.domain.player.FilePickerManager
 import com.fam4k007.videoplayer.domain.player.GestureHandler
 import com.fam4k007.videoplayer.domain.player.PlaybackEngine
+import `is`.xyz.mpv.MPVLib
 import com.fam4k007.videoplayer.domain.player.PlayerControlsManager
 import com.fam4k007.videoplayer.domain.player.PlayerDialogManager
 import com.fam4k007.videoplayer.ui.player.PlayerControls
@@ -109,6 +110,9 @@ internal fun VideoPlayerActivity.setupComposeTestLayer() {
                         onAnime4KClick = { x, y, w, h ->
                             dialogManager.setLastAnchor(x, y, w, h)
                             dialogManager.showAnime4KModeDialog(anime4KMode)
+                        },
+                        onChapterClick = { _, _, _, _ ->
+                            dialogManager.showChapterDialog()
                         },
                         onDanmakuToggle = {
                             val hasLoadedDanmaku = danmakuManager.getCurrentDanmakuPath() != null
@@ -253,6 +257,41 @@ internal fun VideoPlayerActivity.initializeManagers() {
 
                 // 重置片头片尾跳过标记
                 skipIntroOutroManager.resetFlags()
+
+                // 检测竖屏视频，自动切换为竖屏播放
+                // 参考 mpvEx: 通过 video-params/aspect 获取宽高比，考虑旋转元数据修正
+                if (!intent.getBooleanExtra(EXTRA_AUTO_ROTATE, false)) {
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        try {
+                            val rawAspect = MPVLib.getPropertyDouble("video-params/aspect")
+                            val rotate = MPVLib.getPropertyInt("video-params/rotate") ?: 0
+                            var aspect = if (rawAspect == null || rawAspect < 0.001) {
+                                val w = (MPVLib.getPropertyInt("video-params/w") ?: 0).toDouble()
+                                val h = (MPVLib.getPropertyInt("video-params/h") ?: 0).toDouble()
+                                if (w > 0 && h > 0) w / h else null
+                            } else rawAspect
+                            // 考虑旋转：90° 或 270° 时反转宽高比
+                            if (aspect != null && rotate % 180 == 90) {
+                                aspect = 1.0 / aspect
+                            }
+                            if (aspect != null && aspect <= 1.0) {
+                                com.fam4k007.videoplayer.utils.Logger.d(TAG, "Detected portrait video (aspect=$aspect, rotate=$rotate), switching to portrait mode")
+                                intent.putExtra(EXTRA_PORTRAIT_UI, true)
+                                applyPortraitUiEnabled(true)
+                                refreshVideoLayoutAfterOrientationToggle()
+                            }
+                        } catch (e: Exception) {
+                            com.fam4k007.videoplayer.utils.Logger.w(TAG, "Failed to detect video orientation", e)
+                        }
+                    }, 200)
+                }
+
+                // 加载章节信息并更新 ViewModel（延迟确保 MPV 已解析章节数据）
+                Handler(Looper.getMainLooper()).postDelayed({
+                    val chapters = playbackEngine.getChapters()
+                    viewModel.updateChapters(chapters)
+                    com.fam4k007.videoplayer.utils.Logger.d(TAG, "Loaded ${chapters.size} chapters")
+                }, 300)
 
                 // 延迟标记视频准备好，确保视频真正开始播放
                 Handler(Looper.getMainLooper()).postDelayed({

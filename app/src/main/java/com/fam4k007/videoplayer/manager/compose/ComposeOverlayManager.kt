@@ -20,6 +20,18 @@ class ComposeOverlayManager(
     // 弹窗显示状态回调
     var onPopupVisibilityChanged: ((Boolean) -> Unit)? = null
 
+    // 是否禁用动画（超分开启时由外部设置为 true，消除 GPU 额外负载）
+    var disableAnimations: Boolean = false
+
+    companion object {
+        /**
+         * 全局动画开关，供所有抽屉面板读取。
+         * 由 PlayerDialogManager 在超分模式变化时同步更新。
+         */
+        @Volatile
+        var globalDisableAnimations: Boolean = false
+    }
+
     /**
      * 设置Compose内容
      * @param content Composable内容
@@ -117,6 +129,46 @@ class ComposeOverlayManager(
     /**
      * 显示弹幕设置抽屉
      */
+    // ===== 章节对话框相关 =====
+
+    /**
+     * 显示章节列表面板（右侧抽屉式）
+     */
+    fun showChapterDrawer(
+        chapters: List<Pair<String, Double>>,
+        currentChapter: Int,
+        onChapterClick: (Int) -> Unit
+    ) {
+        val chapterItems = chapters.mapIndexed { _, (title, timeSeconds) ->
+            val timeText = formatChapterTime(timeSeconds)
+            com.fam4k007.videoplayer.manager.compose.ChapterItem(title, timeText)
+        }
+        setContent {
+            com.fam4k007.videoplayer.manager.compose.ChapterDrawer(
+                chapters = chapterItems,
+                currentChapterIndex = currentChapter,
+                onChapterClick = onChapterClick,
+                composeOverlayManager = this,
+                onDismiss = { clearContent() }
+            )
+        }
+    }
+
+    /**
+     * 格式化章节时间
+     */
+    private fun formatChapterTime(seconds: Double): String {
+        val totalSecs = seconds.toInt()
+        val hours = totalSecs / 3600
+        val minutes = (totalSecs % 3600) / 60
+        val secs = totalSecs % 60
+        return if (hours > 0) {
+            String.format("%d:%02d:%02d", hours, minutes, secs)
+        } else {
+            String.format("%02d:%02d", minutes, secs)
+        }
+    }
+
     fun showDanmakuSettingsDrawer(
         danmakuPath: String?,
         currentSize: Int,

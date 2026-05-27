@@ -282,6 +282,12 @@ fun AboutScreen(
                 com.fam4k007.videoplayer.utils.UpdateManager.openDownloadPage(context, url)
                 showUpdateDialog = false
             },
+            onSecondaryDownload = { url ->
+                if (url.isNotBlank()) {
+                    com.fam4k007.videoplayer.utils.UpdateManager.openDownloadPage(context, url)
+                }
+                showUpdateDialog = false
+            },
             onIgnore = {
                 prefs.setIgnoredUpdateVersion(updateInfo!!.versionName)
                 showUpdateDialog = false

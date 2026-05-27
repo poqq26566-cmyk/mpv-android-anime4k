@@ -306,6 +306,7 @@ fun PortraitBottomControls(
     onDanmakuToggle: () -> Unit = {},
     onRotateClick: () -> Unit = {},
     onSpeedClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
+    onChapterClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
     modifier: Modifier = Modifier,
 ) {
     // 收集状态
@@ -319,6 +320,11 @@ fun PortraitBottomControls(
     val anime4KMode by viewModel.anime4KMode.collectAsState()
     val seekTimeSeconds by viewModel.seekTimeSeconds.collectAsState()
     val seekbarStyleName by viewModel.seekbarStyle.collectAsState()
+    val showRemainingTime by viewModel.showRemainingTime.collectAsState()
+    val chapters by viewModel.chapters.collectAsState()
+    val currentChapterName by viewModel.currentChapterName.collectAsState()
+    val hasChapters by viewModel.hasChapters.collectAsState()
+    val chapterBarEnabled by viewModel.chapterBarEnabled.collectAsState()
 
     // 拖动进度状态
     var sliderPosition by remember { mutableStateOf<Float?>(null) }
@@ -486,6 +492,49 @@ fun PortraitBottomControls(
 
         Spacer(modifier = Modifier.height(4.dp))
 
+        // ── 章节名称行（仅在有章节信息且启用章节控制时显示）──
+        if (hasChapters && chapterBarEnabled) {
+            var chapterBounds by remember { mutableStateOf(android.graphics.Rect()) }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 1.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .onGloballyPositioned { coords ->
+                            val r = coords.boundsInWindow()
+                            chapterBounds = android.graphics.Rect(
+                                r.left.toInt(), r.top.toInt(),
+                                r.right.toInt(), r.bottom.toInt()
+                            )
+                        }
+                        .clickable {
+                            chapterBounds.let { b ->
+                                onChapterClick(b.left, b.top, b.width(), b.height())
+                            }
+                            viewModel.resetAutoHideTimer()
+                        }
+                        .padding(horizontal = 2.dp, vertical = 1.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = currentChapterName ?: "",
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.width(2.dp))
+                    Text(
+                        text = "❯",
+                        color = Color.White.copy(alpha = 0.6f),
+                        fontSize = 11.sp
+                    )
+                }
+            }
+        }
+
         // ── Row 2: 进度条 + 时间 ──
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -507,6 +556,7 @@ fun PortraitBottomControls(
                     }
             ) {
                 val seekbarStyle = SeekbarStyle.fromName(seekbarStyleName)
+                val chapterTimes = if (chapterBarEnabled) chapters.map { it.timeSeconds.toFloat() } else emptyList()
                 CustomSeekbar(
                     progress = displayPosition,
                     duration = duration.toFloat().coerceAtLeast(1f),
@@ -514,6 +564,11 @@ fun PortraitBottomControls(
                     accentColor = MaterialTheme.colorScheme.primary,
                     paused = paused == true,
                     isDragging = isDragging,
+                    chapters = chapterTimes,
+                    onChapterClick = { index ->
+                        viewModel.seekToChapter(index)
+                        viewModel.resetAutoHideTimer()
+                    },
                     onSeek = { newValue ->
                         if (!isDragging) {
                             isDragging = true
@@ -531,11 +586,20 @@ fun PortraitBottomControls(
                 )
             }
 
+            // 总时长/剩余时间（点击切换）
+            val durationText = if (showRemainingTime) {
+                val remaining = duration - displayPosition.toInt()
+                "-${formatTimeP(remaining)}"
+            } else {
+                formatTimeP(duration)
+            }
             Text(
-                text = formatTimeP(duration),
+                text = durationText,
                 color = Color.White,
                 fontSize = 12.sp,
-                modifier = Modifier.padding(start = 6.dp),
+                modifier = Modifier
+                    .padding(start = 6.dp)
+                    .clickable { viewModel.toggleRemainingTimeDisplay() }
             )
         }
 

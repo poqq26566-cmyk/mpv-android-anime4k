@@ -3,7 +3,7 @@ package com.fam4k007.videoplayer.domain.player
 import android.net.Uri
 import android.util.Log
 import androidx.documentfile.provider.DocumentFile
-import com.fam4k007.videoplayer.utils.NoMediaChecker
+import com.fam4k007.videoplayer.utils.ScanFilter
 import java.io.File
 
 /**
@@ -232,7 +232,7 @@ class SeriesManager {
                     }
                 }
                 "file" -> {
-                    videos.addAll(getVideosFromFile(uri))
+                    videos.addAll(getVideosFromFile(context, uri))
                 }
             }
         } catch (e: Exception) {
@@ -264,16 +264,15 @@ class SeriesManager {
                             val parentDir = file.parentFile
 
                             if (parentDir != null && parentDir.exists() && parentDir.isDirectory) {
-                                // 检查父目录是否包含 .nomedia 文件
-                                if (NoMediaChecker.folderHasNoMedia(parentDir.absolutePath)) {
-                                    Log.d(TAG, "父目录包含 .nomedia 文件，跳过: ${parentDir.absolutePath}")
+                                // 使用 ScanFilter 统一检查
+                                if (ScanFilter.shouldSkipFolder(context, parentDir.absolutePath)) {
+                                    Log.d(TAG, "ScanFilter 跳过文件夹: ${parentDir.absolutePath}")
                                     return videos
                                 }
                                 
                                 parentDir.listFiles()?.forEach { f ->
                                     if (f.isFile && f.extension.lowercase() in VIDEO_EXTENSIONS) {
-                                        // 再次检查文件路径
-                                        if (!NoMediaChecker.fileInNoMediaFolder(f.absolutePath)) {
+                                        if (!ScanFilter.shouldSkipFile(context, f.absolutePath)) {
                                             videos.add(Uri.fromFile(f))
                                         }
                                     }
@@ -324,7 +323,7 @@ class SeriesManager {
         return videos
     }
 
-    private fun getVideosFromFile(uri: Uri): List<Uri> {
+    private fun getVideosFromFile(context: android.content.Context, uri: Uri): List<Uri> {
         val videos = mutableListOf<Uri>()
 
         uri.path?.let { path ->
@@ -332,16 +331,15 @@ class SeriesManager {
             val parentDir = file.parentFile
 
             if (parentDir != null && parentDir.exists() && parentDir.isDirectory) {
-                // 检查父目录是否包含 .nomedia 文件
-                if (NoMediaChecker.folderHasNoMedia(parentDir.absolutePath)) {
-                    Log.d(TAG, "父目录包含 .nomedia 文件，跳过: ${parentDir.absolutePath}")
+                // 使用 ScanFilter 统一检查
+                if (ScanFilter.shouldSkipFolder(context, parentDir.absolutePath)) {
+                    Log.d(TAG, "ScanFilter 跳过文件夹: ${parentDir.absolutePath}")
                     return videos
                 }
                 
                 parentDir.listFiles()?.forEach { f ->
                     if (f.isFile && f.extension.lowercase() in VIDEO_EXTENSIONS) {
-                        // 再次检查文件路径
-                        if (!NoMediaChecker.fileInNoMediaFolder(f.absolutePath)) {
+                        if (!ScanFilter.shouldSkipFile(context, f.absolutePath)) {
                             videos.add(Uri.fromFile(f))
                         }
                     }

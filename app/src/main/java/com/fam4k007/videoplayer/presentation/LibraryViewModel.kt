@@ -8,6 +8,9 @@ import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.repository.VideoRepository
 import com.fam4k007.videoplayer.repository.VideoSortOrder
 import com.fam4k007.videoplayer.utils.Logger
+import com.fam4k007.videoplayer.utils.media.MediaLibraryEvents
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -59,6 +62,27 @@ class LibraryViewModel(
     init {
         // 从 PreferencesManager 恢复保存的排序设置
         loadSavedSortSettings()
+
+        // 1. 先显示缓存的文件夹列表（秒开），再后台刷新
+        viewModelScope.launch {
+            val cached = videoRepository.loadFolderCache()
+            if (cached != null) {
+                val sorted = filterBlacklistedFolders(cached)
+                _folderListState.value = _folderListState.value.copy(folders = sorted)
+                Logger.d(TAG, "显示缓存的 ${sorted.size} 个文件夹")
+            }
+            // 首次完整扫描
+            scanVideoFolders()
+        }
+
+        // 2. 监听媒体库变化事件，自动刷新
+        viewModelScope.launch {
+            MediaLibraryEvents.changes.collect {
+                Logger.d(TAG, "收到媒体库变化通知，延迟 2 秒后自动刷新")
+                delay(2000) // 等 MediaScanner 完成索引更新
+                scanVideoFolders()
+            }
+        }
     }
     
     /**
@@ -126,6 +150,8 @@ class LibraryViewModel(
                     folders = sortedFolders,
                     isLoading = false
                 )
+                // 缓存扫描结果到 SharedPreferences，下次秒开
+                videoRepository.saveFolderCache(sortedFolders)
                 Logger.d(TAG, "Scanned ${allFolders.size} video folders, filtered ${allFolders.size - folders.size} blacklisted")
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to scan video folders", e)
@@ -138,12 +164,13 @@ class LibraryViewModel(
     }
     
     /**
-     * 刷新文件夹列表
+     * 刷新文件夹列表（触发 MediaStore 重新扫描 + 直接文件扫描）
      */
     fun refreshFolders() {
         viewModelScope.launch {
             try {
                 _folderListState.value = _folderListState.value.copy(isRefreshing = true, error = null)
+
                 val allFolders = videoRepository.scanAllVideoFolders()
                 val folders = filterBlacklistedFolders(allFolders)
                 val sortedFolders = sortFolders(folders, _folderListState.value.sortType, _folderListState.value.sortOrder)
@@ -302,15 +329,22 @@ class LibraryViewModel(
     
     // ==================== 视频搜索 ====================
     
+    private var searchJob: kotlinx.coroutines.Job? = null
+
     /**
-     * 搜索视频
+     * 搜索视频（带 300ms 防抖）
      */
     fun searchVideos(query: String) {
-        val filtered = filterVideos(_videoListState.value.videos, query)
-        _videoListState.value = _videoListState.value.copy(
-            searchQuery = query,
-            filteredVideos = filtered
-        )
+        // 取消上一次搜索
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(300)  // 防抖：用户停止输入 300ms 后再执行搜索
+            val filtered = filterVideos(_videoListState.value.videos, query)
+            _videoListState.value = _videoListState.value.copy(
+                searchQuery = query,
+                filteredVideos = filtered
+            )
+        }
     }
     
     private fun filterVideos(videos: List<VideoFileParcelable>, query: String): List<VideoFileParcelable> {

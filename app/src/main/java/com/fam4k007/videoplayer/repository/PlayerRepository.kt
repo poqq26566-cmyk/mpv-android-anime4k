@@ -395,6 +395,34 @@ class PlayerRepository(
     }
     
     /**
+     * 获取是否启用章节进度条
+     */
+    fun isChapterBarEnabled(): Boolean {
+        return preferencesManager.isChapterBarEnabled()
+    }
+
+    /**
+     * 设置章节进度条开关
+     */
+    fun setChapterBarEnabled(enabled: Boolean) {
+        preferencesManager.setChapterBarEnabled(enabled)
+    }
+
+    /**
+     * 获取是否显示剩余时间
+     */
+    fun isShowRemainingTimeEnabled(): Boolean {
+        return preferencesManager.getShowRemainingTime()
+    }
+
+    /**
+     * 设置剩余时间显示开关
+     */
+    fun setShowRemainingTimeEnabled(enabled: Boolean) {
+        preferencesManager.setShowRemainingTime(enabled)
+    }
+
+    /**
      * 设置弹幕最大行数
      */
     fun setDanmakuMaxLines(maxLines: Int) {
@@ -485,6 +513,22 @@ class PlayerRepository(
         preferencesManager.setSeekbarStyle(style)
     }
 
+    // ==================== MPV 解码器预设 ====================
+
+    /**
+     * 获取 MPV 解码器预设
+     */
+    fun getMpvProfile(): String {
+        return preferencesManager.getMpvProfile()
+    }
+
+    /**
+     * 设置 MPV 解码器预设
+     */
+    fun setMpvProfile(profile: String) {
+        preferencesManager.setMpvProfile(profile)
+    }
+
     /**
      * 是否启用播放倍速记忆
      */
@@ -527,6 +571,18 @@ class PlayerRepository(
      */
     fun setPreciseSeekingEnabled(enabled: Boolean) {
         preferencesManager.setPreciseSeekingEnabled(enabled)
+    }
+    
+    // ==================== 音量增强 ====================
+    
+    // ==================== 控制系统音量 ====================
+    
+    fun isControlSystemVolume(): Boolean {
+        return preferencesManager.isControlSystemVolume()
+    }
+    
+    fun setControlSystemVolume(enabled: Boolean) {
+        preferencesManager.setControlSystemVolume(enabled)
     }
     
     // ==================== 音量增强 ====================

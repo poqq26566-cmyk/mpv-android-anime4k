@@ -343,11 +343,98 @@ class PlayerViewModel(
     // 是否为在线视频
     private val _isOnlineVideo = MutableStateFlow(false)
     val isOnlineVideo: StateFlow<Boolean> = _isOnlineVideo.asStateFlow()
+
+    // 实时下载网速（KB/s），仅在线播放时有效
+    private val _downloadSpeedKbps = MutableStateFlow(0)
+    val downloadSpeedKbps: StateFlow<Int> = _downloadSpeedKbps.asStateFlow()
     
     // 加载动画显示状态（在线视频缓冲/加载时显示）
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     
+    // 剩余时间显示切换状态（点击进度条右侧时间文本切换为剩余时间/总时长）
+    private val _showRemainingTime = MutableStateFlow(false)
+    val showRemainingTime: StateFlow<Boolean> = _showRemainingTime.asStateFlow()
+    
+    /**
+     * 切换剩余时间/总时长显示
+     */
+    fun toggleRemainingTimeDisplay() {
+        val newValue = !_showRemainingTime.value
+        _showRemainingTime.value = newValue
+        playerRepository.setShowRemainingTimeEnabled(newValue)
+    }
+
+    // ==================== 章节管理 ====================
+
+    // 章节进度条开关（从 PreferencesManager 加载）
+    private val _chapterBarEnabled = MutableStateFlow(true)
+    val chapterBarEnabled: StateFlow<Boolean> = _chapterBarEnabled.asStateFlow()
+
+    /**
+     * 章节信息
+     */
+    data class Chapter(
+        val title: String,
+        val timeSeconds: Double
+    )
+
+    // 章节列表
+    private val _chapters = MutableStateFlow<List<Chapter>>(emptyList())
+    val chapters: StateFlow<List<Chapter>> = _chapters.asStateFlow()
+
+    // 当前所在章节索引
+    private val _currentChapterIndex = MutableStateFlow(-1)
+    val currentChapterIndex: StateFlow<Int> = _currentChapterIndex.asStateFlow()
+
+    // 当前章节名称（无章节时为 null）
+    val currentChapterName: StateFlow<String?> = combine(_chapters, _currentChapterIndex) { chapters, index ->
+        if (index in chapters.indices) chapters[index].title else null
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    // 是否有章节信息
+    val hasChapters: StateFlow<Boolean> = _chapters.map { it.isNotEmpty() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /**
+     * 更新章节列表（在文件加载时调用）
+     */
+    fun updateChapters(chapters: List<Pair<String, Double>>) {
+        _chapters.value = chapters.map { (title, time) -> Chapter(title, time) }
+        _currentChapterIndex.value = -1
+    }
+
+    /**
+     * 根据当前播放位置更新当前章节索引
+     */
+    fun updateCurrentChapter(positionSeconds: Double) {
+        val chapters = _chapters.value
+        if (chapters.isEmpty() || positionSeconds < 0) {
+            _currentChapterIndex.value = -1
+            return
+        }
+        // 从后往前找，找到最后一个 startTime <= positionSeconds 的章节
+        var index = -1
+        for (i in chapters.indices) {
+            if (chapters[i].timeSeconds <= positionSeconds) {
+                index = i
+            } else {
+                break
+            }
+        }
+        _currentChapterIndex.value = index
+    }
+
+    /**
+     * 跳转到指定章节
+     */
+    fun seekToChapter(index: Int) {
+        val chapters = _chapters.value
+        if (index in chapters.indices) {
+            seekTo(chapters[index].timeSeconds.toInt())
+        }
+    }
+
     // 保存的播放位置（用于恢复播放）
     private val _savedPosition = MutableStateFlow(0.0)
     val savedPosition: StateFlow<Double> = _savedPosition.asStateFlow()
@@ -430,6 +517,10 @@ class PlayerViewModel(
             .takeIf { it.isNotEmpty() }
             ?: listOf(0.75f, 1.0f, 1.25f, 1.5f, 2.0f)
         _customSpeedPresets.value = parsedPresets
+        // 加载剩余时间显示偏好
+        _showRemainingTime.value = playerRepository.isShowRemainingTimeEnabled()
+        // 加载章节进度条开关
+        _chapterBarEnabled.value = playerRepository.isChapterBarEnabled()
     }
     
     // 轮询协程的Job
@@ -452,6 +543,7 @@ class PlayerViewModel(
                 try {
                     MPVLib.getPropertyDouble("time-pos")?.let {
                         _precisePosition.value = it
+                        updateCurrentChapter(it)
                     }
                 } catch (e: Exception) {
                     // 忽略错误，可能MPV还未初始化
@@ -460,6 +552,24 @@ class PlayerViewModel(
             }
         }
         
+        // 轮询更新网速（仅在线视频）
+        viewModelScope.launch {
+            while (isActive && mpvInitialized) {
+                if (_isOnlineVideo.value) {
+                    try {
+                        // cache-speed 返回的是字节/秒，除以 1024 转 KB/s
+                        val speedBytes = MPVLib.getPropertyInt("cache-speed") ?: 0
+                        _downloadSpeedKbps.value = speedBytes / 1024
+                    } catch (_: Exception) {
+                        _downloadSpeedKbps.value = 0
+                    }
+                } else {
+                    if (_downloadSpeedKbps.value != 0) _downloadSpeedKbps.value = 0
+                }
+                delay(1000)
+            }
+        }
+
         // 轮询更新高精度时长
         durationPollingJob = viewModelScope.launch {
             var lastDuration = 0
@@ -966,6 +1076,9 @@ class PlayerViewModel(
         _anime4KEnabled.value = enabled
         _anime4KMode.value = mode
         _anime4KQuality.value = quality
+        // 超分开启时全局禁用动画，消除 GPU 额外负载
+        com.fam4k007.videoplayer.manager.compose.ComposeOverlayManager.globalDisableAnimations =
+            enabled && mode != Anime4KManager.Mode.OFF
         Logger.d(TAG, "Anime4K: enabled=$enabled, mode=$mode, quality=$quality")
     }
     
@@ -1431,32 +1544,76 @@ class PlayerViewModel(
         Logger.d(TAG, "Speed changed to: ${speed}x")
     }
     
+    // ==================== Seek 防抖合并（参考 mpvEx coalesceSeek）====================
+    private var seekCoalesceJob: Job? = null
+    private var pendingSeekOffset = 0
+    private val seekCoalesceDelayMs = 60L  // 60ms 防抖窗口，期间累积多次点击的偏移量
+
     /**
-     * Seek到指定位置
+     * 防抖合并的 seekBy（参考 mpvEx）
+     * 快速连续点击时，将多次偏移量累加后只执行一次 seek，避免 MPV 过载
+     */
+    private fun coalesceSeek(offset: Int) {
+        pendingSeekOffset += offset
+        seekCoalesceJob?.cancel()
+        seekCoalesceJob = viewModelScope.launch {
+            delay(seekCoalesceDelayMs)
+            val toApply = pendingSeekOffset
+            pendingSeekOffset = 0
+            if (toApply != 0) {
+                // 临时启用精确跳转（参考 mpvEx 动态 hr-seek 管理）
+                val hrSeekEnabled = playerRepository.isPreciseSeekingEnabled()
+                if (!hrSeekEnabled) {
+                    MPVLib.setPropertyString("hr-seek", "yes")
+                }
+                // 使用 mpv 原生相对跳转 "relative+exact"（参考 mpvKt/mpvEx）
+                // 避免在 Kotlin 层做位置计算，由 MPV 内部处理偏移
+                MPVLib.command("seek", toApply.toString(), "relative+exact")
+                if (!hrSeekEnabled) {
+                    MPVLib.setPropertyString("hr-seek", "no")
+                }
+                Logger.d(TAG, "Seek coalesced: $toApply (relative+exact, hr-seek=$hrSeekEnabled)")
+            }
+        }
+    }
+
+    /**
+     * Seek到指定位置（绝对位置跳转，用于进度条、滑动手势）
      */
     fun seekTo(position: Int) {
-        MPVLib.setPropertyInt("time-pos", position)
+        val safePosition = position.coerceAtLeast(0)
+        val hrSeekEnabled = playerRepository.isPreciseSeekingEnabled()
+        if (!hrSeekEnabled) {
+            MPVLib.setPropertyString("hr-seek", "yes")
+        }
+        MPVLib.command("seek", safePosition.toString(), "absolute+exact")
+        if (!hrSeekEnabled) {
+            MPVLib.setPropertyString("hr-seek", "no")
+        }
         // 发射Seek事件，通知Activity同步弹幕进度
-        _seekEvent.tryEmit(position)
-        Logger.d(TAG, "Seek to: $position")
+        _seekEvent.tryEmit(safePosition)
+        Logger.d(TAG, "Seek to: $safePosition (absolute+exact, hr-seek=$hrSeekEnabled)")
     }
     
     /**
-     * 相对Seek（前进/后退）
+     * 相对Seek（前进/后退按钮）
+     * 使用 mpv 原生相对跳转 "relative+exact" + 防抖合并
      * @param seconds 偏移秒数
-     * @param atTop 指示器是否显示在顶部（true=按钮点击显示在顶部，false=双击手势显示在侧边）
+     * @param atTop 指示器是否显示在顶部
      */
     fun seekRelative(seconds: Int, atTop: Boolean = true) {
-        val currentPos = position.value
-        val newPos = (currentPos + seconds).coerceAtLeast(0)
-        seekTo(newPos)
+        // 使用防抖合并的 seek（参考 mpvEx coalesceSeek 算法）
+        coalesceSeek(seconds)
         
         // 显示seek指示器
         _seekOffset.value = seconds
         _seekIndicatorShown.value = true
         _seekIndicatorAtTop.value = atTop
         
-        // 1秒后自动隐藏
+        // 发射Seek事件用于弹幕同步
+        _seekEvent.tryEmit(position.value + seconds)
+        
+        // 1秒后自动隐藏指示器
         viewModelScope.launch {
             delay(1000)
             _seekIndicatorShown.value = false

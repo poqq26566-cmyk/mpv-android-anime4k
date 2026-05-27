@@ -224,6 +224,7 @@
 - **[B站弹幕下载](docs/bilibili_danmaku_download.md)** - 弹幕下载算法和优化策略
 - **[B站下载原理](docs/bilibili_download_principle.md)** - 视频/番剧下载实现原理
 - **[B站安全分析](docs/bilibili_security_analysis.md)** - 反爬虫和安全机制分析
+- **[设备信息获取](docs/device_info_detection.md)** - 设备硬件检测原理和 API 参考
 
 ---
 

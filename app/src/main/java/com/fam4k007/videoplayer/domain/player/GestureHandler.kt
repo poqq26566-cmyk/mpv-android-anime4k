@@ -49,6 +49,7 @@ class GestureHandler(
         private const val PREF_NAME = "player_preferences"
         private const val KEY_PRECISE_SEEKING = "precise_seeking"
         private const val KEY_VOLUME_BOOST_ENABLED = "volume_boost_enabled"
+        private const val KEY_CONTROL_SYSTEM_VOLUME = "control_system_volume"
     }
     
     // PlayerControlsManager引用（用于检查锁定状态）
@@ -82,6 +83,9 @@ class GestureHandler(
     
     // 音量增强设置
     private var volumeBoostEnabled = false  // 默认关闭音量增强
+    
+    // 控制系统音量设置
+    private var controlSystemVolume = false  // 默认关闭（退出时恢复音量）
     
     // 双击手势设置
     private var doubleTapMode = 1  // 0=暂停/播放, 1=快进/快退（默认为快进快退）
@@ -144,6 +148,7 @@ class GestureHandler(
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         usePreciseSeeking = prefs.getBoolean(KEY_PRECISE_SEEKING, false)
         volumeBoostEnabled = prefs.getBoolean(KEY_VOLUME_BOOST_ENABLED, false)  // 默认关闭
+        controlSystemVolume = prefs.getBoolean(KEY_CONTROL_SYSTEM_VOLUME, false)  // 默认关闭
         
         // 读取双击手势设置
         doubleTapMode = prefs.getInt(com.fam4k007.videoplayer.AppConstants.Preferences.DOUBLE_TAP_MODE, 
@@ -745,22 +750,27 @@ class GestureHandler(
      */
     fun restoreOriginalSettings() {
         try {
-            // 恢复MPV音量为进入时的原始百分比
-            try {
-                MPVLib.setPropertyInt("volume", originalMPVVolumePercent.toInt())
-                Log.d(TAG, "Restored MPV volume to original: ${originalMPVVolumePercent.toInt()}%")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to restore MPV volume", e)
-            }
-            
-            // 恢复原始系统音量（音量增强模式修改过系统音量，普通模式未修改但确保恢复）
-            if (originalSystemVolume >= 0) {
+            // 如果开启了"控制系统音量"，则不恢复音量，保持退出时的当前音量
+            if (!controlSystemVolume) {
+                // 恢复MPV音量为进入时的原始百分比
                 try {
-                    audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, originalSystemVolume, 0)
-                    Log.d(TAG, "Restored system volume: $originalSystemVolume/$maxSystemVolume")
+                    MPVLib.setPropertyInt("volume", originalMPVVolumePercent.toInt())
+                    Log.d(TAG, "Restored MPV volume to original: ${originalMPVVolumePercent.toInt()}%")
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to restore system volume", e)
+                    Log.e(TAG, "Failed to restore MPV volume", e)
                 }
+                
+                // 恢复原始系统音量（音量增强模式修改过系统音量，普通模式未修改但确保恢复）
+                if (originalSystemVolume >= 0) {
+                    try {
+                        audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, originalSystemVolume, 0)
+                        Log.d(TAG, "Restored system volume: $originalSystemVolume/$maxSystemVolume")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to restore system volume", e)
+                    }
+                }
+            } else {
+                Log.d(TAG, "Control system volume enabled, skipping volume restore")
             }
             
             // 恢复原始亮度

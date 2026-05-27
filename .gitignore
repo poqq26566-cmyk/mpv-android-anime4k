@@ -33,8 +33,9 @@ proguard/
 # Log Files
 *.log
 
-# IDE - Android Studio / IntelliJ
+# IDE
 .idea/
+.vscode/
 *.iml
 .idea/workspace.xml
 .idea/tasks.xml

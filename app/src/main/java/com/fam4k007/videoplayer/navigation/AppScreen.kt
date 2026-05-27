@@ -28,9 +28,17 @@ sealed interface AppScreen {
     @Serializable
     data object FolderBlacklist : AppScreen
 
+    /** 其他媒体设置页 */
+    @Serializable
+    data object MediaSettings : AppScreen
+
     /** 关于页 */
     @Serializable
     data object About : AppScreen
+
+    /** 设备信息页 */
+    @Serializable
+    data object DeviceInfo : AppScreen
 
     /** 错误日志页 */
     @Serializable
@@ -43,6 +51,10 @@ sealed interface AppScreen {
         /** 开源许可页 */
         @Serializable
         data object License : AppScreen
+
+    /** 用户协议页 */
+    @Serializable
+    data object UserAgreement : AppScreen
 
     /** WebDAV 账户列表页 */
     @Serializable

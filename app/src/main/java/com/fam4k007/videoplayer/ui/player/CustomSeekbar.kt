@@ -45,6 +45,8 @@ import kotlinx.coroutines.launch
  * @param onSeekFinished 用户完成拖动时的回调
  * @param paused 是否暂停
  * @param isDragging 是否正在拖动中（由外部控制）
+ * @param chapters 章节时间点列表（秒），用于在进度条上标记小圆点
+ * @param onChapterClick 点击章节标记时的回调，参数为章节索引
  * @param modifier Modifier
  */
 @Composable
@@ -57,6 +59,8 @@ fun CustomSeekbar(
     onSeekFinished: () -> Unit,
     paused: Boolean = false,
     isDragging: Boolean = false,
+    chapters: List<Float> = emptyList(),
+    onChapterClick: ((Int) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     when (seekbarStyle) {
@@ -69,6 +73,8 @@ fun CustomSeekbar(
             isScrubbing = isDragging,
             onSeek = onSeek,
             onSeekFinished = onSeekFinished,
+            chapters = chapters,
+            onChapterClick = onChapterClick,
             modifier = modifier,
         )
         SeekbarStyle.Thick -> StandardOrThickSeekbar(
@@ -80,6 +86,8 @@ fun CustomSeekbar(
             isScrubbing = isDragging,
             onSeek = onSeek,
             onSeekFinished = onSeekFinished,
+            chapters = chapters,
+            onChapterClick = onChapterClick,
             modifier = modifier,
         )
         SeekbarStyle.Wavy -> WavySeekbar(
@@ -90,6 +98,8 @@ fun CustomSeekbar(
             isScrubbing = isDragging,
             onSeek = onSeek,
             onSeekFinished = onSeekFinished,
+            chapters = chapters,
+            onChapterClick = onChapterClick,
             modifier = modifier,
         )
     }
@@ -112,6 +122,8 @@ private fun StandardOrThickSeekbar(
     isScrubbing: Boolean,
     onSeek: (Float) -> Unit,
     onSeekFinished: () -> Unit,
+    chapters: List<Float> = emptyList(),
+    onChapterClick: ((Int) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var heightFraction by remember { mutableFloatStateOf(1f) }
@@ -238,6 +250,30 @@ private fun StandardOrThickSeekbar(
                     center = Offset(thumbX, thumbY),
                 )
             }
+
+            // 章节标记小圆点
+            if (duration > 0f) {
+                val dotRadius = 3.dp.toPx()
+                chapters.forEach { chapterTime ->
+                    val fraction = (chapterTime / duration).coerceIn(0f, 1f)
+                    val dotX = fraction * size.width
+                    // 在滑块上方绘制小圆点
+                    val dotY = trackH / 2f
+                    val isPlayed = fraction <= playedFraction
+                    drawCircle(
+                        color = if (isPlayed) Color.White else primaryColor.copy(alpha = 0.7f),
+                        radius = dotRadius,
+                        center = Offset(dotX, dotY),
+                    )
+                    // 小圆点描边
+                    drawCircle(
+                        color = Color.Black.copy(alpha = 0.3f),
+                        radius = dotRadius,
+                        center = Offset(dotX, dotY),
+                        style = Stroke(width = 1.dp.toPx())
+                    )
+                }
+            }
         }
     }
 }
@@ -255,6 +291,8 @@ private fun WavySeekbar(
     isScrubbing: Boolean,
     onSeek: (Float) -> Unit,
     onSeekFinished: () -> Unit,
+    chapters: List<Float> = emptyList(),
+    onChapterClick: ((Int) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var phaseOffset by remember { mutableFloatStateOf(0f) }
@@ -380,6 +418,27 @@ private fun WavySeekbar(
                 strokeWidth = barWidth,
                 cap = StrokeCap.Round,
             )
+
+            // 章节标记小圆点
+            if (duration > 0f) {
+                val dotRadius = 3.dp.toPx()
+                chapters.forEach { chapterTime ->
+                    val fraction = (chapterTime / duration).coerceIn(0f, 1f)
+                    val dotX = fraction * size.width
+                    val isPlayed = fraction <= playedFraction
+                    drawCircle(
+                        color = if (isPlayed) Color.White else primaryColor.copy(alpha = 0.7f),
+                        radius = dotRadius,
+                        center = Offset(dotX, centerY),
+                    )
+                    drawCircle(
+                        color = Color.Black.copy(alpha = 0.3f),
+                        radius = dotRadius,
+                        center = Offset(dotX, centerY),
+                        style = Stroke(width = 1.dp.toPx())
+                    )
+                }
+            }
         }
     }
 }
