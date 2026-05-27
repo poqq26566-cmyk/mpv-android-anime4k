@@ -87,6 +87,12 @@ class MainActivity : BaseActivity() {
                                 UpdateManager.openDownloadPage(activity, url)
                                 showUpdateDialog = false
                             },
+                            onSecondaryDownload = { url ->
+                                if (url.isNotBlank()) {
+                                    UpdateManager.openDownloadPage(activity, url)
+                                }
+                                showUpdateDialog = false
+                            },
                             onIgnore = {
                                 prefs.setIgnoredUpdateVersion(info.versionName)
                                 showUpdateDialog = false

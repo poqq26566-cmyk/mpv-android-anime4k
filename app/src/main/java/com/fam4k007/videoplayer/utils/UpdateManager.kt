@@ -20,13 +20,16 @@ object UpdateManager {
     // GitHub Releases API 地址
     private const val GITHUB_API_URL = "https://api.github.com/repos/azxcvn/mpv-android-anime4k/releases/latest"
     
-    // 自定义下载地址（金山文档）- 优先使用此地址，对国内用户友好
-    private const val CUSTOM_DOWNLOAD_URL = "https://www.kdocs.cn/l/cqqJw4RUp3Rt"
+    // 自定义下载地址
+    private const val CUSTOM_DOWNLOAD_URL = "https://b23.tv/0xk3O0m"
+    // 备用下载地址
+    private const val SECONDARY_DOWNLOAD_URL = "https://docs.qq.com/aio/p/scektroglatideb?p=pJTx0TLuJpKfJrmfpzYPBA&nlc=1"
     
     data class UpdateInfo(
         val versionName: String,
         val versionCode: Int,
         val downloadUrl: String,
+        val secondaryDownloadUrl: String,
         val releaseNotes: String,
         val publishedAt: String
     )
@@ -108,6 +111,7 @@ object UpdateManager {
                         versionName = versionName,
                         versionCode = latestVersionCode,
                         downloadUrl = downloadUrl,
+                        secondaryDownloadUrl = SECONDARY_DOWNLOAD_URL,
                         releaseNotes = body,
                         publishedAt = publishedAt
                     )

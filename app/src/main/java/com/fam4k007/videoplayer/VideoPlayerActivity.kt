@@ -52,6 +52,7 @@ import com.fam4k007.videoplayer.domain.player.SubtitleDialogCallback
 import com.fam4k007.videoplayer.domain.player.DanmakuDialogCallback
 import com.fam4k007.videoplayer.domain.player.MoreOptionsCallback
 import com.fam4k007.videoplayer.domain.player.VideoAspectCallback
+import com.fam4k007.videoplayer.service.BackgroundPlaybackService
 import com.fam4k007.videoplayer.domain.player.VideoUriProvider
 import com.fam4k007.videoplayer.utils.FormatUtils
 import com.fam4k007.videoplayer.utils.UriUtils.resolveUri
@@ -212,6 +213,11 @@ class VideoPlayerActivity : AppCompatActivity(),
     internal var wasPlayingBeforeSubtitlePicker = false
     
     internal var wasPlayingBeforeDanmakuPicker = false
+
+    // ==================== 后台播放（听视频）====================
+    
+    /** 用户手动触发了后台播放 */
+    private var isManualBackgroundPlayback = false
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -438,6 +444,9 @@ class VideoPlayerActivity : AppCompatActivity(),
         val volumeBoost = preferencesManager.isVolumeBoostEnabled()
         viewModel.setVolumeBoostEnabled(volumeBoost)
         
+        // 创建后台播放通知渠道
+        BackgroundPlaybackService.createNotificationChannel(this)
+        
         // 【阶段2.1】添加Compose测试层（不影响现有XML布局）
         setupComposeTestLayer()
         
@@ -526,6 +535,13 @@ class VideoPlayerActivity : AppCompatActivity(),
     override fun onStop() {
         super.onStop()
         
+        // 后台播放模式：不暂停视频，让 Service 继续控制，但仍保存播放进度
+        if (isManualBackgroundPlayback) {
+            Log.d(TAG, "Background playback active, keeping video playing in background")
+            savePlaybackState()
+            return
+        }
+        
         // 当Activity完全不可见时（Home键、锁屏等），自动暂停视频
         // 不会影响文件选择器等操作，因为那些只触发onPause不触发onStop
         if (::playbackEngine.isInitialized && isPlaying) {
@@ -550,6 +566,16 @@ class VideoPlayerActivity : AppCompatActivity(),
         savePlaybackState()
     }
     
+    override fun onStart() {
+        super.onStart()
+        // 从后台返回时重置标记并停止 Service
+        if (isManualBackgroundPlayback) {
+            isManualBackgroundPlayback = false
+            endBackgroundPlayback()
+            Logger.d(TAG, "Returned from background playback, service stopped")
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         themeRevision++
@@ -582,6 +608,26 @@ class VideoPlayerActivity : AppCompatActivity(),
         remoteResolveJob?.cancel()
         
         savePlaybackState()
+        
+        // 后台播放模式：不解绑 Service，不销毁 MPV，让 Service 继续运行
+        if (isManualBackgroundPlayback) {
+            Log.d(TAG, "Background playback active, keeping service alive")
+            // 仍然清理 UI 相关资源
+            anime4KDialog?.dismiss()
+            anime4KDialog = null
+            if (::dialogManager.isInitialized) {
+                dialogManager.cleanup()
+            }
+            controlsManager?.cleanup()
+            gestureHandler?.cleanup()
+            filePickerManager?.cleanup()
+            // 注意：不调用 playbackEngine?.destroy()，保持 MPV 运行
+            // 不调用 endBackgroundPlayback()，保持 Service 运行
+            return
+        }
+        
+        // 正常销毁流程
+        endBackgroundPlayback()
         
         // 清除自动旋转设置，避免影响下次播放
         intent.removeExtra(EXTRA_AUTO_ROTATE)
@@ -741,6 +787,62 @@ class VideoPlayerActivity : AppCompatActivity(),
     
     override fun onShowSkipSettings() {
         skipIntroOutroManager.showSkipSettingsDrawer(viewModel.currentFolderPath.value)
+    }
+
+    override fun onBackgroundPlayback() {
+        if (!::playbackEngine.isInitialized || viewModel.paused.value == true) {
+            DialogUtils.showToastShort(this, "请先开始播放视频")
+            return
+        }
+        Log.d(TAG, "User triggered background playback")
+        
+        isManualBackgroundPlayback = true
+        
+        // 暂停弹幕（画面不可见）
+        if (::danmakuManager.isInitialized && danmakuManager.isPrepared()) {
+            danmakuManager.pause()
+        }
+        
+        // 启动前台 Service（通知栏）
+        startBackgroundPlayback()
+        
+        // 发送到后台（模拟 Home 键）
+        val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_HOME)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        startActivity(homeIntent)
+    }
+
+    // ==================== 后台播放管理 ====================
+
+    /**
+     * 启动后台播放 Service
+     */
+    private fun startBackgroundPlayback() {
+        Log.d(TAG, "Starting background playback service")
+        BackgroundPlaybackService.createNotificationChannel(this)
+        try {
+            startForegroundService(Intent(this, BackgroundPlaybackService::class.java).apply {
+                putExtra("media_title", viewModel.videoTitle.value.ifBlank { "听视频" })
+            })
+            Log.d(TAG, "Service started")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error starting service", e)
+            isManualBackgroundPlayback = false
+        }
+    }
+    
+    /**
+     * 停止后台播放 Service
+     */
+    private fun endBackgroundPlayback() {
+        Log.d(TAG, "Ending background playback service")
+        try {
+            stopService(Intent(this, BackgroundPlaybackService::class.java))
+        } catch (e: Exception) {
+            Log.e(TAG, "Error stopping service", e)
+        }
     }
 
     override fun getVideoUri(): Uri? = videoUri
