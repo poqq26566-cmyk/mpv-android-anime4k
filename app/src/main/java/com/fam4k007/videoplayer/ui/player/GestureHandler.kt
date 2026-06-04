@@ -153,11 +153,27 @@ fun GestureHandler(
                                     val dx = abs(pointer.position.x - downPosition.x)
                                     val dy = abs(pointer.position.y - downPosition.y)
                                     when {
-                                        dy > dx && dy > 20f -> isVerticalGesture = true
+                                        dy > dx && dy > 20f -> {
+                                            // 检查是否在顶部/底部死区（避免全面屏手势误触音量/亮度调节）
+                                            val deadZonePx = size.height * 0.08f
+                                            if (downPosition.y < deadZonePx ||
+                                                downPosition.y > size.height - deadZonePx
+                                            ) {
+                                                // 在死区内的垂直滑动不处理
+                                            } else {
+                                                isVerticalGesture = true
+                                            }
+                                        }
                                         dx > dy && dx > 20f -> {
-                                            isHorizontalGesture = true
-                                            // 记录水平 seek 的起始视频位置（只记录一次）
-                                            swipeSeekStartVideoPosition = viewModel.precisePosition.value.toInt()
+                                            // 检查是否在右侧死区（避免系统返回手势误触水平 seek）
+                                            val rightDeadZonePx = size.width * 0.08f
+                                            if (downPosition.x > size.width - rightDeadZonePx) {
+                                                // 在右侧死区内的水平滑动不处理，留给系统返回手势
+                                            } else {
+                                                isHorizontalGesture = true
+                                                // 记录水平 seek 的起始视频位置（只记录一次）
+                                                swipeSeekStartVideoPosition = viewModel.precisePosition.value.toInt()
+                                            }
                                         }
                                     }
                                 }
