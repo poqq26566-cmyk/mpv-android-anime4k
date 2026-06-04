@@ -203,7 +203,7 @@ class VideoBrowserComposeActivity : ComponentActivity() {
                     // 补充扫描：当 .nomedia 关闭或隐藏文件夹扫描开启时，
                     // MediaStore 会遗漏这些文件，需要用 File API 直接扫描补充
                     val prefs = com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(this@VideoBrowserComposeActivity)
-                    val needSupplementaryScan = !prefs.isNomediaEnabled() || prefs.isScanHiddenFoldersEnabled()
+                    val needSupplementaryScan = prefs.getIncludeNoMediaFolders() || prefs.isScanHiddenFoldersEnabled()
                     if (needSupplementaryScan) {
                         val knownPaths = folderMap.values.flatten().map { it.path }.toMutableSet()
                         // 收集待扫描的目录
@@ -238,7 +238,7 @@ class VideoBrowserComposeActivity : ComponentActivity() {
                             if (prefs.isScanHiddenFoldersEnabled() && subDir.name.startsWith(".")) {
                                 scanSingleFolder(subDir, this@VideoBrowserComposeActivity, knownPaths, folderMap)
                             }
-                            if (!prefs.isNomediaEnabled()) {
+                            if (prefs.getIncludeNoMediaFolders()) {
                                 scanSingleFolder(subDir, this@VideoBrowserComposeActivity, knownPaths, folderMap)
                             }
                         }

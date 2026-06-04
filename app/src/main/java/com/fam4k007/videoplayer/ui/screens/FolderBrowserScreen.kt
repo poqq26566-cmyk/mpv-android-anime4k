@@ -90,13 +90,13 @@ fun FolderBrowserScreen(
         viewModel.treeNavigateBack()
     }
 
-    // 初始化加载（仅作为后备，setViewMode/init 已负责主要加载）
+    // 初始化加载（仅作为后备，setViewMode/init 已负责主要加载，使用静默模式避免转圈）
     LaunchedEffect(hasPermission, viewMode) {
         if (hasPermission && !folderListState.isLoading) {
             if (isTreeView && folderListState.folders.isEmpty()) {
-                viewModel.loadTreeRoot()
+                viewModel.loadTreeRoot(silent = true)
             } else if (!isTreeView && folderListState.folders.isEmpty()) {
-                viewModel.scanVideoFolders()
+                viewModel.scanVideoFolders(silent = true)
             }
         }
     }
@@ -221,21 +221,29 @@ fun FolderBrowserScreen(
                 }
                 else -> {
                     // 用面包屑深度触发过渡动画（树状视图下）
-                    val transitionKey = if (isTreeView) breadcrumbs.size else 0
+                    // 使用 Pair 包含视图模式，确保模式切换时 key 变化方式不会触发滑入/滑出动画
+                    val transitionKey = if (isTreeView) Pair(1, breadcrumbs.size) else Pair(0, 0)
                     AnimatedContent(
                         targetState = transitionKey,
                         transitionSpec = {
-                            val direction = targetState - initialState
-                            if (direction > 0) {
-                                // 进入子级：新内容从右侧滑入覆盖，旧内容原地消失
-                                (slideInHorizontally { it } + fadeIn(tween(250))) togetherWith
-                                fadeOut(tween(1))
-                            } else if (direction < 0) {
-                                // 返回父级：当前页面（上层）渐变淡出并向右滑，露出底部的父级页面
-                                (slideInHorizontally { it / 3 } + fadeIn(tween(300))) togetherWith
-                                (slideOutHorizontally { it } + fadeOut(tween(300)))
-                            } else {
+                            val (prevMode, prevLevel) = initialState
+                            val (currMode, currLevel) = targetState
+                            if (prevMode != currMode) {
+                                // 模式切换：仅淡入淡出，不播滑入滑出
                                 fadeIn(tween(200)) togetherWith fadeOut(tween(150))
+                            } else {
+                                val direction = currLevel - prevLevel
+                                if (direction > 0) {
+                                    // 进入子级：新内容从右侧滑入覆盖，旧内容原地消失
+                                    (slideInHorizontally { it } + fadeIn(tween(250))) togetherWith
+                                    fadeOut(tween(1))
+                                } else if (direction < 0) {
+                                    // 返回父级：当前页面（上层）渐变淡出并向右滑，露出底部的父级页面
+                                    (slideInHorizontally { it / 3 } + fadeIn(tween(300))) togetherWith
+                                    (slideOutHorizontally { it } + fadeOut(tween(300)))
+                                } else {
+                                    fadeIn(tween(200)) togetherWith fadeOut(tween(150))
+                                }
                             }
                         },
                         label = "folderTransition"

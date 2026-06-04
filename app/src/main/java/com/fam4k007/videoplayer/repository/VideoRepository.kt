@@ -29,10 +29,37 @@ class VideoRepository(
     companion object {
         private const val TAG = "VideoRepository"
         private const val MAX_SUPPLEMENTARY_FILES = 1000
+        private const val MAX_SCAN_FILES = 2000
     }
     
     private val videoCacheDao = database.videoCacheDao()
-    
+
+    /** 内存缓存：全量扫描结果，避免每次进场都重新扫 */
+    private var scanResultCache: List<VideoFolder>? = null
+    /** 缓存对应的扫描选项标签，选项变更时自动失效 */
+    private var cacheOptionsTag: String? = null
+
+    /**
+     * 获取缓存的全量扫描结果（若存在）
+     */
+    fun getCachedScanResult(): List<VideoFolder>? = scanResultCache
+
+    /**
+     * 清除内存缓存
+     */
+    fun clearScanCache() {
+        scanResultCache = null
+        cacheOptionsTag = null
+    }
+
+    /**
+     * 强制刷新全量扫描（清除缓存）
+     */
+    suspend fun forceRefreshScan(): List<VideoFolder> = withContext(Dispatchers.IO) {
+        scanResultCache = null
+        scanAllVideoFolders()
+    }
+
     /**
      * 扫描指定文件夹的所有视频文件（通过MediaStore）
      * @param folderPath 文件夹路径
@@ -113,7 +140,7 @@ class VideoRepository(
             
             // 补充扫描：当 .nomedia 关闭或隐藏文件夹开启时，MediaStore 可能遗漏文件
             val prefs = com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(context)
-            val needSupplementary = !prefs.isNomediaEnabled() || prefs.isScanHiddenFoldersEnabled()
+            val needSupplementary = prefs.getIncludeNoMediaFolders() || prefs.isScanHiddenFoldersEnabled()
             if (needSupplementary) {
                 val folderFile = File(folderPath)
                 if (folderFile.exists() && folderFile.isDirectory) {
@@ -274,108 +301,95 @@ class VideoRepository(
      * @return 视频文件夹列表
      */
     suspend fun scanAllVideoFolders(): List<com.fam4k007.videoplayer.VideoFolder> = withContext(Dispatchers.IO) {
-        try {
-            val projection = arrayOf(
-                MediaStore.Video.Media.DATA,
-                MediaStore.Video.Media.DISPLAY_NAME,
-                MediaStore.Video.Media._ID,
-                MediaStore.Video.Media.SIZE,
-                MediaStore.Video.Media.DURATION,
-                MediaStore.Video.Media.DATE_ADDED
-            )
-            
-            val folderMap = mutableMapOf<String, MutableList<com.fam4k007.videoplayer.VideoFile>>()
-            
-            context.contentResolver.query(
-                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                projection,
-                null,
-                null,
-                "${MediaStore.Video.Media.DATE_ADDED} DESC"
-            )?.use { cursor ->
-                val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
-                val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
-                val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
-                val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
-                val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
-                val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
-                
-                while (cursor.moveToNext()) {
-                    val path = cursor.getString(dataColumn)
-                    val name = cursor.getString(nameColumn)
-                    val id = cursor.getLong(idColumn)
-                    val size = cursor.getLong(sizeColumn)
-                    val duration = cursor.getLong(durationColumn)
-                    val dateAdded = cursor.getLong(dateColumn)
-                    
-                    val file = File(path)
-                    // 检查文件是否真实存在（MediaStore可能有过期数据）
-                    if (!file.exists()) continue
-                    val folderPath = file.parent ?: continue
-                    
-                    val uri = Uri.withAppendedPath(
-                        MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                        id.toString()
-                    ).toString()
-                    
-                    val videoFile = com.fam4k007.videoplayer.VideoFile(
-                        uri = uri,
-                        name = name,
-                        path = path,
-                        size = size,
-                        duration = duration,
-                        dateAdded = dateAdded
-                    )
-                    
-                    folderMap.getOrPut(folderPath) { mutableListOf() }.add(videoFile)
-                }
-            }
+        val prefs = com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(context)
+        val includeNoMedia = prefs.getIncludeNoMediaFolders()
+        val includeHidden = prefs.isScanHiddenFoldersEnabled()
+        val currentTag = "nomedia=$includeNoMedia,hidden=$includeHidden"
 
-            // 补充扫描：当 .nomedia 关闭或隐藏文件夹扫描开启时，
-            // MediaStore 可能遗漏部分文件，用 File API 针对性扫描补充
+        // 内存缓存命中且选项未变更 → 直接返回
+        if (scanResultCache != null && cacheOptionsTag == currentTag) {
+            Logger.d(TAG, "返回内存缓存 ${scanResultCache!!.size} 个文件夹")
+            return@withContext scanResultCache!!
+        }
+
+        // 选项变了 → 之前的缓存失效
+        scanResultCache = null
+        cacheOptionsTag = currentTag
+
+        try {
             val prefs = com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(context)
-            val needSupplementaryScan = !prefs.isNomediaEnabled() || prefs.isScanHiddenFoldersEnabled()
-            if (needSupplementaryScan) {
-                val knownPaths = folderMap.values.flatten().map { it.path }.toMutableSet()
-                // 收集待扫描的目录：已有文件夹的父目录的同级子目录
-                val dirsToScan = mutableSetOf<String>()
-                val parentDirs = folderMap.keys.map { File(it).parentFile?.absolutePath }.distinct().filterNotNull()
-                for (parentPath in parentDirs) {
-                    val parentFile = File(parentPath)
-                    if (parentFile.exists() && parentFile.isDirectory) {
-                        parentFile.listFiles()?.forEach { subDir ->
-                            if (subDir.isDirectory && subDir.canRead()) {
-                                dirsToScan.add(subDir.absolutePath)
-                            }
-                        }
+            val includeNoMedia = prefs.getIncludeNoMediaFolders()
+            val includeHidden = prefs.isScanHiddenFoldersEnabled() // 用户开启隐藏文件夹扫描
+
+            val folderMap = mutableMapOf<String, MutableList<com.fam4k007.videoplayer.VideoFile>>()
+
+            if (includeNoMedia || includeHidden) {
+                // ──────────────────────────────────────────────
+                // 方案 A：包含 .nomedia 或隐藏文件夹
+                // 用 File API 直接从存储根目录扫描（不走 MediaStore）
+                // 因为 MediaStore 内建过滤，无法拿到 .nomedia 中的文件
+                // ──────────────────────────────────────────────
+                ScanFilter.clearCache()
+                scanFromStorageRoots(folderMap, context, prefs)
+                Logger.d(TAG, "File API 扫描完成，共 ${folderMap.size} 个文件夹")
+            } else {
+                // ──────────────────────────────────────────────
+                // 方案 B：默认路径 — 使用 MediaStore（快）
+                // ──────────────────────────────────────────────
+                val projection = arrayOf(
+                    MediaStore.Video.Media.DATA,
+                    MediaStore.Video.Media.DISPLAY_NAME,
+                    MediaStore.Video.Media._ID,
+                    MediaStore.Video.Media.SIZE,
+                    MediaStore.Video.Media.DURATION,
+                    MediaStore.Video.Media.DATE_ADDED
+                )
+
+                context.contentResolver.query(
+                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                    projection,
+                    null,
+                    null,
+                    "${MediaStore.Video.Media.DATE_ADDED} DESC"
+                )?.use { cursor ->
+                    val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
+                    val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
+                    val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
+                    val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
+                    val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
+                    val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
+
+                    while (cursor.moveToNext()) {
+                        val path = cursor.getString(dataColumn)
+                        val name = cursor.getString(nameColumn)
+                        val id = cursor.getLong(idColumn)
+                        val size = cursor.getLong(sizeColumn)
+                        val duration = cursor.getLong(durationColumn)
+                        val dateAdded = cursor.getLong(dateColumn)
+
+                        val file = File(path)
+                        if (!file.exists()) continue
+                        val folderPath = file.parent ?: continue
+
+                        val uri = Uri.withAppendedPath(
+                            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                            id.toString()
+                        ).toString()
+
+                        val videoFile = com.fam4k007.videoplayer.VideoFile(
+                            uri = uri,
+                            name = name,
+                            path = path,
+                            size = size,
+                            duration = duration,
+                            dateAdded = dateAdded
+                        )
+
+                        folderMap.getOrPut(folderPath) { mutableListOf() }.add(videoFile)
                     }
                 }
-                // 如果 MediaStore 没有返回任何结果（所有视频都在 .nomedia 文件夹中），
-                // 则从外部存储根目录开始扫描
-                if (dirsToScan.isEmpty()) {
-                    val storageRoot = android.os.Environment.getExternalStorageDirectory()
-                    if (storageRoot.exists() && storageRoot.isDirectory) {
-                        storageRoot.listFiles()?.forEach { subDir ->
-                            if (subDir.isDirectory && subDir.canRead() && !subDir.name.startsWith(".")) {
-                                dirsToScan.add(subDir.absolutePath)
-                            }
-                        }
-                    }
-                    Logger.d(TAG, "MediaStore 无结果，从存储根目录补充扫描")
-                }
-                for (dirPath in dirsToScan) {
-                    val subDir = File(dirPath)
-                    if (!subDir.exists() || !subDir.isDirectory || !subDir.canRead()) continue
-                    // 隐藏文件夹（仅当开启时）
-                    if (prefs.isScanHiddenFoldersEnabled() && subDir.name.startsWith(".")) {
-                        scanSingleFolder(subDir, knownPaths, folderMap, context)
-                    }
-                    // .nomedia 规则关闭时，扫描所有目录
-                    if (!prefs.isNomediaEnabled()) {
-                        scanSingleFolder(subDir, knownPaths, folderMap, context)
-                    }
-                }
-                Logger.d(TAG, "补充扫描完成，共 ${folderMap.size} 个文件夹")
+
+                Logger.d(TAG, "MediaStore 扫描完成，共 ${folderMap.size} 个文件夹")
             }
 
             val folders = folderMap.map { (folderPath, videos) ->
@@ -388,15 +402,21 @@ class VideoRepository(
                 )
             }.sortedByDescending { it.videoCount }
             
+            // 写入内存缓存（不缓存空结果，避免授权前空扫描污染缓存）
+            if (folders.isNotEmpty()) {
+                scanResultCache = folders
+                cacheOptionsTag = currentTag
+            }
+
             Logger.d(TAG, "Scanned ${folders.size} video folders")
             folders
-            
+
         } catch (e: Exception) {
             Logger.e(TAG, "Failed to scan video folders: ${e.message}", e)
             emptyList()
         }
     }
-    
+
     /**
      * 搜索视频
      * @param query 搜索关键词
@@ -563,6 +583,95 @@ class VideoRepository(
     /**
      * 扫描单个文件夹中的视频文件（不递归子目录，仅扫描直接子文件）
      */
+    /**
+     * 从存储根目录直接用 File API 扫描所有视频文件
+     * 不走 MediaStore，用于需要包含 .nomedia/隐藏文件夹的场景
+     */
+    private fun scanFromStorageRoots(
+        folderMap: MutableMap<String, MutableList<com.fam4k007.videoplayer.VideoFile>>,
+        context: android.content.Context,
+        prefs: com.fam4k007.videoplayer.preferences.PreferencesManager
+    ) {
+        val knownPaths = mutableSetOf<String>()
+        val visitedDirs = mutableSetOf<String>()  // 防止符号链接循环
+        val roots = mutableListOf<File>()
+
+        // 主存储
+        val primaryRoot = android.os.Environment.getExternalStorageDirectory()
+        if (primaryRoot.exists() && primaryRoot.isDirectory) {
+            roots.add(primaryRoot)
+        }
+
+        // 扫描根目录下的一级子目录（Android/data、Android/media 不扫）
+        for (root in roots) {
+            root.listFiles()?.forEach { subDir ->
+                if (!subDir.isDirectory || !subDir.canRead()) return@forEach
+                val name = subDir.name
+                // 跳过系统关键目录
+                if (name.equals("Android", ignoreCase = true)) return@forEach
+                if (name.equals("obb", ignoreCase = true)) return@forEach
+                scanDirectoryRecursive(subDir, knownPaths, visitedDirs, folderMap, context, prefs)
+            }
+        }
+
+        Logger.d(TAG, "File API 扫描完成，发现 ${folderMap.size} 个文件夹")
+    }
+
+    /**
+     * 递归扫描目录（visitedDirs 防止符号链接循环）
+     */
+    private fun scanDirectoryRecursive(
+        dir: File,
+        knownPaths: MutableSet<String>,
+        visitedDirs: MutableSet<String>,
+        folderMap: MutableMap<String, MutableList<com.fam4k007.videoplayer.VideoFile>>,
+        context: android.content.Context,
+        prefs: com.fam4k007.videoplayer.preferences.PreferencesManager
+    ) {
+        if (knownPaths.size >= MAX_SCAN_FILES) return
+        if (!dir.exists() || !dir.isDirectory || !dir.canRead()) return
+
+        // 防止符号链接导致的无限循环
+        val canonicalPath = try { dir.canonicalPath } catch (e: Exception) { return }
+        if (!visitedDirs.add(canonicalPath)) return  // 已访问过，跳过
+
+        if (ScanFilter.shouldSkipFolder(context, dir.absolutePath)) return
+
+        val entries = dir.listFiles() ?: return
+
+        // 先扫当前目录的视频文件
+        for (entry in entries) {
+            if (!entry.isFile || !entry.exists()) continue
+            val path = entry.absolutePath
+            if (path in knownPaths) continue
+            if (knownPaths.size >= MAX_SCAN_FILES) return
+            if (ScanFilter.shouldSkipFile(context, path)) continue
+
+            val extension = entry.extension.lowercase()
+            if (extension in com.fam4k007.videoplayer.AppConstants.Files.SUPPORTED_VIDEO_EXTENSIONS) {
+                val folderPath = path.substringBeforeLast("/")
+                val msDuration = com.fam4k007.videoplayer.utils.ScanFilter.queryDuration(context, path)
+                val videoFile = com.fam4k007.videoplayer.VideoFile(
+                    uri = android.net.Uri.fromFile(entry).toString(),
+                    name = entry.name,
+                    path = path,
+                    size = entry.length(),
+                    duration = msDuration,
+                    dateAdded = entry.lastModified() / 1000
+                )
+                folderMap.getOrPut(folderPath) { mutableListOf() }.add(videoFile)
+                knownPaths.add(path)
+            }
+        }
+
+        // 递归子目录（不限深度，用 visitedDirs 防循环）
+        for (entry in entries) {
+            if (!entry.isDirectory || !entry.canRead()) continue
+            if (entry.name.startsWith(".") && !prefs.isScanHiddenFoldersEnabled()) continue
+            scanDirectoryRecursive(entry, knownPaths, visitedDirs, folderMap, context, prefs)
+        }
+    }
+
     private fun scanSingleFolder(
         dir: File,
         knownPaths: MutableSet<String>,
@@ -612,6 +721,10 @@ class VideoRepository(
     suspend fun saveFolderCache(folders: List<VideoFolder>) = withContext(Dispatchers.IO) {
         try {
             val prefs = PreferencesManager.getInstance(context)
+            val includeNoMedia = prefs.getIncludeNoMediaFolders()
+            val includeHidden = prefs.isScanHiddenFoldersEnabled()
+            val tag = "nomedia=$includeNoMedia,hidden=$includeHidden"
+
             val jsonArray = JSONArray()
             for (folder in folders) {
                 val obj = JSONObject()
@@ -622,9 +735,10 @@ class VideoRepository(
             }
             prefs.sharedPreferences.edit()
                 .putString(AppConstants.Preferences.FOLDER_CACHE, jsonArray.toString())
+                .putString(AppConstants.Preferences.FOLDER_CACHE_TAG, tag)
                 .putLong(AppConstants.Preferences.FOLDER_CACHE_TIME, System.currentTimeMillis())
                 .apply()
-            Logger.d(TAG, "已缓存 ${folders.size} 个文件夹")
+            Logger.d(TAG, "已缓存 ${folders.size} 个文件夹 (tag=$tag)")
         } catch (e: Exception) {
             Logger.w(TAG, "保存文件夹缓存失败", e)
         }
@@ -632,13 +746,23 @@ class VideoRepository(
 
     /**
      * 从缓存加载文件夹列表
-     * @return 缓存的文件夹列表，没有缓存则返回 null
+     * @return 缓存的文件夹列表，没有缓存或选项不匹配则返回 null
      */
     suspend fun loadFolderCache(): List<VideoFolder>? = withContext(Dispatchers.IO) {
         try {
             val prefs = PreferencesManager.getInstance(context)
             val json = prefs.sharedPreferences.getString(AppConstants.Preferences.FOLDER_CACHE, null)
             if (json.isNullOrBlank()) return@withContext null
+
+            // 检查缓存选项标签是否与当前设置匹配
+            val includeNoMedia = prefs.getIncludeNoMediaFolders()
+            val includeHidden = prefs.isScanHiddenFoldersEnabled()
+            val currentTag = "nomedia=$includeNoMedia,hidden=$includeHidden"
+            val cachedTag = prefs.sharedPreferences.getString(AppConstants.Preferences.FOLDER_CACHE_TAG, null)
+            if (cachedTag != currentTag) {
+                Logger.d(TAG, "缓存标签不匹配: 缓存=$cachedTag, 当前=$currentTag, 忽略缓存")
+                return@withContext null
+            }
 
             val cacheTime = prefs.sharedPreferences.getLong(AppConstants.Preferences.FOLDER_CACHE_TIME, 0)
             val now = System.currentTimeMillis()

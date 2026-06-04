@@ -3,21 +3,31 @@ package com.fam4k007.videoplayer.utils
 import android.content.Context
 import android.provider.MediaStore
 import com.fam4k007.videoplayer.preferences.PreferencesManager
+import com.fam4k007.videoplayer.utils.media.NoMediaPathFilter
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 文件扫描过滤器
  * 统一管理文件扫描时的过滤规则，读取 PreferencesManager 中的开关状态。
  * 所有扫描路径（文件夹视图、视频列表、系列识别）都应通过此工具判断。
+ *
+ * 内部使用 NoMediaPathFilter 带缓存实现，避免重复遍历父目录。
  */
 object ScanFilter {
 
+    /** .nomedia 检测结果缓存，避免重复遍历父目录 */
+    private val noMediaCache = ConcurrentHashMap<String, Boolean>()
+
+    /**
+     * 清除内部缓存（文件系统变化时调用）
+     */
+    fun clearCache() {
+        noMediaCache.clear()
+    }
+
     /**
      * 检查文件是否应该被跳过（不被扫描）
-     *
-     * @param context Android Context
-     * @param filePath 文件的完整路径
-     * @return true 表示应该跳过该文件
      */
     fun shouldSkipFile(context: Context, filePath: String?): Boolean {
         if (filePath.isNullOrBlank()) return true
@@ -25,9 +35,9 @@ object ScanFilter {
         val prefs = PreferencesManager.getInstance(context)
         val folderPath = filePath.substringBeforeLast("/", "")
 
-        // 1. 检查 .nomedia 规则
-        if (prefs.isNomediaEnabled()) {
-            if (NoMediaChecker.containsNoMedia(folderPath)) {
+        // 1. 检查 .nomedia 规则（不扫描包含 .nomedia 的文件夹）
+        if (!prefs.getIncludeNoMediaFolders()) {
+            if (hasNoMediaMarker(folderPath)) {
                 return true
             }
         }
@@ -44,19 +54,15 @@ object ScanFilter {
 
     /**
      * 检查文件夹是否应该被跳过（不扫描其中的视频）
-     *
-     * @param context Android Context
-     * @param folderPath 文件夹路径
-     * @return true 表示应该跳过该文件夹
      */
     fun shouldSkipFolder(context: Context, folderPath: String?): Boolean {
         if (folderPath.isNullOrBlank()) return true
 
         val prefs = PreferencesManager.getInstance(context)
 
-        // 1. 检查 .nomedia 规则
-        if (prefs.isNomediaEnabled()) {
-            if (NoMediaChecker.folderHasNoMedia(folderPath)) {
+        // 1. 检查 .nomedia 规则（不扫描包含 .nomedia 的文件夹）
+        if (!prefs.getIncludeNoMediaFolders()) {
+            if (hasNoMediaMarker(folderPath)) {
                 return true
             }
         }
@@ -69,6 +75,34 @@ object ScanFilter {
         }
 
         return false
+    }
+
+    /**
+     * 检查路径或其父目录是否存在 .nomedia 文件（带缓存）
+     */
+    private fun hasNoMediaMarker(path: String): Boolean {
+        noMediaCache[path]?.let { return it }
+
+        val result = try {
+            var currentDir = File(path)
+            if (currentDir.isFile) {
+                currentDir = currentDir.parentFile ?: return false
+            }
+            var found = false
+            while (currentDir.exists()) {
+                if (File(currentDir, ".nomedia").exists()) {
+                    found = true
+                    break
+                }
+                currentDir = currentDir.parentFile ?: break
+            }
+            found
+        } catch (e: Exception) {
+            false
+        }
+
+        noMediaCache[path] = result
+        return result
     }
 
     /**
