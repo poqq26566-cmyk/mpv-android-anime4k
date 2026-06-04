@@ -337,24 +337,42 @@ class VideoRepository(
             val needSupplementaryScan = !prefs.isNomediaEnabled() || prefs.isScanHiddenFoldersEnabled()
             if (needSupplementaryScan) {
                 val knownPaths = folderMap.values.flatten().map { it.path }.toMutableSet()
-                // 只扫描已有查询结果的父目录及其同级的隐藏目录，而非全盘扫描
+                // 收集待扫描的目录：已有文件夹的父目录的同级子目录
+                val dirsToScan = mutableSetOf<String>()
                 val parentDirs = folderMap.keys.map { File(it).parentFile?.absolutePath }.distinct().filterNotNull()
                 for (parentPath in parentDirs) {
                     val parentFile = File(parentPath)
                     if (parentFile.exists() && parentFile.isDirectory) {
                         parentFile.listFiles()?.forEach { subDir ->
                             if (subDir.isDirectory && subDir.canRead()) {
-                                val subPath = subDir.absolutePath
-                                // 只扫描：隐藏文件夹（当开启时）或已有文件夹的同级目录
-                                if (prefs.isScanHiddenFoldersEnabled() && subDir.name.startsWith(".")) {
-                                    scanSingleFolder(subDir, knownPaths, folderMap, context)
-                                }
-                                // 当 .nomedia 关闭时，也扫描现有文件夹的子目录
-                                if (!prefs.isNomediaEnabled()) {
-                                    scanSingleFolder(subDir, knownPaths, folderMap, context)
-                                }
+                                dirsToScan.add(subDir.absolutePath)
                             }
                         }
+                    }
+                }
+                // 如果 MediaStore 没有返回任何结果（所有视频都在 .nomedia 文件夹中），
+                // 则从外部存储根目录开始扫描
+                if (dirsToScan.isEmpty()) {
+                    val storageRoot = android.os.Environment.getExternalStorageDirectory()
+                    if (storageRoot.exists() && storageRoot.isDirectory) {
+                        storageRoot.listFiles()?.forEach { subDir ->
+                            if (subDir.isDirectory && subDir.canRead() && !subDir.name.startsWith(".")) {
+                                dirsToScan.add(subDir.absolutePath)
+                            }
+                        }
+                    }
+                    Logger.d(TAG, "MediaStore 无结果，从存储根目录补充扫描")
+                }
+                for (dirPath in dirsToScan) {
+                    val subDir = File(dirPath)
+                    if (!subDir.exists() || !subDir.isDirectory || !subDir.canRead()) continue
+                    // 隐藏文件夹（仅当开启时）
+                    if (prefs.isScanHiddenFoldersEnabled() && subDir.name.startsWith(".")) {
+                        scanSingleFolder(subDir, knownPaths, folderMap, context)
+                    }
+                    // .nomedia 规则关闭时，扫描所有目录
+                    if (!prefs.isNomediaEnabled()) {
+                        scanSingleFolder(subDir, knownPaths, folderMap, context)
                     }
                 }
                 Logger.d(TAG, "补充扫描完成，共 ${folderMap.size} 个文件夹")

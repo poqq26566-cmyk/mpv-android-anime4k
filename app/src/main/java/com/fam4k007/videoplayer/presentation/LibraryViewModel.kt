@@ -9,6 +9,7 @@ import com.fam4k007.videoplayer.repository.VideoRepository
 import com.fam4k007.videoplayer.repository.VideoSortOrder
 import com.fam4k007.videoplayer.utils.Logger
 import com.fam4k007.videoplayer.utils.media.MediaLibraryEvents
+import com.fam4k007.videoplayer.utils.media.TreeViewScanner
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,28 +60,60 @@ class LibraryViewModel(
     private val _videoListState = MutableStateFlow(VideoListState())
     val videoListState: StateFlow<VideoListState> = _videoListState.asStateFlow()
     
+    // ==================== 树状视图状态 ====================
+
+    // 全量文件夹数据缓存（扫描一次，树构建器复用）
+    private var allFoldersCache: List<VideoFolder>? = null
+
+    // 树状视图导航栈：每个元素是 (path, name)
+    private val treeBackStack = mutableListOf<Pair<String?, String>>()
+
+    // 树状视图当前层级的文件夹列表（直接输出到 folderListState）
+    private val _treeCurrentFolders = MutableStateFlow<List<VideoFolder>>(emptyList())
+
+    // 面包屑（用于 UI 展示）
+    private val _breadcrumbs = MutableStateFlow<List<Pair<String, String>>>(listOf("" to "根目录"))
+    val breadcrumbs: StateFlow<List<Pair<String, String>>> = _breadcrumbs.asStateFlow()
+
+    // 树状视图中标记了有子文件夹的路径（用于 UI 判断是否显示子文件夹箭头）
+    private val _treeHasSubfolders = MutableStateFlow<Set<String>>(emptySet())
+    val treeHasSubfolders: StateFlow<Set<String>> = _treeHasSubfolders.asStateFlow()
+
+    // 当前视图模式
+    private val _viewMode = MutableStateFlow(preferencesManager.getFolderViewMode())
+    val viewMode: StateFlow<String> = _viewMode.asStateFlow()
+
     init {
         // 从 PreferencesManager 恢复保存的排序设置
         loadSavedSortSettings()
 
-        // 1. 先显示缓存的文件夹列表（秒开），再后台刷新
-        viewModelScope.launch {
-            val cached = videoRepository.loadFolderCache()
-            if (cached != null) {
-                val sorted = filterBlacklistedFolders(cached)
-                _folderListState.value = _folderListState.value.copy(folders = sorted)
-                Logger.d(TAG, "显示缓存的 ${sorted.size} 个文件夹")
+        // 根据当前视图模式决定初始化加载方式
+        if (_viewMode.value == "TREE_VIEW") {
+            // 树状视图：直接加载根级别（避免平铺扫描覆盖 folderListState）
+            loadTreeRoot()
+        } else {
+            // 文件夹视图：先显示缓存（秒开），再后台刷新
+            viewModelScope.launch {
+                val cached = videoRepository.loadFolderCache()
+                if (cached != null) {
+                    val sorted = filterBlacklistedFolders(cached)
+                    _folderListState.value = _folderListState.value.copy(folders = sorted)
+                    Logger.d(TAG, "显示缓存的 ${sorted.size} 个文件夹")
+                }
+                scanVideoFolders()
             }
-            // 首次完整扫描
-            scanVideoFolders()
         }
 
-        // 2. 监听媒体库变化事件，自动刷新
+        // 2. 监听媒体库变化事件，自动刷新（根据当前视图模式选择刷新方式）
         viewModelScope.launch {
             MediaLibraryEvents.changes.collect {
                 Logger.d(TAG, "收到媒体库变化通知，延迟 2 秒后自动刷新")
                 delay(2000) // 等 MediaScanner 完成索引更新
-                scanVideoFolders()
+                if (_viewMode.value == "TREE_VIEW") {
+                    refreshTreeView()
+                } else {
+                    scanVideoFolders()
+                }
             }
         }
     }
@@ -360,5 +393,214 @@ class LibraryViewModel(
             searchQuery = "",
             filteredVideos = _videoListState.value.videos
         )
+    }
+
+    // ==================== 视图模式切换 ====================
+
+    /**
+     * 切换视图模式
+     */
+    fun setViewMode(mode: String) {
+        _viewMode.value = mode
+        preferencesManager.setFolderViewMode(mode)
+
+        // 清空当前文件夹数据，避免旧模式的数据残留
+        _folderListState.value = _folderListState.value.copy(folders = emptyList())
+
+        // 加载对应模式的根级别数据
+        if (mode == "TREE_VIEW") {
+            loadTreeRoot()
+        } else {
+            scanVideoFolders()
+        }
+    }
+
+    // ==================== 树状视图操作 ====================
+
+    /**
+     * 加载树状视图根级别
+     * 将 TreeViewScanner 的节点转为 VideoFolder，输出到 folderListState
+     */
+    fun loadTreeRoot() {
+        viewModelScope.launch {
+            try {
+                _folderListState.value = _folderListState.value.copy(isLoading = true, error = null)
+                val allFolders = getOrRefreshAllFolders()
+                val nodes = TreeViewScanner.getChildren(allFolders = allFolders, parentPath = null)
+                val folders = nodes.map { node ->
+                    VideoFolder(
+                        folderPath = node.path,
+                        folderName = node.name,
+                        videoCount = node.videoCount,
+                        videos = emptyList()
+                    )
+                }
+                treeBackStack.clear()
+                _breadcrumbs.value = listOf("" to "根目录")
+                _treeHasSubfolders.value = nodes.filter { it.hasSubfolders }.map { it.path }.toSet()
+
+                _folderListState.value = _folderListState.value.copy(
+                    folders = folders,
+                    isLoading = false
+                )
+                Logger.d(TAG, "Loaded ${nodes.size} tree root nodes")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to load tree root", e)
+                _folderListState.value = _folderListState.value.copy(
+                    isLoading = false,
+                    error = e.message ?: "Unknown error"
+                )
+            }
+        }
+    }
+
+    /**
+     * 导航到树状视图的子文件夹
+     */
+    fun navigateToTreeFolder(path: String, name: String) {
+        viewModelScope.launch {
+            try {
+                _folderListState.value = _folderListState.value.copy(isLoading = true, error = null)
+                val allFolders = getOrRefreshAllFolders()
+                val nodes = TreeViewScanner.getChildren(allFolders = allFolders, parentPath = path)
+                val folders = nodes.map { node ->
+                    VideoFolder(
+                        folderPath = node.path,
+                        folderName = node.name,
+                        videoCount = node.videoCount,
+                        videos = emptyList()
+                    )
+                }
+
+                treeBackStack.add(path to name)
+                _breadcrumbs.value = listOf("" to "根目录") + treeBackStack.map { (p, n) -> (p ?: "") to n }
+                _treeHasSubfolders.value = nodes.filter { it.hasSubfolders }.map { it.path }.toSet()
+
+                _folderListState.value = _folderListState.value.copy(
+                    folders = folders,
+                    isLoading = false
+                )
+                Logger.d(TAG, "Navigated to tree folder: $path, ${nodes.size} children")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to navigate to tree folder", e)
+                _folderListState.value = _folderListState.value.copy(
+                    isLoading = false,
+                    error = e.message ?: "Unknown error"
+                )
+            }
+        }
+    }
+
+    /**
+     * 导航到面包屑指定的层级
+     */
+    fun navigateToBreadcrumb(index: Int) {
+        if (index < 0 || index >= _breadcrumbs.value.size) return
+
+        viewModelScope.launch {
+            try {
+                _folderListState.value = _folderListState.value.copy(isLoading = true, error = null)
+                val allFolders = getOrRefreshAllFolders()
+
+                while (treeBackStack.size > index) {
+                    treeBackStack.removeLast()
+                }
+
+                val targetPath = if (index == 0) null else treeBackStack.lastOrNull()?.first
+                _breadcrumbs.value = listOf("" to "根目录") + treeBackStack.map { (p, n) -> (p ?: "") to n }
+
+                val nodes = TreeViewScanner.getChildren(allFolders = allFolders, parentPath = targetPath)
+                val folders = nodes.map { node ->
+                    VideoFolder(
+                        folderPath = node.path,
+                        folderName = node.name,
+                        videoCount = node.videoCount,
+                        videos = emptyList()
+                    )
+                }
+                _treeHasSubfolders.value = nodes.filter { it.hasSubfolders }.map { it.path }.toSet()
+
+                _folderListState.value = _folderListState.value.copy(
+                    folders = folders,
+                    isLoading = false
+                )
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to navigate to breadcrumb", e)
+                _folderListState.value = _folderListState.value.copy(
+                    isLoading = false,
+                    error = e.message ?: "Unknown error"
+                )
+            }
+        }
+    }
+
+    /**
+     * 树状视图返回上一级
+     * @return true 如果有上级可以返回，false 已经在根级别
+     */
+    fun treeNavigateBack(): Boolean {
+        if (treeBackStack.isEmpty()) return false
+
+        viewModelScope.launch {
+            try {
+                _folderListState.value = _folderListState.value.copy(isLoading = true, error = null)
+                val allFolders = getOrRefreshAllFolders()
+
+                treeBackStack.removeLast()
+                val targetPath = if (treeBackStack.isEmpty()) null else treeBackStack.last().first
+                _breadcrumbs.value = listOf("" to "根目录") + treeBackStack.map { (p, n) -> (p ?: "") to n }
+
+                val nodes = TreeViewScanner.getChildren(allFolders = allFolders, parentPath = targetPath)
+                val folders = nodes.map { node ->
+                    VideoFolder(
+                        folderPath = node.path,
+                        folderName = node.name,
+                        videoCount = node.videoCount,
+                        videos = emptyList()
+                    )
+                }
+                _treeHasSubfolders.value = nodes.filter { it.hasSubfolders }.map { it.path }.toSet()
+
+                _folderListState.value = _folderListState.value.copy(
+                    folders = folders,
+                    isLoading = false
+                )
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to navigate back", e)
+                _folderListState.value = _folderListState.value.copy(
+                    isLoading = false,
+                    error = e.message ?: "Unknown error"
+                )
+            }
+        }
+        return true
+    }
+
+    /**
+     * 刷新树状视图
+     */
+    fun refreshTreeView() {
+        allFoldersCache = null
+        if (treeBackStack.isEmpty()) {
+            loadTreeRoot()
+        } else {
+            val (targetPath, targetName) = treeBackStack.last()
+            // targetPath 可能为 null（根节点），需要处理
+            if (targetPath != null) {
+                navigateToTreeFolder(targetPath, targetName)
+            } else {
+                loadTreeRoot()
+            }
+        }
+    }
+
+    /**
+     * 获取或刷新全量文件夹数据（复用 VideoRepository）
+     */
+    private suspend fun getOrRefreshAllFolders(): List<VideoFolder> {
+        allFoldersCache?.let { return it }
+        val folders = videoRepository.scanAllVideoFolders()
+        allFoldersCache = folders
+        return folders
     }
 }

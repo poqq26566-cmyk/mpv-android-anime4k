@@ -51,6 +51,9 @@ object AppConstants {
         // 文件扫描 Key
         const val NOMEDIA_ENABLED = "nomedia_enabled"
         const val SCAN_HIDDEN_FOLDERS = "scan_hidden_folders"
+
+        // 文件夹视图模式 Key
+        const val FOLDER_VIEW_MODE = "folder_view_mode"
         const val FOLDER_CACHE = "folder_cache"          // 文件夹列表缓存（JSON）
         const val FOLDER_CACHE_TIME = "folder_cache_time" // 缓存时间戳
 

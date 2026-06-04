@@ -206,20 +206,40 @@ class VideoBrowserComposeActivity : ComponentActivity() {
                     val needSupplementaryScan = !prefs.isNomediaEnabled() || prefs.isScanHiddenFoldersEnabled()
                     if (needSupplementaryScan) {
                         val knownPaths = folderMap.values.flatten().map { it.path }.toMutableSet()
-                        // 只扫描已有文件夹的同级隐藏目录和子目录
+                        // 收集待扫描的目录
+                        val dirsToScan = mutableSetOf<String>()
                         val parentDirs = folderMap.keys.map { java.io.File(it).parentFile?.absolutePath }.distinct().filterNotNull()
                         for (parentPath in parentDirs) {
                             val parentFile = java.io.File(parentPath)
                             if (parentFile.exists() && parentFile.isDirectory) {
                                 parentFile.listFiles()?.forEach { subDir ->
-                                    if (!subDir.isDirectory || !subDir.canRead()) return@forEach
-                                    if (prefs.isScanHiddenFoldersEnabled() && subDir.name.startsWith(".")) {
-                                        scanSingleFolder(subDir, this@VideoBrowserComposeActivity, knownPaths, folderMap)
-                                    }
-                                    if (!prefs.isNomediaEnabled()) {
-                                        scanSingleFolder(subDir, this@VideoBrowserComposeActivity, knownPaths, folderMap)
+                                    if (subDir.isDirectory && subDir.canRead()) {
+                                        dirsToScan.add(subDir.absolutePath)
                                     }
                                 }
+                            }
+                        }
+                        // 如果 MediaStore 没有返回任何结果（所有视频都在 .nomedia 文件夹中），
+                        // 则从外部存储根目录开始扫描
+                        if (dirsToScan.isEmpty()) {
+                            val storageRoot = android.os.Environment.getExternalStorageDirectory()
+                            if (storageRoot.exists() && storageRoot.isDirectory) {
+                                storageRoot.listFiles()?.forEach { subDir ->
+                                    if (subDir.isDirectory && subDir.canRead() && !subDir.name.startsWith(".")) {
+                                        dirsToScan.add(subDir.absolutePath)
+                                    }
+                                }
+                            }
+                            Log.d(TAG, "MediaStore 无结果，从存储根目录补充扫描")
+                        }
+                        for (dirPath in dirsToScan) {
+                            val subDir = java.io.File(dirPath)
+                            if (!subDir.exists() || !subDir.isDirectory || !subDir.canRead()) continue
+                            if (prefs.isScanHiddenFoldersEnabled() && subDir.name.startsWith(".")) {
+                                scanSingleFolder(subDir, this@VideoBrowserComposeActivity, knownPaths, folderMap)
+                            }
+                            if (!prefs.isNomediaEnabled()) {
+                                scanSingleFolder(subDir, this@VideoBrowserComposeActivity, knownPaths, folderMap)
                             }
                         }
                         Log.d(TAG, "补充扫描完成，共 ${folderMap.size} 个文件夹")

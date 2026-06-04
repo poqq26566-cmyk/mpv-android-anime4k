@@ -1377,4 +1377,20 @@ class PreferencesManager private constructor(context: Context) {
     fun setShowRemainingTime(enabled: Boolean) {
         sharedPreferences.edit().putBoolean(AppConstants.Preferences.SHOW_REMAINING_TIME, enabled).apply()
     }
+
+    // ==================== 文件夹视图模式 ====================
+
+    /**
+     * 获取文件夹视图模式 (FOLDER_VIEW, TREE_VIEW)
+     */
+    fun getFolderViewMode(): String {
+        return sharedPreferences.getString(AppConstants.Preferences.FOLDER_VIEW_MODE, "FOLDER_VIEW") ?: "FOLDER_VIEW"
+    }
+
+    /**
+     * 保存文件夹视图模式
+     */
+    fun setFolderViewMode(mode: String) {
+        sharedPreferences.edit().putString(AppConstants.Preferences.FOLDER_VIEW_MODE, mode).apply()
+    }
 }
