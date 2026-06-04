@@ -35,25 +35,10 @@ class Anime4KManager(private val context: Context) {
     private var currentQuality: Quality = Quality.BALANCED
     private var isInitialized = false  // 标记是否已初始化
 
-    // ===== 追加着色器开关（默认开启线条加深和细化，去模糊默认关闭）=====
-    // 基于社区证据：Issue #84（作者配置）和 Issue #216（社区配置）
-    @Volatile
-    var enableDarken: Boolean = true
-        private set
-    @Volatile
-    var enableThin: Boolean = true
-        private set
+    // ===== 追加着色器开关（去模糊默认关闭）=====
     @Volatile
     var enableDeblur: Boolean = false
         private set
-
-    fun setDarkenEnabled(enabled: Boolean) {
-        enableDarken = enabled
-    }
-
-    fun setThinEnabled(enabled: Boolean) {
-        enableThin = enabled
-    }
 
     fun setDeblurEnabled(enabled: Boolean) {
         enableDeblur = enabled
@@ -139,76 +124,81 @@ class Anime4KManager(private val context: Context) {
 
         val shaders = mutableListOf<String>()
         val q = quality.suffix
+        // 后置着色器处理4倍像素量，按官方最佳实践用低一级的变体抵消性能开销
+        val lowerQ = when (quality) {
+            Quality.HIGH -> "M"      // L → M
+            Quality.BALANCED -> "S"  // M → S
+            Quality.FAST -> "S"      // S 已是最低，保持 S
+        }
 
         // 始终添加 Clamp_Highlights（防止振铃）
         shaders.add(getShaderPath("Anime4K_Clamp_Highlights.glsl"))
 
-        // 根据模式添加着色器
+        // 根据模式添加着色器（对齐官方 v4.x 推荐配置）
         when (mode) {
             Mode.A -> {
-                // Mode A: Restore -> Upscale -> Upscale
+                // Mode A: Restore -> Upscale -> Downscale -> Upscale
                 shaders.add(getShaderPath("Anime4K_Restore_CNN_$q.glsl"))
                 shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$q.glsl"))
                 shaders.add(getShaderPath("Anime4K_AutoDownscalePre_x2.glsl"))
-                shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$q.glsl"))
+                shaders.add(getShaderPath("Anime4K_AutoDownscalePre_x4.glsl"))
+                shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$lowerQ.glsl"))
             }
             Mode.B -> {
-                // Mode B: Restore_Soft -> Upscale -> Upscale
+                // Mode B: Restore_Soft -> Upscale -> Downscale -> Upscale
                 shaders.add(getShaderPath("Anime4K_Restore_CNN_Soft_$q.glsl"))
                 shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$q.glsl"))
                 shaders.add(getShaderPath("Anime4K_AutoDownscalePre_x2.glsl"))
-                shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$q.glsl"))
+                shaders.add(getShaderPath("Anime4K_AutoDownscalePre_x4.glsl"))
+                shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$lowerQ.glsl"))
             }
             Mode.C -> {
-                // Mode C: Upscale_Denoise -> Upscale
+                // Mode C: Upscale_Denoise -> Downscale -> Upscale
                 shaders.add(getShaderPath("Anime4K_Upscale_Denoise_CNN_x2_$q.glsl"))
                 shaders.add(getShaderPath("Anime4K_AutoDownscalePre_x2.glsl"))
-                shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$q.glsl"))
+                shaders.add(getShaderPath("Anime4K_AutoDownscalePre_x4.glsl"))
+                shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$lowerQ.glsl"))
             }
             Mode.A_PLUS -> {
-                // Mode A+A: Restore -> Upscale -> Restore -> Upscale
+                // Mode A+A: Restore -> Upscale -> Downscale -> Restore -> Upscale
                 shaders.add(getShaderPath("Anime4K_Restore_CNN_$q.glsl"))
                 shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$q.glsl"))
                 shaders.add(getShaderPath("Anime4K_AutoDownscalePre_x2.glsl"))
-                shaders.add(getShaderPath("Anime4K_Restore_CNN_$q.glsl"))
-                shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$q.glsl"))
+                shaders.add(getShaderPath("Anime4K_AutoDownscalePre_x4.glsl"))
+                shaders.add(getShaderPath("Anime4K_Restore_CNN_$lowerQ.glsl"))
+                shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$lowerQ.glsl"))
             }
             Mode.B_PLUS -> {
-                // Mode B+B: Restore_Soft -> Upscale -> Restore_Soft -> Upscale
+                // Mode B+B: Restore_Soft -> Upscale -> Downscale -> Restore_Soft -> Upscale
                 shaders.add(getShaderPath("Anime4K_Restore_CNN_Soft_$q.glsl"))
                 shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$q.glsl"))
                 shaders.add(getShaderPath("Anime4K_AutoDownscalePre_x2.glsl"))
-                shaders.add(getShaderPath("Anime4K_Restore_CNN_Soft_$q.glsl"))
-                shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$q.glsl"))
+                shaders.add(getShaderPath("Anime4K_AutoDownscalePre_x4.glsl"))
+                shaders.add(getShaderPath("Anime4K_Restore_CNN_Soft_$lowerQ.glsl"))
+                shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$lowerQ.glsl"))
             }
             Mode.C_PLUS -> {
-                // Mode C+A: Upscale_Denoise -> Restore -> Upscale
+                // Mode C+A: Upscale_Denoise -> Downscale -> Restore -> Upscale
                 shaders.add(getShaderPath("Anime4K_Upscale_Denoise_CNN_x2_$q.glsl"))
                 shaders.add(getShaderPath("Anime4K_AutoDownscalePre_x2.glsl"))
-                shaders.add(getShaderPath("Anime4K_Restore_CNN_$q.glsl"))
-                shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$q.glsl"))
+                shaders.add(getShaderPath("Anime4K_AutoDownscalePre_x4.glsl"))
+                shaders.add(getShaderPath("Anime4K_Restore_CNN_$lowerQ.glsl"))
+                shaders.add(getShaderPath("Anime4K_Upscale_CNN_x2_$lowerQ.glsl"))
             }
             Mode.OFF -> {
                 // 已在开头处理
             }
         }
 
-        // ===== 追加着色器模块（基于社区证据）=====
-        // 顺序：Deblur → Darken → Thin（来源 Issue #84 作者配置）
+        // ===== 追加着色器模块 =====
         if (enableDeblur) {
             shaders.add(getShaderPath("Anime4K_Deblur_DoG.glsl"))
-        }
-        if (enableDarken) {
-            shaders.add(getShaderPath("Anime4K_Darken_HQ.glsl"))
-        }
-        if (enableThin) {
-            shaders.add(getShaderPath("Anime4K_Thin_HQ.glsl"))
         }
 
         // 用冒号连接所有着色器路径
         val chain = shaders.joinToString(":")
         Log.d(TAG, "Shader chain for Mode $mode ($quality): $chain" +
-            " | darken=$enableDarken thin=$enableThin deblur=$enableDeblur")
+            " | deblur=$enableDeblur")
         return chain
     }
 

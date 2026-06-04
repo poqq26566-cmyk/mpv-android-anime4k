@@ -257,6 +257,27 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putString(AppConstants.Preferences.ANIME4K_LAST_MODE, mode).apply()
     }
     
+    // ==================== Anime4K 超分质量 ====================
+    
+    /**
+     * 获取超分质量设置
+     * @return Quality 枚举名称（FAST, BALANCED, HIGH）
+     */
+    fun getAnime4KQuality(): String {
+        return sharedPreferences.getString(
+            AppConstants.Preferences.ANIME4K_QUALITY,
+            "BALANCED"  // 默认平衡档
+        ) ?: "BALANCED"
+    }
+    
+    /**
+     * 保存超分质量设置
+     * @param quality Quality 枚举名称
+     */
+    fun setAnime4KQuality(quality: String) {
+        sharedPreferences.edit().putString(AppConstants.Preferences.ANIME4K_QUALITY, quality).apply()
+    }
+    
     // ==================== 更新相关 ====================
     
     /**

@@ -639,7 +639,9 @@ internal fun VideoPlayerActivity.initializeManagers() {
         }
 
         override fun onAnime4KChanged(enabled: Boolean, mode: Anime4KManager.Mode, quality: Anime4KManager.Quality) {
-            viewModel.setAnime4K(enabled, mode, quality)
+            // 使用用户设置的质量等级，忽略弹窗传入的硬编码值
+            val actualQuality = viewModel.anime4KQuality.value
+            viewModel.setAnime4K(enabled, mode, actualQuality)
             anime4KMode = mode
             applyAnime4K()
 

@@ -23,6 +23,7 @@ object AppConstants {
         const val LONG_PRESS_SPEED = "long_press_speed"
         const val ANIME4K_MEMORY_ENABLED = "anime4k_memory_enabled"
         const val ANIME4K_LAST_MODE = "anime4k_last_mode"
+        const val ANIME4K_QUALITY = "anime4k_quality"
         
         // 倍速记忆设置 Key
         const val REMEMBER_PLAYBACK_SPEED = "remember_playback_speed"
