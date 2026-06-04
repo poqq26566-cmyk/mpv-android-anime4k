@@ -6,11 +6,19 @@ import androidx.lifecycle.lifecycleScope
 import com.fam4k007.videoplayer.utils.DialogUtils
 import com.fam4k007.videoplayer.utils.Logger
 import `is`.xyz.mpv.MPVLib
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.net.URLDecoder
 
 private const val TAG = "VideoPlayerActivity"
+
+/**
+ * 字幕优先级列表：ass > srt > ssa > vtt > sub > sbv > json
+ */
+private val SUBTITLE_PRIORITY = listOf("ass", "srt", "ssa", "vtt", "sub", "sbv", "json")
 
 /**
  * 自动加载同文件夹下的同名字幕文件
@@ -56,9 +64,6 @@ internal fun VideoPlayerActivity.autoLoadSubtitleIfExists(videoUri: android.net.
             return
         }
 
-        // 按优先级排序：ass > srt > 其他
-        val priorityExtensions = listOf("ass", "srt", "ssa", "vtt", "sub", "sbv", "json")
-
         // 模糊匹配：查找所有以视频文件名开头的字幕文件
         val allSubtitles = videoDir.listFiles()?.filter { file ->
             if (!file.isFile) return@filter false
@@ -70,7 +75,7 @@ internal fun VideoPlayerActivity.autoLoadSubtitleIfExists(videoUri: android.net.
 
             // 扩展名必须在支持列表中
             val ext = file.extension.lowercase()
-            priorityExtensions.contains(ext)
+            SUBTITLE_PRIORITY.contains(ext)
         } ?: emptyList()
 
         com.fam4k007.videoplayer.utils.Logger.d(TAG, "Found ${allSubtitles.size} potential subtitle files")
@@ -82,46 +87,11 @@ internal fun VideoPlayerActivity.autoLoadSubtitleIfExists(videoUri: android.net.
             return
         }
 
-        // 获取系统语言偏好
+        // 使用公用排序函数选择最佳字幕
         val systemLanguage = resources.configuration.locales[0].toString().lowercase()
-        val isSimplifiedChinese = systemLanguage.contains("zh_cn") || systemLanguage.contains("zh-cn")
-        val isTraditionalChinese = systemLanguage.contains("zh_tw") || systemLanguage.contains("zh_hk") ||
-                                   systemLanguage.contains("zh-tw") || systemLanguage.contains("zh-hk")
-
-        com.fam4k007.videoplayer.utils.Logger.d(TAG, "System language: $systemLanguage, SC: $isSimplifiedChinese, TC: $isTraditionalChinese")
-
-        // 按优先级排序字幕文件
-        val sortedSubtitles = allSubtitles.sortedWith(compareBy(
-            // 1. 扩展名优先级（数字越小优先级越高）
-            { file ->
-                val ext = file.extension.lowercase()
-                priorityExtensions.indexOf(ext).let { if (it == -1) 999 else it }
-            },
-            // 2. 完全匹配优先（123.ass > 123.sc.ass）
-            { file ->
-                val nameWithoutExt = file.nameWithoutExtension
-                if (nameWithoutExt.equals(videoNameWithoutExt, ignoreCase = true)) 0 else 1
-            },
-            // 3. 语言标记优先级（根据系统语言）
-            { file ->
-                val nameLower = file.nameWithoutExtension.lowercase()
-                val afterVideoName = nameLower.removePrefix(videoNameWithoutExt.lowercase())
-
-                when {
-                    // 简体中文系统优先简体标记
-                    isSimplifiedChinese && (afterVideoName.contains("sc") || afterVideoName.contains("chs") ||
-                                            afterVideoName.contains("简") || afterVideoName.contains("zh-cn")) -> 0
-                    // 繁体中文系统优先繁体标记
-                    isTraditionalChinese && (afterVideoName.contains("tc") || afterVideoName.contains("cht") ||
-                                             afterVideoName.contains("繁") || afterVideoName.contains("zh-tw")) -> 0
-                    else -> 1
-                }
-            },
-            // 4. 文件名长度（越短越优先，假设越接近原始名称）
-            { file -> file.nameWithoutExtension.length },
-            // 5. 字母顺序
-            { file -> file.name.lowercase() }
-        ))
+        val sortedSubtitles = allSubtitles.sortedWith(
+            subtitleComparator(videoNameWithoutExt, systemLanguage)
+        )
 
         // 打印所有找到的字幕（调试用）
         sortedSubtitles.forEachIndexed { index, file ->
@@ -198,7 +168,7 @@ internal fun VideoPlayerActivity.restoreSubtitlePreferences(videoUri: android.ne
                 // 如果已经自动加载过这个字幕，就跳过（防止重复加载）
                 if (viewModel.hasAutoLoadedSubtitle.value) {
                     Logger.d(TAG, "Subtitle already auto-loaded this session, skipping restore")
-                } else if (File(savedSubtitlePath).exists()) {
+                } else if (File(savedSubtitlePath).exists() || savedSubtitlePath.startsWith("http")) {
                     try {
                         MPVLib.command("sub-add", savedSubtitlePath, "select")
                         Logger.d(TAG, "Restored external subtitle from path: $savedSubtitlePath")
@@ -313,5 +283,157 @@ internal fun VideoPlayerActivity.getContentUriForFile(file: File): android.net.U
     } catch (e: Exception) {
         com.fam4k007.videoplayer.utils.Logger.w(TAG, "Failed to get content URI for file: ${file.absolutePath}", e)
         null
+    }
+}
+
+// ==================== 字幕匹配工具函数（本地和 WebDAV 共用）====================
+
+/**
+ * 从文件名列表中，找出与视频名最佳匹配的字幕文件名
+ * 使用与本地字幕相同的排序算法
+ */
+fun findBestSubtitleFileName(
+    videoNameWithoutExt: String,
+    availableFiles: List<String>,
+    systemLanguage: String = "zh_cn"
+): String? {
+    val matching = availableFiles.filter { fileName ->
+        val name = fileName.lowercase()
+        val videoName = videoNameWithoutExt.lowercase()
+        name.startsWith(videoName) && SUBTITLE_PRIORITY.contains(fileName.substringAfterLast('.', "").lowercase())
+    }
+    if (matching.isEmpty()) return null
+
+    return matching.sortedWith(subtitleFileNameComparator(videoNameWithoutExt, systemLanguage)).first()
+}
+
+/**
+ * File 版本的字幕比较器（本地文件使用）
+ */
+private fun subtitleComparator(videoNameWithoutExt: String, systemLanguage: String): Comparator<File> {
+    val isSC = systemLanguage.contains("zh_cn")
+    val isTC = systemLanguage.contains("zh_tw") || systemLanguage.contains("zh_hk")
+    return compareBy<File>(
+        { file -> SUBTITLE_PRIORITY.indexOf(file.extension.lowercase()).let { if (it == -1) 999 else it } },
+        { file -> if (file.nameWithoutExtension.equals(videoNameWithoutExt, ignoreCase = true)) 0 else 1 },
+        { file ->
+            val after = file.nameWithoutExtension.lowercase().removePrefix(videoNameWithoutExt.lowercase())
+            langPriority(after, isSC, isTC)
+        },
+        { file -> file.nameWithoutExtension.length },
+        { file -> file.name.lowercase() }
+    )
+}
+
+/**
+ * 文件名 String 版本的字幕比较器（WebDAV 使用）
+ */
+private fun subtitleFileNameComparator(videoNameWithoutExt: String, systemLanguage: String): Comparator<String> {
+    val isSC = systemLanguage.contains("zh_cn")
+    val isTC = systemLanguage.contains("zh_tw") || systemLanguage.contains("zh_hk")
+    return compareBy<String>(
+        { name -> SUBTITLE_PRIORITY.indexOf(name.substringAfterLast('.').lowercase()).let { if (it == -1) 999 else it } },
+        { name -> if (name.substringBeforeLast('.').equals(videoNameWithoutExt, ignoreCase = true)) 0 else 1 },
+        { name ->
+            val after = name.substringBeforeLast('.').lowercase().removePrefix(videoNameWithoutExt.lowercase())
+            langPriority(after, isSC, isTC)
+        },
+        { name -> name.substringBeforeLast('.').length },
+        { name -> name.lowercase() }
+    )
+}
+
+private fun langPriority(afterVideoName: String, isSC: Boolean, isTC: Boolean): Int {
+    return when {
+        isSC && (afterVideoName.contains("sc") || afterVideoName.contains("chs") ||
+                 afterVideoName.contains("简") || afterVideoName.contains("zh-cn")) -> 0
+        isTC && (afterVideoName.contains("tc") || afterVideoName.contains("cht") ||
+                 afterVideoName.contains("繁") || afterVideoName.contains("zh-tw")) -> 0
+        else -> 1
+    }
+}
+
+// ==================== WebDAV 同名字幕加载 ====================
+
+/**
+ * 自动加载 WebDAV 视频的同名字幕
+ * 通过 WebDAV 客户端列目录，找到同名字幕 URL 后传给 MPV 加载
+ */
+internal suspend fun VideoPlayerActivity.autoLoadWebDavSubtitle(
+    videoUri: android.net.Uri,
+    parentDirPath: String,
+    client: com.fam4k007.videoplayer.domain.webdav.WebDavClient
+) {
+    try {
+        Logger.d(TAG, "===== Auto-load WebDAV subtitle start =====")
+        Logger.d(TAG, "Video URI: $videoUri, parent dir: $parentDirPath")
+
+        // 从 URL 中提取视频文件名（不含扩展名），需 URL 解码
+        val videoUrl = videoUri.toString()
+        val fileName = videoUrl.substringAfterLast('/').substringBefore('?')
+        val rawName = fileName.substringBeforeLast('.')
+        val videoNameWithoutExt = URLDecoder.decode(rawName, "UTF-8")
+
+        Logger.d(TAG, "Video file name: $fileName, raw name: $rawName, decoded base name: $videoNameWithoutExt")
+
+        // 获取系统语言偏好（简体系统优先 sc，繁体优先 tc）
+        val systemLanguage = resources.configuration.locales[0].toString().lowercase()
+        Logger.d(TAG, "System language: $systemLanguage")
+
+        // 用 WebDAV 客户端列出目录（网络请求，需要在 IO 线程执行）
+        val files = withContext(Dispatchers.IO) {
+            client.listFiles(parentDirPath)
+        }
+        val subtitleCandidates = files.filter { !it.isDirectory }
+
+        if (subtitleCandidates.isEmpty()) {
+            Logger.d(TAG, "No files found in WebDAV directory")
+            return
+        }
+
+        val availableNames = subtitleCandidates.map { it.name }
+        val bestName = findBestSubtitleFileName(videoNameWithoutExt, availableNames, systemLanguage)
+
+        if (bestName == null) {
+            Logger.d(TAG, "No matching subtitle found in WebDAV directory")
+            return
+        }
+
+        Logger.d(TAG, "Best matching subtitle: $bestName")
+
+        // 构建字幕文件的完整 URL（需包含认证信息）
+        val bestFile = subtitleCandidates.first { it.name == bestName }
+        val config = client.config
+        val subtitleUrl = if (config.isAnonymous || config.account.isNullOrEmpty()) {
+            client.getFileUrl(bestFile.path)
+        } else {
+            val uri = Uri.parse(config.serverUrl)
+            val scheme = uri.scheme
+            val host = uri.host
+            if (scheme.isNullOrEmpty() || host.isNullOrEmpty()) {
+                client.getFileUrl(bestFile.path)
+            } else {
+                val port = if (uri.port != -1) ":${uri.port}" else ""
+                val username = Uri.encode(config.account.orEmpty())
+                val password = Uri.encode(config.password.orEmpty())
+                val basePath = uri.path ?: "/"
+                val encodedPath = bestFile.path.split("/").joinToString("/") { Uri.encode(it) }
+                "$scheme://$username:$password@$host$port$basePath$encodedPath"
+            }
+        }
+
+        Logger.d(TAG, "Subtitle URL: $subtitleUrl")
+
+        // 通过 MPV 加载远程字幕
+        MPVLib.command("sub-add", subtitleUrl, "select")
+        Logger.d(TAG, "Successfully loaded WebDAV subtitle: $bestName")
+
+        // 保存字幕路径，避免重复加载
+        preferencesManager.setExternalSubtitle(videoUri.toString(), subtitleUrl)
+        viewModel.setHasAutoLoadedSubtitle(true)
+
+        DialogUtils.showToastShort(this, "已自动加载字幕: $bestName")
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to auto-load WebDAV subtitle", e)
     }
 }
