@@ -18,6 +18,16 @@ internal fun VideoPlayerActivity.loadUserSettings() {
     viewModel.setSeekTimeSeconds(seekTime)
     Log.d(TAG, "loadUserSettings: seekTimeSeconds loaded = $seekTime seconds")
 
+    // 恢复超分质量设置
+    val savedQuality = preferencesManager.getAnime4KQuality()
+    try {
+        val quality = Anime4KManager.Quality.valueOf(savedQuality)
+        viewModel.setAnime4KQuality(quality)
+        Logger.d(TAG, "Anime4K quality restored: $savedQuality")
+    } catch (e: IllegalArgumentException) {
+        Log.e(TAG, "Invalid Anime4K quality in preferences: $savedQuality", e)
+    }
+
     // 如果启用了Anime4K记忆功能，恢复上次使用的模式
     if (preferencesManager.isAnime4KMemoryEnabled()) {
         val lastMode = preferencesManager.getLastAnime4KMode()

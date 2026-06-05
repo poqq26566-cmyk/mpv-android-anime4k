@@ -1261,8 +1261,13 @@ class PlayerDialogManager(
                     itemText.setTextColor(typedValue.data)
                     itemText.setTypeface(null, android.graphics.Typeface.BOLD)
                 } else {
-                    // 使用固定颜色，确保深色/AMOLED模式下与浅色模式一致
-                    itemText.setTextColor(android.graphics.Color.parseColor("#333333"))
+                    val typedValue = android.util.TypedValue()
+                    activity.theme.resolveAttribute(
+                        R.attr.colorDialogText,
+                        typedValue,
+                        true
+                    )
+                    itemText.setTextColor(typedValue.data)
                     itemText.setTypeface(null, android.graphics.Typeface.NORMAL)
                 }
 

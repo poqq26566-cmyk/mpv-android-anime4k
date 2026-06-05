@@ -21,12 +21,12 @@ import android.content.Intent
 import android.widget.Toast
 import com.fam4k007.videoplayer.presentation.PlaybackSettingsViewModel
 import com.fam4k007.videoplayer.ui.components.PreferenceCard
-import com.fam4k007.videoplayer.ui.components.PreferenceDivider
 import com.fam4k007.videoplayer.ui.components.PreferenceSectionHeader
 import com.fam4k007.videoplayer.ui.components.SwitchItem
 import com.fam4k007.videoplayer.ui.components.TextItem
 import com.fam4k007.videoplayer.ui.player.SeekbarStyle
 import com.fam4k007.videoplayer.ui.theme.spacing
+import com.fam4k007.videoplayer.domain.player.Anime4KManager
 
 /**
  * Compose 版本的播放设置页面
@@ -247,6 +247,10 @@ fun PlaybackSettingsScreen(
                         subtitle = if (settings.anime4KMemory) "Remember last used Anime4K mode" else "Always start with Anime4K off",
                         checked = settings.anime4KMemory,
                         onCheckedChange = { viewModel.setAnime4KMemory(it) }
+                    )
+                    Anime4KQualitySelector(
+                        currentQuality = settings.anime4KQuality,
+                        onQualityChange = { viewModel.setAnime4KQuality(it) }
                     )
                 }
             }
@@ -916,6 +920,90 @@ private fun SeekbarStyleCard(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun Anime4KQualitySelector(
+    currentQuality: String,
+    onQualityChange: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = MaterialTheme.spacing.medium,
+                vertical = MaterialTheme.spacing.small
+            )
+    ) {
+        Text(
+            "超分质量",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(Modifier.height(MaterialTheme.spacing.small))
+
+        QualityOption(
+            label = "流畅",
+            subtitle = "GPU负载最低，播放更流畅",
+            isSelected = currentQuality == "FAST",
+            onClick = { onQualityChange("FAST") }
+        )
+        QualityOption(
+            label = "均衡",
+            subtitle = "画质与性能的平衡之选",
+            isSelected = currentQuality == "BALANCED",
+            onClick = { onQualityChange("BALANCED") }
+        )
+        QualityOption(
+            label = "高清",
+            subtitle = "追求最佳画质，GPU开销较大",
+            isSelected = currentQuality == "HIGH",
+            onClick = { onQualityChange("HIGH") }
+        )
+    }
+}
+
+@Composable
+private fun QualityOption(
+    label: String,
+    subtitle: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = MaterialTheme.spacing.small, horizontal = MaterialTheme.spacing.small),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = isSelected,
+            onClick = onClick,
+            modifier = Modifier.size(24.dp),
+            colors = RadioButtonDefaults.colors(
+                selectedColor = MaterialTheme.colorScheme.primary,
+                unselectedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+            )
+        )
+        Spacer(Modifier.width(12.dp))
+        Column {
+            Text(
+                label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (isSelected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurface,
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+            )
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

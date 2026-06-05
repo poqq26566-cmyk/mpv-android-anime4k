@@ -952,7 +952,7 @@ private fun scanAllVideosFlat(context: android.content.Context): List<com.fam4k0
 
         // 补充扫描：当 .nomedia 关闭或隐藏文件夹开启时，MediaStore 可能遗漏文件
         val prefs = com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(context)
-        if (!prefs.isNomediaEnabled() || prefs.isScanHiddenFoldersEnabled()) {
+        if (prefs.getIncludeNoMediaFolders() || prefs.isScanHiddenFoldersEnabled()) {
             val knownPaths = videos.map { it.path }.toMutableSet()
             val parentDirs = videos.map { java.io.File(it.path).parentFile?.absolutePath }.distinct().filterNotNull()
             for (parentPath in parentDirs) {
@@ -965,7 +965,7 @@ private fun scanAllVideosFlat(context: android.content.Context): List<com.fam4k0
                         scanSingleFolderFlat(subDir, knownPaths, videos, context)
                     }
                     // .nomedia 关闭时扫子目录
-                    if (!prefs.isNomediaEnabled()) {
+                    if (prefs.getIncludeNoMediaFolders()) {
                         scanSingleFolderFlat(subDir, knownPaths, videos, context)
                     }
                 }

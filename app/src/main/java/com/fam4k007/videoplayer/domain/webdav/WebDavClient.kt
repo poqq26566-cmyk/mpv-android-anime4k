@@ -25,6 +25,19 @@ data class WebDavConfig(
 )
 
 /**
+ * WebDAV 文件类别枚举
+ */
+enum class WebDavFileCategory {
+    VIDEO,      // 视频
+    AUDIO,      // 音频
+    IMAGE,      // 图片
+    DOCUMENT,   // 文档/文本
+    ARCHIVE,    // 压缩包
+    SUBTITLE,   // 字幕
+    OTHER       // 其他
+}
+
+/**
  * WebDAV 客户端工具类
  * Domain Layer - 核心业务逻辑（WebDAV 操作）
  * 封装 Sardine 库的操作
@@ -164,12 +177,29 @@ class WebDavClient(internal val config: WebDavConfig) {
          * 判断是否为视频文件
          */
         fun isVideoFile(fileName: String): Boolean {
-            val videoExtensions = setOf(
-                "mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v",
-                "3gp", "3g2", "ts", "m2ts", "mts", "rmvb", "rm", "asf"
-            )
+            return getFileCategory(fileName) == WebDavFileCategory.VIDEO
+        }
+
+        /**
+         * 根据文件名判断文件类别
+         */
+        fun getFileCategory(fileName: String): WebDavFileCategory {
             val extension = fileName.substringAfterLast('.', "").lowercase()
-            return extension in videoExtensions
+            return when (extension) {
+                in setOf("mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v",
+                    "3gp", "3g2", "ts", "m2ts", "mts", "rmvb", "rm", "asf") -> WebDavFileCategory.VIDEO
+                in setOf("mp3", "flac", "wav", "ogg", "aac", "m4a", "wma", "opus",
+                    "aiff", "alac", "ape", "dsf", "dff") -> WebDavFileCategory.AUDIO
+                in setOf("jpg", "jpeg", "png", "gif", "bmp", "webp", "svg",
+                    "ico", "tiff", "tif", "heic", "heif", "raw") -> WebDavFileCategory.IMAGE
+                in setOf("txt", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+                    "epub", "mobi", "md", "log", "csv", "json", "xml", "html", "htm",
+                    "css", "js", "py", "java", "kt", "sql", "yaml", "yml", "toml",
+                    "ini", "cfg", "conf") -> WebDavFileCategory.DOCUMENT
+                in setOf("zip", "rar", "7z", "tar", "gz", "bz2", "xz", "zst", "iso") -> WebDavFileCategory.ARCHIVE
+                in setOf("srt", "ass", "ssa", "vtt", "sub", "idx", "sup", "pgs") -> WebDavFileCategory.SUBTITLE
+                else -> WebDavFileCategory.OTHER
+            }
         }
     }
 }

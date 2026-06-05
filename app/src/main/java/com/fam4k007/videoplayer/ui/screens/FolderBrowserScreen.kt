@@ -9,6 +9,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -36,6 +38,7 @@ import com.fam4k007.videoplayer.ui.components.DeleteConfirmDialog
 import com.fam4k007.videoplayer.ui.components.MultiSelectActionBar
 import com.fam4k007.videoplayer.ui.components.RenameDialog
 import com.fam4k007.videoplayer.utils.FileOperationManager
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
@@ -54,6 +57,9 @@ fun FolderBrowserScreen(
     
     // 观察 ViewModel 状态
     val folderListState by viewModel.folderListState.collectAsState()
+    val viewMode by viewModel.viewMode.collectAsState()
+    val breadcrumbs by viewModel.breadcrumbs.collectAsState()
+    val treeHasSubfolders by viewModel.treeHasSubfolders.collectAsState()
     
     var showSortDialog by remember { mutableStateOf(false) }
     
@@ -67,10 +73,31 @@ fun FolderBrowserScreen(
     var selectedFolders by remember { mutableStateOf<Set<VideoFolder>>(emptySet()) }
     var showBatchDeleteDialog by remember { mutableStateOf(false) }
 
-    // 初始化加载
-    LaunchedEffect(hasPermission) {
-        if (hasPermission && folderListState.folders.isEmpty()) {
-            viewModel.scanVideoFolders()
+    val isTreeView = viewMode == "TREE_VIEW"
+
+    // 面包屑滚动状态：进入子文件夹时自动滚到最右（显示最新路径）
+    val breadcrumbScrollState = rememberScrollState()
+    LaunchedEffect(breadcrumbs.size) {
+        if (isTreeView && breadcrumbs.size > 1) {
+            // 延迟一帧确保布局完成后再滚动
+            delay(50)
+            breadcrumbScrollState.animateScrollTo(breadcrumbScrollState.maxValue)
+        }
+    }
+
+    // 树状视图：返回键逐级回退
+    androidx.activity.compose.BackHandler(enabled = isTreeView && breadcrumbs.size > 1) {
+        viewModel.treeNavigateBack()
+    }
+
+    // 初始化加载（仅作为后备，setViewMode/init 已负责主要加载，使用静默模式避免转圈）
+    LaunchedEffect(hasPermission, viewMode) {
+        if (hasPermission && !folderListState.isLoading) {
+            if (isTreeView && folderListState.folders.isEmpty()) {
+                viewModel.loadTreeRoot(silent = true)
+            } else if (!isTreeView && folderListState.folders.isEmpty()) {
+                viewModel.scanVideoFolders(silent = true)
+            }
         }
     }
 
@@ -78,14 +105,54 @@ fun FolderBrowserScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        "Folders",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    if (isTreeView && breadcrumbs.size > 1) {
+                        // 树状视图面包屑导航
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(breadcrumbScrollState),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            breadcrumbs.forEachIndexed { index, (path, name) ->
+                                if (index > 0) {
+                                    Icon(
+                                        imageVector = Icons.Default.ChevronRight,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Text(
+                                    text = name,
+                                    fontSize = 15.sp,
+                                    color = if (index == breadcrumbs.lastIndex)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = if (index == breadcrumbs.lastIndex) FontWeight.Bold else FontWeight.Normal,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .clickable { viewModel.navigateToBreadcrumb(index) }
+                                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    } else {
+                        Text(
+                            "文件夹",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        if (isTreeView && breadcrumbs.size > 1) {
+                            viewModel.treeNavigateBack()
+                        } else {
+                            onNavigateBack()
+                        }
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
@@ -94,6 +161,18 @@ fun FolderBrowserScreen(
                 },
                 actions = {
                     if (hasPermission) {
+                        // 视图模式切换按钮
+                        IconButton(onClick = { 
+                            val newMode = if (isTreeView) "FOLDER_VIEW" else "TREE_VIEW"
+                            viewModel.setViewMode(newMode)
+                            isEditMode = false
+                            selectedFolders = emptySet()
+                        }) {
+                            Icon(
+                                imageVector = if (isTreeView) Icons.Default.ViewList else Icons.Default.AccountTree,
+                                contentDescription = if (isTreeView) "切换到文件夹视图" else "切换到树状视图"
+                            )
+                        }
                         // 编辑按钮
                         IconButton(onClick = { 
                             isEditMode = !isEditMode
@@ -141,102 +220,134 @@ fun FolderBrowserScreen(
                     EmptyState("No video folders found")
                 }
                 else -> {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            item {
-                                if (folderListState.isRefreshing) {
-                                    Box(
-                                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        CircularProgressIndicator()
-                                    }
+                    // 用面包屑深度触发过渡动画（树状视图下）
+                    // 使用 Pair 包含视图模式，确保模式切换时 key 变化方式不会触发滑入/滑出动画
+                    val transitionKey = if (isTreeView) Pair(1, breadcrumbs.size) else Pair(0, 0)
+                    AnimatedContent(
+                        targetState = transitionKey,
+                        transitionSpec = {
+                            val (prevMode, prevLevel) = initialState
+                            val (currMode, currLevel) = targetState
+                            if (prevMode != currMode) {
+                                // 模式切换：仅淡入淡出，不播滑入滑出
+                                fadeIn(tween(200)) togetherWith fadeOut(tween(150))
+                            } else {
+                                val direction = currLevel - prevLevel
+                                if (direction > 0) {
+                                    // 进入子级：新内容从右侧滑入覆盖，旧内容原地消失
+                                    (slideInHorizontally { it } + fadeIn(tween(250))) togetherWith
+                                    fadeOut(tween(1))
+                                } else if (direction < 0) {
+                                    // 返回父级：当前页面（上层）渐变淡出并向右滑，露出底部的父级页面
+                                    (slideInHorizontally { it / 3 } + fadeIn(tween(300))) togetherWith
+                                    (slideOutHorizontally { it } + fadeOut(tween(300)))
+                                } else {
+                                    fadeIn(tween(200)) togetherWith fadeOut(tween(150))
                                 }
                             }
-                            items(folderListState.folders) { folder ->
-                                FolderItem(
-                                    folder = folder,
-                                    isSelected = folder == selectedFolder,
-                                    isEditMode = isEditMode,
-                                    isChecked = selectedFolders.contains(folder),
-                                    onClick = { 
-                                        if (isEditMode) {
-                                            // 编辑模式下切换选中状态
-                                            selectedFolders = if (selectedFolders.contains(folder)) {
-                                                selectedFolders - folder
-                                            } else {
-                                                selectedFolders + folder
-                                            }
-                                        } else {
-                                            // 正常模式下打开文件夹
-                                            onOpenFolder(folder)
+                        },
+                        label = "folderTransition"
+                    ) { _ ->
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                item {
+                                    if (folderListState.isRefreshing) {
+                                        Box(
+                                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator()
                                         }
                                     }
-                                )
+                                }
+                                items(folderListState.folders) { folder ->
+                                    FolderItem(
+                                        folder = folder,
+                                        isSelected = folder == selectedFolder,
+                                        isEditMode = isEditMode,
+                                        isChecked = selectedFolders.contains(folder),
+                                        onClick = { 
+                                            if (isEditMode) {
+                                                selectedFolders = if (selectedFolders.contains(folder)) {
+                                                    selectedFolders - folder
+                                                } else {
+                                                    selectedFolders + folder
+                                                }
+                                            } else if (isTreeView && treeHasSubfolders.contains(folder.folderPath)) {
+                                                // 树状视图：有子文件夹的节点 → 导航进入
+                                                viewModel.navigateToTreeFolder(folder.folderPath, folder.folderName)
+                                            } else {
+                                                // 叶子节点或文件夹视图 → 打开视频列表
+                                                onOpenFolder(folder)
+                                            }
+                                        }
+                                    )
+                                }
                             }
-                        }
-                        
-                        // 多选操作栏
-                        MultiSelectActionBar(
-                            visible = isEditMode && selectedFolders.isNotEmpty(),
-                            selectedCount = selectedFolders.size,
-                            totalCount = folderListState.folders.size,
-                            onSelectAll = {
-                                if (selectedFolders.size == folderListState.folders.size) {
-                                    // 取消全选
+                            
+                            // 多选操作栏
+                            MultiSelectActionBar(
+                                visible = isEditMode && selectedFolders.isNotEmpty(),
+                                selectedCount = selectedFolders.size,
+                                totalCount = folderListState.folders.size,
+                                onSelectAll = {
+                                    if (selectedFolders.size == folderListState.folders.size) {
+                                        selectedFolders = emptySet()
+                                    } else {
+                                        selectedFolders = folderListState.folders.toSet()
+                                    }
+                                },
+                                onRename = {
+                                    if (selectedFolders.size == 1) {
+                                        selectedFolder = selectedFolders.first()
+                                        showRenameDialog = true
+                                    }
+                                },
+                                onDelete = {
+                                    showBatchDeleteDialog = true
+                                },
+                                onCopy = null,
+                                onCancel = {
+                                    isEditMode = false
                                     selectedFolders = emptySet()
-                                } else {
-                                    // 全选
-                                    selectedFolders = folderListState.folders.toSet()
-                                }
-                            },
-                            onRename = {
-                                if (selectedFolders.size == 1) {
-                                    selectedFolder = selectedFolders.first()
-                                    showRenameDialog = true
-                                }
-                            },
-                            onDelete = {
-                                showBatchDeleteDialog = true
-                            },
-                            onCopy = null,  // 文件夹不提供复制功能
-                            onCancel = {
-                                isEditMode = false
-                                selectedFolders = emptySet()
-                            },
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .windowInsetsPadding(WindowInsets.navigationBars)
-                        )
-                        
-                        // 添加刷新按钮（编辑模式时隐藏）
-                        AnimatedVisibility(
-                            visible = !isEditMode,
-                            enter = scaleIn(
-                                initialScale = 0.3f,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                )
-                            ) + fadeIn(animationSpec = tween(200)),
-                            exit = scaleOut(
-                                targetScale = 0.3f,
-                                animationSpec = tween(200)
-                            ) + fadeOut(animationSpec = tween(200)),
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(16.dp)
-                        ) {
-                            FloatingActionButton(
-                                onClick = { viewModel.refreshFolders() },
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .windowInsetsPadding(WindowInsets.navigationBars)
+                            )
+                            
+                            // 刷新按钮（编辑模式时隐藏）
+                            AnimatedVisibility(
+                                visible = !isEditMode,
+                                enter = scaleIn(
+                                    initialScale = 0.3f,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMedium
+                                    )
+                                ) + fadeIn(animationSpec = tween(200)),
+                                exit = scaleOut(
+                                    targetScale = 0.3f,
+                                    animationSpec = tween(200)
+                                ) + fadeOut(animationSpec = tween(200)),
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(16.dp)
                             ) {
-                                Icon(Icons.Default.Refresh, "Refresh")
+                                FloatingActionButton(
+                                    onClick = {
+                                        if (isTreeView) viewModel.refreshTreeView()
+                                        else viewModel.refreshFolders()
+                                    },
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                ) {
+                                    Icon(Icons.Default.Refresh, "刷新")
+                                }
                             }
                         }
                     }
@@ -642,6 +753,8 @@ private fun <T> naturalComparator(selector: (T) -> String): Comparator<T> {
         compareNatural(selector(a), selector(b))
     }
 }
+
+
 
 private fun compareNatural(str1: String, str2: String): Int {
     val s1 = str1.lowercase()

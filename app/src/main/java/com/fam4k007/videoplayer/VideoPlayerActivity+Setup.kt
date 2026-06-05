@@ -344,137 +344,7 @@ internal fun VideoPlayerActivity.initializeManagers() {
 
     gestureHandler = GestureHandler(
         WeakReference(this),
-        WeakReference(window),
-        object : GestureHandler.GestureCallback {
-            override fun onGestureStart() {
-                // 通用手势开始（亮度/音量调节）
-            }
-
-            override fun onGestureEnd() {
-                seekHint?.let {
-                    if (it.visibility == View.VISIBLE) {
-                        it.animate().alpha(0f).setDuration(300)
-                            .withEndAction { it.visibility = View.GONE }.start()
-                    }
-                }
-                speedHint?.let {
-                    if (it.visibility == View.VISIBLE) {
-                        it.animate().alpha(0f).setDuration(300)
-                            .withEndAction { it.visibility = View.GONE }.start()
-                    }
-                }
-            }
-
-            override fun onLongPressRelease() {
-                // 恢复到长按前的速度
-                viewModel.restoreSpeedAfterLongPress()
-                playbackEngine?.setSpeed(viewModel.speedBeforeLongPress.value)
-                danmakuManager.setSpeed(viewModel.speedBeforeLongPress.value.toFloat())
-
-                // 隐藏速度提示
-                speedHint?.animate()?.alpha(0f)?.setDuration(200)
-                    ?.withEndAction { speedHint?.visibility = View.GONE }?.start()
-            }
-
-            override fun onSingleTap() {
-                // 锁定状态下单击屏幕触发解锁按钮重新显示
-                if (controlsManager?.isLocked != true) {
-                    controlsManager?.toggleControls()
-                } else {
-                    viewModel.triggerUnlockButtons()
-                }
-            }
-
-            override fun onDoubleTap() {
-                playbackEngine?.togglePlayPause()
-            }
-
-            override fun onLongPress() {
-                val longPressSpeed = preferencesManager.getLongPressSpeed()
-
-                // 记录当前速度，用于松开后恢复
-                viewModel.saveSpeedBeforeLongPress(viewModel.speed.value.toDouble())
-
-                // 设置为长按速度
-                viewModel.setSpeed(longPressSpeed.toDouble())
-                playbackEngine?.setSpeed(longPressSpeed.toDouble())
-                danmakuManager.setSpeed(longPressSpeed)
-
-                // 显示速度提示
-                speedHintText?.text = "正在${String.format("%.1f", longPressSpeed)}倍速播放"
-                speedHint?.apply {
-                    visibility = View.VISIBLE
-                    alpha = 0f
-                    animate().alpha(1f).setDuration(200).start()
-                }
-            }
-
-            override fun onSeekGesture(seekSeconds: Int, isRelativeSeek: Boolean) {
-                // 仅用于双击快进/快退
-                if (duration > 0) {
-                    val basePosition = pendingSeekPosition ?: currentPosition.toInt()
-                    val newPos = (basePosition + seekSeconds).coerceIn(0, duration.toInt())
-                    pendingSeekPosition = newPos
-
-                    val usePrecise = gestureHandler.isPreciseSeekingEnabled()
-                    playbackEngine?.seekTo(newPos, usePrecise)
-                    danmakuManager.seekTo((newPos * 1000).toLong())
-
-                    val currentTime = FormatUtils.formatProgressTime(newPos.toDouble())
-                    val sign = if (seekSeconds >= 0) "+" else ""
-                    val seekTime = FormatUtils.formatProgressTime(seekSeconds.toDouble())
-                    seekHint?.text = "$currentTime\n[$sign$seekTime]"
-                    if (seekHint?.visibility != View.VISIBLE) {
-                        seekHint?.visibility = View.VISIBLE
-                        seekHint?.animate()?.alpha(1f)?.setDuration(200)?.start()
-                    } else {
-                        seekHint?.alpha = 1f
-                    }
-                }
-            }
-
-            override fun onSeekStart(initialPosition: Int) {
-                // 滑动seek开始，记录初始位置
-                viewModel.setGestureStartPosition(initialPosition)
-                android.util.Log.d(TAG, "Seek started from position: $initialPosition")
-            }
-
-            override fun onSeekUpdate(targetPosition: Int, deltaSeconds: Int) {
-                // 滑动中，实时seek到目标位置（参考 mpvEx）
-                if (duration > 0) {
-                    val clampedPosition = targetPosition.coerceIn(0, duration.toInt())
-
-                    // 实时调用 seekTo，让视频跟着手指移动
-                    val usePrecise = gestureHandler.isPreciseSeekingEnabled()
-                    playbackEngine?.seekTo(clampedPosition, usePrecise)
-                    danmakuManager.seekTo((clampedPosition * 1000).toLong())
-
-                    // 更新提示文字
-                    val currentTime = FormatUtils.formatProgressTime(clampedPosition.toDouble())
-                    val sign = if (deltaSeconds >= 0) "+" else ""
-                    val seekTime = FormatUtils.formatProgressTime(kotlin.math.abs(deltaSeconds).toDouble())
-                    seekHint?.text = "$currentTime\n[$sign$seekTime]"
-                    if (seekHint?.visibility != View.VISIBLE) {
-                        seekHint?.visibility = View.VISIBLE
-                        seekHint?.alpha = 1f
-                    } else {
-                        seekHint?.alpha = 1f
-                    }
-                }
-            }
-
-            override fun onSeekEnd() {
-                // 滑动seek结束，延迟隐藏提示
-                seekHint?.postDelayed({
-                    seekHint?.animate()?.alpha(0f)?.setDuration(300)
-                        ?.withEndAction { seekHint?.visibility = View.GONE }?.start()
-                }, 300)
-            }
-
-            override fun getCurrentPosition(): Int {
-                return currentPosition.toInt()
-            }
-        }
+        WeakReference(window)
     )
 
     controlsManager = PlayerControlsManager(
@@ -639,7 +509,9 @@ internal fun VideoPlayerActivity.initializeManagers() {
         }
 
         override fun onAnime4KChanged(enabled: Boolean, mode: Anime4KManager.Mode, quality: Anime4KManager.Quality) {
-            viewModel.setAnime4K(enabled, mode, quality)
+            // 使用用户设置的质量等级，忽略弹窗传入的硬编码值
+            val actualQuality = viewModel.anime4KQuality.value
+            viewModel.setAnime4K(enabled, mode, actualQuality)
             anime4KMode = mode
             applyAnime4K()
 
@@ -692,12 +564,7 @@ internal fun VideoPlayerActivity.bindViewsToManagers() {
 
     // 亮度/音量指示器已移至 Compose 层，通过 ViewModel 驱动
 
-    // 设置controlsManager引用到gestureHandler，用于检查锁定状态
-    gestureHandler.setControlsManager(controlsManager)
-
-    clickArea.setOnTouchListener { v: View, event: MotionEvent ->
-        gestureHandler.onTouchEvent(event)
-    }
+    // 触摸事件已由 Compose 层 GestureHandler 接管 (ui/player/GestureHandler.kt)
 
     // 设置当前视频 URI 给文件选择器管理器
     videoUri?.let { uri ->

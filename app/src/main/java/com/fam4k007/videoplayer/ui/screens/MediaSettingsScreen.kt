@@ -32,9 +32,63 @@ fun MediaSettingsScreen(
     val context = LocalContext.current
     val prefs = remember { PreferencesManager.getInstance(context) }
 
-    var nomediaEnabled by remember { mutableStateOf(prefs.isNomediaEnabled()) }
+    var includeNoMedia by remember { mutableStateOf(prefs.getIncludeNoMediaFolders()) }
     var scanHiddenEnabled by remember { mutableStateOf(prefs.isScanHiddenFoldersEnabled()) }
     var currentDisplayMode by remember { mutableStateOf(prefs.getVideoDisplayMode()) }
+
+    // 警告弹窗状态
+    var showWarningDialog by remember { mutableStateOf(false) }
+
+    // 用户开启任一逆向扫描开关时，检测是否需要弹出警告
+    fun checkShowWarning() {
+        if (!prefs.getDontShowNomediaWarning()) {
+            showWarningDialog = true
+        }
+    }
+
+    // 逆向扫描警告弹窗
+    if (showWarningDialog) {
+        AlertDialog(
+            onDismissRequest = { showWarningDialog = false },
+            title = {
+                Text(
+                    text = "警告",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Text(
+                    text = "此功能将突破 Android 系统的原生限制，扫描系统默认跳过的目录。作者已尽力优化，但受限于平台机制，开启后可能出现但不限于以下问题：\n\n"
+                            + "1. 显示异常\n"
+                            + "2. 视频数量统计不准确\n"
+                            + "3. 扫描或加载卡顿\n"
+                            + "4. 刷新状态不及时等",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showWarningDialog = false }
+                ) {
+                    Text("确定")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        prefs.setDontShowNomediaWarning(true)
+                        showWarningDialog = false
+                    }
+                ) {
+                    Text("不再提示")
+                }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -71,12 +125,13 @@ fun MediaSettingsScreen(
             item {
                 PreferenceCard {
                     SwitchItem(
-                        title = "Enable .nomedia Rules",
-                        subtitle = if (nomediaEnabled) "Folders with .nomedia will not be scanned" else "Ignore .nomedia files, scan all folders",
-                        checked = nomediaEnabled,
+                        title = "扫描包含 .nomedia 的文件夹",
+                        subtitle = if (includeNoMedia) "同时扫描 .nomedia 文件夹中的视频" else "跳过包含 .nomedia 文件的文件夹",
+                        checked = includeNoMedia,
                         onCheckedChange = { enabled ->
-                            nomediaEnabled = enabled
-                            prefs.setNomediaEnabled(enabled)
+                            includeNoMedia = enabled
+                            prefs.setIncludeNoMediaFolders(enabled)
+                            if (enabled) checkShowWarning()
                         }
                     )
 
@@ -87,6 +142,7 @@ fun MediaSettingsScreen(
                         onCheckedChange = { enabled ->
                             scanHiddenEnabled = enabled
                             prefs.setScanHiddenFoldersEnabled(enabled)
+                            if (enabled) checkShowWarning()
                         }
                     )
                 }
@@ -101,7 +157,7 @@ fun MediaSettingsScreen(
                 PreferenceCard {
                     DisplayModeSelector(
                         currentMode = currentDisplayMode,
-                        nomediaEnabled = nomediaEnabled,
+                        nomediaEnabled = !includeNoMedia,
                         scanHiddenEnabled = scanHiddenEnabled,
                         onModeChange = { mode ->
                             prefs.setVideoDisplayMode(mode)

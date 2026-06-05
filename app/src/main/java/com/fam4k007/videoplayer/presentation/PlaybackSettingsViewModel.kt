@@ -65,6 +65,7 @@ class PlaybackSettingsViewModel(
                     
                     // 画质增强
                     anime4KMemory = playerRepository.isAnime4KMemoryEnabled(),
+                    anime4KQuality = playerRepository.getAnime4KQuality(),
 
                     // 进度条样式
                     seekbarStyle = playerRepository.getSeekbarStyle(),
@@ -247,6 +248,21 @@ class PlaybackSettingsViewModel(
             }
         }
     }
+    
+    /**
+     * 设置超分质量等级
+     */
+    fun setAnime4KQuality(quality: String) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setAnime4KQuality(quality)
+                _playbackSettings.value = _playbackSettings.value.copy(anime4KQuality = quality)
+                Logger.d(TAG, "Set Anime4K quality: $quality")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set Anime4K quality", e)
+            }
+        }
+    }
 
     // ==================== 进度条样式 ====================
 
@@ -352,6 +368,7 @@ data class PlaybackSettings(
     
     // 画质增强
     val anime4KMemory: Boolean = false,
+    val anime4KQuality: String = "BALANCED",
 
     // 进度条样式
     val seekbarStyle: String = "Standard",

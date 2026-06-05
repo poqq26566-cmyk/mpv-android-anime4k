@@ -1,4 +1,0 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/nav_home" android:title="首页" android:icon="@drawable/home"/>
-    <item android:id="@+id/nav_settings" android:title="我的" android:icon="@drawable/user"/>
-</menu>

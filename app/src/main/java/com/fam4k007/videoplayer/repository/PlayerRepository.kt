@@ -631,6 +631,22 @@ class PlayerRepository(
         preferencesManager.setLastAnime4KMode(mode)
     }
     
+    // ==================== Anime4K 超分质量 ====================
+    
+    /**
+     * 获取超分质量设置
+     */
+    fun getAnime4KQuality(): String {
+        return preferencesManager.getAnime4KQuality()
+    }
+    
+    /**
+     * 保存超分质量设置
+     */
+    fun setAnime4KQuality(quality: String) {
+        preferencesManager.setAnime4KQuality(quality)
+    }
+    
     // ==================== 双击手势设置 ====================
     
     /**

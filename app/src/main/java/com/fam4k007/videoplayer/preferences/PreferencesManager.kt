@@ -257,6 +257,27 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putString(AppConstants.Preferences.ANIME4K_LAST_MODE, mode).apply()
     }
     
+    // ==================== Anime4K 超分质量 ====================
+    
+    /**
+     * 获取超分质量设置
+     * @return Quality 枚举名称（FAST, BALANCED, HIGH）
+     */
+    fun getAnime4KQuality(): String {
+        return sharedPreferences.getString(
+            AppConstants.Preferences.ANIME4K_QUALITY,
+            "BALANCED"  // 默认平衡档
+        ) ?: "BALANCED"
+    }
+    
+    /**
+     * 保存超分质量设置
+     * @param quality Quality 枚举名称
+     */
+    fun setAnime4KQuality(quality: String) {
+        sharedPreferences.edit().putString(AppConstants.Preferences.ANIME4K_QUALITY, quality).apply()
+    }
+    
     // ==================== 更新相关 ====================
     
     /**
@@ -1290,7 +1311,7 @@ class PreferencesManager private constructor(context: Context) {
     // ==================== 文件扫描 ====================
 
     /**
-     * 获取是否启用 .nomedia 规则
+     * 获取是否启用 .nomedia 规则（旧，保持兼容）
      */
     fun isNomediaEnabled(): Boolean {
         return sharedPreferences.getBoolean(
@@ -1300,10 +1321,30 @@ class PreferencesManager private constructor(context: Context) {
     }
 
     /**
-     * 设置 .nomedia 规则开关
+     * 设置 .nomedia 规则开关（旧，保持兼容）
      */
     fun setNomediaEnabled(enabled: Boolean) {
         sharedPreferences.edit().putBoolean(AppConstants.Preferences.NOMEDIA_ENABLED, enabled).apply()
+    }
+
+    /**
+     * 获取是否扫描包含 .nomedia 文件的文件夹
+     * 与旧版 isNomediaEnabled() 逻辑相反
+     */
+    fun getIncludeNoMediaFolders(): Boolean {
+        return sharedPreferences.getBoolean(
+            AppConstants.Preferences.INCLUDE_NOMEDIA_FOLDERS,
+            false  // 默认不扫描（与系统行为一致）
+        )
+    }
+
+    /**
+     * 设置是否扫描包含 .nomedia 文件的文件夹
+     */
+    fun setIncludeNoMediaFolders(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.INCLUDE_NOMEDIA_FOLDERS, enabled).apply()
+        // 同步旧键值，保持兼容
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.NOMEDIA_ENABLED, !enabled).apply()
     }
 
     /**
@@ -1321,6 +1362,25 @@ class PreferencesManager private constructor(context: Context) {
      */
     fun setScanHiddenFoldersEnabled(enabled: Boolean) {
         sharedPreferences.edit().putBoolean(AppConstants.Preferences.SCAN_HIDDEN_FOLDERS, enabled).apply()
+    }
+
+    // ==================== 逆向扫描警告 ====================
+
+    /**
+     * 获取是否不再显示逆向扫描警告
+     */
+    fun getDontShowNomediaWarning(): Boolean {
+        return sharedPreferences.getBoolean(
+            AppConstants.Preferences.DONT_SHOW_NOMEDIA_WARNING,
+            false  // 默认显示警告
+        )
+    }
+
+    /**
+     * 设置不再显示逆向扫描警告
+     */
+    fun setDontShowNomediaWarning(dontShow: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.DONT_SHOW_NOMEDIA_WARNING, dontShow).apply()
     }
 
     // ==================== 章节进度条 ====================
@@ -1376,5 +1436,21 @@ class PreferencesManager private constructor(context: Context) {
      */
     fun setShowRemainingTime(enabled: Boolean) {
         sharedPreferences.edit().putBoolean(AppConstants.Preferences.SHOW_REMAINING_TIME, enabled).apply()
+    }
+
+    // ==================== 文件夹视图模式 ====================
+
+    /**
+     * 获取文件夹视图模式 (FOLDER_VIEW, TREE_VIEW)
+     */
+    fun getFolderViewMode(): String {
+        return sharedPreferences.getString(AppConstants.Preferences.FOLDER_VIEW_MODE, "FOLDER_VIEW") ?: "FOLDER_VIEW"
+    }
+
+    /**
+     * 保存文件夹视图模式
+     */
+    fun setFolderViewMode(mode: String) {
+        sharedPreferences.edit().putString(AppConstants.Preferences.FOLDER_VIEW_MODE, mode).apply()
     }
 }

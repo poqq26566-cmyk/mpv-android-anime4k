@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fam4k007.videoplayer.data.model.WebDavAccount
 import com.fam4k007.videoplayer.domain.webdav.WebDavClient
+import com.fam4k007.videoplayer.domain.webdav.WebDavFileCategory
 import com.fam4k007.videoplayer.presentation.WebDavViewModel
 import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
@@ -668,6 +670,15 @@ private fun WebDavFileCard(
 ) {
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
 
+    // 非目录文件：根据类别获取图标和颜色
+    val fileIcon = if (!file.isDirectory) {
+        getFileIcon(file.name)
+    } else null
+    val fileColor = if (!file.isDirectory) {
+        getFileColor(file.name)
+    } else Color.Unspecified
+    val isPlayable = !file.isDirectory && (fileIcon == Icons.Default.VideoFile || fileIcon == Icons.Default.AudioFile)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
@@ -682,9 +693,9 @@ private fun WebDavFileCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = if (file.isDirectory) Icons.Default.Folder else Icons.Default.VideoFile,
+                imageVector = if (file.isDirectory) Icons.Default.Folder else fileIcon!!,
                 contentDescription = null,
-                tint = if (file.isDirectory) Color(0xFFFFB74D) else MaterialTheme.colorScheme.primary,
+                tint = if (file.isDirectory) Color(0xFFFFB74D) else fileColor,
                 modifier = Modifier.size(40.dp)
             )
             Spacer(modifier = Modifier.width(16.dp))
@@ -716,11 +727,44 @@ private fun WebDavFileCard(
                     )
                 }
             }
-            Icon(
-                imageVector = if (file.isDirectory) Icons.Default.ChevronRight else Icons.Default.PlayArrow,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (file.isDirectory || isPlayable) {
+                Icon(
+                    imageVector = if (file.isDirectory) Icons.Default.ChevronRight else Icons.Default.PlayArrow,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
+    }
+}
+
+/**
+ * 根据文件扩展名获取对应的 Material 图标
+ */
+private fun getFileIcon(fileName: String): ImageVector {
+    return when (WebDavClient.getFileCategory(fileName)) {
+        WebDavFileCategory.VIDEO -> Icons.Default.VideoFile
+        WebDavFileCategory.AUDIO -> Icons.Default.AudioFile
+        WebDavFileCategory.IMAGE -> Icons.Default.Image
+        WebDavFileCategory.DOCUMENT -> Icons.Default.Description
+        WebDavFileCategory.ARCHIVE -> Icons.Default.FolderZip
+        WebDavFileCategory.SUBTITLE -> Icons.Default.ClosedCaption
+        WebDavFileCategory.OTHER -> Icons.Default.InsertDriveFile
+    }
+}
+
+/**
+ * 根据文件扩展名获取对应的图标颜色
+ */
+@Composable
+private fun getFileColor(fileName: String): Color {
+    return when (WebDavClient.getFileCategory(fileName)) {
+        WebDavFileCategory.VIDEO -> MaterialTheme.colorScheme.primary
+        WebDavFileCategory.AUDIO -> Color(0xFF7C4DFF)      // 紫色
+        WebDavFileCategory.IMAGE -> Color(0xFF00BCD4)       // 青色
+        WebDavFileCategory.DOCUMENT -> Color(0xFF42A5F5)    // 蓝色
+        WebDavFileCategory.ARCHIVE -> Color(0xFFFFCA28)     // 黄色
+        WebDavFileCategory.SUBTITLE -> Color(0xFF66BB6A)    // 绿色
+        WebDavFileCategory.OTHER -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 }
