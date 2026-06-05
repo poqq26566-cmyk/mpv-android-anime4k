@@ -97,7 +97,7 @@ fun DownloadManagerScreen(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false },
                             shape = RoundedCornerShape(16.dp),
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            containerColor = MaterialTheme.colorScheme.surface,
                             tonalElevation = 0.dp,
                             shadowElevation = 4.dp
                         ) {

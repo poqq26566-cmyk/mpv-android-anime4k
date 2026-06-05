@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.presentation.PlayerViewModel
+import android.widget.Toast
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.delay
@@ -325,6 +326,7 @@ fun PortraitBottomControls(
     val currentChapterName by viewModel.currentChapterName.collectAsState()
     val hasChapters by viewModel.hasChapters.collectAsState()
     val chapterBarEnabled by viewModel.chapterBarEnabled.collectAsState()
+    val gpuNext by viewModel.gpuNext.collectAsState()
 
     // 拖动进度状态
     var sliderPosition by remember { mutableStateOf<Float?>(null) }
@@ -373,6 +375,7 @@ fun PortraitBottomControls(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // 超分辨率文字按钮（靠左）
+            val context = LocalContext.current
             Box(
                 modifier =
                     Modifier
@@ -387,11 +390,26 @@ fun PortraitBottomControls(
                                     r.bottom.toInt(),
                                 )
                         }
-                        .clickable {
+                        .clickable(enabled = !gpuNext) {
                             anime4KBounds.let { b ->
                                 onAnime4KClick(b.left, b.top, b.width(), b.height())
                             }
                             viewModel.resetAutoHideTimer()
+                        }
+                        .let { mod ->
+                            if (gpuNext) {
+                                mod.clickable {
+                                    Toast
+                                        .makeText(
+                                            context,
+                                            "已启用 GPU Next 渲染，无法开启超分",
+                                            Toast.LENGTH_SHORT,
+                                        )
+                                        .show()
+                                }
+                            } else {
+                                mod
+                            }
                         }
                         .padding(horizontal = 6.dp),
                 contentAlignment = Alignment.Center,
@@ -400,6 +418,7 @@ fun PortraitBottomControls(
                     text = "超分辨率：$anime4KLabel",
                     color =
                         if (anime4KActive) Color.Yellow
+                        else if (gpuNext) Color.Gray.copy(alpha = 0.5f)
                         else Color.White.copy(alpha = 0.7f),
                     fontSize = 11.sp,
                     fontWeight =

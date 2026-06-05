@@ -368,6 +368,10 @@ class PlayerViewModel(
     // ==================== 章节管理 ====================
 
     // 章节进度条开关（从 PreferencesManager 加载）
+    // GPU Next 状态
+    private val _gpuNext = MutableStateFlow(false)
+    val gpuNext: StateFlow<Boolean> = _gpuNext.asStateFlow()
+
     private val _chapterBarEnabled = MutableStateFlow(true)
     val chapterBarEnabled: StateFlow<Boolean> = _chapterBarEnabled.asStateFlow()
 
@@ -521,6 +525,8 @@ class PlayerViewModel(
         _showRemainingTime.value = playerRepository.isShowRemainingTimeEnabled()
         // 加载章节进度条开关
         _chapterBarEnabled.value = playerRepository.isChapterBarEnabled()
+        // 加载 GPU Next 状态
+        _gpuNext.value = playerRepository.getGpuNext()
     }
     
     // 轮询协程的Job

@@ -19,7 +19,6 @@
     <!-- 主题 -->
     <string name="theme_default">默认</string>
     <string name="theme_dynamic">动态颜色</string>
-    <string name="theme_catppuccin">卡布奇诺</string>
     <string name="theme_cloudflare">云耀</string>
     <string name="theme_cotton_candy">棉花糖</string>
     <string name="theme_doom">毁灭</string>

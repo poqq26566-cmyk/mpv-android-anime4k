@@ -33,6 +33,11 @@ object AppConstants {
         // 视频显示模式 Key
         const val VIDEO_DISPLAY_MODE = "video_display_mode"
         
+        // 首次播放 Key
+        const val IS_FIRST_PLAY = "is_first_play"
+        // 杜比视界提示 Key
+        const val DONT_SHOW_DV_WARNING = "dont_show_dv_warning"
+
         // 文件夹黑名单 Key
         const val FOLDER_BLACKLIST = "folder_blacklist"
         
@@ -48,6 +53,8 @@ object AppConstants {
 
         // MPV 解码器预设
         const val MPV_PROFILE = "mpv_profile"
+        const val GPU_NEXT = "gpu_next"
+        const val USE_VULKAN = "use_vulkan"
 
         // 文件扫描 Key
         const val NOMEDIA_ENABLED = "nomedia_enabled"

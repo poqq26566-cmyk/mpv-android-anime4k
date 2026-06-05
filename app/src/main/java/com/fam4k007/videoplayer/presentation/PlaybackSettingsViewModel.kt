@@ -78,7 +78,9 @@ class PlaybackSettingsViewModel(
                     chapterBarEnabled = playerRepository.isChapterBarEnabled(),
 
                     // MPV 解码器预设
-                    mpvProfile = playerRepository.getMpvProfile()
+                    mpvProfile = playerRepository.getMpvProfile(),
+                    gpuNext = playerRepository.getGpuNext(),
+                    useVulkan = playerRepository.getUseVulkan()
                 )
                 _playbackSettings.value = settings
                 Logger.d(TAG, "Loaded playback settings")
@@ -343,6 +345,36 @@ class PlaybackSettingsViewModel(
             }
         }
     }
+
+    /**
+     * 设置 GPU Next 渲染
+     */
+    fun setGpuNext(enabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setGpuNext(enabled)
+                _playbackSettings.value = _playbackSettings.value.copy(gpuNext = enabled)
+                Logger.d(TAG, "Set GPU Next: $enabled")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set GPU Next", e)
+            }
+        }
+    }
+
+    /**
+     * 设置 Vulkan 渲染上下文
+     */
+    fun setUseVulkan(enabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setUseVulkan(enabled)
+                _playbackSettings.value = _playbackSettings.value.copy(useVulkan = enabled)
+                Logger.d(TAG, "Set use Vulkan: $enabled")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set use Vulkan", e)
+            }
+        }
+    }
 }
 
 /**
@@ -381,5 +413,7 @@ data class PlaybackSettings(
     val chapterBarEnabled: Boolean = true,
 
     // MPV 解码器预设
-    val mpvProfile: String = "fast"
+    val mpvProfile: String = "fast",
+    val gpuNext: Boolean = false,
+    val useVulkan: Boolean = false
 )

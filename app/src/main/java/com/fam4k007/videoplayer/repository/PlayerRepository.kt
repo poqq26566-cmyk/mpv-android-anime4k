@@ -530,6 +530,34 @@ class PlayerRepository(
     }
 
     /**
+     * 获取是否启用 GPU Next 渲染
+     */
+    fun getGpuNext(): Boolean {
+        return preferencesManager.getGpuNext()
+    }
+
+    /**
+     * 设置是否启用 GPU Next 渲染
+     */
+    fun setGpuNext(enabled: Boolean) {
+        preferencesManager.setGpuNext(enabled)
+    }
+
+    /**
+     * 获取是否启用 Vulkan 渲染上下文
+     */
+    fun getUseVulkan(): Boolean {
+        return preferencesManager.getUseVulkan()
+    }
+
+    /**
+     * 设置是否启用 Vulkan 渲染上下文
+     */
+    fun setUseVulkan(enabled: Boolean) {
+        preferencesManager.setUseVulkan(enabled)
+    }
+
+    /**
      * 是否启用播放倍速记忆
      */
     fun isRememberSpeedEnabled(): Boolean {

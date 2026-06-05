@@ -46,6 +46,7 @@ fun PlaybackSettingsScreen(
     var showSpeedPresetsDialog by remember { mutableStateOf(false) }
     var showRestartDialog by remember { mutableStateOf(false) }
     var pendingProfile by remember { mutableStateOf<String?>(null) }
+    var showGpuNextWarning by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -109,6 +110,24 @@ fun PlaybackSettingsScreen(
                             pendingProfile = profile
                             showRestartDialog = true
                         }
+                    )
+                    SwitchItem(
+                        title = "GPU Next 渲染",
+                        subtitle = if (settings.gpuNext) "配合软解可正确显示杜比视界，与 4K 超分不兼容" else "开启后可改善 HDR 渲染效果",
+                        checked = settings.gpuNext,
+                        onCheckedChange = { enabled ->
+                            if (enabled) {
+                                showGpuNextWarning = true
+                            } else {
+                                viewModel.setGpuNext(false)
+                            }
+                        }
+                    )
+                    SwitchItem(
+                        title = "Vulkan 渲染上下文",
+                        subtitle = if (settings.useVulkan) "使用 Vulkan 驱动，性能会更好" else "使用 OpenGL ES 驱动",
+                        checked = settings.useVulkan,
+                        onCheckedChange = { viewModel.setUseVulkan(it) }
                     )
                 }
             }
@@ -341,7 +360,54 @@ fun PlaybackSettingsScreen(
                 }
             },
             shape = RoundedCornerShape(28.dp),
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+
+    // GPU Next 开启警告
+    if (showGpuNextWarning) {
+        AlertDialog(
+            onDismissRequest = { showGpuNextWarning = false },
+            title = {
+                Text(
+                    "开启 GPU Next 渲染",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "GPU Next 是 mpv 的新渲染引擎，可改善 HDR 渲染效果，配合软解可正确显示杜比视界画面。但与 4K 超分（Anime4K）不兼容，开启后超分功能将自动禁用。",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "注意：部分设备开启后可能出现紫屏，如遇到请启用下方的「Vulkan 渲染上下文」即可解决。",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.setGpuNext(true)
+                        showGpuNextWarning = false
+                    }
+                ) {
+                    Text("继续开启", fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showGpuNextWarning = false }) {
+                    Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
             textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         )

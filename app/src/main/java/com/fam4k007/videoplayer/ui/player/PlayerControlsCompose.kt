@@ -33,6 +33,7 @@ import android.os.BatteryManager
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.presentation.PlayerViewModel
 import com.fam4k007.videoplayer.ui.components.LoadingIndicator
+import android.widget.Toast
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.delay
@@ -248,6 +249,7 @@ fun BottomControlPanel(
     val currentChapterName by viewModel.currentChapterName.collectAsState()
     val hasChapters by viewModel.hasChapters.collectAsState()
     val chapterBarEnabled by viewModel.chapterBarEnabled.collectAsState()
+    val gpuNext by viewModel.gpuNext.collectAsState()
 
     // 检测屏幕方向
     val configuration = LocalContext.current.resources.configuration
@@ -425,6 +427,7 @@ fun BottomControlPanel(
                 Spacer(modifier = Modifier.width(14.dp))
 
                 // 超分辨率（Anime4K）按钮
+                val context = LocalContext.current
                 var anime4KBounds by remember { mutableStateOf(android.graphics.Rect()) }
                 Box(
                     modifier = Modifier
@@ -434,16 +437,27 @@ fun BottomControlPanel(
                             val r = coords.boundsInWindow()
                             anime4KBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
                         }
-                        .clickable {
+                        .clickable(enabled = !gpuNext) {
                             anime4KBounds.let { b -> onAnime4KClick(b.left, b.top, b.width(), b.height()) }
                             viewModel.resetAutoHideTimer()
+                        }
+                        .let { mod ->
+                            if (gpuNext) {
+                                mod.clickable {
+                                    Toast.makeText(context, "已启用 GPU Next 渲染，无法开启超分", Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
+                                mod
+                            }
                         }
                         .padding(horizontal = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "超分辨率：$anime4KLabel",
-                        color = if (anime4KActive) Color.Yellow else Color.White.copy(alpha = 0.7f),
+                        color = if (anime4KActive) Color.Yellow
+                                else if (gpuNext) Color.Gray.copy(alpha = 0.5f)
+                                else Color.White.copy(alpha = 0.7f),
                         fontSize = 12.sp,
                         fontWeight = if (anime4KActive) FontWeight.Bold else FontWeight.Normal
                     )
