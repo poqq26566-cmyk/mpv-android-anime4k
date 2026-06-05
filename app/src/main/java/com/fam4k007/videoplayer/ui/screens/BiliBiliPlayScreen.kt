@@ -157,8 +157,8 @@ fun BiliBiliPlayScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = androidx.compose.ui.graphics.Color.Transparent,
                             unfocusedBorderColor = androidx.compose.ui.graphics.Color.Transparent,
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface
                         ),
                         shape = RoundedCornerShape(20.dp)
                     )

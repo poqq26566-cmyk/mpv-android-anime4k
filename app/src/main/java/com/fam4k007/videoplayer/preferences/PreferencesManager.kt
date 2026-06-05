@@ -137,6 +137,38 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putString(AppConstants.Preferences.VIDEO_DISPLAY_MODE, mode).apply()
     }
     
+    // ==================== 首次播放 ====================
+
+    /**
+     * 获取是否首次播放（新安装第一次播放时标记为 false）
+     */
+    fun isFirstPlay(): Boolean {
+        return sharedPreferences.getBoolean(AppConstants.Preferences.IS_FIRST_PLAY, true)
+    }
+
+    /**
+     * 标记已首次播放
+     */
+    fun setFirstPlayDone() {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.IS_FIRST_PLAY, false).apply()
+    }
+
+    // ==================== 杜比视界提示 ====================
+
+    /**
+     * 获取是否不再提示杜比视界
+     */
+    fun getDontShowDvWarning(): Boolean {
+        return sharedPreferences.getBoolean(AppConstants.Preferences.DONT_SHOW_DV_WARNING, false)
+    }
+
+    /**
+     * 设置是否不再提示杜比视界
+     */
+    fun setDontShowDvWarning(dontShow: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.DONT_SHOW_DV_WARNING, dontShow).apply()
+    }
+
     // ==================== 文件夹黑名单 ====================
     
     /**
@@ -1417,6 +1449,34 @@ class PreferencesManager private constructor(context: Context) {
      */
     fun setMpvProfile(profile: String) {
         sharedPreferences.edit().putString(AppConstants.Preferences.MPV_PROFILE, profile).apply()
+    }
+
+    /**
+     * 获取是否启用 GPU Next 渲染
+     */
+    fun getGpuNext(): Boolean {
+        return sharedPreferences.getBoolean(AppConstants.Preferences.GPU_NEXT, false)
+    }
+
+    /**
+     * 设置是否启用 GPU Next 渲染
+     */
+    fun setGpuNext(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.GPU_NEXT, enabled).apply()
+    }
+
+    /**
+     * 获取是否启用 Vulkan 渲染上下文
+     */
+    fun getUseVulkan(): Boolean {
+        return sharedPreferences.getBoolean(AppConstants.Preferences.USE_VULKAN, false)
+    }
+
+    /**
+     * 设置是否启用 Vulkan 渲染上下文
+     */
+    fun setUseVulkan(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.USE_VULKAN, enabled).apply()
     }
 
     // ==================== 剩余时间显示 ====================
