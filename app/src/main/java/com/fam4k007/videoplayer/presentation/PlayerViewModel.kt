@@ -1083,6 +1083,14 @@ class PlayerViewModel(
     }
     
     /**
+     * 设置超分质量等级
+     */
+    fun setAnime4KQuality(quality: Anime4KManager.Quality) {
+        _anime4KQuality.value = quality
+        Logger.d(TAG, "Anime4K quality set: $quality")
+    }
+
+    /**
      * 切换Anime4K开关
      */
     fun toggleAnime4K() {

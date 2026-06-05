@@ -66,12 +66,32 @@ internal fun VideoPlayerActivity.loadVideo() {
 
             com.fam4k007.videoplayer.utils.Logger.d(TAG, "Post-load coroutine started, isOnlineVideo=$isOnlineVideo")
 
-            // 先尝试自动加载同名字幕（本地视频，包括content://）
+            // 先尝试自动加载同名字幕
             if (!isOnlineVideo) {
+                // 本地视频（包括 content://）
                 com.fam4k007.videoplayer.utils.Logger.d(TAG, "Calling autoLoadSubtitleIfExists")
                 autoLoadSubtitleIfExists(uri)
+            } else if (intent.getBooleanExtra("is_webdav", false)) {
+                // WebDAV 远程视频 — 通过 WebDAV 客户端查找同名字幕
+                val accountId = intent.getStringExtra("webdav_account_id")
+                val filePath = intent.getStringExtra("webdav_file_path")
+                if (accountId != null && filePath != null) {
+                    try {
+                        val repository: com.fam4k007.videoplayer.repository.WebDavRepository =
+                            org.koin.core.context.GlobalContext.get().get()
+                        val account = repository.getAccountById(accountId)
+                        if (account != null) {
+                            val client = repository.createClient(account)
+                            // 文件在根目录时 path 无 '/'，此时父目录为空字符串
+                            val parentDir = filePath.substringBeforeLast('/', "")
+                            autoLoadWebDavSubtitle(uri, parentDir, client)
+                        }
+                    } catch (e: Exception) {
+                        com.fam4k007.videoplayer.utils.Logger.e(TAG, "Failed to auto-load WebDAV subtitle", e)
+                    }
+                }
             } else {
-                com.fam4k007.videoplayer.utils.Logger.d(TAG, "Skipping subtitle auto-load for online video")
+                com.fam4k007.videoplayer.utils.Logger.d(TAG, "Skipping subtitle auto-load for other online video")
             }
 
             // 再恢复用户的字幕偏好设置（会覆盖自动加载的）

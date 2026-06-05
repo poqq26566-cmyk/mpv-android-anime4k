@@ -23,6 +23,7 @@ object AppConstants {
         const val LONG_PRESS_SPEED = "long_press_speed"
         const val ANIME4K_MEMORY_ENABLED = "anime4k_memory_enabled"
         const val ANIME4K_LAST_MODE = "anime4k_last_mode"
+        const val ANIME4K_QUALITY = "anime4k_quality"
         
         // 倍速记忆设置 Key
         const val REMEMBER_PLAYBACK_SPEED = "remember_playback_speed"
@@ -50,8 +51,14 @@ object AppConstants {
 
         // 文件扫描 Key
         const val NOMEDIA_ENABLED = "nomedia_enabled"
+        const val INCLUDE_NOMEDIA_FOLDERS = "include_nomedia_folders"
         const val SCAN_HIDDEN_FOLDERS = "scan_hidden_folders"
+        const val DONT_SHOW_NOMEDIA_WARNING = "dont_show_nomedia_warning"
+
+        // 文件夹视图模式 Key
+        const val FOLDER_VIEW_MODE = "folder_view_mode"
         const val FOLDER_CACHE = "folder_cache"          // 文件夹列表缓存（JSON）
+        const val FOLDER_CACHE_TAG = "folder_cache_tag"  // 缓存对应的扫描选项标签
         const val FOLDER_CACHE_TIME = "folder_cache_time" // 缓存时间戳
 
         // 播放历史记录 Key

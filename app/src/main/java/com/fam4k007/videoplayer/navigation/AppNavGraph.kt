@@ -252,6 +252,8 @@ fun AppNavGraph(
                             data = Uri.parse(fileUrl)
                             putExtra("video_title", file.name)
                             putExtra("is_webdav", true)
+                            putExtra("webdav_account_id", account.id)
+                            putExtra("webdav_file_path", file.path)
                         }
                         context.startActivity(intent)
                         (context as? android.app.Activity)?.overridePendingTransition(
