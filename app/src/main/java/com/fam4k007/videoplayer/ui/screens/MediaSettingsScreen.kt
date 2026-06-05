@@ -21,8 +21,8 @@ import com.fam4k007.videoplayer.ui.components.SwitchItem
 import com.fam4k007.videoplayer.ui.theme.spacing
 
 /**
- * 其他媒体设置页面
- * 包含 .nomedia 规则、隐藏文件夹扫描、视频显示模式等开关设置
+ * Other Media Settings page
+ * Contains .nomedia rules, hidden folder scanning, video display mode and other switch settings
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,34 +36,34 @@ fun MediaSettingsScreen(
     var scanHiddenEnabled by remember { mutableStateOf(prefs.isScanHiddenFoldersEnabled()) }
     var currentDisplayMode by remember { mutableStateOf(prefs.getVideoDisplayMode()) }
 
-    // 警告弹窗状态
+    // Warning dialog state
     var showWarningDialog by remember { mutableStateOf(false) }
 
-    // 用户开启任一逆向扫描开关时，检测是否需要弹出警告
+    // Check whether to show warning when user enables reverse scanning
     fun checkShowWarning() {
         if (!prefs.getDontShowNomediaWarning()) {
             showWarningDialog = true
         }
     }
 
-    // 逆向扫描警告弹窗
+    // Reverse scanning warning dialog
     if (showWarningDialog) {
         AlertDialog(
             onDismissRequest = { showWarningDialog = false },
             title = {
                 Text(
-                    text = "警告",
+                    text = "Warning",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )
             },
             text = {
                 Text(
-                    text = "此功能将突破 Android 系统的原生限制，扫描系统默认跳过的目录。作者已尽力优化，但受限于平台机制，开启后可能出现但不限于以下问题：\n\n"
-                            + "1. 显示异常\n"
-                            + "2. 视频数量统计不准确\n"
-                            + "3. 扫描或加载卡顿\n"
-                            + "4. 刷新状态不及时等",
+                    text = "This feature bypasses Android system limitations to scan directories that are normally skipped. The author has done their best to optimize, but due to platform limitations, enabling this may cause (but is not limited to) the following issues:\n\n"
+                            + "1. Display abnormalities\n"
+                            + "2. Inaccurate video count\n"
+                            + "3. Scanning or loading lag\n"
+                            + "4. Delayed refresh status, etc.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -72,7 +72,7 @@ fun MediaSettingsScreen(
                 Button(
                     onClick = { showWarningDialog = false }
                 ) {
-                    Text("确定")
+                    Text("OK")
                 }
             },
             dismissButton = {
@@ -82,7 +82,7 @@ fun MediaSettingsScreen(
                         showWarningDialog = false
                     }
                 ) {
-                    Text("不再提示")
+                    Text("Don't remind again")
                 }
             },
             shape = RoundedCornerShape(28.dp),
@@ -125,8 +125,8 @@ fun MediaSettingsScreen(
             item {
                 PreferenceCard {
                     SwitchItem(
-                        title = "扫描包含 .nomedia 的文件夹",
-                        subtitle = if (includeNoMedia) "同时扫描 .nomedia 文件夹中的视频" else "跳过包含 .nomedia 文件的文件夹",
+                        title = "Scan folders containing .nomedia",
+                        subtitle = if (includeNoMedia) "Also scan videos in .nomedia folders" else "Skip folders that contain .nomedia files",
                         checked = includeNoMedia,
                         onCheckedChange = { enabled ->
                             includeNoMedia = enabled
@@ -239,7 +239,7 @@ private fun DisplayModeSelector(
             }
         }
 
-        // 禁用时的说明文字
+        // Hint text when disabled
         if (flatDisabled) {
             Spacer(Modifier.height(MaterialTheme.spacing.small))
             Text(

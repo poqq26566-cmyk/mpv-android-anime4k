@@ -938,7 +938,7 @@ private fun Anime4KQualitySelector(
             )
     ) {
         Text(
-            "超分质量",
+            "Upscale Quality",
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
@@ -946,20 +946,20 @@ private fun Anime4KQualitySelector(
         Spacer(Modifier.height(MaterialTheme.spacing.small))
 
         QualityOption(
-            label = "流畅",
-            subtitle = "GPU负载最低，播放更流畅",
+            label = "Smooth",
+            subtitle = "Lowest GPU load for smoother playback",
             isSelected = currentQuality == "FAST",
             onClick = { onQualityChange("FAST") }
         )
         QualityOption(
-            label = "均衡",
-            subtitle = "画质与性能的平衡之选",
+            label = "Balanced",
+            subtitle = "Balanced choice between quality and performance",
             isSelected = currentQuality == "BALANCED",
             onClick = { onQualityChange("BALANCED") }
         )
         QualityOption(
-            label = "高清",
-            subtitle = "追求最佳画质，GPU开销较大",
+            label = "High Quality",
+            subtitle = "Best quality, higher GPU usage",
             isSelected = currentQuality == "HIGH",
             onClick = { onQualityChange("HIGH") }
         )
