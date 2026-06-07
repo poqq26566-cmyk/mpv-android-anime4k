@@ -1477,6 +1477,19 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putBoolean(AppConstants.Preferences.CHAPTER_BAR_ENABLED, enabled).apply()
     }
 
+    // ==================== 进度条缩略图预览 ====================
+
+    fun isSeekbarThumbnailEnabled(): Boolean {
+        return sharedPreferences.getBoolean(
+            AppConstants.Preferences.SEEKBAR_THUMBNAIL_ENABLED,
+            false  // 默认关闭
+        )
+    }
+
+    fun setSeekbarThumbnailEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.SEEKBAR_THUMBNAIL_ENABLED, enabled).apply()
+    }
+
     // ==================== MPV 解码器预设 ====================
 
     /**

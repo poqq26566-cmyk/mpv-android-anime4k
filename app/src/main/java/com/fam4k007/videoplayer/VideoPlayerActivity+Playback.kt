@@ -201,6 +201,9 @@ internal fun VideoPlayerActivity.playVideo(uri: Uri) {
     // 设置切换标志，防止级联切换
     isSwitchingVideo = true
 
+    // 重置缩略图状态（新视频需要重新初始化）
+    viewModel.resetThumbnailState()
+
     // 更新播放列表索引
     val newIndex = playlist.indexOfFirst { it.toString() == uri.toString() }
     if (newIndex >= 0) {

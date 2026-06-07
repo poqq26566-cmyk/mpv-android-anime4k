@@ -241,6 +241,14 @@ internal fun VideoPlayerActivity.initializeManagers() {
                         hadNext
                     }
                 )
+
+                // 缩略图管理器初始化（duration 可用时触发，仅初始化一次）
+                if (duration > 0) {
+                    videoUri?.let { uri ->
+                        val isWebDav = intent.getBooleanExtra("is_webdav", false)
+                        viewModel.initializeThumbnail(uri, (duration * 1000).toLong(), isWebDav)
+                    }
+                }
             }
 
             override fun onFileLoaded() {
@@ -577,6 +585,10 @@ internal fun VideoPlayerActivity.initializeManagers() {
         preferencesManager,
         composeOverlayManager
     )
+
+    // 初始化缩略图管理器
+    thumbnailManager = com.fam4k007.videoplayer.manager.VideoThumbnailManager(this)
+    viewModel.setThumbnailManager(thumbnailManager!!)
 
     bindViewsToManagers()
 }

@@ -408,6 +408,14 @@ class PlayerRepository(
         preferencesManager.setChapterBarEnabled(enabled)
     }
 
+    fun isSeekbarThumbnailEnabled(): Boolean {
+        return preferencesManager.isSeekbarThumbnailEnabled()
+    }
+
+    fun setSeekbarThumbnailEnabled(enabled: Boolean) {
+        preferencesManager.setSeekbarThumbnailEnabled(enabled)
+    }
+
     /**
      * 获取是否显示剩余时间
      */

@@ -51,6 +51,9 @@ object AppConstants {
         // 章节进度条 Key
         const val CHAPTER_BAR_ENABLED = "chapter_bar_enabled"
 
+        // 进度条缩略图预览 Key
+        const val SEEKBAR_THUMBNAIL_ENABLED = "seekbar_thumbnail_enabled"
+
         // MPV 解码器预设
         const val MPV_PROFILE = "mpv_profile"
         const val GPU_NEXT = "gpu_next"
