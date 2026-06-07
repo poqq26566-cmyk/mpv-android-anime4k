@@ -174,7 +174,13 @@ fun EqualizerDrawer(
                             modifier = Modifier.padding(vertical = 8.dp)
                         )
 
-                        // 均衡器开关（固定不滚动）
+                        // 以下内容可滚动（含开关）
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                        // 均衡器开关
                         EqualizerSwitch(
                             enabled = eqEnabled,
                             onEnabledChange = { newValue ->
@@ -184,13 +190,6 @@ fun EqualizerDrawer(
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
-
-                        // 以下内容可滚动
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .verticalScroll(rememberScrollState())
-                        ) {
                         AnimatedVisibility(
                             visible = eqEnabled,
                             enter = expandVertically() + fadeIn(),
@@ -350,7 +349,6 @@ private fun EqualizerBands(
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        // 竖向滑块区域
         Row(
             modifier = Modifier
                 .fillMaxWidth()
