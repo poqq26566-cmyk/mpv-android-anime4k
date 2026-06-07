@@ -187,6 +187,9 @@ dependencies {
     implementation(libs.androidx.security.crypto)
     implementation(libs.bundles.aboutlibraries)
 
+    // TrueType Parser (字体族名解析)
+    implementation(libs.truetype.parser)
+
     // Test
     testImplementation(libs.junit)
 }

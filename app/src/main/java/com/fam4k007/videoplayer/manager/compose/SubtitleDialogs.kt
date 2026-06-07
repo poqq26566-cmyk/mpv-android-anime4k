@@ -1,7 +1,11 @@
 package com.fam4k007.videoplayer.manager.compose
 
+import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -22,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,24 +44,86 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.documentfile.provider.DocumentFile
+import com.yubyf.truetypeparser.TTFFile
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import `is`.xyz.mpv.MPVLib
+import java.io.File
+import java.util.Locale
 
 /**
- * 系统字体数据类
+ * 自定义字体条目
  */
-data class SystemFont(
-    val name: String,
-    val displayName: String
+data class CustomFontEntry(
+    val familyName: String,
+    val file: File
 )
 
 /**
- * 系统预设字体列表
+ * 从用户选择的目录复制字体文件到应用内部存储
  */
-val SYSTEM_FONTS = listOf(
-    SystemFont("Noto Sans CJK SC", "思源黑体"),
-    SystemFont("Noto Serif CJK SC", "思源宋体")
-)
+private suspend fun copyFontsFromDirectory(
+    context: android.content.Context,
+    uriString: String
+): Int = withContext(Dispatchers.IO) {
+    var count = 0
+    runCatching {
+        val destinationPath = context.filesDir.path + "/fonts"
+        val destinationDir = File(destinationPath)
+        if (!destinationDir.exists()) destinationDir.mkdirs()
+
+        val sourceDir = DocumentFile.fromTreeUri(context, Uri.parse(uriString))
+        sourceDir?.listFiles()?.forEach { file ->
+            if (file.isFile) {
+                val fileName = file.name ?: return@forEach
+                if (fileName.lowercase(Locale.ROOT).matches(".*\\.[ot]tf$".toRegex())) {
+                    val inputStream = context.contentResolver.openInputStream(file.uri) ?: return@forEach
+                    val outputFile = File(destinationPath, fileName)
+                    outputFile.outputStream().use { outputStream ->
+                        inputStream.use { it.copyTo(outputStream) }
+                    }
+                    count++
+                }
+            }
+        }
+    }.onFailure { e ->
+        Log.e("SubtitleDialogs", "Error copying fonts", e)
+    }
+    count
+}
+
+/**
+ * 从应用内部字体目录加载字体条目（字体族名 + 文件），按族名去重排序
+ */
+private suspend fun loadCustomFontEntries(context: android.content.Context): List<CustomFontEntry> =
+    withContext(Dispatchers.IO) {
+        val fontsDir = File(context.filesDir, "fonts")
+        if (!fontsDir.exists()) return@withContext emptyList()
+
+        val fontFiles = fontsDir.listFiles()
+            ?.filter { it.isFile && it.name.lowercase(Locale.ROOT).matches(".*\\.[ot]tf$".toRegex()) }
+            .orEmpty()
+
+        val entries = mutableListOf<CustomFontEntry>()
+        val seenFamilies = mutableSetOf<String>()
+
+        for (fontFile in fontFiles) {
+            val familyName = runCatching {
+                fontFile.inputStream().use { input ->
+                    TTFFile.open(input).families.values.firstOrNull()
+                }
+            }.getOrNull()
+
+            if (!familyName.isNullOrBlank() && seenFamilies.add(familyName)) {
+                entries += CustomFontEntry(familyName, fontFile)
+            }
+        }
+
+        entries.sortedBy { it.familyName }
+    }
 
 /**
  * 右侧抽屉式字幕设置面板
@@ -513,10 +580,62 @@ fun SubtitleStyleContent(
     var borderColorSelectedIndex by remember { mutableStateOf<Int?>(null) }
     var backColorSelectedIndex by remember { mutableStateOf<Int?>(null) }
     
+    val context = LocalContext.current
+    val preferencesManager = remember { 
+        com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(context)
+    }
+    var assOverrideEnabled by remember { mutableStateOf(preferencesManager.isAssOverrideEnabled()) }
+    
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // 样式覆盖开关
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(8.dp),
+            color = Color(0xFF1A2332)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "样式覆盖",
+                        fontSize = 14.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = if (assOverrideEnabled) "已开启，将强制使用自定义样式" else "关闭时使用字幕文件内嵌样式",
+                        fontSize = 11.sp,
+                        color = Color(0xFF9E9E9E),
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
+                Switch(
+                    checked = assOverrideEnabled,
+                    onCheckedChange = { enabled ->
+                        assOverrideEnabled = enabled
+                        preferencesManager.setAssOverrideEnabled(enabled)
+                        // 立即应用到播放引擎，并重新加载字幕使其生效
+                        MPVLib.setPropertyString("sub-ass-override", if (enabled) "force" else "no")
+                        MPVLib.command("sub-reload")
+                    },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = Color(0xFF64B5F6),
+                        uncheckedThumbColor = Color(0xFF9E9E9E),
+                        uncheckedTrackColor = Color(0xFF2A3A4A)
+                    )
+                )
+            }
+        }
+        
         // 提示文本
         Row(
             modifier = Modifier
@@ -534,7 +653,7 @@ fun SubtitleStyleContent(
                 modifier = Modifier.padding(end = 6.dp)
             )
             Text(
-                text = "若未生效，请在更多中开启样式覆盖",
+                text = "内嵌ASS字幕需开启样式覆盖才能应用自定义样式",
                 fontSize = 11.sp,
                 color = Color(0xFFCCCCCC),
                 maxLines = 1,
@@ -1297,157 +1416,287 @@ fun QuickButton(text: String, onClick: () -> Unit) {
 @Composable
 fun SubtitleFontContent(composeOverlayManager: ComposeOverlayManager) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val preferencesManager = remember { 
         com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(context)
     }
     
-    var systemFontName by remember { mutableStateOf(preferencesManager.getSystemFontName()) }
-    var expandedSystemFonts by remember { mutableStateOf(false) }
+    var currentFontName by remember { mutableStateOf(preferencesManager.getSubtitleFontName()) }
+    var fontDirUri by remember { mutableStateOf(preferencesManager.getFontDirectoryUri()) }
+    var fontEntries by remember { mutableStateOf<List<CustomFontEntry>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var expandedFontList by remember { mutableStateOf(false) }
+    
+    // 加载字体列表
+    LaunchedEffect(fontDirUri) {
+        isLoading = true
+        fontEntries = loadCustomFontEntries(context)
+        isLoading = false
+    }
+    
+    // SAF 目录选择器
+    val dirPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri: Uri? ->
+        uri ?: return@rememberLauncherForActivityResult
+        // 持久化 URI 权限
+        context.contentResolver.takePersistableUriPermission(
+            uri,
+            android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+        )
+        val uriString = uri.toString()
+        preferencesManager.setFontDirectoryUri(uriString)
+        fontDirUri = uriString
+        
+        // 复制字体到内部目录
+        coroutineScope.launch {
+            isLoading = true
+            val count = copyFontsFromDirectory(context, uriString)
+            fontEntries = loadCustomFontEntries(context)
+            isLoading = false
+            Toast.makeText(context, "已复制 $count 个字体文件，加载了 ${fontEntries.size} 种字体", Toast.LENGTH_SHORT).show()
+        }
+    }
     
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 当前字体显示
-        Column(
+        // 字体目录选择
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF1A2332), RoundedCornerShape(12.dp))
-                .padding(16.dp)
+                .clickable { dirPickerLauncher.launch(null) },
+            shape = RoundedCornerShape(12.dp),
+            color = Color(0xFF2A3A4A)
         ) {
-            Text(
-                text = "当前字体",
-                fontSize = 13.sp,
-                color = Color(0xFF9E9E9E),
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            
-            val font = SYSTEM_FONTS
-                .find { it.name == systemFontName }
-            Text(
-                text = font?.displayName ?: systemFontName,
-                fontSize = 16.sp,
-                color = Color.White,
-                fontWeight = FontWeight.Medium
-            )
-        }
-        
-        // 系统字体选择
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expandedSystemFonts = !expandedSystemFonts },
-                shape = RoundedCornerShape(12.dp),
-                color = Color(0xFF2A3A4A)
+            Row(
+                modifier = Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "选择字体目录",
+                        fontSize = 15.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.Medium
+                    )
+                    if (fontDirUri.isNotBlank()) {
                         Text(
-                            text = "选择字体",
-                            fontSize = 15.sp,
-                            color = Color.White,
-                            fontWeight = FontWeight.Medium
+                            text = if (isLoading) "正在加载..." else "已加载 ${fontEntries.size} 种字体",
+                            fontSize = 12.sp,
+                            color = if (fontEntries.isNotEmpty()) Color(0xFF81C784) else Color(0xFF9E9E9E),
+                            modifier = Modifier.padding(top = 2.dp)
                         )
+                    } else {
                         Text(
-                            text = "适用于所有字幕格式",
+                            text = "点击选择包含 .ttf/.otf 字体文件的目录",
                             fontSize = 12.sp,
                             color = Color(0xFF9E9E9E),
                             modifier = Modifier.padding(top = 2.dp)
                         )
                     }
-                    Text(
-                        text = if (expandedSystemFonts) "▲" else "▼",
-                        fontSize = 14.sp,
-                        color = Color(0xFF9E9E9E)
-                    )
                 }
-            }
-            
-            // 系统字体列表
-            androidx.compose.animation.AnimatedVisibility(
-                visible = expandedSystemFonts,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    SYSTEM_FONTS.forEach { font ->
-                        val isSelected = systemFontName == font.name
-                        
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    systemFontName = font.name
-                                    preferencesManager.setSystemFontName(font.name)
-                                    expandedSystemFonts = false
-                                    Toast
-                                        .makeText(context, "已切换到: ${font.displayName}\n重新播放生效", Toast.LENGTH_SHORT)
-                                        .show()
-                                },
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (isSelected) Color(0xFF405060) else Color(0xFF1A2332)
+                
+                // 刷新和清除按钮
+                if (fontDirUri.isNotBlank()) {
+                    Row {
+                        IconButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    isLoading = true
+                                    copyFontsFromDirectory(context, fontDirUri)
+                                    fontEntries = loadCustomFontEntries(context)
+                                    isLoading = false
+                                    Toast.makeText(context, "已刷新，加载了 ${fontEntries.size} 种字体", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier.size(36.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                // 选中指示器
-                                Box(
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                        .background(
-                                            if (isSelected) Color(0xFF64B5F6) else Color.Transparent,
-                                            CircleShape
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    if (isSelected) {
-                                        Text(
-                                            text = "✓",
-                                            fontSize = 12.sp,
-                                            color = Color.White,
-                                            fontWeight = FontWeight.Bold
-                                        )
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "刷新",
+                                tint = Color(0xFF64B5F6),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        IconButton(
+                            onClick = {
+                                preferencesManager.setFontDirectoryUri("")
+                                fontDirUri = ""
+                                // 清空内部字体目录
+                                coroutineScope.launch {
+                                    withContext(Dispatchers.IO) {
+                                        File(context.filesDir, "fonts").listFiles()?.forEach { it.delete() }
                                     }
+                                    fontEntries = emptyList()
+                                    // 如果当前字体不是默认的，重置
+                                    currentFontName = ""
+                                    preferencesManager.setSubtitleFontName("")
+                                    Toast.makeText(context, "已清除字体目录", Toast.LENGTH_SHORT).show()
                                 }
-                                
-                                Spacer(modifier = Modifier.width(12.dp))
-                                
-                                Column {
-                                    Text(
-                                        text = font.displayName,
-                                        fontSize = 14.sp,
-                                        color = Color.White
-                                    )
-                                    Text(
-                                        text = font.name,
-                                        fontSize = 11.sp,
-                                        color = Color(0xFF9E9E9E)
-                                    )
-                                }
-                            }
+                            },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "清除",
+                                tint = Color(0xFFEF5350),
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
                 }
             }
         }
         
+        // 字体选择（合并当前字体显示和选择列表）
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { 
+                        if (fontEntries.isNotEmpty()) expandedFontList = !expandedFontList 
+                    },
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFF2A3A4A)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "当前字体",
+                            fontSize = 12.sp,
+                            color = Color(0xFF9E9E9E)
+                        )
+                        Text(
+                            text = currentFontName.ifBlank { "默认字体" },
+                            fontSize = 15.sp,
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+                    if (fontEntries.isNotEmpty()) {
+                        Text(
+                            text = if (expandedFontList) "▲" else "▼",
+                            fontSize = 14.sp,
+                            color = Color(0xFF9E9E9E)
+                        )
+                    } else {
+                        Text(
+                            text = "请先选择字体目录",
+                            fontSize = 11.sp,
+                            color = Color(0xFF9E9E9E)
+                        )
+                    }
+                }
+            }
+                
+                AnimatedVisibility(
+                    visible = expandedFontList,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // "默认字体"选项
+                        val isDefaultSelected = currentFontName.isBlank()
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    currentFontName = ""
+                                    preferencesManager.setSubtitleFontName("")
+                                    expandedFontList = false
+                                    Toast.makeText(context, "已切换到: 默认字体\n重新播放生效", Toast.LENGTH_SHORT).show()
+                                },
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isDefaultSelected) Color(0xFF405060) else Color(0xFF1A2332)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .background(
+                                            if (isDefaultSelected) Color(0xFF64B5F6) else Color.Transparent,
+                                            CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isDefaultSelected) {
+                                        Text("✓", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text("默认字体", fontSize = 14.sp, color = Color.White)
+                            }
+                        }
+                        
+                        // 自定义字体列表
+                        fontEntries.forEach { entry ->
+                            val isSelected = currentFontName == entry.familyName
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        currentFontName = entry.familyName
+                                        preferencesManager.setSubtitleFontName(entry.familyName)
+                                        expandedFontList = false
+                                        Toast.makeText(context, "已切换到: ${entry.familyName}\n重新播放生效", Toast.LENGTH_SHORT).show()
+                                    },
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isSelected) Color(0xFF405060) else Color(0xFF1A2332)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .background(
+                                                if (isSelected) Color(0xFF64B5F6) else Color.Transparent,
+                                                CircleShape
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (isSelected) {
+                                            Text("✓", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(entry.familyName, fontSize = 14.sp, color = Color.White)
+                                        Text(
+                                            text = entry.file.name,
+                                            fontSize = 11.sp,
+                                            color = Color(0xFF9E9E9E)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        
         // 提示信息
         Text(
-            text = "💡 提示：字体更改需要重新播放视频才能生效",
+            text = "💡 提示：字体更改需要重新播放视频才能生效\n💡 内嵌ASS字幕需开启样式覆盖后字体设置才会生效",
             fontSize = 12.sp,
             color = Color(0xFF9E9E9E),
             modifier = Modifier

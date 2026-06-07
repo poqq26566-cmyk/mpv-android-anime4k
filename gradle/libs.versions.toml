@@ -58,6 +58,9 @@ kotlinxSerialization = "1.7.3"
 # FrameScout
 framescout = "1.0.2"
 
+# TrueType Parser
+truetypeParser = "2.1.4"
+
 # Dependency Injection (未来使用)
 koin = "4.0.0"
 
@@ -121,6 +124,9 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 
 # FrameScout
 framescout = { module = "com.github.AKhalil609:FrameScout", version.ref = "framescout" }
+
+# TrueType Parser
+truetype-parser = { module = "io.github.yubyf:truetypeparser-light", version.ref = "truetypeParser" }
 
 # Koin (未来使用)
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }

@@ -136,7 +136,7 @@ internal fun VideoPlayerActivity.restoreSubtitlePreferences(videoUri: android.ne
         Logger.d(TAG, "Restoring subtitle preferences for: $uriString")
 
         playbackEngine?.let { engine ->
-            val assOverride = preferencesManager.isAssOverrideEnabled(uriString)
+            val assOverride = preferencesManager.isAssOverrideEnabled()
             if (assOverride) {
                 lifecycleScope.launch {
                     delay(300)

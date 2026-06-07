@@ -1076,17 +1076,45 @@ class PreferencesManager private constructor(context: Context) {
     // ==================== 字幕字体设置（全局） ====================
     
     /**
-     * 获取系统字体名称
+     * 获取用户选择的字体名称（字体族名）
      */
-    fun getSystemFontName(): String {
-        return sharedPreferences.getString("system_font_name", "Noto Sans CJK SC") ?: "Noto Sans CJK SC"
+    fun getSubtitleFontName(): String {
+        return sharedPreferences.getString("subtitle_font_name", "") ?: ""
     }
     
     /**
-     * 保存系统字体名称
+     * 保存用户选择的字体名称（字体族名）
      */
-    fun setSystemFontName(fontName: String) {
-        sharedPreferences.edit().putString("system_font_name", fontName).apply()
+    fun setSubtitleFontName(fontName: String) {
+        sharedPreferences.edit().putString("subtitle_font_name", fontName).apply()
+    }
+    
+    /**
+     * 获取字体目录 URI
+     */
+    fun getFontDirectoryUri(): String {
+        return sharedPreferences.getString("font_directory_uri", "") ?: ""
+    }
+    
+    /**
+     * 保存字体目录 URI
+     */
+    fun setFontDirectoryUri(uri: String) {
+        sharedPreferences.edit().putString("font_directory_uri", uri).apply()
+    }
+    
+    /**
+     * 获取全局ASS样式覆盖开关
+     */
+    fun isAssOverrideEnabled(): Boolean {
+        return sharedPreferences.getBoolean("ass_override_global", false)
+    }
+    
+    /**
+     * 保存全局ASS样式覆盖开关
+     */
+    fun setAssOverrideEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("ass_override_global", enabled).apply()
     }
     
     // ==================== 批量操作 ====================
