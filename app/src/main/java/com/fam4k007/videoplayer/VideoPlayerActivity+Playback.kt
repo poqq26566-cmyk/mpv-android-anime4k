@@ -97,6 +97,9 @@ internal fun VideoPlayerActivity.loadVideo() {
             // 再恢复用户的字幕偏好设置（会覆盖自动加载的）
             restoreSubtitlePreferences(uri)
 
+            // 恢复均衡器设置
+            restoreEqualizerSettings()
+
             // 如果记忆的Anime4K模式已启用，在视频加载后应用shader
             if (viewModel.anime4KEnabled.value && anime4KMode != com.fam4k007.videoplayer.domain.player.Anime4KManager.Mode.OFF) {
                 delay(200) // 额外延迟确保MPV完全初始化

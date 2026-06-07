@@ -164,8 +164,7 @@ internal fun VideoPlayerActivity.setupComposeTestLayer() {
                             onTogglePortraitUi()
                         },
                         onSpeedClick = { anchorX, anchorY, anchorW, anchorH ->
-                            dialogManager.setLastAnchor(anchorX, anchorY, anchorW, anchorH)
-                            dialogManager.showSpeedDialog(viewModel.speed.value.toDouble())
+                            showSpeedDrawer()
                         }
                     )
                 }
@@ -408,7 +407,7 @@ internal fun VideoPlayerActivity.initializeManagers() {
             }
 
             override fun onSpeedClick() {
-                dialogManager.showSpeedDialog(viewModel.speed.value.toDouble())
+                showSpeedDrawer()
             }
 
             override fun onSeekBarChange(position: Double) {
