@@ -122,8 +122,8 @@ internal fun VideoPlayerActivity.showVideoListDrawer() {
 internal fun VideoPlayerActivity.handleBackNavigation() {
     gestureHandler?.restoreOriginalSettings()
 
-    // 重置屏幕方向为默认值，避免影响其他Activity
-    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+    // 重置屏幕方向为用户设置（跟随设备旋转锁定状态），避免在某些设备上强制横屏
+    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
 
     if (viewModel.isFromHomeContinue.value) {
         // 从主页继续播放进入，直接返回到主页（MainActivity）

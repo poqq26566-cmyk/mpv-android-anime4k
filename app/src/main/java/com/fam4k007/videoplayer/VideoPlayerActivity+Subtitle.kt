@@ -200,10 +200,9 @@ internal fun VideoPlayerActivity.restoreSubtitlePreferences(videoUri: android.ne
             }
 
             val savedBorderSize = preferencesManager.getSubtitleBorderSize(uriString)
-            if (savedBorderSize != 3) {
-                engine.setSubtitleBorderSize(savedBorderSize)
-                Logger.d(TAG, "Restored subtitle border size: $savedBorderSize")
-            }
+            // 总是应用描边粗细，确保全局设置也能生效
+            engine.setSubtitleBorderSize(savedBorderSize)
+            Logger.d(TAG, "Restored subtitle border size: $savedBorderSize")
 
             val savedBorderColor = preferencesManager.getSubtitleBorderColor(uriString)
             if (savedBorderColor != "#000000") {

@@ -1096,7 +1096,8 @@ class PlaybackEngine(
      */
     fun setSubtitleBorderSize(size: Int) {
         try {
-            MPVLib.setPropertyInt("sub-border-size", size)
+            // 使用 setPropertyString 确保跨平台兼容性（mpv 的 sub-border-size 为浮点属性）
+            MPVLib.setPropertyString("sub-border-size", size.toString())
             Log.d(TAG, "Subtitle border size set to: $size")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to set subtitle border size", e)
@@ -1155,6 +1156,90 @@ class PlaybackEngine(
         }
     }
     
+    // ==================== 音频均衡器 ====================
+    
+    /**
+     * 设置音频均衡器
+     * 使用 mpv 的 af (audio filter) 属性实现 5 频段均衡器
+     * 频段: 60Hz, 230Hz, 910Hz, 3600Hz, 14000Hz
+     *
+     * @param enabled 是否启用均衡器
+     * @param bands 5 个频段的增益值（dB），范围 -15 到 +15
+     */
+    fun setEqualizer(enabled: Boolean, bands: List<Float>) {
+        try {
+            if (!enabled || bands.all { it == 0f }) {
+                // 移除均衡器滤镜
+                MPVLib.command("af", "remove", "@eq")
+                Log.d(TAG, "Equalizer disabled")
+            } else {
+                // 构建 superequalizer 滤镜参数
+                // mpv superequalizer 使用 18 个频段，我们映射 5 个频段到对应位置
+                // 60Hz → band1, 230Hz → band3, 910Hz → band7, 3600Hz → band11, 14000Hz → band15
+                val b1 = bands.getOrElse(0) { 0f }
+                val b2 = bands.getOrElse(1) { 0f }
+                val b3 = bands.getOrElse(2) { 0f }
+                val b4 = bands.getOrElse(3) { 0f }
+                val b5 = bands.getOrElse(4) { 0f }
+                
+                // 使用 lavfi equalizer 链（多个 equalizer 滤镜串联）
+                val filterStr = "lavfi=[" +
+                    "equalizer=f=60:t=o:w=2:g=$b1," +
+                    "equalizer=f=230:t=o:w=2:g=$b2," +
+                    "equalizer=f=910:t=o:w=2:g=$b3," +
+                    "equalizer=f=3600:t=o:w=2:g=$b4," +
+                    "equalizer=f=14000:t=o:w=2:g=$b5]"
+                
+                MPVLib.command("af", "add", "@eq:$filterStr")
+                Log.d(TAG, "Equalizer set: bands=$bands")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to set equalizer", e)
+        }
+    }
+    
+    /**
+     * 设置低音增强
+     * @param value 增强强度，0-100
+     */
+    fun setBassBoost(value: Int) {
+        try {
+            if (value <= 0) {
+                MPVLib.command("af", "remove", "@bass")
+                Log.d(TAG, "Bass boost disabled")
+            } else {
+                // 使用 lowshelf 滤镜增强低频
+                val gain = value * 0.2  // 0-100 → 0-20 dB
+                val filterStr = "lavfi=[lowshelf=f=250:t=s:g=$gain]"
+                MPVLib.command("af", "add", "@bass:$filterStr")
+                Log.d(TAG, "Bass boost set to: $value ($gain dB)")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to set bass boost", e)
+        }
+    }
+    
+    /**
+     * 设置虚拟环绕声
+     * @param value 虚拟环绕强度，0-100
+     */
+    fun setVirtualizer(value: Int) {
+        try {
+            if (value <= 0) {
+                MPVLib.command("af", "remove", "@virt")
+                Log.d(TAG, "Virtualizer disabled")
+            } else {
+                // 使用 extrastereo 滤镜增强立体声效果
+                val strength = value / 50.0  // 0-100 → 0.0-2.0
+                val filterStr = "lavfi=[extrastereo=m=$strength]"
+                MPVLib.command("af", "add", "@virt:$filterStr")
+                Log.d(TAG, "Virtualizer set to: $value (strength=$strength)")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to set virtualizer", e)
+        }
+    }
+
     /**
      * 设置着色器列表（用于Anime4K等）
      * 启用着色器时自动开启OpenGL渲染优化（PBO、直接渲染），提升性能

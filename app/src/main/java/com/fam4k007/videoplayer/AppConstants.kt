@@ -56,6 +56,12 @@ object AppConstants {
         const val GPU_NEXT = "gpu_next"
         const val USE_VULKAN = "use_vulkan"
 
+        // 音频均衡器 Key
+        const val EQ_ENABLED = "eq_enabled"
+        const val EQ_BAND_PREFIX = "eq_band_"  // eq_band_0 ~ eq_band_4
+        const val EQ_BASS_BOOST = "eq_bass_boost"
+        const val EQ_VIRTUALIZER = "eq_virtualizer"
+
         // 文件扫描 Key
         const val NOMEDIA_ENABLED = "nomedia_enabled"
         const val INCLUDE_NOMEDIA_FOLDERS = "include_nomedia_folders"

@@ -287,6 +287,30 @@ class ComposeOverlayManager(
         }
     }
     
+    // ===== 音频均衡器 =====
+    
+    /**
+     * 显示音频均衡器抽屉
+     */
+    fun showEqualizerDrawer(
+        state: EqualizerState,
+        onEnabledChange: (Boolean) -> Unit,
+        onBandChange: (Int, Float) -> Unit,
+        onBassBoostChange: (Int) -> Unit,
+        onVirtualizerChange: (Int) -> Unit
+    ) {
+        setContent {
+            EqualizerDrawer(
+                state = state,
+                onEnabledChange = onEnabledChange,
+                onBandChange = onBandChange,
+                onBassBoostChange = onBassBoostChange,
+                onVirtualizerChange = onVirtualizerChange,
+                onDismiss = { clearContent() }
+            )
+        }
+    }
+    
     // ===== 片头片尾跳过设置 =====
     
     /**

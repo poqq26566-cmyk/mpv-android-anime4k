@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.drawBehind
+import kotlin.math.roundToInt
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
@@ -853,7 +854,7 @@ fun BorderSizeSection(
             .padding(12.dp)
     ) {
         Text(
-            text = "描边粗细：${borderSize.toInt()}",
+            text = "描边粗细：${borderSize.roundToInt()}",
             fontSize = 14.sp,
             color = Color.White,
             fontWeight = FontWeight.Medium
@@ -865,7 +866,7 @@ fun BorderSizeSection(
             value = borderSize,
             onValueChange = {
                 borderSize = it
-                onSizeChange(it.toInt())
+                onSizeChange(it.roundToInt())
             },
             valueRange = 0f..100f,
             steps = 99,
