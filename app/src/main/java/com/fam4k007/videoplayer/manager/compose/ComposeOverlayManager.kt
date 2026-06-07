@@ -420,4 +420,22 @@ class ComposeOverlayManager(
             )
         }
     }
+
+    /**
+     * 显示杜比视界提示对话框
+     * 当检测到视频为杜比视界编码且未开启 GPU Next 时弹出
+     */
+    fun showDolbyVisionDialog(
+        onDontShowAgain: () -> Unit
+    ) {
+        setContent {
+            DolbyVisionHintDialog(
+                onDismiss = { clearContent() },
+                onDontShowAgain = {
+                    onDontShowAgain()
+                    clearContent()
+                }
+            )
+        }
+    }
 }

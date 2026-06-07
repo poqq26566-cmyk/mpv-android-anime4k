@@ -26,24 +26,8 @@ import org.koin.android.ext.android.get
 import org.koin.androidx.compose.KoinAndroidContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 
 class VideoListComposeActivity : ComponentActivity() {
 
@@ -75,14 +59,9 @@ class VideoListComposeActivity : ComponentActivity() {
 
     private fun setupContent(folderName: String) {
         val activity = this
-        val prefs = preferencesManager
 
         setContent {
             val revision = themeRevision
-            var pendingVideo by remember { mutableStateOf<VideoFileParcelable?>(null) }
-            var pendingIndex by remember { mutableIntStateOf(-1) }
-            var pendingList by remember { mutableStateOf<List<VideoFileParcelable>?>(null) }
-            var showDvDialog by remember { mutableStateOf(false) }
             KoinAndroidContext {
                 val themeController = ThemeController.from(activity)
                 VideoPlayerTheme(
@@ -99,78 +78,9 @@ class VideoListComposeActivity : ComponentActivity() {
                             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                         },
                         onOpenVideo = { video, index, allVideos ->
-                            val isFirstPlay = prefs.isFirstPlay()
-                            val isDvFile = isDolbyVisionVideo(video.name, video.path)
-                            val isDvDismissed = prefs.getDontShowDvWarning()
-                            if (isFirstPlay || (isDvFile && !isDvDismissed)) {
-                                pendingVideo = video
-                                pendingIndex = index
-                                pendingList = allVideos
-                                showDvDialog = true
-                                if (isFirstPlay) prefs.setFirstPlayDone()
-                            } else {
-                                openVideoPlayer(video, index, folderName, allVideos)
-                            }
+                            openVideoPlayer(video, index, folderName, allVideos)
                         }
                     )
-
-                    // 杜比视界提示弹窗
-                    if (showDvDialog && pendingVideo != null && pendingList != null) {
-                        androidx.compose.material3.AlertDialog(
-                            onDismissRequest = { showDvDialog = false },
-                            title = {
-                                Text(
-                                    "杜比视界（Dolby Vision）",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            },
-                            text = {
-                                Column {
-                                    Text(
-                                        "若播放时出现画面发绿，可尝试在「设置 - 播放设置」中启用 GPU Next 渲染，并在播放界面内启用软解，以此来解决画面发绿的问题。",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Spacer(Modifier.height(8.dp))
-                                    Text(
-                                        "若经过以上操作后仍无法解决，则代表此设备不支持播放杜比视界，或设备性能有限，无法正常解析并播放杜比视界文件。",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        showDvDialog = false
-                                        pendingVideo?.let { v ->
-                                            openVideoPlayer(v, pendingIndex, folderName, pendingList ?: emptyList())
-                                        }
-                                    }
-                                ) {
-                                    Text("继续播放", fontWeight = FontWeight.SemiBold)
-                                }
-                            },
-                            dismissButton = {
-                                Row {
-                                    TextButton(onClick = {
-                                        prefs.setDontShowDvWarning(true)
-                                        showDvDialog = false
-                                    }) {
-                                        Text("不再提示", color = MaterialTheme.colorScheme.error)
-                                    }
-                                    TextButton(onClick = { showDvDialog = false }) {
-                                        Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                }
-                            },
-                            shape = RoundedCornerShape(28.dp),
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            titleContentColor = MaterialTheme.colorScheme.onSurface,
-                            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
                 }
             }
         }
@@ -194,16 +104,6 @@ class VideoListComposeActivity : ComponentActivity() {
         overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
     }
 
-    /**
-     * 检测视频文件名是否包含杜比视界关键词
-     */
-    private fun isDolbyVisionVideo(name: String, path: String): Boolean {
-        val lowerName = name.lowercase()
-        val lowerPath = path.lowercase()
-        val dvKeywords = listOf("dolbyvision", "dolby.vision", "dovi", "dolby")
-        return dvKeywords.any { lowerName.contains(it) || lowerPath.contains(it) }
-    }
-    
     private fun rescanFolder(callback: (List<VideoFileParcelable>) -> Unit) {
         if (folderPath.isEmpty()) {
             callback(emptyList())
