@@ -584,6 +584,10 @@ class PlayerViewModel(
                     val intDuration = MPVLib.getPropertyInt("duration") ?: 0
                     if (intDuration != lastDuration) {
                         lastDuration = intDuration
+                        // 同步更新 _duration（修复某些设备 observeProperty 不触发导致 duration=0）
+                        if (intDuration > 0 && intDuration != _duration.value) {
+                            _duration.value = intDuration
+                        }
                         MPVLib.getPropertyDouble("duration")?.let { dur ->
                             if (dur > 0) {
                                 _preciseDuration.value = dur

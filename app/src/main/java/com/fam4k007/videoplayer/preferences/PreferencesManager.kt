@@ -427,31 +427,43 @@ class PreferencesManager private constructor(context: Context) {
     }
     
     /**
-     * 获取视频的字幕大小
+     * 获取视频的字幕大小（优先 per-video，回退 global）
      */
     fun getSubtitleScale(videoUri: String): Double {
-        return sharedPreferences.getFloat("${videoUri}_sub_scale", 1.0f).toDouble()
+        if (sharedPreferences.contains("${videoUri}_sub_scale")) {
+            return sharedPreferences.getFloat("${videoUri}_sub_scale", 1.0f).toDouble()
+        }
+        return sharedPreferences.getFloat("global_sub_scale", 1.0f).toDouble()
     }
     
     /**
-     * 保存视频的字幕大小
+     * 保存视频的字幕大小（同时保存 per-video 和 global）
      */
     fun setSubtitleScale(videoUri: String, scale: Double) {
-        sharedPreferences.edit().putFloat("${videoUri}_sub_scale", scale.toFloat()).apply()
+        sharedPreferences.edit()
+            .putFloat("${videoUri}_sub_scale", scale.toFloat())
+            .putFloat("global_sub_scale", scale.toFloat())
+            .apply()
     }
     
     /**
-     * 获取视频的字幕位置
+     * 获取视频的字幕位置（优先 per-video，回退 global）
      */
     fun getSubtitlePosition(videoUri: String): Int {
-        return sharedPreferences.getInt("${videoUri}_sub_pos", 100)
+        if (sharedPreferences.contains("${videoUri}_sub_pos")) {
+            return sharedPreferences.getInt("${videoUri}_sub_pos", 100)
+        }
+        return sharedPreferences.getInt("global_sub_pos", 100)
     }
     
     /**
-     * 保存视频的字幕位置
+     * 保存视频的字幕位置（同时保存 per-video 和 global）
      */
     fun setSubtitlePosition(videoUri: String, position: Int) {
-        sharedPreferences.edit().putInt("${videoUri}_sub_pos", position).apply()
+        sharedPreferences.edit()
+            .putInt("${videoUri}_sub_pos", position)
+            .putInt("global_sub_pos", position)
+            .apply()
     }
     
     /**
