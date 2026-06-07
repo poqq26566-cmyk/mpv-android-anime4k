@@ -43,7 +43,6 @@ fun PlaybackSettingsScreen(
     var showSeekTimeDialog by remember { mutableStateOf(false) }
     var showSpeedDialog by remember { mutableStateOf(false) }
     var showDoubleTapSeekDialog by remember { mutableStateOf(false) }
-    var showSpeedPresetsDialog by remember { mutableStateOf(false) }
     var showRestartDialog by remember { mutableStateOf(false) }
     var pendingProfile by remember { mutableStateOf<String?>(null) }
     var showGpuNextWarning by remember { mutableStateOf(false) }
@@ -204,12 +203,7 @@ fun PlaybackSettingsScreen(
                         onCheckedChange = { viewModel.setRememberSpeed(it) }
                     )
                     TextItem(
-                        title = "Speed Presets",
-                        value = "Tap to set",
-                        onClick = { showSpeedPresetsDialog = true }
-                    )
-                    TextItem(
-                        title = "Long-press Speed",
+                        title = "长按倍速",
                         value = String.format("%.1fx", settings.longPressSpeed),
                         onClick = { showSpeedDialog = true }
                     )
@@ -311,15 +305,6 @@ fun PlaybackSettingsScreen(
                 viewModel.setDoubleTapSeekSeconds(newValue)
                 showDoubleTapSeekDialog = false
             }
-        )
-    }
-
-    // 自定义倍速选项对话框
-    if (showSpeedPresetsDialog) {
-        SpeedPresetsDialog(
-            viewModel = viewModel,
-            currentPresets = settings.customSpeedPresets,
-            onDismiss = { showSpeedPresetsDialog = false }
         )
     }
 
@@ -796,153 +781,6 @@ private fun SpeedDialog(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SpeedPresetsDialog(
-    viewModel: PlaybackSettingsViewModel,
-    currentPresets: Set<String>,
-    onDismiss: () -> Unit
-) {
-    val context = LocalContext.current
-    val allSpeeds = (1..16).map { it * 0.25 }
-    val selectedPresets = remember { mutableStateOf(currentPresets) }
-    val allSelected = selectedPresets.value.size == allSpeeds.size
-
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(MaterialTheme.spacing.medium),
-            shape = RoundedCornerShape(28.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(MaterialTheme.spacing.larger)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "Speed Presets",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    TextButton(
-                        onClick = {
-                            if (allSelected) {
-                                selectedPresets.value = setOf("1.0")
-                            } else {
-                                selectedPresets.value = allSpeeds.map { it.toString() }.toSet()
-                            }
-                        }
-                    ) {
-                        Text(
-                            if (allSelected) "Deselect All" else "Select All",
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "1x speed is fixed",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(Modifier.height(MaterialTheme.spacing.medium))
-
-                Column(
-                    modifier = Modifier
-                        .heightIn(max = 400.dp)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    allSpeeds.forEach { speed ->
-                        val speedStr = speed.toString()
-                        val isSelected = selectedPresets.value.contains(speedStr)
-                        val isRequired = speed == 1.0
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable(enabled = !isRequired) {
-                                    val newSet = selectedPresets.value.toMutableSet()
-                                    if (isSelected) {
-                                        newSet.remove(speedStr)
-                                    } else {
-                                        newSet.add(speedStr)
-                                    }
-                                    selectedPresets.value = newSet
-                                }
-                                .padding(vertical = 10.dp, horizontal = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = isSelected,
-                                onCheckedChange = if (!isRequired) {
-                                    { checked ->
-                                        val newSet = selectedPresets.value.toMutableSet()
-                                        if (checked) newSet.add(speedStr) else newSet.remove(speedStr)
-                                        selectedPresets.value = newSet
-                                    }
-                                } else {
-                                    null
-                                },
-                                enabled = !isRequired,
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = MaterialTheme.colorScheme.primary,
-                                    uncheckedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                    disabledCheckedColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                                ),
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(Modifier.width(12.dp))
-                            Text(
-                                "${speed}x",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-                            )
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(MaterialTheme.spacing.larger))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Cancel")
-                    }
-
-                    Button(
-                        onClick = {
-                            viewModel.setCustomSpeedPresets(selectedPresets.value)
-                            Toast.makeText(context, "Speed presets saved", Toast.LENGTH_SHORT).show()
-                            onDismiss()
-                        },
-                        modifier = Modifier.weight(1f),
-                        enabled = selectedPresets.value.contains("1.0")
-                    ) {
-                        Text("Save")
-                    }
-                }
-            }
-        }
-    }
-}
-
 /** 解码器预设信息 */
 private data class MpvProfileOption(
     val value: String,

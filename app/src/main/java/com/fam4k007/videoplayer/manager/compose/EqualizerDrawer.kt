@@ -231,6 +231,38 @@ fun EqualizerDrawer(
                                         onVirtualizerChange(value)
                                     }
                                 )
+
+                                Spacer(modifier = Modifier.height(20.dp))
+
+                                Divider(
+                                    color = Color(0x33FFFFFF),
+                                    thickness = 1.dp,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+
+                                // 一键重置按钮
+                                TextButton(
+                                    onClick = {
+                                        // 重置所有内部状态
+                                        eqBands = listOf(0f, 0f, 0f, 0f, 0f)
+                                        eqBassBoost = 0
+                                        eqVirtualizer = 0
+                                        // 回调通知外部
+                                        for (i in 0..4) { onBandChange(i, 0f) }
+                                        onBassBoostChange(0)
+                                        onVirtualizerChange(0)
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = Color(0xFF64B5F6)
+                                    )
+                                ) {
+                                    Text(
+                                        text = "一键重置",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
                             }
                         }
                     }
@@ -284,8 +316,8 @@ private fun EqualizerSwitch(
                 onEnabledChange(newValue)
             },
             colors = SwitchDefaults.colors(
-                checkedThumbColor = Color(0xFF4CAF50),
-                checkedTrackColor = Color(0x884CAF50),
+                checkedThumbColor = Color(0xFF64B5F6),
+                checkedTrackColor = Color(0x8864B5F6),
                 uncheckedThumbColor = Color(0xFF9E9E9E),
                 uncheckedTrackColor = Color(0x88757575)
             )
@@ -313,23 +345,6 @@ private fun EqualizerBands(
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        // dB 刻度标签
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = "", modifier = Modifier.width(28.dp)) // 占位
-            Text(
-                text = "+15dB",
-                fontSize = 10.sp,
-                color = Color(0x66FFFFFF),
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center
-            )
-        }
-
         // 竖向滑块区域
         Row(
             modifier = Modifier
@@ -348,23 +363,6 @@ private fun EqualizerBands(
                     modifier = Modifier.weight(1f)
                 )
             }
-        }
-
-        // 底部 dB 标签
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = "", modifier = Modifier.width(28.dp))
-            Text(
-                text = "-15dB",
-                fontSize = 10.sp,
-                color = Color(0x66FFFFFF),
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center
-            )
         }
     }
 }
@@ -392,7 +390,7 @@ private fun VerticalEqSlider(
     ) {
         // 当前 dB 值显示
         Text(
-            text = "${sliderValue.roundToInt()}",
+            text = "${sliderValue.roundToInt()}dB",
             fontSize = 11.sp,
             color = if (enabled) Color(0xFF64B5F6) else Color(0x55FFFFFF),
             fontWeight = FontWeight.Bold,

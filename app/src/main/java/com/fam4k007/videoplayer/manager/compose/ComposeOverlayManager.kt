@@ -311,6 +311,28 @@ class ComposeOverlayManager(
         }
     }
     
+    // ===== 播放速度 =====
+
+    /**
+     * 显示播放速度抽屉
+     */
+    fun showSpeedDrawer(
+        currentSpeed: Double,
+        speedPresets: Set<String>,
+        onSpeedChanged: (Double) -> Unit,
+        onPresetsChanged: (Set<String>) -> Unit
+    ) {
+        setContent {
+            SpeedDrawer(
+                currentSpeed = currentSpeed,
+                speedPresets = speedPresets,
+                onSpeedChanged = onSpeedChanged,
+                onPresetsChanged = onPresetsChanged,
+                onDismiss = { clearContent() }
+            )
+        }
+    }
+
     // ===== 片头片尾跳过设置 =====
     
     /**

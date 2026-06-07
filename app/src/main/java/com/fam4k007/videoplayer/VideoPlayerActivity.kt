@@ -832,9 +832,28 @@ class VideoPlayerActivity : AppCompatActivity(),
     }
 
     /**
+     * 显示播放速度抽屉
+     */
+    fun showSpeedDrawer() {
+        composeOverlayManager.showSpeedDrawer(
+            currentSpeed = viewModel.speed.value.toDouble(),
+            speedPresets = preferencesManager.getCustomSpeedPresets(),
+            onSpeedChanged = { speed ->
+                viewModel.setSpeed(speed)
+                playbackEngine.setSpeed(speed)
+                danmakuManager.setSpeed(speed.toFloat())
+                preferencesManager.setLastPlaybackSpeed(speed.toFloat())
+            },
+            onPresetsChanged = { presets ->
+                preferencesManager.setCustomSpeedPresets(presets)
+            }
+        )
+    }
+
+    /**
      * 恢复均衡器设置
      */
-    private fun restoreEqualizerSettings() {
+    internal fun restoreEqualizerSettings() {
         if (preferencesManager.isEqualizerEnabled()) {
             val bands = preferencesManager.getEqualizerBands()
             playbackEngine?.setEqualizer(true, bands)

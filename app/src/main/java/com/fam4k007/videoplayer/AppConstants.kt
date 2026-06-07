@@ -119,7 +119,7 @@ object AppConstants {
         const val DEFAULT_PLAYBACK_SPEED = 1.0f
         
         // 默认自定义倍速预设列表
-        val DEFAULT_SPEED_PRESETS = setOf("0.5", "0.75", "1.0", "1.25", "1.5", "1.75", "2.0", "2.5", "3.0")
+        val DEFAULT_SPEED_PRESETS = setOf("0.5", "1.0", "1.5", "2.0", "2.5", "3.0")
         
         // 视频显示模式
         const val DEFAULT_VIDEO_DISPLAY_MODE = "folder"
