@@ -108,6 +108,7 @@ class VideoPlayerActivity : AppCompatActivity(),
     internal lateinit var composeOverlayManager: com.fam4k007.videoplayer.manager.compose.ComposeOverlayManager
     internal lateinit var screenshotManager: com.fam4k007.videoplayer.manager.ScreenshotManager
     internal lateinit var skipIntroOutroManager: com.fam4k007.videoplayer.manager.SkipIntroOutroManager
+    internal var thumbnailManager: com.fam4k007.videoplayer.manager.VideoThumbnailManager? = null
 
     internal lateinit var mpvView: CustomMPVView
     internal lateinit var danmakuView: com.fam4k007.videoplayer.danmaku.DanmakuPlayerView
@@ -657,6 +658,8 @@ class VideoPlayerActivity : AppCompatActivity(),
         controlsManager?.cleanup()
         gestureHandler?.cleanup()
         filePickerManager?.cleanup()
+        thumbnailManager?.release()
+        thumbnailManager = null
     }
 
     override fun onImportSubtitle() {

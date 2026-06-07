@@ -339,6 +339,79 @@ class PlayerViewModel(
     // Slider 正在被拖动（拖动期间暂停自动隐藏定时器）
     private val _isSliderDragging = MutableStateFlow(false)
     val isSliderDragging: StateFlow<Boolean> = _isSliderDragging.asStateFlow()
+
+    // ==================== 缩略图预览 ====================
+
+    private var _thumbnailManager: com.fam4k007.videoplayer.manager.VideoThumbnailManager? = null
+    private var thumbnailInitialized = false
+
+    // 当前预览缩略图
+    private val _thumbnailBitmap = MutableStateFlow<android.graphics.Bitmap?>(null)
+    val thumbnailBitmap: StateFlow<android.graphics.Bitmap?> = _thumbnailBitmap.asStateFlow()
+
+    // 当前拖动时间位置（秒）
+    private val _thumbnailTimeSec = MutableStateFlow(-1L)
+    val thumbnailTimeSec: StateFlow<Long> = _thumbnailTimeSec.asStateFlow()
+
+    private var thumbnailLoadJob: Job? = null
+
+    fun setThumbnailManager(manager: com.fam4k007.videoplayer.manager.VideoThumbnailManager) {
+        _thumbnailManager = manager
+    }
+
+    fun initializeThumbnail(uri: Uri, durationMs: Long, isWebDav: Boolean = false) {
+        if (thumbnailInitialized) return
+        _thumbnailManager?.initializeVideo(uri, durationMs, isWebDav)
+        thumbnailInitialized = true
+    }
+
+    fun onSeekbarDragPosition(positionSec: Float, durationSec: Float) {
+        if (!_seekbarThumbnailEnabled.value) return
+        val manager = _thumbnailManager ?: return
+        if (!manager.isThumbnailSupported()) return
+        val sec = positionSec.toLong()
+        _thumbnailTimeSec.value = sec
+
+        // 策略1：立即显示精确缓存
+        val exactCached = manager.getThumbnailAt(sec)
+        if (exactCached != null) {
+            _thumbnailBitmap.value = exactCached
+            return
+        }
+        // 策略2：显示附近缓存帧（先显示近似帧，再后台提取精确帧）
+        var nearby: android.graphics.Bitmap? = null
+        for (offset in 1..3) {
+            nearby = manager.getThumbnailAt(sec + offset) ?: manager.getThumbnailAt(sec - offset)
+            if (nearby != null) break
+        }
+        if (nearby != null) _thumbnailBitmap.value = nearby
+        // 策略3：防抖后台提取（30ms 内如果位置再次变化则取消上次请求）
+        thumbnailLoadJob?.cancel()
+        thumbnailLoadJob = viewModelScope.launch {
+            delay(30)
+            val targetSec = _thumbnailTimeSec.value
+            val bitmap = manager.extractThumbnailRealtime(targetSec)
+            if (bitmap != null) {
+                _thumbnailBitmap.value = bitmap
+            }
+        }
+    }
+
+    fun onSeekbarDragStart(positionSec: Float) {
+        // 不再限制预加载范围，拖动时按需即时提取
+    }
+
+    fun onSeekbarDragEnd() {
+        thumbnailLoadJob?.cancel()
+        _thumbnailBitmap.value = null
+        _thumbnailTimeSec.value = -1L
+    }
+
+    fun resetThumbnailState() {
+        thumbnailInitialized = false
+        _thumbnailBitmap.value = null
+        _thumbnailTimeSec.value = -1L
+    }
     
     // 是否为在线视频
     private val _isOnlineVideo = MutableStateFlow(false)
@@ -374,6 +447,9 @@ class PlayerViewModel(
 
     private val _chapterBarEnabled = MutableStateFlow(true)
     val chapterBarEnabled: StateFlow<Boolean> = _chapterBarEnabled.asStateFlow()
+
+    private val _seekbarThumbnailEnabled = MutableStateFlow(false)
+    val seekbarThumbnailEnabled: StateFlow<Boolean> = _seekbarThumbnailEnabled.asStateFlow()
 
     /**
      * 章节信息
@@ -525,6 +601,8 @@ class PlayerViewModel(
         _showRemainingTime.value = playerRepository.isShowRemainingTimeEnabled()
         // 加载章节进度条开关
         _chapterBarEnabled.value = playerRepository.isChapterBarEnabled()
+        // 加载缩略图预览开关
+        _seekbarThumbnailEnabled.value = playerRepository.isSeekbarThumbnailEnabled()
         // 加载 GPU Next 状态
         _gpuNext.value = playerRepository.getGpuNext()
     }

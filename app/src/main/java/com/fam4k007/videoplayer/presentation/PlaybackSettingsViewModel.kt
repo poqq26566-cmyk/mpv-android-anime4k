@@ -76,6 +76,7 @@ class PlaybackSettingsViewModel(
 
                     // 章节控制
                     chapterBarEnabled = playerRepository.isChapterBarEnabled(),
+                    seekbarThumbnailEnabled = playerRepository.isSeekbarThumbnailEnabled(),
 
                     // MPV 解码器预设
                     mpvProfile = playerRepository.getMpvProfile(),
@@ -297,6 +298,18 @@ class PlaybackSettingsViewModel(
         }
     }
 
+    fun setSeekbarThumbnailEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setSeekbarThumbnailEnabled(enabled)
+                _playbackSettings.value = _playbackSettings.value.copy(seekbarThumbnailEnabled = enabled)
+                Logger.d(TAG, "Set seekbar thumbnail enabled: $enabled")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set seekbar thumbnail", e)
+            }
+        }
+    }
+
     // ==================== 自动连播 ====================
 
     /**
@@ -411,6 +424,7 @@ data class PlaybackSettings(
 
     // 章节控制
     val chapterBarEnabled: Boolean = true,
+    val seekbarThumbnailEnabled: Boolean = true,
 
     // MPV 解码器预设
     val mpvProfile: String = "fast",

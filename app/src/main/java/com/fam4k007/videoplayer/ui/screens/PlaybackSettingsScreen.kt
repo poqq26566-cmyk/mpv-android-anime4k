@@ -237,7 +237,7 @@ fun PlaybackSettingsScreen(
 
             // 章节控制
             item {
-                PreferenceSectionHeader("Chapter Controls")
+                PreferenceSectionHeader("章节与缩略图")
             }
 
             item {
@@ -247,6 +247,12 @@ fun PlaybackSettingsScreen(
                         subtitle = if (settings.chapterBarEnabled) "Show chapter markers and current chapter name on progress bar" else "Hide chapter-related info",
                         checked = settings.chapterBarEnabled,
                         onCheckedChange = { viewModel.setChapterBarEnabled(it) }
+                    )
+                    SwitchItem(
+                        title = "进度条缩略图预览",
+                        subtitle = if (settings.seekbarThumbnailEnabled) "拖动进度条时显示视频画面预览" else "拖动进度条时不显示缩略图",
+                        checked = settings.seekbarThumbnailEnabled,
+                        onCheckedChange = { viewModel.setSeekbarThumbnailEnabled(it) }
                     )
                 }
             }

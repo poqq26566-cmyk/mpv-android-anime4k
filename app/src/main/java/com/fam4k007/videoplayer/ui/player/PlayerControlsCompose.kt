@@ -259,6 +259,10 @@ fun BottomControlPanel(
     var sliderPosition by remember { mutableStateOf<Float?>(null) }
     var isDragging by remember { mutableStateOf(false) }
 
+    // 缩略图预览状态
+    val thumbnailBitmap by viewModel.thumbnailBitmap.collectAsState()
+    val thumbnailTimeSec by viewModel.thumbnailTimeSec.collectAsState()
+
     // 计算当前显示的进度（拖动时显示临时位置，否则显示实际位置）
     val displayPosition = if (isDragging) {
         sliderPosition ?: precisePosition.toFloat()
@@ -377,8 +381,10 @@ fun BottomControlPanel(
                         if (!isDragging) {
                             isDragging = true
                             viewModel.setSliderDragging(true)
+                            viewModel.onSeekbarDragStart(newValue)
                         }
                         sliderPosition = newValue
+                        viewModel.onSeekbarDragPosition(newValue, duration.toFloat().coerceAtLeast(1f))
                     },
                     onSeekFinished = {
                         sliderPosition?.let { pos ->
@@ -387,10 +393,18 @@ fun BottomControlPanel(
                         isDragging = false
                         sliderPosition = null
                         viewModel.setSliderDragging(false)
+                        viewModel.onSeekbarDragEnd()
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
+
+            // 缩略图预览弹窗
+            SeekbarThumbnailPreview(
+                bitmap = thumbnailBitmap,
+                timeSec = thumbnailTimeSec,
+                show = isDragging && thumbnailBitmap != null
+            )
 
             // 总时长/剩余时间（点击切换）
             val durationText = if (showRemainingTime) {

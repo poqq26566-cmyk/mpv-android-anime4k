@@ -331,6 +331,10 @@ fun PortraitBottomControls(
     // 拖动进度状态
     var sliderPosition by remember { mutableStateOf<Float?>(null) }
     var isDragging by remember { mutableStateOf(false) }
+
+    // 缩略图预览状态
+    val thumbnailBitmap by viewModel.thumbnailBitmap.collectAsState()
+    val thumbnailTimeSec by viewModel.thumbnailTimeSec.collectAsState()
     val displayPosition =
         if (isDragging) sliderPosition ?: precisePosition.toFloat() else precisePosition.toFloat()
 
@@ -592,18 +596,28 @@ fun PortraitBottomControls(
                         if (!isDragging) {
                             isDragging = true
                             viewModel.setSliderDragging(true)
+                            viewModel.onSeekbarDragStart(newValue)
                         }
                         sliderPosition = newValue
+                        viewModel.onSeekbarDragPosition(newValue, duration.toFloat().coerceAtLeast(1f))
                     },
                     onSeekFinished = {
                         sliderPosition?.let { pos -> viewModel.seekTo(pos.toInt()) }
                         isDragging = false
                         sliderPosition = null
                         viewModel.setSliderDragging(false)
+                        viewModel.onSeekbarDragEnd()
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
+
+            // 缩略图预览弹窗
+            SeekbarThumbnailPreview(
+                bitmap = thumbnailBitmap,
+                timeSec = thumbnailTimeSec,
+                show = isDragging && thumbnailBitmap != null
+            )
 
             // 总时长/剩余时间（点击切换）
             val durationText = if (showRemainingTime) {
