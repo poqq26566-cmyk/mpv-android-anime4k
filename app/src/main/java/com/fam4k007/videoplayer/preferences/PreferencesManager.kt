@@ -500,72 +500,103 @@ class PreferencesManager private constructor(context: Context) {
     
     /**
      * 获取字幕文本颜色（ARGB格式）
+     * 优先返回视频专属设置，若无则回退到全局设置
      */
     fun getSubtitleTextColor(videoUri: String): String {
-        return sharedPreferences.getString("${videoUri}_sub_text_color", "#FFFFFF") ?: "#FFFFFF"
+        val perVideo = sharedPreferences.getString("${videoUri}_sub_text_color", null)
+        if (perVideo != null) return perVideo
+        return sharedPreferences.getString("global_sub_text_color", "#FFFFFF") ?: "#FFFFFF"
     }
     
     /**
-     * 保存字幕文本颜色
+     * 保存字幕文本颜色（同时保存全局）
      */
     fun setSubtitleTextColor(videoUri: String, color: String) {
-        sharedPreferences.edit().putString("${videoUri}_sub_text_color", color).apply()
+        sharedPreferences.edit()
+            .putString("${videoUri}_sub_text_color", color)
+            .putString("global_sub_text_color", color)
+            .apply()
     }
     
     /**
      * 获取字幕描边粗细
+     * 优先返回视频专属设置，若无则回退到全局设置
      */
     fun getSubtitleBorderSize(videoUri: String): Int {
-        return sharedPreferences.getInt("${videoUri}_sub_border_size", 3)
+        if (sharedPreferences.contains("${videoUri}_sub_border_size")) {
+            return sharedPreferences.getInt("${videoUri}_sub_border_size", 3)
+        }
+        return sharedPreferences.getInt("global_sub_border_size", 3)
     }
     
     /**
-     * 保存字幕描边粗细
+     * 保存字幕描边粗细（同时保存全局）
      */
     fun setSubtitleBorderSize(videoUri: String, size: Int) {
-        sharedPreferences.edit().putInt("${videoUri}_sub_border_size", size).apply()
+        sharedPreferences.edit()
+            .putInt("${videoUri}_sub_border_size", size)
+            .putInt("global_sub_border_size", size)
+            .apply()
     }
     
     /**
      * 获取字幕描边颜色（ARGB格式）
+     * 优先返回视频专属设置，若无则回退到全局设置
      */
     fun getSubtitleBorderColor(videoUri: String): String {
-        return sharedPreferences.getString("${videoUri}_sub_border_color", "#000000") ?: "#000000"
+        val perVideo = sharedPreferences.getString("${videoUri}_sub_border_color", null)
+        if (perVideo != null) return perVideo
+        return sharedPreferences.getString("global_sub_border_color", "#000000") ?: "#000000"
     }
     
     /**
-     * 保存字幕描边颜色
+     * 保存字幕描边颜色（同时保存全局）
      */
     fun setSubtitleBorderColor(videoUri: String, color: String) {
-        sharedPreferences.edit().putString("${videoUri}_sub_border_color", color).apply()
+        sharedPreferences.edit()
+            .putString("${videoUri}_sub_border_color", color)
+            .putString("global_sub_border_color", color)
+            .apply()
     }
     
     /**
      * 获取字幕背景颜色（ARGB格式）
+     * 优先返回视频专属设置，若无则回退到全局设置
      */
     fun getSubtitleBackColor(videoUri: String): String {
-        return sharedPreferences.getString("${videoUri}_sub_back_color", "#00000000") ?: "#00000000"
+        val perVideo = sharedPreferences.getString("${videoUri}_sub_back_color", null)
+        if (perVideo != null) return perVideo
+        return sharedPreferences.getString("global_sub_back_color", "#00000000") ?: "#00000000"
     }
     
     /**
-     * 保存字幕背景颜色
+     * 保存字幕背景颜色（同时保存全局）
      */
     fun setSubtitleBackColor(videoUri: String, color: String) {
-        sharedPreferences.edit().putString("${videoUri}_sub_back_color", color).apply()
+        sharedPreferences.edit()
+            .putString("${videoUri}_sub_back_color", color)
+            .putString("global_sub_back_color", color)
+            .apply()
     }
     
     /**
      * 获取字幕描边样式
+     * 优先返回视频专属设置，若无则回退到全局设置
      */
     fun getSubtitleBorderStyle(videoUri: String): String {
-        return sharedPreferences.getString("${videoUri}_sub_border_style", "outline-and-shadow") ?: "outline-and-shadow"
+        val perVideo = sharedPreferences.getString("${videoUri}_sub_border_style", null)
+        if (perVideo != null) return perVideo
+        return sharedPreferences.getString("global_sub_border_style", "outline-and-shadow") ?: "outline-and-shadow"
     }
     
     /**
-     * 保存字幕描边样式
+     * 保存字幕描边样式（同时保存全局）
      */
     fun setSubtitleBorderStyle(videoUri: String, style: String) {
-        sharedPreferences.edit().putString("${videoUri}_sub_border_style", style).apply()
+        sharedPreferences.edit()
+            .putString("${videoUri}_sub_border_style", style)
+            .putString("global_sub_border_style", style)
+            .apply()
     }
     
     // ==================== 主题设置 ====================
@@ -1450,6 +1481,46 @@ class PreferencesManager private constructor(context: Context) {
     fun setMpvProfile(profile: String) {
         sharedPreferences.edit().putString(AppConstants.Preferences.MPV_PROFILE, profile).apply()
     }
+
+    // ==================== 音频均衡器 ====================
+
+    fun isEqualizerEnabled(): Boolean {
+        return sharedPreferences.getBoolean(AppConstants.Preferences.EQ_ENABLED, false)
+    }
+
+    fun setEqualizerEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.EQ_ENABLED, enabled).apply()
+    }
+
+    fun getEqualizerBand(index: Int): Float {
+        return sharedPreferences.getFloat("${AppConstants.Preferences.EQ_BAND_PREFIX}$index", 0f)
+    }
+
+    fun setEqualizerBand(index: Int, value: Float) {
+        sharedPreferences.edit().putFloat("${AppConstants.Preferences.EQ_BAND_PREFIX}$index", value).apply()
+    }
+
+    fun getEqualizerBands(): List<Float> {
+        return (0..4).map { getEqualizerBand(it) }
+    }
+
+    fun getEqualizerBassBoost(): Int {
+        return sharedPreferences.getInt(AppConstants.Preferences.EQ_BASS_BOOST, 0)
+    }
+
+    fun setEqualizerBassBoost(value: Int) {
+        sharedPreferences.edit().putInt(AppConstants.Preferences.EQ_BASS_BOOST, value).apply()
+    }
+
+    fun getEqualizerVirtualizer(): Int {
+        return sharedPreferences.getInt(AppConstants.Preferences.EQ_VIRTUALIZER, 0)
+    }
+
+    fun setEqualizerVirtualizer(value: Int) {
+        sharedPreferences.edit().putInt(AppConstants.Preferences.EQ_VIRTUALIZER, value).apply()
+    }
+
+    // ==================== GPU Next 渲染 ====================
 
     /**
      * 获取是否启用 GPU Next 渲染

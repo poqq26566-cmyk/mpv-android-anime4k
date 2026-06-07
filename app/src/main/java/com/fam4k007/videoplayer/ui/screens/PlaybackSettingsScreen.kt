@@ -581,31 +581,122 @@ private fun DoubleTapSeekDialog(
     onConfirm: (Int) -> Unit
 ) {
     var selected by remember { mutableIntStateOf(currentValue) }
+    var showCustomInput by remember { mutableStateOf(false) }
+    var customInputText by remember { mutableStateOf("") }
     val options = listOf(5, 10, 15, 20, 30)
+    val isCustom = selected !in options
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                "Double-tap Seek Duration",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-        },
-        text = {
-            Column {
-                options.forEach { seconds ->
+    if (showCustomInput) {
+        // 自定义输入对话框
+        AlertDialog(
+            onDismissRequest = { showCustomInput = false },
+            title = {
+                Text(
+                    "自定义跳转时长",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        "请输入跳转时长（1~300秒）",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = customInputText,
+                        onValueChange = { input ->
+                            // 只允许输入数字
+                            if (input.all { it.isDigit() } && input.length <= 3) {
+                                customInputText = input
+                            }
+                        },
+                        label = { Text("秒数") },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+                            imeAction = androidx.compose.ui.text.input.ImeAction.Done
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val value = customInputText.toIntOrNull()
+                        if (value != null && value in 1..300) {
+                            showCustomInput = false
+                            onConfirm(value)
+                        }
+                    },
+                    enabled = customInputText.toIntOrNull()?.let { it in 1..300 } == true
+                ) {
+                    Text("确定")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCustomInput = false }) {
+                    Text("取消")
+                }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    } else {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Text(
+                    "双击跳转时长",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Column {
+                    options.forEach { seconds ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { selected = seconds }
+                                .padding(vertical = 12.dp, horizontal = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selected == seconds,
+                                onClick = { selected = seconds },
+                                modifier = Modifier.size(24.dp),
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = MaterialTheme.colorScheme.primary,
+                                    unselectedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                )
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Text(
+                                "${seconds}秒",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (selected == seconds) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurface,
+                                fontWeight = if (selected == seconds) FontWeight.SemiBold else FontWeight.Normal
+                            )
+                        }
+                    }
+                    // 自定义选项
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable { selected = seconds }
+                            .clickable { showCustomInput = true }
                             .padding(vertical = 12.dp, horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
-                            selected = selected == seconds,
-                            onClick = { selected = seconds },
+                            selected = isCustom,
+                            onClick = { showCustomInput = true },
                             modifier = Modifier.size(24.dp),
                             colors = RadioButtonDefaults.colors(
                                 selectedColor = MaterialTheme.colorScheme.primary,
@@ -614,29 +705,29 @@ private fun DoubleTapSeekDialog(
                         )
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            "${seconds}s",
+                            if (isCustom) "自定义（${selected}秒）" else "自定义",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = if (selected == seconds) MaterialTheme.colorScheme.primary
+                            color = if (isCustom) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurface,
-                            fontWeight = if (selected == seconds) FontWeight.SemiBold else FontWeight.Normal
+                            fontWeight = if (isCustom) FontWeight.SemiBold else FontWeight.Normal
                         )
                     }
                 }
-            }
-        },
-        confirmButton = {
-            Button(onClick = { onConfirm(selected) }) {
-                Text("OK")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-        shape = RoundedCornerShape(28.dp),
-        containerColor = MaterialTheme.colorScheme.surface
-    )
+            },
+            confirmButton = {
+                Button(onClick = { onConfirm(selected) }) {
+                    Text("确定")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text("取消")
+                }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
 }
 
 @Composable

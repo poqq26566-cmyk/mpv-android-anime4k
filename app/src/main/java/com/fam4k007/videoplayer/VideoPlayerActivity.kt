@@ -633,8 +633,8 @@ class VideoPlayerActivity : AppCompatActivity(),
         intent.removeExtra(EXTRA_AUTO_ROTATE)
         intent.removeExtra(EXTRA_PORTRAIT_UI)
         
-        // 重置屏幕方向，防止影响其他Activity
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        // 重置屏幕方向为用户设置，防止影响其他Activity
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
         
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         
@@ -789,12 +789,65 @@ class VideoPlayerActivity : AppCompatActivity(),
         skipIntroOutroManager.showSkipSettingsDrawer(viewModel.currentFolderPath.value)
     }
 
+    override fun onShowEqualizer() {
+        val state = com.fam4k007.videoplayer.manager.compose.EqualizerState(
+            enabled = preferencesManager.isEqualizerEnabled(),
+            bands = preferencesManager.getEqualizerBands(),
+            bassBoost = preferencesManager.getEqualizerBassBoost(),
+            virtualizer = preferencesManager.getEqualizerVirtualizer()
+        )
+        composeOverlayManager.showEqualizerDrawer(
+            state = state,
+            onEnabledChange = { enabled ->
+                preferencesManager.setEqualizerEnabled(enabled)
+                if (enabled) {
+                    playbackEngine?.setEqualizer(true, preferencesManager.getEqualizerBands())
+                    playbackEngine?.setBassBoost(preferencesManager.getEqualizerBassBoost())
+                    playbackEngine?.setVirtualizer(preferencesManager.getEqualizerVirtualizer())
+                } else {
+                    playbackEngine?.setEqualizer(false, emptyList())
+                    playbackEngine?.setBassBoost(0)
+                    playbackEngine?.setVirtualizer(0)
+                }
+            },
+            onBandChange = { index, value ->
+                preferencesManager.setEqualizerBand(index, value)
+                if (preferencesManager.isEqualizerEnabled()) {
+                    playbackEngine?.setEqualizer(true, preferencesManager.getEqualizerBands())
+                }
+            },
+            onBassBoostChange = { value ->
+                preferencesManager.setEqualizerBassBoost(value)
+                if (preferencesManager.isEqualizerEnabled()) {
+                    playbackEngine?.setBassBoost(value)
+                }
+            },
+            onVirtualizerChange = { value ->
+                preferencesManager.setEqualizerVirtualizer(value)
+                if (preferencesManager.isEqualizerEnabled()) {
+                    playbackEngine?.setVirtualizer(value)
+                }
+            }
+        )
+    }
+
+    /**
+     * 恢复均衡器设置
+     */
+    private fun restoreEqualizerSettings() {
+        if (preferencesManager.isEqualizerEnabled()) {
+            val bands = preferencesManager.getEqualizerBands()
+            playbackEngine?.setEqualizer(true, bands)
+            playbackEngine?.setBassBoost(preferencesManager.getEqualizerBassBoost())
+            playbackEngine?.setVirtualizer(preferencesManager.getEqualizerVirtualizer())
+        }
+    }
+
     override fun onBackgroundPlayback() {
         if (!::playbackEngine.isInitialized || viewModel.paused.value == true) {
             DialogUtils.showToastShort(this, "请先开始播放视频")
             return
         }
-        Log.d(TAG, "User triggered background playback")
         
         isManualBackgroundPlayback = true
         
@@ -1093,6 +1146,9 @@ class VideoPlayerActivity : AppCompatActivity(),
             }
 
             restoreSubtitlePreferences(uri)
+
+            // 恢复均衡器设置
+            restoreEqualizerSettings()
 
             if (position > 0) {
                 delay(300)
