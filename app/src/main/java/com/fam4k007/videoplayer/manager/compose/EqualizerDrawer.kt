@@ -132,10 +132,9 @@ fun EqualizerDrawer(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
                             .padding(16.dp)
                     ) {
-                        // 标题栏
+                        // 标题栏（固定不滚动）
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -175,7 +174,7 @@ fun EqualizerDrawer(
                             modifier = Modifier.padding(vertical = 8.dp)
                         )
 
-                        // 均衡器开关
+                        // 均衡器开关（固定不滚动）
                         EqualizerSwitch(
                             enabled = eqEnabled,
                             onEnabledChange = { newValue ->
@@ -186,7 +185,12 @@ fun EqualizerDrawer(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // 均衡器 5 频段滑块（竖向排列）
+                        // 以下内容可滚动
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .verticalScroll(rememberScrollState())
+                        ) {
                         AnimatedVisibility(
                             visible = eqEnabled,
                             enter = expandVertically() + fadeIn(),
@@ -265,6 +269,7 @@ fun EqualizerDrawer(
                                 }
                             }
                         }
+                        } // 可滚动 Column
                     }
                 }
             }

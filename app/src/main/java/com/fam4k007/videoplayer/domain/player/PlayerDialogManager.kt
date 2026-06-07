@@ -898,18 +898,10 @@ class PlayerDialogManager(
     fun showMoreOptionsDialog() {
         val activity = activityRef.get() ?: return
 
-        // 获取当前视频URI以查询样式覆盖状态
-        val videoUri = (activity as? VideoUriProvider)?.getVideoUri()
-        val assOverrideEnabled = videoUri?.let { 
-            preferencesManager.isAssOverrideEnabled(it.toString())
-        } ?: false
-
         // 检查是否有章节信息
         val chapterCount = MPVLib.getPropertyInt("chapter-list/count") ?: 0
         val hasChapters = chapterCount > 0
         
-        // 动态显示样式覆盖状态
-        val assOverrideText = if (assOverrideEnabled) "Style Override: On" else "Style Override: Off"
         val autoRotateEnabled =
             (activity as? MoreOptionsCallback)?.isAutoRotateEnabled() == true
         val autoRotateText = if (autoRotateEnabled) "Auto Rotate: On" else "Auto Rotate: Off"
@@ -919,7 +911,7 @@ class PlayerDialogManager(
         if (hasChapters) {
             items.add("Chapters")
         }
-        items.addAll(listOf("截图", "音轨", "解码", "听视频", "片头片尾", "音频均衡器", assOverrideText, autoRotateText))
+        items.addAll(listOf("截图", "音轨", "解码", "听视频", "片头片尾", "音频均衡器", autoRotateText))
         
         // 根据屏幕方向决定对齐方式：竖屏靠右对齐，横屏居中
         val configuration = activity.resources.configuration
@@ -939,7 +931,7 @@ class PlayerDialogManager(
         ) { position ->
             // 根据是否有章节项调整索引映射
             val actualAction = if (hasChapters) {
-                position  // 有章节时：0=章节, 1=截图, 2=音轨, 3=解码, 4=听视频, 5=片头片尾, 6=均衡器, 7=样式覆盖, 8=自动旋转
+                position  // 有章节时：0=章节, 1=截图, 2=音轨, 3=解码, 4=听视频, 5=片头片尾, 6=均衡器, 7=自动旋转
             } else {
                 position + 1  // 无章节时：0=截图->1, 1=音轨->2, ...
             }
@@ -952,34 +944,8 @@ class PlayerDialogManager(
                 4 -> (activity as? MoreOptionsCallback)?.onBackgroundPlayback()  // 听视频
                 5 -> (activity as? MoreOptionsCallback)?.onShowSkipSettings()  // 片头片尾设置
                 6 -> (activity as? MoreOptionsCallback)?.onShowEqualizer()  // 音频均衡器
-                7 -> toggleAssOverride()  // 点击切换样式覆盖
-                8 -> (activity as? MoreOptionsCallback)?.onToggleAutoRotate()
+                7 -> (activity as? MoreOptionsCallback)?.onToggleAutoRotate()
             }
-        }
-    }
-
-    /**
-     * 切换ASS/SSA字幕样式覆盖
-     */
-    private fun toggleAssOverride() {
-        val activity = activityRef.get() ?: return
-        val videoUri = (activity as? VideoUriProvider)?.getVideoUri() ?: return
-
-        try {
-            // 获取当前状态
-            val currentState = preferencesManager.isAssOverrideEnabled(videoUri.toString())
-            // 切换状态
-            val newState = !currentState
-            
-            // 保存设置
-            preferencesManager.setAssOverrideEnabled(videoUri.toString(), newState)
-            
-            // 立即应用到播放引擎
-            playbackEngine.setAssOverride(newState)
-            
-            Log.d(TAG, "ASS override toggled: $newState")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to toggle ASS override", e)
         }
     }
 

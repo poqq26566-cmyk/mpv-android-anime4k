@@ -86,7 +86,7 @@ internal fun VideoPlayerActivity.autoFindAndLoadDanmaku(videoUri: android.net.Ur
                     val fileName = danmakuPath?.substringAfterLast("/") ?: "弹幕文件"
 
                     // 显示加载成功提示，提醒用户需要手动显示
-                    DialogUtils.showToastShort(this, "Danmaku loaded: $fileName\nTap danmaku button to show")
+                    DialogUtils.showToastShort(this, "已自动加载弹幕: $fileName")
 
                     // 根据实际的 trackSelected 状态更新Compose弹幕按钮
                     val isTrackSelected = danmakuManager.getTrackSelected()
