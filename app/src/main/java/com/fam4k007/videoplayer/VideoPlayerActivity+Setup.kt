@@ -298,6 +298,39 @@ internal fun VideoPlayerActivity.initializeManagers() {
                     com.fam4k007.videoplayer.utils.Logger.d(TAG, "Video marked as ready for skip detection")
                 }, 500)  // 延迟500ms
 
+                // 杜比视界检测：通过 MediaExtractor 精确检测编码类型
+                if (!preferencesManager.getGpuNext() && !preferencesManager.getDontShowDvWarning()) {
+                    val uri = videoUri
+                    if (uri != null) {
+                        Thread {
+                            try {
+                                val extractor = android.media.MediaExtractor()
+                                extractor.setDataSource(applicationContext, uri, null)
+                                var isDolbyVision = false
+                                for (i in 0 until extractor.trackCount) {
+                                    val format = extractor.getTrackFormat(i)
+                                    val mime = format.getString(android.media.MediaFormat.KEY_MIME) ?: continue
+                                    if (mime == "video/dolby-vision") {
+                                        isDolbyVision = true
+                                        break
+                                    }
+                                }
+                                extractor.release()
+                                if (isDolbyVision) {
+                                    Handler(Looper.getMainLooper()).post {
+                                        com.fam4k007.videoplayer.utils.Logger.d(TAG, "Detected Dolby Vision via MediaExtractor")
+                                        composeOverlayManager.showDolbyVisionDialog(
+                                            onDontShowAgain = { preferencesManager.setDontShowDvWarning(true) }
+                                        )
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                com.fam4k007.videoplayer.utils.Logger.w(TAG, "Failed to detect Dolby Vision via MediaExtractor", e)
+                            }
+                        }.start()
+                    }
+                }
+
                 // 不在这里启动弹幕，弹幕的启动由 onPlaybackStateChanged 统一管理
                 com.fam4k007.videoplayer.utils.Logger.d(TAG, "Video file loaded")
             }

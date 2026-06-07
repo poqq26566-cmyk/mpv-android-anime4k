@@ -23,6 +23,7 @@ import com.fam4k007.videoplayer.presentation.PlaybackSettingsViewModel
 import com.fam4k007.videoplayer.ui.components.PreferenceCard
 import com.fam4k007.videoplayer.ui.components.PreferenceSectionHeader
 import com.fam4k007.videoplayer.ui.components.SwitchItem
+import com.fam4k007.videoplayer.ui.components.SliderItem
 import com.fam4k007.videoplayer.ui.components.TextItem
 import com.fam4k007.videoplayer.ui.player.SeekbarStyle
 import com.fam4k007.videoplayer.ui.theme.spacing
@@ -41,7 +42,6 @@ fun PlaybackSettingsScreen(
     val settings by viewModel.playbackSettings.collectAsState()
 
     var showSeekTimeDialog by remember { mutableStateOf(false) }
-    var showSpeedDialog by remember { mutableStateOf(false) }
     var showDoubleTapSeekDialog by remember { mutableStateOf(false) }
     var showRestartDialog by remember { mutableStateOf(false) }
     var pendingProfile by remember { mutableStateOf<String?>(null) }
@@ -202,10 +202,13 @@ fun PlaybackSettingsScreen(
                         checked = settings.rememberSpeed,
                         onCheckedChange = { viewModel.setRememberSpeed(it) }
                     )
-                    TextItem(
+                    SliderItem(
                         title = "长按倍速",
-                        value = String.format("%.1fx", settings.longPressSpeed),
-                        onClick = { showSpeedDialog = true }
+                        value = settings.longPressSpeed,
+                        valueRange = 1.0f..6.0f,
+                        steps = 49,
+                        onValueChange = { viewModel.setLongPressSpeed(Math.round(it * 10f) / 10f) },
+                        valueFormatter = { String.format("%.1fx", it) }
                     )
                 }
             }
@@ -280,18 +283,6 @@ fun PlaybackSettingsScreen(
             onConfirm = { newValue ->
                 viewModel.setSeekTime(newValue)
                 showSeekTimeDialog = false
-            }
-        )
-    }
-
-    // 长按倍速选择对话框
-    if (showSpeedDialog) {
-        SpeedDialog(
-            currentValue = settings.longPressSpeed,
-            onDismiss = { showSpeedDialog = false },
-            onConfirm = { newValue ->
-                viewModel.setLongPressSpeed(newValue)
-                showSpeedDialog = false
             }
         )
     }
@@ -501,31 +492,120 @@ private fun SeekTimeDialog(
     onConfirm: (Int) -> Unit
 ) {
     var selected by remember { mutableIntStateOf(currentValue) }
+    var showCustomInput by remember { mutableStateOf(false) }
+    var customInputText by remember { mutableStateOf("") }
     val options = listOf(3, 5, 10, 15, 20, 25, 30)
+    val isCustom = selected !in options
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                "快进/快退时长",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-        },
-        text = {
-            Column {
-                options.forEach { seconds ->
+    if (showCustomInput) {
+        AlertDialog(
+            onDismissRequest = { showCustomInput = false },
+            title = {
+                Text(
+                    "自定义快进/快退时长",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        "请输入快进/快退时长（1~300秒）",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = customInputText,
+                        onValueChange = { input ->
+                            if (input.all { it.isDigit() } && input.length <= 3) {
+                                customInputText = input
+                            }
+                        },
+                        label = { Text("秒数") },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+                            imeAction = androidx.compose.ui.text.input.ImeAction.Done
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val value = customInputText.toIntOrNull()
+                        if (value != null && value in 1..300) {
+                            showCustomInput = false
+                            onConfirm(value)
+                        }
+                    },
+                    enabled = customInputText.toIntOrNull()?.let { it in 1..300 } == true
+                ) {
+                    Text("确定")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCustomInput = false }) {
+                    Text("取消")
+                }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    } else {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Text(
+                    "快进/快退时长",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Column {
+                    options.forEach { seconds ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { selected = seconds }
+                                .padding(vertical = 12.dp, horizontal = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selected == seconds,
+                                onClick = { selected = seconds },
+                                modifier = Modifier.size(24.dp),
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = MaterialTheme.colorScheme.primary,
+                                    unselectedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                )
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Text(
+                                "${seconds}秒",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (selected == seconds) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurface,
+                                fontWeight = if (selected == seconds) FontWeight.SemiBold else FontWeight.Normal
+                            )
+                        }
+                    }
+                    // 自定义选项
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable { selected = seconds }
+                            .clickable { showCustomInput = true }
                             .padding(vertical = 12.dp, horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
-                            selected = selected == seconds,
-                            onClick = { selected = seconds },
+                            selected = isCustom,
+                            onClick = { showCustomInput = true },
                             modifier = Modifier.size(24.dp),
                             colors = RadioButtonDefaults.colors(
                                 selectedColor = MaterialTheme.colorScheme.primary,
@@ -534,29 +614,29 @@ private fun SeekTimeDialog(
                         )
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            "${seconds}秒",
+                            if (isCustom) "自定义（${selected}秒）" else "自定义",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = if (selected == seconds) MaterialTheme.colorScheme.primary
+                            color = if (isCustom) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurface,
-                            fontWeight = if (selected == seconds) FontWeight.SemiBold else FontWeight.Normal
+                            fontWeight = if (isCustom) FontWeight.SemiBold else FontWeight.Normal
                         )
                     }
                 }
-            }
-        },
-        confirmButton = {
-            Button(onClick = { onConfirm(selected) }) {
-                Text("确定")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消")
-            }
-        },
-        shape = RoundedCornerShape(28.dp),
-        containerColor = MaterialTheme.colorScheme.surface
-    )
+            },
+            confirmButton = {
+                Button(onClick = { onConfirm(selected) }) {
+                    Text("确定")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text("取消")
+                }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
 }
 
 @Composable
@@ -713,71 +793,6 @@ private fun DoubleTapSeekDialog(
             containerColor = MaterialTheme.colorScheme.surface
         )
     }
-}
-
-@Composable
-private fun SpeedDialog(
-    currentValue: Float,
-    onDismiss: () -> Unit,
-    onConfirm: (Float) -> Unit
-) {
-    var selected by remember { mutableFloatStateOf(currentValue) }
-    val options = listOf(1.5f, 2.0f, 2.5f, 3.0f, 3.5f)
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                "长按倍速",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-        },
-        text = {
-            Column {
-                options.forEach { speed ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable { selected = speed }
-                            .padding(vertical = 12.dp, horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = selected == speed,
-                            onClick = { selected = speed },
-                            modifier = Modifier.size(24.dp),
-                            colors = RadioButtonDefaults.colors(
-                                selectedColor = MaterialTheme.colorScheme.primary,
-                                unselectedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                            )
-                        )
-                        Spacer(Modifier.width(12.dp))
-                        Text(
-                            String.format("%.1fx", speed),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (selected == speed) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurface,
-                            fontWeight = if (selected == speed) FontWeight.SemiBold else FontWeight.Normal
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(onClick = { onConfirm(selected) }) {
-                Text("确定")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消")
-            }
-        },
-        shape = RoundedCornerShape(28.dp),
-        containerColor = MaterialTheme.colorScheme.surface
-    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
