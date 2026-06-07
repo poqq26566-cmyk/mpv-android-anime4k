@@ -17,6 +17,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -843,6 +848,8 @@ fun BorderSizeSection(
     onSizeChange: (Int) -> Unit
 ) {
     var borderSize by remember { mutableStateOf(currentSize.toFloat()) }
+    var isEditing by remember { mutableStateOf(false) }
+    var editText by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -853,12 +860,106 @@ fun BorderSizeSection(
             )
             .padding(12.dp)
     ) {
-        Text(
-            text = "描边粗细：${borderSize.roundToInt()}",
-            fontSize = 14.sp,
-            color = Color.White,
-            fontWeight = FontWeight.Medium
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "描边粗细：",
+                fontSize = 14.sp,
+                color = Color.White,
+                fontWeight = FontWeight.Medium
+            )
+
+            if (isEditing) {
+                androidx.compose.foundation.text.BasicTextField(
+                    value = editText,
+                    onValueChange = { newValue: String ->
+                        if (newValue.isEmpty() || (newValue.all { c -> c.isDigit() } && (newValue.toIntOrNull() ?: 100) <= 99)) {
+                            editText = newValue
+                        }
+                    },
+                    modifier = Modifier
+                        .width(52.dp)
+                        .background(Color.Transparent)
+                        .border(1.dp, Color(0xFF64B5F6), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+                        imeAction = androidx.compose.ui.text.input.ImeAction.Done
+                    ),
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                        onDone = {
+                            val value = editText.toIntOrNull()
+                            if (value != null && value in 0..99) {
+                                borderSize = value.toFloat()
+                                onSizeChange(value)
+                                isEditing = false
+                            }
+                        }
+                    ),
+                    textStyle = androidx.compose.ui.text.TextStyle(
+                        fontSize = 14.sp,
+                        color = Color.White,
+                        textAlign = TextAlign.Center
+                    ),
+                    cursorBrush = androidx.compose.ui.graphics.SolidColor(Color(0xFF64B5F6))
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                IconButton(
+                    onClick = {
+                        val value = editText.toIntOrNull()
+                        if (value != null && value in 0..99) {
+                            borderSize = value.toFloat()
+                            onSizeChange(value)
+                            isEditing = false
+                        }
+                    },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = "确定",
+                        tint = Color(0xFF4CAF50),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                IconButton(
+                    onClick = { isEditing = false },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "取消",
+                        tint = Color(0xFFEF5350),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            } else {
+                Text(
+                    text = "${borderSize.roundToInt()}",
+                    fontSize = 14.sp,
+                    color = Color(0xFF64B5F6),
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                IconButton(
+                    onClick = {
+                        editText = borderSize.roundToInt().toString()
+                        isEditing = true
+                    },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "编辑",
+                        tint = Color(0xFF64B5F6),
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -868,8 +969,8 @@ fun BorderSizeSection(
                 borderSize = it
                 onSizeChange(it.roundToInt())
             },
-            valueRange = 0f..100f,
-            steps = 99,
+            valueRange = 0f..10f,
+            steps = 9,
             colors = SliderDefaults.colors(
                 thumbColor = Color(0xFF64B5F6),
                 activeTrackColor = Color(0xFF64B5F6),
@@ -879,16 +980,27 @@ fun BorderSizeSection(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        TextButton(
-            onClick = {
-                borderSize = 3f
-                onSizeChange(3)
-            },
-            colors = ButtonDefaults.textButtonColors(
-                contentColor = Color(0xFF64B5F6)
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("重置为 3")
+            TextButton(
+                onClick = {
+                    borderSize = 3f
+                    onSizeChange(3)
+                },
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color(0xFF64B5F6)
+                )
+            ) {
+                Text("重置为 3")
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "点击笔可输入 0-99 的精确值",
+                fontSize = 11.sp,
+                color = Color(0xFF888888)
+            )
         }
     }
 }
