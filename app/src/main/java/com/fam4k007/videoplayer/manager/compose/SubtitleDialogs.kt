@@ -623,7 +623,7 @@ fun SubtitleStyleContent(
                         assOverrideEnabled = enabled
                         preferencesManager.setAssOverrideEnabled(enabled)
                         // 立即应用到播放引擎，并重新加载字幕使其生效
-                        MPVLib.setPropertyString("sub-ass-override", if (enabled) "force" else "no")
+                        MPVLib.setPropertyString("sub-ass-override", if (enabled) "force" else "scale")
                         MPVLib.command("sub-reload")
                     },
                     colors = SwitchDefaults.colors(
