@@ -2,6 +2,7 @@ package com.fam4k007.videoplayer.di
 
 import com.fam4k007.videoplayer.bilibili.auth.BiliBiliAuthManager
 import com.fam4k007.videoplayer.dandanplay.DanDanPlayApi
+import com.fam4k007.videoplayer.preferences.PreferencesManager
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -16,8 +17,12 @@ val networkModule = module {
         BiliBiliAuthManager(androidContext())
     }
     
-    // DanDanPlayApi单例
-    single { 
-        DanDanPlayApi() 
+    // DanDanPlayApi - 使用 factory，默认使用第一个启用的服务器
+    factory { 
+        val preferencesManager = get<PreferencesManager>()
+        val firstServer = preferencesManager.getEnabledDanmakuServers().firstOrNull()
+        DanDanPlayApi(
+            if (firstServer == null || firstServer.isDefault) null else firstServer.url
+        )
     }
 }

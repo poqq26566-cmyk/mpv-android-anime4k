@@ -108,6 +108,7 @@ class VideoPlayerActivity : AppCompatActivity(),
     internal lateinit var composeOverlayManager: com.fam4k007.videoplayer.manager.compose.ComposeOverlayManager
     internal lateinit var screenshotManager: com.fam4k007.videoplayer.manager.ScreenshotManager
     internal lateinit var skipIntroOutroManager: com.fam4k007.videoplayer.manager.SkipIntroOutroManager
+    internal var thumbnailManager: com.fam4k007.videoplayer.manager.VideoThumbnailManager? = null
 
     internal lateinit var mpvView: CustomMPVView
     internal lateinit var danmakuView: com.fam4k007.videoplayer.danmaku.DanmakuPlayerView
@@ -633,8 +634,8 @@ class VideoPlayerActivity : AppCompatActivity(),
         intent.removeExtra(EXTRA_AUTO_ROTATE)
         intent.removeExtra(EXTRA_PORTRAIT_UI)
         
-        // 重置屏幕方向，防止影响其他Activity
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        // 重置屏幕方向为用户设置，防止影响其他Activity
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
         
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         
@@ -657,6 +658,8 @@ class VideoPlayerActivity : AppCompatActivity(),
         controlsManager?.cleanup()
         gestureHandler?.cleanup()
         filePickerManager?.cleanup()
+        thumbnailManager?.release()
+        thumbnailManager = null
     }
 
     override fun onImportSubtitle() {
@@ -736,7 +739,11 @@ class VideoPlayerActivity : AppCompatActivity(),
                 // 显示匹配提示
                 DialogUtils.showToastShort(this@VideoPlayerActivity, "正在匹配弹幕，请稍候...")
                 
-                val api = com.fam4k007.videoplayer.dandanplay.DanDanPlayApi()
+                val enabledServers = preferencesManager.getEnabledDanmakuServers()
+                if (enabledServers.isEmpty()) {
+                    DialogUtils.showToastLong(this@VideoPlayerActivity, "没有启用的弹幕服务器")
+                    return@launch
+                }
                 
                 // 获取完整文件名
                 val fileName = videoFile.name
@@ -744,33 +751,53 @@ class VideoPlayerActivity : AppCompatActivity(),
                 
                 Logger.d(TAG, "File info - name: $fileName, size: $fileSize, path: $videoPath")
                 
-                // 计算文件哈希
+                // 计算文件哈希（本地计算，只需一次）
                 Logger.d(TAG, "Calculating file hash...")
-                val fileHash = api.calculateFileHash(videoPath)
+                val hashApi = com.fam4k007.videoplayer.dandanplay.DanDanPlayApi(null)
+                val fileHash = hashApi.calculateFileHash(videoPath)
                 Logger.d(TAG, "File hash calculated: $fileHash")
                 
-                // 调用匹配API
-                val matchResponse = api.matchDanmaku(
-                    fileName = fileName,
-                    fileHash = fileHash,
-                    fileSize = fileSize
-                )
+                // 遍历所有启用的服务器进行匹配
+                val allMatchResults = mutableListOf<com.fam4k007.videoplayer.dandanplay.ServerMatchResult>()
+                for (server in enabledServers) {
+                    try {
+                        val api = com.fam4k007.videoplayer.dandanplay.DanDanPlayApi(
+                            if (server.isDefault) null else server.url
+                        )
+                        val matchResponse = api.matchDanmaku(
+                            fileName = fileName,
+                            fileHash = fileHash,
+                            fileSize = fileSize
+                        )
+                        if (matchResponse.isMatched && !matchResponse.matches.isNullOrEmpty()) {
+                            matchResponse.matches.forEach { match ->
+                                allMatchResults.add(
+                                    com.fam4k007.videoplayer.dandanplay.ServerMatchResult(
+                                        matchInfo = match,
+                                        serverName = server.name,
+                                        serverUrl = if (server.isDefault) null else server.url
+                                    )
+                                )
+                            }
+                        }
+                        Logger.d(TAG, "Server '${server.name}' returned ${matchResponse.matches?.size ?: 0} matches")
+                    } catch (e: Exception) {
+                        Logger.e(TAG, "Server '${server.name}' match failed", e)
+                    }
+                }
                 
-                if (!matchResponse.isMatched || matchResponse.matches.isNullOrEmpty()) {
+                if (allMatchResults.isEmpty()) {
                     DialogUtils.showToastLong(this@VideoPlayerActivity, "未找到匹配的弹幕")
                     return@launch
                 }
                 
-                // 找到匹配，显示选择对话框
-                val matches = matchResponse.matches
-                if (matches.size == 1) {
-                    // 只有一个匹配，直接加载
-                    val match = matches[0]
-                    loadNetworkDanmaku(match.episodeId, match.animeTitle, match.episodeTitle)
+                // 根据结果数量决定是否弹窗
+                if (allMatchResults.size == 1) {
+                    val result = allMatchResults[0]
+                    loadNetworkDanmaku(result.matchInfo.episodeId, result.matchInfo.animeTitle, result.matchInfo.episodeTitle, result.serverUrl)
                 } else {
-                    // 多个匹配，让用户选择
                     withContext(Dispatchers.Main) {
-                        showMatchSelectionDialog(matches)
+                        showMatchSelectionDialog(allMatchResults)
                     }
                 }
                 
@@ -789,12 +816,84 @@ class VideoPlayerActivity : AppCompatActivity(),
         skipIntroOutroManager.showSkipSettingsDrawer(viewModel.currentFolderPath.value)
     }
 
+    override fun onShowEqualizer() {
+        val state = com.fam4k007.videoplayer.manager.compose.EqualizerState(
+            enabled = preferencesManager.isEqualizerEnabled(),
+            bands = preferencesManager.getEqualizerBands(),
+            bassBoost = preferencesManager.getEqualizerBassBoost(),
+            virtualizer = preferencesManager.getEqualizerVirtualizer()
+        )
+        composeOverlayManager.showEqualizerDrawer(
+            state = state,
+            onEnabledChange = { enabled ->
+                preferencesManager.setEqualizerEnabled(enabled)
+                if (enabled) {
+                    playbackEngine?.setEqualizer(true, preferencesManager.getEqualizerBands())
+                    playbackEngine?.setBassBoost(preferencesManager.getEqualizerBassBoost())
+                    playbackEngine?.setVirtualizer(preferencesManager.getEqualizerVirtualizer())
+                } else {
+                    playbackEngine?.setEqualizer(false, emptyList())
+                    playbackEngine?.setBassBoost(0)
+                    playbackEngine?.setVirtualizer(0)
+                }
+            },
+            onBandChange = { index, value ->
+                preferencesManager.setEqualizerBand(index, value)
+                if (preferencesManager.isEqualizerEnabled()) {
+                    playbackEngine?.setEqualizer(true, preferencesManager.getEqualizerBands())
+                }
+            },
+            onBassBoostChange = { value ->
+                preferencesManager.setEqualizerBassBoost(value)
+                if (preferencesManager.isEqualizerEnabled()) {
+                    playbackEngine?.setBassBoost(value)
+                }
+            },
+            onVirtualizerChange = { value ->
+                preferencesManager.setEqualizerVirtualizer(value)
+                if (preferencesManager.isEqualizerEnabled()) {
+                    playbackEngine?.setVirtualizer(value)
+                }
+            }
+        )
+    }
+
+    /**
+     * 显示播放速度抽屉
+     */
+    fun showSpeedDrawer() {
+        composeOverlayManager.showSpeedDrawer(
+            currentSpeed = viewModel.speed.value.toDouble(),
+            speedPresets = preferencesManager.getCustomSpeedPresets(),
+            onSpeedChanged = { speed ->
+                viewModel.setSpeed(speed)
+                playbackEngine.setSpeed(speed)
+                danmakuManager.setSpeed(speed.toFloat())
+                preferencesManager.setLastPlaybackSpeed(speed.toFloat())
+            },
+            onPresetsChanged = { presets ->
+                preferencesManager.setCustomSpeedPresets(presets)
+            }
+        )
+    }
+
+    /**
+     * 恢复均衡器设置
+     */
+    internal fun restoreEqualizerSettings() {
+        if (preferencesManager.isEqualizerEnabled()) {
+            val bands = preferencesManager.getEqualizerBands()
+            playbackEngine?.setEqualizer(true, bands)
+            playbackEngine?.setBassBoost(preferencesManager.getEqualizerBassBoost())
+            playbackEngine?.setVirtualizer(preferencesManager.getEqualizerVirtualizer())
+        }
+    }
+
     override fun onBackgroundPlayback() {
         if (!::playbackEngine.isInitialized || viewModel.paused.value == true) {
             DialogUtils.showToastShort(this, "请先开始播放视频")
             return
         }
-        Log.d(TAG, "User triggered background playback")
         
         isManualBackgroundPlayback = true
         
@@ -1093,6 +1192,9 @@ class VideoPlayerActivity : AppCompatActivity(),
             }
 
             restoreSubtitlePreferences(uri)
+
+            // 恢复均衡器设置
+            restoreEqualizerSettings()
 
             if (position > 0) {
                 delay(300)

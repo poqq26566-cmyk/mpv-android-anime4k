@@ -10,19 +10,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-
 import androidx.compose.material.icons.filled.Comment
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Help
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Subtitles
-import androidx.compose.material.icons.filled.Update
-import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,7 +45,6 @@ import com.fam4k007.videoplayer.bilibili.auth.BiliBiliAuthManager
 import com.fam4k007.videoplayer.ui.components.ClickableItem
 import com.fam4k007.videoplayer.ui.components.PreferenceCard
 import com.fam4k007.videoplayer.ui.components.PreferenceSectionHeader
-import com.fam4k007.videoplayer.ui.theme.AppTheme
 import com.fam4k007.videoplayer.ui.theme.DarkMode
 import com.fam4k007.videoplayer.ui.theme.ThemeController
 import com.fam4k007.videoplayer.ui.theme.spacing
@@ -74,6 +71,7 @@ fun SettingsScreen(
     onNavigateToFolderBlacklist: () -> Unit = {},
     onNavigateToMediaSettings: () -> Unit = {},
     onNavigateToDeviceInfo: () -> Unit = {},
+    onNavigateToDanmakuServer: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val authManager: BiliBiliAuthManager = koinInject()
@@ -157,7 +155,7 @@ fun SettingsScreen(
                     ClickableItem(
                         title = "播放设置",
                         subtitle = "修改与播放有关的参数配置",
-                        icon = Icons.Default.Settings,
+                        icon = Icons.Default.PlayCircle,
                         onClick = onNavigateToPlaybackSettings
                     )
                     
@@ -166,6 +164,22 @@ fun SettingsScreen(
                         subtitle = "查看最近播放的视频",
                         icon = Icons.Default.History,
                         onClick = onNavigateToPlaybackHistory
+                    )
+                }
+            }
+            
+            // 弹幕
+            item {
+                PreferenceSectionHeader(title = "弹幕")
+            }
+            
+            item {
+                PreferenceCard {
+                    ClickableItem(
+                        title = "弹幕服务器",
+                        subtitle = "管理弹幕搜索服务器",
+                        icon = Icons.Default.Storage,
+                        onClick = onNavigateToDanmakuServer
                     )
                 }
             }
@@ -187,7 +201,7 @@ fun SettingsScreen(
                     ClickableItem(
                         title = "其他媒体设置",
                         subtitle = ".nomedia 规则、隐藏文件夹扫描等",
-                        icon = Icons.Default.Star,
+                        icon = Icons.Default.Tune,
                         onClick = onNavigateToMediaSettings
                     )
                 }

@@ -33,6 +33,11 @@ object AppConstants {
         // 视频显示模式 Key
         const val VIDEO_DISPLAY_MODE = "video_display_mode"
         
+        // 首次播放 Key
+        const val IS_FIRST_PLAY = "is_first_play"
+        // 杜比视界提示 Key
+        const val DONT_SHOW_DV_WARNING = "dont_show_dv_warning"
+
         // 文件夹黑名单 Key
         const val FOLDER_BLACKLIST = "folder_blacklist"
         
@@ -46,8 +51,19 @@ object AppConstants {
         // 章节进度条 Key
         const val CHAPTER_BAR_ENABLED = "chapter_bar_enabled"
 
+        // 进度条缩略图预览 Key
+        const val SEEKBAR_THUMBNAIL_ENABLED = "seekbar_thumbnail_enabled"
+
         // MPV 解码器预设
         const val MPV_PROFILE = "mpv_profile"
+        const val GPU_NEXT = "gpu_next"
+        const val USE_VULKAN = "use_vulkan"
+
+        // 音频均衡器 Key
+        const val EQ_ENABLED = "eq_enabled"
+        const val EQ_BAND_PREFIX = "eq_band_"  // eq_band_0 ~ eq_band_4
+        const val EQ_BASS_BOOST = "eq_bass_boost"
+        const val EQ_VIRTUALIZER = "eq_virtualizer"
 
         // 文件扫描 Key
         const val NOMEDIA_ENABLED = "nomedia_enabled"
@@ -106,7 +122,7 @@ object AppConstants {
         const val DEFAULT_PLAYBACK_SPEED = 1.0f
         
         // 默认自定义倍速预设列表
-        val DEFAULT_SPEED_PRESETS = setOf("0.5", "0.75", "1.0", "1.25", "1.5", "1.75", "2.0", "2.5", "3.0")
+        val DEFAULT_SPEED_PRESETS = setOf("0.5", "1.0", "1.5", "2.0", "2.5", "3.0")
         
         // 视频显示模式
         const val DEFAULT_VIDEO_DISPLAY_MODE = "folder"

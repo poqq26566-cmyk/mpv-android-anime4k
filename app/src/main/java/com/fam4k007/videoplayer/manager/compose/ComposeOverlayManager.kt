@@ -287,6 +287,52 @@ class ComposeOverlayManager(
         }
     }
     
+    // ===== 音频均衡器 =====
+    
+    /**
+     * 显示音频均衡器抽屉
+     */
+    fun showEqualizerDrawer(
+        state: EqualizerState,
+        onEnabledChange: (Boolean) -> Unit,
+        onBandChange: (Int, Float) -> Unit,
+        onBassBoostChange: (Int) -> Unit,
+        onVirtualizerChange: (Int) -> Unit
+    ) {
+        setContent {
+            EqualizerDrawer(
+                state = state,
+                onEnabledChange = onEnabledChange,
+                onBandChange = onBandChange,
+                onBassBoostChange = onBassBoostChange,
+                onVirtualizerChange = onVirtualizerChange,
+                onDismiss = { clearContent() }
+            )
+        }
+    }
+    
+    // ===== 播放速度 =====
+
+    /**
+     * 显示播放速度抽屉
+     */
+    fun showSpeedDrawer(
+        currentSpeed: Double,
+        speedPresets: Set<String>,
+        onSpeedChanged: (Double) -> Unit,
+        onPresetsChanged: (Set<String>) -> Unit
+    ) {
+        setContent {
+            SpeedDrawer(
+                currentSpeed = currentSpeed,
+                speedPresets = speedPresets,
+                onSpeedChanged = onSpeedChanged,
+                onPresetsChanged = onPresetsChanged,
+                onDismiss = { clearContent() }
+            )
+        }
+    }
+
     // ===== 片头片尾跳过设置 =====
     
     /**
@@ -371,6 +417,24 @@ class ComposeOverlayManager(
                 currentVideoUri = currentVideoUri,
                 onVideoSelected = onVideoSelected,
                 onDismiss = { clearContent() }
+            )
+        }
+    }
+
+    /**
+     * 显示杜比视界提示对话框
+     * 当检测到视频为杜比视界编码且未开启 GPU Next 时弹出
+     */
+    fun showDolbyVisionDialog(
+        onDontShowAgain: () -> Unit
+    ) {
+        setContent {
+            DolbyVisionHintDialog(
+                onDismiss = { clearContent() },
+                onDontShowAgain = {
+                    onDontShowAgain()
+                    clearContent()
+                }
             )
         }
     }

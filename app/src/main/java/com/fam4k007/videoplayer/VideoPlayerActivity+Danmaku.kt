@@ -86,7 +86,7 @@ internal fun VideoPlayerActivity.autoFindAndLoadDanmaku(videoUri: android.net.Ur
                     val fileName = danmakuPath?.substringAfterLast("/") ?: "弹幕文件"
 
                     // 显示加载成功提示，提醒用户需要手动显示
-                    DialogUtils.showToastShort(this, "已加载弹幕: $fileName\n点击弹幕按钮显示")
+                    DialogUtils.showToastShort(this, "已自动加载弹幕: $fileName")
 
                     // 根据实际的 trackSelected 状态更新Compose弹幕按钮
                     val isTrackSelected = danmakuManager.getTrackSelected()
@@ -122,14 +122,14 @@ internal fun VideoPlayerActivity.autoFindAndLoadDanmaku(videoUri: android.net.Ur
 /**
  * 加载网络弹幕
  */
-internal fun VideoPlayerActivity.loadNetworkDanmaku(episodeId: Int, animeTitle: String, episodeTitle: String) {
+internal fun VideoPlayerActivity.loadNetworkDanmaku(episodeId: Int, animeTitle: String, episodeTitle: String, serverUrl: String? = null) {
     lifecycleScope.launch {
         try {
             // 显示加载提示
             DialogUtils.showToastShort(this@loadNetworkDanmaku, "正在加载弹幕...")
 
-            // 获取弹幕
-            val api = com.fam4k007.videoplayer.dandanplay.DanDanPlayApi()
+            // 使用指定的服务器获取弹幕
+            val api = com.fam4k007.videoplayer.dandanplay.DanDanPlayApi(serverUrl)
             val result = api.getDanmaku(episodeId)
 
             result.fold(
@@ -197,14 +197,14 @@ internal fun VideoPlayerActivity.loadNetworkDanmaku(episodeId: Int, animeTitle: 
 /**
  * 显示匹配结果选择对话框
  */
-internal fun VideoPlayerActivity.showMatchSelectionDialog(matches: List<com.fam4k007.videoplayer.dandanplay.MatchInfo>) {
-    val items = matches.map { "${it.animeTitle} - ${it.episodeTitle}" }.toTypedArray()
+internal fun VideoPlayerActivity.showMatchSelectionDialog(results: List<com.fam4k007.videoplayer.dandanplay.ServerMatchResult>) {
+    val items = results.map { "[${it.serverName}] ${it.matchInfo.animeTitle} - ${it.matchInfo.episodeTitle}" }.toTypedArray()
 
     androidx.appcompat.app.AlertDialog.Builder(this)
         .setTitle("选择匹配结果")
         .setItems(items) { dialog, which ->
-            val match = matches[which]
-            loadNetworkDanmaku(match.episodeId, match.animeTitle, match.episodeTitle)
+            val result = results[which]
+            loadNetworkDanmaku(result.matchInfo.episodeId, result.matchInfo.animeTitle, result.matchInfo.episodeTitle, result.serverUrl)
             dialog.dismiss()
         }
         .setNegativeButton("取消", null)

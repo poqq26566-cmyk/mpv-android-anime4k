@@ -28,11 +28,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import kotlin.math.abs
 import android.content.res.Configuration
 import android.os.BatteryManager
 import com.fam4k007.videoplayer.R
 import com.fam4k007.videoplayer.presentation.PlayerViewModel
 import com.fam4k007.videoplayer.ui.components.LoadingIndicator
+import android.widget.Toast
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.delay
@@ -248,6 +250,7 @@ fun BottomControlPanel(
     val currentChapterName by viewModel.currentChapterName.collectAsState()
     val hasChapters by viewModel.hasChapters.collectAsState()
     val chapterBarEnabled by viewModel.chapterBarEnabled.collectAsState()
+    val gpuNext by viewModel.gpuNext.collectAsState()
 
     // 检测屏幕方向
     val configuration = LocalContext.current.resources.configuration
@@ -256,6 +259,10 @@ fun BottomControlPanel(
     // 用户拖动进度条时的临时位置
     var sliderPosition by remember { mutableStateOf<Float?>(null) }
     var isDragging by remember { mutableStateOf(false) }
+
+    // 缩略图预览状态
+    val thumbnailBitmap by viewModel.thumbnailBitmap.collectAsState()
+    val thumbnailTimeSec by viewModel.thumbnailTimeSec.collectAsState()
 
     // 计算当前显示的进度（拖动时显示临时位置，否则显示实际位置）
     val displayPosition = if (isDragging) {
@@ -375,8 +382,10 @@ fun BottomControlPanel(
                         if (!isDragging) {
                             isDragging = true
                             viewModel.setSliderDragging(true)
+                            viewModel.onSeekbarDragStart(newValue)
                         }
                         sliderPosition = newValue
+                        viewModel.onSeekbarDragPosition(newValue, duration.toFloat().coerceAtLeast(1f))
                     },
                     onSeekFinished = {
                         sliderPosition?.let { pos ->
@@ -385,10 +394,18 @@ fun BottomControlPanel(
                         isDragging = false
                         sliderPosition = null
                         viewModel.setSliderDragging(false)
+                        viewModel.onSeekbarDragEnd()
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
+
+            // 缩略图预览弹窗
+            SeekbarThumbnailPreview(
+                bitmap = thumbnailBitmap,
+                timeSec = thumbnailTimeSec,
+                show = isDragging && thumbnailBitmap != null
+            )
 
             // 总时长/剩余时间（点击切换）
             val durationText = if (showRemainingTime) {
@@ -425,6 +442,7 @@ fun BottomControlPanel(
                 Spacer(modifier = Modifier.width(14.dp))
 
                 // 超分辨率（Anime4K）按钮
+                val context = LocalContext.current
                 var anime4KBounds by remember { mutableStateOf(android.graphics.Rect()) }
                 Box(
                     modifier = Modifier
@@ -434,16 +452,27 @@ fun BottomControlPanel(
                             val r = coords.boundsInWindow()
                             anime4KBounds = android.graphics.Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
                         }
-                        .clickable {
+                        .clickable(enabled = !gpuNext) {
                             anime4KBounds.let { b -> onAnime4KClick(b.left, b.top, b.width(), b.height()) }
                             viewModel.resetAutoHideTimer()
+                        }
+                        .let { mod ->
+                            if (gpuNext) {
+                                mod.clickable {
+                                    Toast.makeText(context, "已启用 GPU Next 渲染，无法开启超分", Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
+                                mod
+                            }
                         }
                         .padding(horizontal = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "超分辨率：$anime4KLabel",
-                        color = if (anime4KActive) Color.Yellow else Color.White.copy(alpha = 0.7f),
+                        color = if (anime4KActive) Color.Yellow
+                                else if (gpuNext) Color.Gray.copy(alpha = 0.5f)
+                                else Color.White.copy(alpha = 0.7f),
                         fontSize = 12.sp,
                         fontWeight = if (anime4KActive) FontWeight.Bold else FontWeight.Normal
                     )
@@ -1048,14 +1077,27 @@ fun UnlockButtons(
 /**
  * 长按倍速提示覆盖层
  * 长按时顶部居中显示"正在X.Xx倍速播放"
+ * 左右滑动调速时显示速度档位选择条
  */
 @Composable
 fun LongPressSpeedOverlay(
     viewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
+    val preferencesManager: com.fam4k007.videoplayer.preferences.PreferencesManager = org.koin.compose.koinInject()
     val isLongPressing by viewModel.isLongPressing.collectAsState()
+    val isDynamicSpeedActive by viewModel.isDynamicSpeedActive.collectAsState()
     val speed by viewModel.speed.collectAsState()
+    val speedPresets = viewModel.dynamicSpeedPresets
+    val showHint = remember { mutableStateOf(!preferencesManager.hasDynamicSpeedBeenUsed()) }
+
+    // 用户首次使用动态调速后，标记已掌握并隐藏提示
+    LaunchedEffect(isDynamicSpeedActive) {
+        if (isDynamicSpeedActive && showHint.value) {
+            preferencesManager.setDynamicSpeedUsed()
+            showHint.value = false
+        }
+    }
 
     androidx.compose.animation.AnimatedVisibility(
         visible = isLongPressing,
@@ -1067,17 +1109,65 @@ fun LongPressSpeedOverlay(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.TopCenter
         ) {
-            Text(
-                text = "正在${String.format("%.1f", speed)}倍速播放",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(top = 15.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.Black.copy(alpha = 0.4f))
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(top = 15.dp)
+            ) {
+                // 速度文字提示
+                Text(
+                    text = if (isDynamicSpeedActive)
+                        "正在${String.format("%.2f", speed)}倍速播放"
+                    else
+                        "正在${String.format("%.1f", speed)}倍速播放",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                )
+                
+                // 未掌握动态调速且非动态调速时显示滑动提示
+                if (showHint.value && !isDynamicSpeedActive) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "可通过左右滑动，临时调节长按播放的倍数",
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.Black.copy(alpha = 0.5f))
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                    )
+                }
+                
+                // 动态调速时显示速度档位条
+                if (isDynamicSpeedActive) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.Black.copy(alpha = 0.5f))
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        speedPresets.forEach { preset ->
+                            val isSelected = abs(speed.toFloat() - preset) < 0.01f
+                            Text(
+                                text = if (preset == preset.toInt().toFloat()) 
+                                    "${preset.toInt()}x" 
+                                else 
+                                    "${String.format("%.1f", preset)}x",
+                                color = if (isSelected) Color(0xFF4FC3F7) else Color.White.copy(alpha = 0.6f),
+                                fontSize = if (isSelected) 14.sp else 12.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

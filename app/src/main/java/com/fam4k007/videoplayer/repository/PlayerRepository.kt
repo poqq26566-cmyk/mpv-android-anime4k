@@ -408,6 +408,14 @@ class PlayerRepository(
         preferencesManager.setChapterBarEnabled(enabled)
     }
 
+    fun isSeekbarThumbnailEnabled(): Boolean {
+        return preferencesManager.isSeekbarThumbnailEnabled()
+    }
+
+    fun setSeekbarThumbnailEnabled(enabled: Boolean) {
+        preferencesManager.setSeekbarThumbnailEnabled(enabled)
+    }
+
     /**
      * 获取是否显示剩余时间
      */
@@ -527,6 +535,34 @@ class PlayerRepository(
      */
     fun setMpvProfile(profile: String) {
         preferencesManager.setMpvProfile(profile)
+    }
+
+    /**
+     * 获取是否启用 GPU Next 渲染
+     */
+    fun getGpuNext(): Boolean {
+        return preferencesManager.getGpuNext()
+    }
+
+    /**
+     * 设置是否启用 GPU Next 渲染
+     */
+    fun setGpuNext(enabled: Boolean) {
+        preferencesManager.setGpuNext(enabled)
+    }
+
+    /**
+     * 获取是否启用 Vulkan 渲染上下文
+     */
+    fun getUseVulkan(): Boolean {
+        return preferencesManager.getUseVulkan()
+    }
+
+    /**
+     * 设置是否启用 Vulkan 渲染上下文
+     */
+    fun setUseVulkan(enabled: Boolean) {
+        preferencesManager.setUseVulkan(enabled)
     }
 
     /**

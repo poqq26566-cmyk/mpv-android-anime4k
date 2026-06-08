@@ -1,7 +1,9 @@
 package com.fam4k007.videoplayer.ui.webdav
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -415,7 +417,7 @@ private fun WebDavAddAccountDialog(
 /**
  * WebDAV 文件浏览屏幕
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun WebDavBrowserScreen(
     account: WebDavAccount,
@@ -460,7 +462,12 @@ fun WebDavBrowserScreen(
                         Text(
                             account.displayName.orEmpty(),
                             fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            modifier = Modifier.basicMarquee(
+                                iterations = Int.MAX_VALUE,
+                                velocity = 30.dp
+                            )
                         )
                     },
                     navigationIcon = {
@@ -705,8 +712,11 @@ private fun WebDavFileCard(
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    maxLines = 1,
+                    modifier = Modifier.basicMarquee(
+                        iterations = Int.MAX_VALUE,
+                        velocity = 30.dp
+                    )
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 if (file.isDirectory) {

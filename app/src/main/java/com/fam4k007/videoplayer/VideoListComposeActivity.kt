@@ -27,6 +27,7 @@ import org.koin.androidx.compose.KoinAndroidContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.material3.MaterialTheme
 
 class VideoListComposeActivity : ComponentActivity() {
 
@@ -58,7 +59,7 @@ class VideoListComposeActivity : ComponentActivity() {
 
     private fun setupContent(folderName: String) {
         val activity = this
-        
+
         setContent {
             val revision = themeRevision
             KoinAndroidContext {
@@ -71,12 +72,12 @@ class VideoListComposeActivity : ComponentActivity() {
                     VideoListScreen(
                         folderName = folderName,
                         folderPath = folderPath,
-                        preloadedVideos = preloadedVideos,  // 传递预加载的视频列表
+                        preloadedVideos = preloadedVideos,
                         onNavigateBack = { 
                             finish()
                             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                         },
-                        onOpenVideo = { video, index, allVideos -> 
+                        onOpenVideo = { video, index, allVideos ->
                             openVideoPlayer(video, index, folderName, allVideos)
                         }
                     )
@@ -102,7 +103,7 @@ class VideoListComposeActivity : ComponentActivity() {
         startActivity(intent)
         overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
     }
-    
+
     private fun rescanFolder(callback: (List<VideoFileParcelable>) -> Unit) {
         if (folderPath.isEmpty()) {
             callback(emptyList())

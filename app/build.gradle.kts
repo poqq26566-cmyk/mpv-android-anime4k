@@ -37,8 +37,8 @@ android {
         applicationId = "com.fam4k007.videoplayer"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 27
-        versionName = "1.2.7"
+        versionCode = 28
+        versionName = "1.2.8"
 
         buildConfigField(
             "String",
@@ -186,6 +186,9 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.androidx.security.crypto)
     implementation(libs.bundles.aboutlibraries)
+
+    // TrueType Parser (字体族名解析)
+    implementation(libs.truetype.parser)
 
     // Test
     testImplementation(libs.junit)

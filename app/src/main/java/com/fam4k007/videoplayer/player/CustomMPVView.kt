@@ -32,8 +32,21 @@ class CustomMPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context
         MPVLib.setOptionString("profile", mpvProfile)
         Log.d(TAG, "Applied MPV profile: $mpvProfile")
         
-        // 视频输出配置
-        setVo("gpu")
+        // 视频输出配置（GPU Next / Vulkan）
+        val gpuNext = prefsManager.getGpuNext()
+        val useVulkan = prefsManager.getUseVulkan()
+        if (gpuNext) {
+            setVo("gpu-next")
+            if (useVulkan) {
+                MPVLib.setOptionString("gpu-context", "androidvk")
+                Log.d(TAG, "Enabled GPU Next with Vulkan context")
+            } else {
+                Log.d(TAG, "Enabled GPU Next with OpenGL context")
+            }
+        } else {
+            setVo("gpu")
+            MPVLib.setOptionString("gpu-context", "android")
+        }
         // HW解码降级链: 优先硬解(HW+)→ 硬解复制模式(HW) → 软解(no)，避免auto在某些设备上卡死
         MPVLib.setOptionString("hwdec", "mediacodec,mediacodec-copy,no")
         MPVLib.setOptionString("hwdec-codecs", "all")
@@ -74,7 +87,6 @@ class CustomMPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context
         MPVLib.setOptionString("audio-normalize-downmix", "no")
         
         MPVLib.setOptionString("keep-open", "yes")
-        MPVLib.setOptionString("gpu-context", "android")
 
         // 视频适应屏幕
         MPVLib.setOptionString("keepaspect", "yes")
@@ -89,16 +101,32 @@ class CustomMPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context
         // 首选字幕语言
         MPVLib.setOptionString("slang", "zh,chi,zho,chs,cht,zh-CN,zh-TW,en,eng")
         
-        // libass 字体配置（使用系统字体）
+        // libass 字体配置
         val preferencesManager = com.fam4k007.videoplayer.preferences.PreferencesManager.getInstance(context)
-        val systemFontName = preferencesManager.getSystemFontName()
+        val subtitleFontName = preferencesManager.getSubtitleFontName()
+        
+        // 内部字体目录（用户导入的字体）
+        val internalFontsDir = "${context.filesDir.path}/fonts/"
+        val fontsDirFile = java.io.File(internalFontsDir)
+        if (!fontsDirFile.exists()) fontsDirFile.mkdirs()
         
         MPVLib.setOptionString("sub-font-provider", "auto")
-        MPVLib.setOptionString("sub-fonts-dir", "/system/fonts")
-        MPVLib.setOptionString("sub-font", systemFontName)
+        if (subtitleFontName.isNotBlank()) {
+            // 有自定义字体：使用内部字体目录
+            MPVLib.setOptionString("sub-fonts-dir", internalFontsDir)
+            MPVLib.setOptionString("sub-font", subtitleFontName)
+        } else {
+            // 无自定义字体：使用系统字体目录和默认 CJK 字体
+            MPVLib.setOptionString("sub-fonts-dir", "/system/fonts")
+            MPVLib.setOptionString("sub-font", "Noto Sans CJK SC")
+        }
         MPVLib.setOptionString("embeddedfonts", "yes")
         
-        Log.d(TAG, "Using system font: $systemFontName")
+        // 全局样式覆盖
+        val assOverride = preferencesManager.isAssOverrideEnabled()
+        MPVLib.setOptionString("sub-ass-override", if (assOverride) "force" else "no")
+        
+        Log.d(TAG, "Using subtitle font: ${subtitleFontName.ifBlank { "(default)" }}, fonts dir: $internalFontsDir, ass-override: $assOverride")
         
         // 字幕显示位置
         MPVLib.setOptionString("sub-use-margins", "yes")

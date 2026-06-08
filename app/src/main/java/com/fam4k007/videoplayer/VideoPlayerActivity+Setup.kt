@@ -164,8 +164,7 @@ internal fun VideoPlayerActivity.setupComposeTestLayer() {
                             onTogglePortraitUi()
                         },
                         onSpeedClick = { anchorX, anchorY, anchorW, anchorH ->
-                            dialogManager.setLastAnchor(anchorX, anchorY, anchorW, anchorH)
-                            dialogManager.showSpeedDialog(viewModel.speed.value.toDouble())
+                            showSpeedDrawer()
                         }
                     )
                 }
@@ -242,6 +241,14 @@ internal fun VideoPlayerActivity.initializeManagers() {
                         hadNext
                     }
                 )
+
+                // 缩略图管理器初始化（duration 可用时触发，仅初始化一次）
+                if (duration > 0) {
+                    videoUri?.let { uri ->
+                        val isWebDav = intent.getBooleanExtra("is_webdav", false)
+                        viewModel.initializeThumbnail(uri, (duration * 1000).toLong(), isWebDav)
+                    }
+                }
             }
 
             override fun onFileLoaded() {
@@ -298,6 +305,39 @@ internal fun VideoPlayerActivity.initializeManagers() {
                     skipIntroOutroManager.markVideoReady()
                     com.fam4k007.videoplayer.utils.Logger.d(TAG, "Video marked as ready for skip detection")
                 }, 500)  // 延迟500ms
+
+                // 杜比视界检测：通过 MediaExtractor 精确检测编码类型
+                if (!preferencesManager.getGpuNext() && !preferencesManager.getDontShowDvWarning()) {
+                    val uri = videoUri
+                    if (uri != null) {
+                        Thread {
+                            try {
+                                val extractor = android.media.MediaExtractor()
+                                extractor.setDataSource(applicationContext, uri, null)
+                                var isDolbyVision = false
+                                for (i in 0 until extractor.trackCount) {
+                                    val format = extractor.getTrackFormat(i)
+                                    val mime = format.getString(android.media.MediaFormat.KEY_MIME) ?: continue
+                                    if (mime == "video/dolby-vision") {
+                                        isDolbyVision = true
+                                        break
+                                    }
+                                }
+                                extractor.release()
+                                if (isDolbyVision) {
+                                    Handler(Looper.getMainLooper()).post {
+                                        com.fam4k007.videoplayer.utils.Logger.d(TAG, "Detected Dolby Vision via MediaExtractor")
+                                        composeOverlayManager.showDolbyVisionDialog(
+                                            onDontShowAgain = { preferencesManager.setDontShowDvWarning(true) }
+                                        )
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                com.fam4k007.videoplayer.utils.Logger.w(TAG, "Failed to detect Dolby Vision via MediaExtractor", e)
+                            }
+                        }.start()
+                    }
+                }
 
                 // 不在这里启动弹幕，弹幕的启动由 onPlaybackStateChanged 统一管理
                 com.fam4k007.videoplayer.utils.Logger.d(TAG, "Video file loaded")
@@ -408,7 +448,7 @@ internal fun VideoPlayerActivity.initializeManagers() {
             }
 
             override fun onSpeedClick() {
-                dialogManager.showSpeedDialog(viewModel.speed.value.toDouble())
+                showSpeedDrawer()
             }
 
             override fun onSeekBarChange(position: Double) {
@@ -545,6 +585,10 @@ internal fun VideoPlayerActivity.initializeManagers() {
         preferencesManager,
         composeOverlayManager
     )
+
+    // 初始化缩略图管理器
+    thumbnailManager = com.fam4k007.videoplayer.manager.VideoThumbnailManager(this)
+    viewModel.setThumbnailManager(thumbnailManager!!)
 
     bindViewsToManagers()
 }

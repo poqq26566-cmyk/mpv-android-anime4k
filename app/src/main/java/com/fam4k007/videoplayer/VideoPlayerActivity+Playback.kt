@@ -97,6 +97,9 @@ internal fun VideoPlayerActivity.loadVideo() {
             // 再恢复用户的字幕偏好设置（会覆盖自动加载的）
             restoreSubtitlePreferences(uri)
 
+            // 恢复均衡器设置
+            restoreEqualizerSettings()
+
             // 如果记忆的Anime4K模式已启用，在视频加载后应用shader
             if (viewModel.anime4KEnabled.value && anime4KMode != com.fam4k007.videoplayer.domain.player.Anime4KManager.Mode.OFF) {
                 delay(200) // 额外延迟确保MPV完全初始化
@@ -197,6 +200,9 @@ internal fun VideoPlayerActivity.playVideo(uri: Uri) {
 
     // 设置切换标志，防止级联切换
     isSwitchingVideo = true
+
+    // 重置缩略图状态（新视频需要重新初始化）
+    viewModel.resetThumbnailState()
 
     // 更新播放列表索引
     val newIndex = playlist.indexOfFirst { it.toString() == uri.toString() }

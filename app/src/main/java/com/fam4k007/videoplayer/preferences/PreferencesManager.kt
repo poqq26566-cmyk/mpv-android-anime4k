@@ -3,6 +3,9 @@ package com.fam4k007.videoplayer.preferences
 import android.content.Context
 import android.content.SharedPreferences
 import com.fam4k007.videoplayer.AppConstants
+import com.fam4k007.videoplayer.dandanplay.DanmakuServer
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
  * 统一的设置管理器（单例模式）
@@ -62,6 +65,17 @@ class PreferencesManager private constructor(context: Context) {
      */
     fun setLongPressSpeed(speed: Float) {
         sharedPreferences.edit().putFloat(AppConstants.Preferences.LONG_PRESS_SPEED, speed).apply()
+    }
+    
+    /**
+     * 用户是否已使用过长按动态调速（左右滑动）
+     */
+    fun hasDynamicSpeedBeenUsed(): Boolean {
+        return sharedPreferences.getBoolean("dynamic_speed_used", false)
+    }
+    
+    fun setDynamicSpeedUsed() {
+        sharedPreferences.edit().putBoolean("dynamic_speed_used", true).apply()
     }
     
     // ==================== 播放倍速记忆 ====================
@@ -137,6 +151,38 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putString(AppConstants.Preferences.VIDEO_DISPLAY_MODE, mode).apply()
     }
     
+    // ==================== 首次播放 ====================
+
+    /**
+     * 获取是否首次播放（新安装第一次播放时标记为 false）
+     */
+    fun isFirstPlay(): Boolean {
+        return sharedPreferences.getBoolean(AppConstants.Preferences.IS_FIRST_PLAY, true)
+    }
+
+    /**
+     * 标记已首次播放
+     */
+    fun setFirstPlayDone() {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.IS_FIRST_PLAY, false).apply()
+    }
+
+    // ==================== 杜比视界提示 ====================
+
+    /**
+     * 获取是否不再提示杜比视界
+     */
+    fun getDontShowDvWarning(): Boolean {
+        return sharedPreferences.getBoolean(AppConstants.Preferences.DONT_SHOW_DV_WARNING, false)
+    }
+
+    /**
+     * 设置是否不再提示杜比视界
+     */
+    fun setDontShowDvWarning(dontShow: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.DONT_SHOW_DV_WARNING, dontShow).apply()
+    }
+
     // ==================== 文件夹黑名单 ====================
     
     /**
@@ -395,31 +441,43 @@ class PreferencesManager private constructor(context: Context) {
     }
     
     /**
-     * 获取视频的字幕大小
+     * 获取视频的字幕大小（优先 per-video，回退 global）
      */
     fun getSubtitleScale(videoUri: String): Double {
-        return sharedPreferences.getFloat("${videoUri}_sub_scale", 1.0f).toDouble()
+        if (sharedPreferences.contains("${videoUri}_sub_scale")) {
+            return sharedPreferences.getFloat("${videoUri}_sub_scale", 1.0f).toDouble()
+        }
+        return sharedPreferences.getFloat("global_sub_scale", 1.0f).toDouble()
     }
     
     /**
-     * 保存视频的字幕大小
+     * 保存视频的字幕大小（同时保存 per-video 和 global）
      */
     fun setSubtitleScale(videoUri: String, scale: Double) {
-        sharedPreferences.edit().putFloat("${videoUri}_sub_scale", scale.toFloat()).apply()
+        sharedPreferences.edit()
+            .putFloat("${videoUri}_sub_scale", scale.toFloat())
+            .putFloat("global_sub_scale", scale.toFloat())
+            .apply()
     }
     
     /**
-     * 获取视频的字幕位置
+     * 获取视频的字幕位置（优先 per-video，回退 global）
      */
     fun getSubtitlePosition(videoUri: String): Int {
-        return sharedPreferences.getInt("${videoUri}_sub_pos", 100)
+        if (sharedPreferences.contains("${videoUri}_sub_pos")) {
+            return sharedPreferences.getInt("${videoUri}_sub_pos", 100)
+        }
+        return sharedPreferences.getInt("global_sub_pos", 100)
     }
     
     /**
-     * 保存视频的字幕位置
+     * 保存视频的字幕位置（同时保存 per-video 和 global）
      */
     fun setSubtitlePosition(videoUri: String, position: Int) {
-        sharedPreferences.edit().putInt("${videoUri}_sub_pos", position).apply()
+        sharedPreferences.edit()
+            .putInt("${videoUri}_sub_pos", position)
+            .putInt("global_sub_pos", position)
+            .apply()
     }
     
     /**
@@ -468,72 +526,103 @@ class PreferencesManager private constructor(context: Context) {
     
     /**
      * 获取字幕文本颜色（ARGB格式）
+     * 优先返回视频专属设置，若无则回退到全局设置
      */
     fun getSubtitleTextColor(videoUri: String): String {
-        return sharedPreferences.getString("${videoUri}_sub_text_color", "#FFFFFF") ?: "#FFFFFF"
+        val perVideo = sharedPreferences.getString("${videoUri}_sub_text_color", null)
+        if (perVideo != null) return perVideo
+        return sharedPreferences.getString("global_sub_text_color", "#FFFFFF") ?: "#FFFFFF"
     }
     
     /**
-     * 保存字幕文本颜色
+     * 保存字幕文本颜色（同时保存全局）
      */
     fun setSubtitleTextColor(videoUri: String, color: String) {
-        sharedPreferences.edit().putString("${videoUri}_sub_text_color", color).apply()
+        sharedPreferences.edit()
+            .putString("${videoUri}_sub_text_color", color)
+            .putString("global_sub_text_color", color)
+            .apply()
     }
     
     /**
      * 获取字幕描边粗细
+     * 优先返回视频专属设置，若无则回退到全局设置
      */
     fun getSubtitleBorderSize(videoUri: String): Int {
-        return sharedPreferences.getInt("${videoUri}_sub_border_size", 3)
+        if (sharedPreferences.contains("${videoUri}_sub_border_size")) {
+            return sharedPreferences.getInt("${videoUri}_sub_border_size", 3)
+        }
+        return sharedPreferences.getInt("global_sub_border_size", 3)
     }
     
     /**
-     * 保存字幕描边粗细
+     * 保存字幕描边粗细（同时保存全局）
      */
     fun setSubtitleBorderSize(videoUri: String, size: Int) {
-        sharedPreferences.edit().putInt("${videoUri}_sub_border_size", size).apply()
+        sharedPreferences.edit()
+            .putInt("${videoUri}_sub_border_size", size)
+            .putInt("global_sub_border_size", size)
+            .apply()
     }
     
     /**
      * 获取字幕描边颜色（ARGB格式）
+     * 优先返回视频专属设置，若无则回退到全局设置
      */
     fun getSubtitleBorderColor(videoUri: String): String {
-        return sharedPreferences.getString("${videoUri}_sub_border_color", "#000000") ?: "#000000"
+        val perVideo = sharedPreferences.getString("${videoUri}_sub_border_color", null)
+        if (perVideo != null) return perVideo
+        return sharedPreferences.getString("global_sub_border_color", "#000000") ?: "#000000"
     }
     
     /**
-     * 保存字幕描边颜色
+     * 保存字幕描边颜色（同时保存全局）
      */
     fun setSubtitleBorderColor(videoUri: String, color: String) {
-        sharedPreferences.edit().putString("${videoUri}_sub_border_color", color).apply()
+        sharedPreferences.edit()
+            .putString("${videoUri}_sub_border_color", color)
+            .putString("global_sub_border_color", color)
+            .apply()
     }
     
     /**
      * 获取字幕背景颜色（ARGB格式）
+     * 优先返回视频专属设置，若无则回退到全局设置
      */
     fun getSubtitleBackColor(videoUri: String): String {
-        return sharedPreferences.getString("${videoUri}_sub_back_color", "#00000000") ?: "#00000000"
+        val perVideo = sharedPreferences.getString("${videoUri}_sub_back_color", null)
+        if (perVideo != null) return perVideo
+        return sharedPreferences.getString("global_sub_back_color", "#00000000") ?: "#00000000"
     }
     
     /**
-     * 保存字幕背景颜色
+     * 保存字幕背景颜色（同时保存全局）
      */
     fun setSubtitleBackColor(videoUri: String, color: String) {
-        sharedPreferences.edit().putString("${videoUri}_sub_back_color", color).apply()
+        sharedPreferences.edit()
+            .putString("${videoUri}_sub_back_color", color)
+            .putString("global_sub_back_color", color)
+            .apply()
     }
     
     /**
      * 获取字幕描边样式
+     * 优先返回视频专属设置，若无则回退到全局设置
      */
     fun getSubtitleBorderStyle(videoUri: String): String {
-        return sharedPreferences.getString("${videoUri}_sub_border_style", "outline-and-shadow") ?: "outline-and-shadow"
+        val perVideo = sharedPreferences.getString("${videoUri}_sub_border_style", null)
+        if (perVideo != null) return perVideo
+        return sharedPreferences.getString("global_sub_border_style", "outline-and-shadow") ?: "outline-and-shadow"
     }
     
     /**
-     * 保存字幕描边样式
+     * 保存字幕描边样式（同时保存全局）
      */
     fun setSubtitleBorderStyle(videoUri: String, style: String) {
-        sharedPreferences.edit().putString("${videoUri}_sub_border_style", style).apply()
+        sharedPreferences.edit()
+            .putString("${videoUri}_sub_border_style", style)
+            .putString("global_sub_border_style", style)
+            .apply()
     }
     
     // ==================== 主题设置 ====================
@@ -1001,17 +1090,45 @@ class PreferencesManager private constructor(context: Context) {
     // ==================== 字幕字体设置（全局） ====================
     
     /**
-     * 获取系统字体名称
+     * 获取用户选择的字体名称（字体族名）
      */
-    fun getSystemFontName(): String {
-        return sharedPreferences.getString("system_font_name", "Noto Sans CJK SC") ?: "Noto Sans CJK SC"
+    fun getSubtitleFontName(): String {
+        return sharedPreferences.getString("subtitle_font_name", "") ?: ""
     }
     
     /**
-     * 保存系统字体名称
+     * 保存用户选择的字体名称（字体族名）
      */
-    fun setSystemFontName(fontName: String) {
-        sharedPreferences.edit().putString("system_font_name", fontName).apply()
+    fun setSubtitleFontName(fontName: String) {
+        sharedPreferences.edit().putString("subtitle_font_name", fontName).apply()
+    }
+    
+    /**
+     * 获取字体目录 URI
+     */
+    fun getFontDirectoryUri(): String {
+        return sharedPreferences.getString("font_directory_uri", "") ?: ""
+    }
+    
+    /**
+     * 保存字体目录 URI
+     */
+    fun setFontDirectoryUri(uri: String) {
+        sharedPreferences.edit().putString("font_directory_uri", uri).apply()
+    }
+    
+    /**
+     * 获取全局ASS样式覆盖开关
+     */
+    fun isAssOverrideEnabled(): Boolean {
+        return sharedPreferences.getBoolean("ass_override_global", false)
+    }
+    
+    /**
+     * 保存全局ASS样式覆盖开关
+     */
+    fun setAssOverrideEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("ass_override_global", enabled).apply()
     }
     
     // ==================== 批量操作 ====================
@@ -1152,6 +1269,105 @@ class PreferencesManager private constructor(context: Context) {
     
     fun setAutoLoadDanmakuEnabled(enabled: Boolean) {
         sharedPreferences.edit().putBoolean("auto_load_danmaku_enabled", enabled).apply()
+    }
+    
+    /**
+     * 自定义弹幕服务器地址（旧接口，保留兼容）
+     * 为空时使用默认弹弹Play服务器
+     */
+    fun getDanmakuServerUrl(): String {
+        return sharedPreferences.getString("dandanplay_server_url", "") ?: ""
+    }
+    
+    fun setDanmakuServerUrl(url: String) {
+        sharedPreferences.edit().putString("dandanplay_server_url", url.trim()).apply()
+    }
+    
+    // ==================== 弹幕服务器列表管理 ====================
+    
+    private val json = Json { ignoreUnknownKeys = true }
+    
+    /**
+     * 获取弹幕服务器列表
+     * 如果列表为空，自动初始化默认服务器
+     * 同时迁移旧的单服务器设置
+     */
+    fun getDanmakuServers(): List<DanmakuServer> {
+        val jsonStr = sharedPreferences.getString("dandanplay_servers", null)
+        if (jsonStr != null) {
+            return try {
+                json.decodeFromString<List<DanmakuServer>>(jsonStr)
+            } catch (e: Exception) {
+                listOf(DanmakuServer.createDefault())
+            }
+        }
+        
+        // 首次使用：初始化并迁移旧设置
+        val servers = mutableListOf(DanmakuServer.createDefault())
+        val oldUrl = getDanmakuServerUrl()
+        if (oldUrl.isNotBlank()) {
+            servers.add(
+                DanmakuServer(
+                    id = java.util.UUID.randomUUID().toString(),
+                    name = "自定义服务器",
+                    url = oldUrl,
+                    isEnabled = true,
+                    isDefault = false
+                )
+            )
+        }
+        saveDanmakuServers(servers)
+        return servers
+    }
+    
+    /**
+     * 保存弹幕服务器列表
+     */
+    fun saveDanmakuServers(servers: List<DanmakuServer>) {
+        val jsonStr = json.encodeToString(servers)
+        sharedPreferences.edit().putString("dandanplay_servers", jsonStr).apply()
+    }
+    
+    /**
+     * 获取所有已启用的弹幕服务器
+     */
+    fun getEnabledDanmakuServers(): List<DanmakuServer> {
+        return getDanmakuServers().filter { it.isEnabled }
+    }
+    
+    /**
+     * 添加弹幕服务器
+     */
+    fun addDanmakuServer(name: String, url: String) {
+        val servers = getDanmakuServers().toMutableList()
+        servers.add(
+            DanmakuServer(
+                id = java.util.UUID.randomUUID().toString(),
+                name = name.trim(),
+                url = url.trim().trimEnd('/'),
+                isEnabled = true,
+                isDefault = false
+            )
+        )
+        saveDanmakuServers(servers)
+    }
+    
+    /**
+     * 删除弹幕服务器（不允许删除默认服务器）
+     */
+    fun removeDanmakuServer(id: String) {
+        val servers = getDanmakuServers().filter { it.id != id || it.isDefault }
+        saveDanmakuServers(servers)
+    }
+    
+    /**
+     * 切换弹幕服务器启用状态
+     */
+    fun toggleDanmakuServer(id: String, enabled: Boolean) {
+        val servers = getDanmakuServers().map {
+            if (it.id == id) it.copy(isEnabled = enabled) else it
+        }
+        saveDanmakuServers(servers)
     }
     
     /**
@@ -1402,6 +1618,19 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putBoolean(AppConstants.Preferences.CHAPTER_BAR_ENABLED, enabled).apply()
     }
 
+    // ==================== 进度条缩略图预览 ====================
+
+    fun isSeekbarThumbnailEnabled(): Boolean {
+        return sharedPreferences.getBoolean(
+            AppConstants.Preferences.SEEKBAR_THUMBNAIL_ENABLED,
+            false  // 默认关闭
+        )
+    }
+
+    fun setSeekbarThumbnailEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.SEEKBAR_THUMBNAIL_ENABLED, enabled).apply()
+    }
+
     // ==================== MPV 解码器预设 ====================
 
     /**
@@ -1417,6 +1646,74 @@ class PreferencesManager private constructor(context: Context) {
      */
     fun setMpvProfile(profile: String) {
         sharedPreferences.edit().putString(AppConstants.Preferences.MPV_PROFILE, profile).apply()
+    }
+
+    // ==================== 音频均衡器 ====================
+
+    fun isEqualizerEnabled(): Boolean {
+        return sharedPreferences.getBoolean(AppConstants.Preferences.EQ_ENABLED, false)
+    }
+
+    fun setEqualizerEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.EQ_ENABLED, enabled).apply()
+    }
+
+    fun getEqualizerBand(index: Int): Float {
+        return sharedPreferences.getFloat("${AppConstants.Preferences.EQ_BAND_PREFIX}$index", 0f)
+    }
+
+    fun setEqualizerBand(index: Int, value: Float) {
+        sharedPreferences.edit().putFloat("${AppConstants.Preferences.EQ_BAND_PREFIX}$index", value).apply()
+    }
+
+    fun getEqualizerBands(): List<Float> {
+        return (0..4).map { getEqualizerBand(it) }
+    }
+
+    fun getEqualizerBassBoost(): Int {
+        return sharedPreferences.getInt(AppConstants.Preferences.EQ_BASS_BOOST, 0)
+    }
+
+    fun setEqualizerBassBoost(value: Int) {
+        sharedPreferences.edit().putInt(AppConstants.Preferences.EQ_BASS_BOOST, value).apply()
+    }
+
+    fun getEqualizerVirtualizer(): Int {
+        return sharedPreferences.getInt(AppConstants.Preferences.EQ_VIRTUALIZER, 0)
+    }
+
+    fun setEqualizerVirtualizer(value: Int) {
+        sharedPreferences.edit().putInt(AppConstants.Preferences.EQ_VIRTUALIZER, value).apply()
+    }
+
+    // ==================== GPU Next 渲染 ====================
+
+    /**
+     * 获取是否启用 GPU Next 渲染
+     */
+    fun getGpuNext(): Boolean {
+        return sharedPreferences.getBoolean(AppConstants.Preferences.GPU_NEXT, false)
+    }
+
+    /**
+     * 设置是否启用 GPU Next 渲染
+     */
+    fun setGpuNext(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.GPU_NEXT, enabled).apply()
+    }
+
+    /**
+     * 获取是否启用 Vulkan 渲染上下文
+     */
+    fun getUseVulkan(): Boolean {
+        return sharedPreferences.getBoolean(AppConstants.Preferences.USE_VULKAN, false)
+    }
+
+    /**
+     * 设置是否启用 Vulkan 渲染上下文
+     */
+    fun setUseVulkan(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AppConstants.Preferences.USE_VULKAN, enabled).apply()
     }
 
     // ==================== 剩余时间显示 ====================

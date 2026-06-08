@@ -19,15 +19,18 @@ import java.util.zip.GZIPInputStream
  * DanDanPlay API 服务
  * API 文档: https://api.dandanplay.net/swagger/index.html
  */
-class DanDanPlayApi {
+class DanDanPlayApi(private val customBaseUrl: String? = null) {
     companion object {
         private const val TAG = "DanDanPlayApi"
-        private const val BASE_URL = "https://api.dandanplay.net"
+        private const val DEFAULT_BASE_URL = "https://api.dandanplay.net"
         
         // API 密钥 - 从BuildConfig读取
         private val APP_ID = com.fam4k007.videoplayer.BuildConfig.DANDANPLAY_APP_ID
         private val APP_SECRET = com.fam4k007.videoplayer.BuildConfig.DANDANPLAY_APP_SECRET
     }
+
+    private val baseUrl: String
+        get() = customBaseUrl?.takeIf { it.isNotBlank() }?.trimEnd('/') ?: DEFAULT_BASE_URL
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -59,7 +62,7 @@ class DanDanPlayApi {
                 val encodedKeyword = URLEncoder.encode(keyword, "UTF-8")
                 // API路径（用于签名计算）
                 val path = "/api/v2/search/episodes"
-                val url = "$BASE_URL$path?anime=$encodedKeyword"
+                val url = "$baseUrl$path?anime=$encodedKeyword"
                 
                 // 生成时间戳和签名
                 val timestamp = System.currentTimeMillis() / 1000
@@ -150,7 +153,7 @@ class DanDanPlayApi {
             try {
                 // API路径（用于签名计算）
                 val path = "/api/v2/comment/$episodeId"
-                val url = "$BASE_URL$path?withRelated=true"
+                val url = "$baseUrl$path?withRelated=true"
                 
                 // 生成时间戳和签名
                 val timestamp = System.currentTimeMillis() / 1000
@@ -330,11 +333,12 @@ class DanDanPlayApi {
             
             val requestJson = gson.toJson(matchRequest)
             Log.d(TAG, "Match request JSON: $requestJson")
+            Log.d(TAG, "完整URL: $baseUrl$path")
 
             val requestBody = requestJson.toRequestBody("application/json".toMediaType())
 
             val request = Request.Builder()
-                .url("$BASE_URL$path")
+                .url("$baseUrl$path")
                 .post(requestBody)
                 .addHeader("X-AppId", APP_ID)
                 .addHeader("X-Timestamp", timestamp.toString())

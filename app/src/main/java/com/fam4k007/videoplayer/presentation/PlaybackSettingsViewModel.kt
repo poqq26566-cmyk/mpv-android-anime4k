@@ -76,9 +76,12 @@ class PlaybackSettingsViewModel(
 
                     // 章节控制
                     chapterBarEnabled = playerRepository.isChapterBarEnabled(),
+                    seekbarThumbnailEnabled = playerRepository.isSeekbarThumbnailEnabled(),
 
                     // MPV 解码器预设
-                    mpvProfile = playerRepository.getMpvProfile()
+                    mpvProfile = playerRepository.getMpvProfile(),
+                    gpuNext = playerRepository.getGpuNext(),
+                    useVulkan = playerRepository.getUseVulkan()
                 )
                 _playbackSettings.value = settings
                 Logger.d(TAG, "Loaded playback settings")
@@ -295,6 +298,18 @@ class PlaybackSettingsViewModel(
         }
     }
 
+    fun setSeekbarThumbnailEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setSeekbarThumbnailEnabled(enabled)
+                _playbackSettings.value = _playbackSettings.value.copy(seekbarThumbnailEnabled = enabled)
+                Logger.d(TAG, "Set seekbar thumbnail enabled: $enabled")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set seekbar thumbnail", e)
+            }
+        }
+    }
+
     // ==================== 自动连播 ====================
 
     /**
@@ -343,6 +358,36 @@ class PlaybackSettingsViewModel(
             }
         }
     }
+
+    /**
+     * 设置 GPU Next 渲染
+     */
+    fun setGpuNext(enabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setGpuNext(enabled)
+                _playbackSettings.value = _playbackSettings.value.copy(gpuNext = enabled)
+                Logger.d(TAG, "Set GPU Next: $enabled")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set GPU Next", e)
+            }
+        }
+    }
+
+    /**
+     * 设置 Vulkan 渲染上下文
+     */
+    fun setUseVulkan(enabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setUseVulkan(enabled)
+                _playbackSettings.value = _playbackSettings.value.copy(useVulkan = enabled)
+                Logger.d(TAG, "Set use Vulkan: $enabled")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set use Vulkan", e)
+            }
+        }
+    }
 }
 
 /**
@@ -379,7 +424,10 @@ data class PlaybackSettings(
 
     // 章节控制
     val chapterBarEnabled: Boolean = true,
+    val seekbarThumbnailEnabled: Boolean = true,
 
     // MPV 解码器预设
-    val mpvProfile: String = "fast"
+    val mpvProfile: String = "fast",
+    val gpuNext: Boolean = false,
+    val useVulkan: Boolean = false
 )
