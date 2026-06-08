@@ -217,14 +217,14 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
         return try {
             progressCallback?.invoke(1, 1, "正在获取视频信息...", 0, 0)
             
-            val (cid, title) = extractVideoInfo(videoUrl)
+            val (aid, cid, title) = extractVideoInfo(videoUrl)
                 ?: return DownloadResult.Error("无法解析视频信息")
             
-            Log.d(TAG, "视频信息 - 标题: $title, CID: $cid")
+            Log.d(TAG, "视频信息 - 标题: $title, AID: $aid, CID: $cid")
             
             progressCallback?.invoke(1, 1, "正在下载弹幕...", 0, 0)
             
-            val xmlContent = downloadDanmakuXml(cid)
+            val xmlContent = downloadDanmakuXml(cid, aid = aid)
                 ?: return DownloadResult.Error("弹幕下载失败")
             
             val fileName = saveToDirectory(saveDirectoryUri, title, xmlContent)
@@ -250,14 +250,14 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
         return try {
             progressCallback?.invoke(1, 1, "正在获取番剧信息...", 0, 0)
             
-            val (cid, title) = extractBangumiInfo(bangumiUrl)
+            val (aid, cid, title) = extractBangumiInfo(bangumiUrl)
                 ?: return DownloadResult.Error("无法解析番剧信息")
             
-            Log.d(TAG, "番剧信息 - 标题: $title, CID: $cid")
+            Log.d(TAG, "番剧信息 - 标题: $title, AID: $aid, CID: $cid")
             
             progressCallback?.invoke(1, 1, "正在下载弹幕...", 0, 0)
             
-            val xmlContent = downloadDanmakuXml(cid)
+            val xmlContent = downloadDanmakuXml(cid, aid = aid)
                 ?: return DownloadResult.Error("弹幕下载失败")
             
             val fileName = saveToDirectory(saveDirectoryUri, title, xmlContent)
@@ -310,7 +310,7 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
                         async {
                             try {
                                 val episode = episodes[index]
-                                val (cid, epTitle) = episode
+                                val (aid, cid, epTitle) = episode
                                 // 文件名只使用集数标题，不包含番剧名
                                 val fullTitle = epTitle
                                 
@@ -323,7 +323,7 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
                                     return@async true
                                 }
                                 
-                                val xmlContent = downloadDanmakuXml(cid)
+                                val xmlContent = downloadDanmakuXml(cid, aid = aid)
                                 if (xmlContent != null) {
                                     val saved = saveToDirectory(saveDirectoryUri, fullTitle, xmlContent)
                                     if (saved != null) {
@@ -372,9 +372,9 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
     
     /**
      * 获取番剧季度的所有集数信息
-     * @return Pair<季度标题, List<Pair<cid, 集数标题>>>
+     * @return Pair<季度标题, List<Triple<aid, cid, 集数标题>>>
      */
-    private fun getBangumiSeasonInfo(url: String): Pair<String, List<Pair<Long, String>>>? {
+    private fun getBangumiSeasonInfo(url: String): Pair<String, List<Triple<Long, Long, String>>>? {
         try {
             // 提取 season_id 或 ep_id
             val seasonIdMatch = Regex("ss(\\d+)", RegexOption.IGNORE_CASE).find(url)
@@ -430,14 +430,15 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
                     return null
                 }
                 
-                val episodeList = mutableListOf<Pair<Long, String>>()
+                val episodeList = mutableListOf<Triple<Long, Long, String>>()
                 for (i in 0 until episodes.length()) {
                     val ep = episodes.getJSONObject(i)
+                    val aid = ep.getLong("aid")
                     val cid = ep.getLong("cid")
-                    val epTitle = ep.optString("long_title")
-                        ?: ep.optString("title")
+                    val epTitle = ep.optString("long_title").ifEmpty { null }
+                        ?: ep.optString("title").ifEmpty { null }
                         ?: "第${i + 1}集"
-                    episodeList.add(Pair(cid, epTitle))
+                    episodeList.add(Triple(aid, cid, epTitle))
                 }
                 
                 Log.d(TAG, "获取到番剧《$seasonTitle》共${episodeList.size}集")
@@ -450,9 +451,9 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
     }
     
     /**
-     * 从HTML中提取视频CID和标题
+     * 从HTML中提取视频AID、CID和标题
      */
-    private fun extractVideoInfo(url: String): Pair<Long, String>? {
+    private fun extractVideoInfo(url: String): Triple<Long, Long, String>? {
         try {
             // 使用Jsoup获取网页内容
             val html = Jsoup.connect(url)
@@ -481,10 +482,11 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
                 // 提取videoData
                 val videoData = jsonObject.optJSONObject("videoData") ?: continue
                 
+                val aid = videoData.getLong("aid")
                 val cid = videoData.getLong("cid")
                 val title = videoData.getString("title")
                 
-                return Pair(cid, title)
+                return Triple(aid, cid, title)
             }
             
             return null
@@ -495,10 +497,10 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
     }
     
     /**
-     * 从番剧链接中提取CID和标题
+     * 从番剧链接中提取AID、CID和标题
      * 支持 ss{season_id} 和 ep{ep_id} 两种格式
      */
-    private fun extractBangumiInfo(url: String): Pair<Long, String>? {
+    private fun extractBangumiInfo(url: String): Triple<Long, Long, String>? {
         try {
             // 提取 season_id 或 ep_id
             val seasonIdMatch = Regex("ss(\\d+)", RegexOption.IGNORE_CASE).find(url)
@@ -561,28 +563,30 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
                         for (i in 0 until episodes.length()) {
                             val ep = episodes.getJSONObject(i)
                             if (ep.getLong("id") == targetEpId) {
+                                val aid = ep.getLong("aid")
                                 val cid = ep.getLong("cid")
-                                val epTitle = ep.optString("long_title") 
-                                    ?: ep.optString("title")
+                                val epTitle = ep.optString("long_title").ifEmpty { null }
+                                    ?: ep.optString("title").ifEmpty { null }
                                     ?: "第${i + 1}集"
                                 // 文件名只使用集数标题
                                 val fullTitle = epTitle
-                                Log.d(TAG, "找到指定集数: $fullTitle (来自《$title》), CID: $cid")
-                                return Pair(cid, fullTitle)
+                                Log.d(TAG, "找到指定集数: $fullTitle (来自《$title》), AID: $aid, CID: $cid")
+                                return Triple(aid, cid, fullTitle)
                             }
                         }
                     }
                     
                     // 如果没有指定或没找到，使用第一集
                     val firstEp = episodes.getJSONObject(0)
+                    val aid = firstEp.getLong("aid")
                     val cid = firstEp.getLong("cid")
-                    val epTitle = firstEp.optString("long_title") 
-                        ?: firstEp.optString("title")
+                    val epTitle = firstEp.optString("long_title").ifEmpty { null }
+                        ?: firstEp.optString("title").ifEmpty { null }
                         ?: "第1集"
                     // 文件名只使用集数标题
                     val fullTitle = epTitle
-                    Log.d(TAG, "使用第一集: $fullTitle (来自《$title》), CID: $cid")
-                    return Pair(cid, fullTitle)
+                    Log.d(TAG, "使用第一集: $fullTitle (来自《$title》), AID: $aid, CID: $cid")
+                    return Triple(aid, cid, fullTitle)
                 }
                 
                 Log.e(TAG, "未找到番剧集数信息")
@@ -598,12 +602,12 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
      * 下载弹幕XML内容(带重试)
      * 优先使用分段API获取完整弹幕，失败则降级到普通API
      */
-    private suspend fun downloadDanmakuXml(cid: Long, retryCount: Int = 3): String? {
+    private suspend fun downloadDanmakuXml(cid: Long, retryCount: Int = 3, aid: Long = 0): String? {
         var lastException: Exception? = null
         
         // 优先尝试使用分段弹幕API获取完整弹幕
         Log.d(TAG, "尝试使用分段弹幕API下载完整弹幕")
-        val segmentXml = downloadSegmentDanmaku(cid)
+        val segmentXml = downloadSegmentDanmaku(cid, aid)
         if (segmentXml != null) {
             Log.d(TAG, "分段弹幕API下载成功")
             return segmentXml
@@ -711,12 +715,13 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
      * 2. 下载后立即写入文件，不在内存中累积所有弹幕
      * 3. 使用 buildString 减少临时对象分配
      */
-    private suspend fun downloadSegmentDanmaku(cid: Long): String? {
+    private suspend fun downloadSegmentDanmaku(cid: Long, aid: Long = 0): String? {
         try {
-            Log.d(TAG, "使用分段弹幕API（流式写入优化）: cid=$cid")
+            Log.d(TAG, "使用分段弹幕API（流式写入优化）: cid=$cid, aid=$aid")
             
             // 1. 获取弹幕元数据，包括总分段数
-            val viewUrl = "https://api.bilibili.com/x/v2/dm/web/view?type=1&oid=$cid"
+            val pidParam = if (aid > 0) "&pid=$aid" else ""
+            val viewUrl = "https://api.bilibili.com/x/v2/dm/web/view?type=1&oid=$cid$pidParam"
             val viewRequest = createRequestBuilder(viewUrl).build()
             
             val totalSegments: Int
@@ -770,7 +775,7 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
                     // 并发下载当前批次的分段
                     val batchResults = (startIndex..endIndex).map { segmentIndex ->
                         async {
-                            val segmentUrl = "https://api.bilibili.com/x/v2/dm/web/seg.so?type=1&oid=$cid&segment_index=$segmentIndex"
+                            val segmentUrl = "https://api.bilibili.com/x/v2/dm/web/seg.so?type=1&oid=$cid$pidParam&segment_index=$segmentIndex"
                             val segmentRequest = createRequestBuilder(segmentUrl).build()
                             
                             try {
@@ -930,11 +935,14 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
                 // protobuf wire format: field_number << 3 | wire_type
                 if (index >= data.size) break
                 
-                val tag = data[index].toInt() and 0xFF
-                index++
+                // tag 必须用 varint 读取（字段号>=16时tag占多字节）
+                val tagValue = readVarint(data, index).toInt()
+                index += getVarintSize(data, index)
+                val fieldNumber = tagValue shr 3
+                val wireType = tagValue and 0x07
                 
                 // 字段1是弹幕元素（repeated）
-                if (tag == 0x0A) { // field 1, wire type 2 (length-delimited)
+                if (fieldNumber == 1 && wireType == 2) { // field 1, wire type 2 (length-delimited)
                     // 读取长度
                     val length = readVarint(data, index)
                     index += getVarintSize(data, index)
@@ -951,7 +959,7 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
                     }
                 } else {
                     // 跳过不认识的字段
-                    index = skipField(data, index, tag and 0x07)
+                    index = skipField(data, index, wireType)
                 }
             }
         } catch (e: Exception) {
@@ -979,10 +987,13 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
             while (index < data.size) {
                 if (index >= data.size) break
                 
-                val tag = data[index].toInt() and 0xFF
-                index++
+                // tag 必须用 varint 读取（字段号>=16时tag占多字节）
+                val tagValue = readVarint(data, index).toInt()
+                index += getVarintSize(data, index)
+                val fieldNumber = tagValue shr 3
+                val wireType = tagValue and 0x07
                 
-                when (tag shr 3) {
+                when (fieldNumber) {
                     1 -> { // id
                         id = readVarint(data, index)
                         index += getVarintSize(data, index)
@@ -1025,7 +1036,7 @@ class BiliBiliDanmakuDownloadManager(private val context: Context) {
                     }
                     else -> {
                         // 跳过未知字段
-                        index = skipField(data, index, tag and 0x07)
+                        index = skipField(data, index, wireType)
                     }
                 }
             }
