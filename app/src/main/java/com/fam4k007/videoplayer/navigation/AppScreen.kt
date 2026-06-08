@@ -68,6 +68,10 @@ sealed interface AppScreen {
     @Serializable
     data object BiliBiliDanmaku : AppScreen
 
+    /** 弹幕服务器管理页 */
+    @Serializable
+    data object DanmakuServerManagement : AppScreen
+
     /** 视频浏览页 */
     @Serializable
     data object VideoBrowser : AppScreen

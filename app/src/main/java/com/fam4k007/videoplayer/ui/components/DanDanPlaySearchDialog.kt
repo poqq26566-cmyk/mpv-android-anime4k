@@ -24,8 +24,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fam4k007.videoplayer.dandanplay.AnimeSearchInfo
 import com.fam4k007.videoplayer.dandanplay.EpisodeInfo
+import com.fam4k007.videoplayer.preferences.PreferencesManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 /**
  * 网络弹幕搜索对话框 - 右侧抽屉式
@@ -36,6 +38,7 @@ fun DanDanPlaySearchDialog(
     onDismiss: () -> Unit,
     onEpisodeSelected: (episodeId: Int, animeTitle: String, episodeTitle: String) -> Unit
 ) {
+    val preferencesManager: PreferencesManager = koinInject()
     var isVisible by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -130,6 +133,7 @@ private fun DanDanPlaySearchContent(
     onDismiss: () -> Unit,
     onEpisodeSelected: (episodeId: Int, animeTitle: String, episodeTitle: String) -> Unit
 ) {
+    val preferencesManager: PreferencesManager = koinInject()
     var searchText by remember { mutableStateOf("") }
     var searchResults by remember { mutableStateOf<List<AnimeSearchInfo>>(emptyList()) }
     var isSearching by remember { mutableStateOf(false) }
@@ -217,30 +221,51 @@ private fun DanDanPlaySearchContent(
                                 errorMessage = null
                                 try {
                                     android.util.Log.d("DanDanPlayUI", "开始搜索: $searchText")
-                                    val api = com.fam4k007.videoplayer.dandanplay.DanDanPlayApi()
-                                    val result = api.searchAnime(searchText)
-                                    result.fold(
-                                        onSuccess = { response ->
-                                            android.util.Log.d("DanDanPlayUI", "搜索成功，返回 ${response.animes.size} 个结果")
-                                            searchResults = response.animes
-                                            if (searchResults.isEmpty()) {
-                                                errorMessage = "未找到相关番剧，请尝试其他关键词"
-                                            }
-                                        },
-                                        onFailure = { e ->
-                                            val errorMsg = when {
-                                                e.message?.contains("403") == true -> 
-                                                    "访问被拒绝(403)，请检查网络连接或稍后重试"
-                                                e.message?.contains("404") == true -> 
-                                                    "API接口不存在(404)，请联系开发者"
-                                                e.message?.contains("timeout") == true -> 
-                                                    "请求超时，请检查网络连接"
-                                                else -> "搜索失败: ${e.message}"
-                                            }
-                                            android.util.Log.e("DanDanPlayUI", "搜索失败: ${e.message}", e)
-                                            errorMessage = errorMsg
+                                    val enabledServers = preferencesManager.getEnabledDanmakuServers()
+                                    if (enabledServers.isEmpty()) {
+                                        errorMessage = "没有已启用的弹幕服务器，请在设置中配置"
+                                        return@launch
+                                    }
+                                    
+                                    val allResults = mutableListOf<AnimeSearchInfo>()
+                                    val errors = mutableListOf<String>()
+                                    
+                                    for (server in enabledServers) {
+                                        try {
+                                            android.util.Log.d("DanDanPlayUI", "搜索服务器: ${server.name} (${server.url})")
+                                            val api = com.fam4k007.videoplayer.dandanplay.DanDanPlayApi(
+                                                if (server.isDefault) null else server.url
+                                            )
+                                            val result = api.searchAnime(searchText)
+                                            result.fold(
+                                                onSuccess = { response ->
+                                                    android.util.Log.d("DanDanPlayUI", "${server.name}: 返回 ${response.animes.size} 个结果")
+                                                    // 合并结果，按 animeId 去重
+                                                    for (anime in response.animes) {
+                                                        if (allResults.none { it.animeId == anime.animeId }) {
+                                                            allResults.add(anime)
+                                                        }
+                                                    }
+                                                },
+                                                onFailure = { e ->
+                                                    android.util.Log.e("DanDanPlayUI", "${server.name} 搜索失败: ${e.message}")
+                                                    errors.add("${server.name}: ${e.message}")
+                                                }
+                                            )
+                                        } catch (e: Exception) {
+                                            android.util.Log.e("DanDanPlayUI", "${server.name} 异常: ${e.message}")
+                                            errors.add("${server.name}: ${e.message}")
                                         }
-                                    )
+                                    }
+                                    
+                                    searchResults = allResults
+                                    if (allResults.isEmpty()) {
+                                        errorMessage = if (errors.isNotEmpty()) {
+                                            "搜索失败:\n${errors.joinToString("\n")}"
+                                        } else {
+                                            "未找到相关番剧，请尝试其他关键词"
+                                        }
+                                    }
                                 } catch (e: Exception) {
                                     android.util.Log.e("DanDanPlayUI", "搜索异常", e)
                                     errorMessage = "搜索异常: ${e.message}\n请检查网络连接"

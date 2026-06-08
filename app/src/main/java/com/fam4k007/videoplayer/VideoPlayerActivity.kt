@@ -739,7 +739,11 @@ class VideoPlayerActivity : AppCompatActivity(),
                 // 显示匹配提示
                 DialogUtils.showToastShort(this@VideoPlayerActivity, "正在匹配弹幕，请稍候...")
                 
-                val api = com.fam4k007.videoplayer.dandanplay.DanDanPlayApi()
+                val enabledServers = preferencesManager.getEnabledDanmakuServers()
+                if (enabledServers.isEmpty()) {
+                    DialogUtils.showToastLong(this@VideoPlayerActivity, "没有启用的弹幕服务器")
+                    return@launch
+                }
                 
                 // 获取完整文件名
                 val fileName = videoFile.name
@@ -747,33 +751,53 @@ class VideoPlayerActivity : AppCompatActivity(),
                 
                 Logger.d(TAG, "File info - name: $fileName, size: $fileSize, path: $videoPath")
                 
-                // 计算文件哈希
+                // 计算文件哈希（本地计算，只需一次）
                 Logger.d(TAG, "Calculating file hash...")
-                val fileHash = api.calculateFileHash(videoPath)
+                val hashApi = com.fam4k007.videoplayer.dandanplay.DanDanPlayApi(null)
+                val fileHash = hashApi.calculateFileHash(videoPath)
                 Logger.d(TAG, "File hash calculated: $fileHash")
                 
-                // 调用匹配API
-                val matchResponse = api.matchDanmaku(
-                    fileName = fileName,
-                    fileHash = fileHash,
-                    fileSize = fileSize
-                )
+                // 遍历所有启用的服务器进行匹配
+                val allMatchResults = mutableListOf<com.fam4k007.videoplayer.dandanplay.ServerMatchResult>()
+                for (server in enabledServers) {
+                    try {
+                        val api = com.fam4k007.videoplayer.dandanplay.DanDanPlayApi(
+                            if (server.isDefault) null else server.url
+                        )
+                        val matchResponse = api.matchDanmaku(
+                            fileName = fileName,
+                            fileHash = fileHash,
+                            fileSize = fileSize
+                        )
+                        if (matchResponse.isMatched && !matchResponse.matches.isNullOrEmpty()) {
+                            matchResponse.matches.forEach { match ->
+                                allMatchResults.add(
+                                    com.fam4k007.videoplayer.dandanplay.ServerMatchResult(
+                                        matchInfo = match,
+                                        serverName = server.name,
+                                        serverUrl = if (server.isDefault) null else server.url
+                                    )
+                                )
+                            }
+                        }
+                        Logger.d(TAG, "Server '${server.name}' returned ${matchResponse.matches?.size ?: 0} matches")
+                    } catch (e: Exception) {
+                        Logger.e(TAG, "Server '${server.name}' match failed", e)
+                    }
+                }
                 
-                if (!matchResponse.isMatched || matchResponse.matches.isNullOrEmpty()) {
+                if (allMatchResults.isEmpty()) {
                     DialogUtils.showToastLong(this@VideoPlayerActivity, "未找到匹配的弹幕")
                     return@launch
                 }
                 
-                // 找到匹配，显示选择对话框
-                val matches = matchResponse.matches
-                if (matches.size == 1) {
-                    // 只有一个匹配，直接加载
-                    val match = matches[0]
-                    loadNetworkDanmaku(match.episodeId, match.animeTitle, match.episodeTitle)
+                // 根据结果数量决定是否弹窗
+                if (allMatchResults.size == 1) {
+                    val result = allMatchResults[0]
+                    loadNetworkDanmaku(result.matchInfo.episodeId, result.matchInfo.animeTitle, result.matchInfo.episodeTitle, result.serverUrl)
                 } else {
-                    // 多个匹配，让用户选择
                     withContext(Dispatchers.Main) {
-                        showMatchSelectionDialog(matches)
+                        showMatchSelectionDialog(allMatchResults)
                     }
                 }
                 
