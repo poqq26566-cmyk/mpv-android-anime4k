@@ -118,7 +118,7 @@ internal fun VideoPlayerActivity.setupComposeTestLayer() {
                             val hasLoadedDanmaku = danmakuManager.getCurrentDanmakuPath() != null
                             if (!hasLoadedDanmaku) {
                                 com.fam4k007.videoplayer.utils.DialogUtils.showToastShort(
-                                    this@setupComposeTestLayer, "请先加载弹幕文件"
+                                    this@setupComposeTestLayer, "Please load a danmaku file first"
                                 )
                             } else {
                                 val currentVisible = danmakuManager.isVisible()

@@ -127,7 +127,7 @@ class DanDanPlayApi(private val customBaseUrl: String? = null) {
                     Log.d(TAG, "解析成功，找到 ${searchResponse.animes.size} 个结果")
                     Result.success(searchResponse)
                 } else {
-                    val errorMsg = "搜索失败: ${response.code} - ${response.message}"
+                    val errorMsg = "Search failed: ${response.code} - ${response.message}"
                     Log.e(TAG, errorMsg)
                     Log.e(TAG, "错误响应体: $responseBody")
                     Result.failure(Exception(errorMsg))
@@ -213,7 +213,7 @@ class DanDanPlayApi(private val customBaseUrl: String? = null) {
                     Log.d(TAG, "解析成功，获得 ${danmakuResponse.count} 条弹幕")
                     Result.success(danmakuResponse)
                 } else {
-                    val errorMsg = "获取弹幕失败: ${response.code} - ${response.message}"
+                    val errorMsg = "Failed to fetch danmaku: ${response.code} - ${response.message}"
                     Log.e(TAG, errorMsg)
                     Log.e(TAG, "错误响应体: $responseBody")
                     Result.failure(Exception(errorMsg))
@@ -367,12 +367,12 @@ class DanDanPlayApi(private val customBaseUrl: String? = null) {
                 } else {
                     body.string()
                 }
-            } ?: throw Exception("空响应")
+            } ?: throw Exception("Empty response")
 
             Log.d(TAG, "Match response: $responseBody")
 
             if (!response.isSuccessful) {
-                throw Exception("匹配失败: ${response.code} - $responseBody")
+                throw Exception("Match failed: ${response.code} - $responseBody")
             }
 
             val matchResponse = gson.fromJson(responseBody, MatchResponse::class.java)

@@ -172,7 +172,7 @@ fun PlayerControls(
             }
         }
 
-        // 锁定时：左右解锁按钮
+        // 锁定时：左右Unlock按钮
         UnlockButtons(viewModel = viewModel)
 
         // 手势指示器（亮度/音量）
@@ -459,7 +459,7 @@ fun BottomControlPanel(
                         .let { mod ->
                             if (gpuNext) {
                                 mod.clickable {
-                                    Toast.makeText(context, "已启用 GPU Next 渲染，无法开启超分", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "GPU Next rendering enabled, cannot use upscaling", Toast.LENGTH_SHORT).show()
                                 }
                             } else {
                                 mod
@@ -469,7 +469,7 @@ fun BottomControlPanel(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "超分辨率：$anime4KLabel",
+                        text = "Upscale: $anime4KLabel",
                         color = if (anime4KActive) Color.Yellow
                                 else if (gpuNext) Color.Gray.copy(alpha = 0.5f)
                                 else Color.White.copy(alpha = 0.7f),
@@ -1004,14 +1004,14 @@ fun TopControlPanel(
 }
 
 // =====================================================================
-// 解锁按钮（锁定模式下显示）
+// Unlock按钮（锁定模式下显示）
 // =====================================================================
 
 /**
- * 锁定模式下显示的解锁按钮
+ * 锁定模式下显示的Unlock按钮
  *
  * - 锁定后立即显示，3 秒无操作后自动淡出
- * - 点击任意解锁按钮（左/右）均可解锁
+ * - 点击任意Unlock按钮（左/右）均可Unlock
  * - 单击屏幕（手势层会通知 ViewModel showControls）时重新显示
  */
 @Composable
@@ -1025,7 +1025,7 @@ fun UnlockButtons(
     if (!areControlsLocked) return
 
     Box(modifier = modifier.fillMaxSize()) {
-        // 左侧解锁按钮
+        // 左侧Unlock按钮
         androidx.compose.animation.AnimatedVisibility(
             visible = unlockButtonsVisible,
             enter = androidx.compose.animation.fadeIn(),
@@ -1042,7 +1042,7 @@ fun UnlockButtons(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.lock_open_48_filled),
-                    contentDescription = "解锁",
+                    contentDescription = "Unlock",
                     tint = Color.White,
                     modifier = Modifier.size(26.dp)
                 )
@@ -1065,7 +1065,7 @@ fun UnlockButtons(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.lock_open_48_filled),
-                    contentDescription = "解锁",
+                    contentDescription = "Unlock",
                     tint = Color.White,
                     modifier = Modifier.size(26.dp)
                 )
@@ -1116,9 +1116,9 @@ fun LongPressSpeedOverlay(
                 // 速度文字提示
                 Text(
                     text = if (isDynamicSpeedActive)
-                        "正在${String.format("%.2f", speed)}倍速播放"
+                        "Playing at ${String.format("%.2f", speed)}x speed"
                     else
-                        "正在${String.format("%.1f", speed)}倍速播放",
+                        "Playing at ${String.format("%.1f", speed)}x speed",
                     color = Color.White,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
@@ -1132,7 +1132,7 @@ fun LongPressSpeedOverlay(
                 if (showHint.value && !isDynamicSpeedActive) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "可通过左右滑动，临时调节长按播放的倍数",
+                        text = "Swipe left/right to adjust long-press playback speed",
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 12.sp,
                         modifier = Modifier

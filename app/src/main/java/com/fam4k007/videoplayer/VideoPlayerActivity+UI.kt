@@ -52,7 +52,7 @@ internal fun VideoPlayerActivity.loadUserSettings() {
  * 显示速度变化提示
  */
 internal fun VideoPlayerActivity.showSpeedChangeHint(speed: Float) {
-    speedHintText?.text = String.format("%.1f倍速", speed)
+    speedHintText?.text = String.format("%.1fx speed", speed)
     speedHint?.apply {
         visibility = View.VISIBLE
         alpha = 0f

@@ -431,7 +431,7 @@ internal suspend fun VideoPlayerActivity.autoLoadWebDavSubtitle(
         preferencesManager.setExternalSubtitle(videoUri.toString(), subtitleUrl)
         viewModel.setHasAutoLoadedSubtitle(true)
 
-        DialogUtils.showToastShort(this, "已自动加载字幕: $bestName")
+        DialogUtils.showToastShort(this, "Auto-loaded subtitle: $bestName")
     } catch (e: Exception) {
         Log.e(TAG, "Failed to auto-load WebDAV subtitle", e)
     }

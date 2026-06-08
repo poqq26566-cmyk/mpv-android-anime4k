@@ -111,8 +111,8 @@ fun PlaybackSettingsScreen(
                         }
                     )
                     SwitchItem(
-                        title = "GPU Next 渲染",
-                        subtitle = if (settings.gpuNext) "配合软解可正确显示杜比视界，与 4K 超分不兼容" else "开启后可改善 HDR 渲染效果",
+                        title = "GPU Next Rendering",
+                        subtitle = if (settings.gpuNext) "Works with software decoding for Dolby Vision, incompatible with 4K upscaling" else "Improves HDR rendering when enabled",
                         checked = settings.gpuNext,
                         onCheckedChange = { enabled ->
                             if (enabled) {
@@ -123,8 +123,8 @@ fun PlaybackSettingsScreen(
                         }
                     )
                     SwitchItem(
-                        title = "Vulkan 渲染上下文",
-                        subtitle = if (settings.useVulkan) "使用 Vulkan 驱动，性能会更好" else "使用 OpenGL ES 驱动",
+                        title = "Vulkan Render Context",
+                        subtitle = if (settings.useVulkan) "Uses Vulkan driver for better performance" else "Uses OpenGL ES driver",
                         checked = settings.useVulkan,
                         onCheckedChange = { viewModel.setUseVulkan(it) }
                     )
@@ -203,7 +203,7 @@ fun PlaybackSettingsScreen(
                         onCheckedChange = { viewModel.setRememberSpeed(it) }
                     )
                     SliderItem(
-                        title = "长按倍速",
+                        title = "Long-press Speed",
                         value = settings.longPressSpeed,
                         valueRange = 1.0f..6.0f,
                         steps = 49,
@@ -237,7 +237,7 @@ fun PlaybackSettingsScreen(
 
             // 章节控制
             item {
-                PreferenceSectionHeader("章节与缩略图")
+                PreferenceSectionHeader("Chapters & Thumbnails")
             }
 
             item {
@@ -249,8 +249,8 @@ fun PlaybackSettingsScreen(
                         onCheckedChange = { viewModel.setChapterBarEnabled(it) }
                     )
                     SwitchItem(
-                        title = "进度条缩略图预览",
-                        subtitle = if (settings.seekbarThumbnailEnabled) "拖动进度条时显示视频画面预览" else "拖动进度条时不显示缩略图",
+                        title = "Seekbar Thumbnail Preview",
+                        subtitle = if (settings.seekbarThumbnailEnabled) "Show video frame preview when dragging seekbar" else "Hide thumbnails when dragging seekbar",
                         checked = settings.seekbarThumbnailEnabled,
                         onCheckedChange = { viewModel.setSeekbarThumbnailEnabled(it) }
                     )
@@ -293,7 +293,7 @@ fun PlaybackSettingsScreen(
         )
     }
 
-    // 双击跳转时长选择对话框
+    // Double-tap Seek Duration选择对话框
     if (showDoubleTapSeekDialog) {
         DoubleTapSeekDialog(
             currentValue = settings.doubleTapSeekSeconds,
@@ -311,7 +311,7 @@ fun PlaybackSettingsScreen(
             onDismissRequest = { showRestartDialog = false },
             title = {
                 Text(
-                    "需要重启应用",
+                    "Restart Required",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -333,12 +333,12 @@ fun PlaybackSettingsScreen(
                         (context as? android.app.Activity)?.finish()
                     }
                 ) {
-                    Text("重启", fontWeight = FontWeight.SemiBold)
+                    Text("Restart", fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRestartDialog = false }) {
-                    Text("稍后", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Later", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
             shape = RoundedCornerShape(28.dp),
@@ -354,7 +354,7 @@ fun PlaybackSettingsScreen(
             onDismissRequest = { showGpuNextWarning = false },
             title = {
                 Text(
-                    "开启 GPU Next 渲染",
+                    "Enable GPU Next Rendering",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -362,12 +362,12 @@ fun PlaybackSettingsScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "GPU Next 是 mpv 的新渲染引擎，可改善 HDR 渲染效果，配合软解可正确显示杜比视界画面。但与 4K 超分（Anime4K）不兼容，开启后超分功能将自动禁用。",
+                        "GPU Next is mpv's new rendering engine that improves HDR rendering. With software decoding, it correctly displays Dolby Vision content. However, it is incompatible with 4K upscaling (Anime4K), which will be automatically disabled when enabled.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        "注意：部分设备开启后可能出现紫屏，如遇到请启用下方的「Vulkan 渲染上下文」即可解决。",
+                        "Note: Some devices may show a purple screen after enabling this. If so, enable \"Vulkan Render Context\" below to fix it.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -380,12 +380,12 @@ fun PlaybackSettingsScreen(
                         showGpuNextWarning = false
                     }
                 ) {
-                    Text("继续开启", fontWeight = FontWeight.SemiBold)
+                    Text("Continue", fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showGpuNextWarning = false }) {
-                    Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
             shape = RoundedCornerShape(28.dp),
@@ -508,7 +508,7 @@ private fun SeekTimeDialog(
             onDismissRequest = { showCustomInput = false },
             title = {
                 Text(
-                    "自定义快进/快退时长",
+                    "Custom Seek Duration",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -516,7 +516,7 @@ private fun SeekTimeDialog(
             text = {
                 Column {
                     Text(
-                        "请输入快进/快退时长（1~300秒）",
+                        "Enter seek duration (1-300 seconds)",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -528,7 +528,7 @@ private fun SeekTimeDialog(
                                 customInputText = input
                             }
                         },
-                        label = { Text("秒数") },
+                        label = { Text("Seconds") },
                         singleLine = true,
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                             keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
@@ -549,12 +549,12 @@ private fun SeekTimeDialog(
                     },
                     enabled = customInputText.toIntOrNull()?.let { it in 1..300 } == true
                 ) {
-                    Text("确定")
+                    Text("OK")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCustomInput = false }) {
-                    Text("取消")
+                    Text("Cancel")
                 }
             },
             shape = RoundedCornerShape(28.dp),
@@ -565,7 +565,7 @@ private fun SeekTimeDialog(
             onDismissRequest = onDismiss,
             title = {
                 Text(
-                    "快进/快退时长",
+                    "Seek Duration",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -592,7 +592,7 @@ private fun SeekTimeDialog(
                             )
                             Spacer(Modifier.width(12.dp))
                             Text(
-                                "${seconds}秒",
+                                "${seconds}s",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = if (selected == seconds) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.onSurface,
@@ -620,7 +620,7 @@ private fun SeekTimeDialog(
                         )
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            if (isCustom) "自定义（${selected}秒）" else "自定义",
+                            if (isCustom) "Custom (${selected}s)" else "Custom",
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (isCustom) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurface,
@@ -631,12 +631,12 @@ private fun SeekTimeDialog(
             },
             confirmButton = {
                 Button(onClick = { onConfirm(selected) }) {
-                    Text("确定")
+                    Text("OK")
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("取消")
+                    Text("Cancel")
                 }
             },
             shape = RoundedCornerShape(28.dp),
@@ -663,7 +663,7 @@ private fun DoubleTapSeekDialog(
             onDismissRequest = { showCustomInput = false },
             title = {
                 Text(
-                    "自定义跳转时长",
+                    "Custom Double-tap Seek Duration",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -671,7 +671,7 @@ private fun DoubleTapSeekDialog(
             text = {
                 Column {
                     Text(
-                        "请输入跳转时长（1~300秒）",
+                        "Enter seek duration (1-300 seconds)",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -684,7 +684,7 @@ private fun DoubleTapSeekDialog(
                                 customInputText = input
                             }
                         },
-                        label = { Text("秒数") },
+                        label = { Text("Seconds") },
                         singleLine = true,
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                             keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
@@ -705,12 +705,12 @@ private fun DoubleTapSeekDialog(
                     },
                     enabled = customInputText.toIntOrNull()?.let { it in 1..300 } == true
                 ) {
-                    Text("确定")
+                    Text("OK")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCustomInput = false }) {
-                    Text("取消")
+                    Text("Cancel")
                 }
             },
             shape = RoundedCornerShape(28.dp),
@@ -721,7 +721,7 @@ private fun DoubleTapSeekDialog(
             onDismissRequest = onDismiss,
             title = {
                 Text(
-                    "双击跳转时长",
+                    "Double-tap Seek Duration",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -748,7 +748,7 @@ private fun DoubleTapSeekDialog(
                             )
                             Spacer(Modifier.width(12.dp))
                             Text(
-                                "${seconds}秒",
+                                "${seconds}s",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = if (selected == seconds) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.onSurface,
@@ -776,7 +776,7 @@ private fun DoubleTapSeekDialog(
                         )
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            if (isCustom) "自定义（${selected}秒）" else "自定义",
+                            if (isCustom) "Custom (${selected}s)" else "Custom",
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (isCustom) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurface,
@@ -787,12 +787,12 @@ private fun DoubleTapSeekDialog(
             },
             confirmButton = {
                 Button(onClick = { onConfirm(selected) }) {
-                    Text("确定")
+                    Text("OK")
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("取消")
+                    Text("Cancel")
                 }
             },
             shape = RoundedCornerShape(28.dp),

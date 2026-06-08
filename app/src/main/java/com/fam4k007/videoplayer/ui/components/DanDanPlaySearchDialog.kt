@@ -153,7 +153,7 @@ private fun DanDanPlaySearchContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (selectedAnime == null) "网络弹幕" else "选择剧集",
+                text = if (selectedAnime == null) "Online Danmaku" else "Select Episode",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -171,7 +171,7 @@ private fun DanDanPlaySearchContent(
                             contentColor = Color(0xFF64B5F6)
                         )
                     ) {
-                        Text("← 返回", fontSize = 13.sp)
+                        Text("Back", fontSize = 13.sp)
                     }
                 }
                 
@@ -200,7 +200,7 @@ private fun DanDanPlaySearchContent(
                 OutlinedTextField(
                     value = searchText,
                     onValueChange = { searchText = it },
-                    placeholder = { Text("输入番剧名称", color = Color(0xFF888888)) },
+                    placeholder = { Text("Enter anime title", color = Color(0xFF888888)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -223,7 +223,7 @@ private fun DanDanPlaySearchContent(
                                     android.util.Log.d("DanDanPlayUI", "开始搜索: $searchText")
                                     val enabledServers = preferencesManager.getEnabledDanmakuServers()
                                     if (enabledServers.isEmpty()) {
-                                        errorMessage = "没有已启用的弹幕服务器，请在设置中配置"
+                                        errorMessage = "No enabled danmaku servers. Please configure in settings."
                                         return@launch
                                     }
                                     
@@ -261,14 +261,14 @@ private fun DanDanPlaySearchContent(
                                     searchResults = allResults
                                     if (allResults.isEmpty()) {
                                         errorMessage = if (errors.isNotEmpty()) {
-                                            "搜索失败:\n${errors.joinToString("\n")}"
+                                            "Search failed:\n${errors.joinToString("\n")}"
                                         } else {
-                                            "未找到相关番剧，请尝试其他关键词"
+                                            "No anime found. Try other keywords."
                                         }
                                     }
                                 } catch (e: Exception) {
                                     android.util.Log.e("DanDanPlayUI", "搜索异常", e)
-                                    errorMessage = "搜索异常: ${e.message}\n请检查网络连接"
+                                    errorMessage = "Search error: ${e.message}\nPlease check network connection"
                                 } finally {
                                     isSearching = false
                                 }
@@ -283,7 +283,7 @@ private fun DanDanPlaySearchContent(
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("搜索", fontSize = 15.sp)
+                    Text("Search", fontSize = 15.sp)
                 }
             }
 
@@ -329,7 +329,7 @@ private fun DanDanPlaySearchContent(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "搜索中...",
+                        text = "Searching...",
                         fontSize = 16.sp,
                         color = Color.White
                     )
@@ -371,7 +371,7 @@ private fun DanDanPlaySearchContent(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "输入番剧名称开始搜索",
+                        text = "Enter anime title to search",
                         fontSize = 16.sp,
                         color = Color(0xFF888888)
                     )
@@ -454,7 +454,7 @@ private fun AnimeCard(
 
             // 剧集数量
             Text(
-                text = "${anime.episodes.size} 集",
+                text = "${anime.episodes.size} episodes",
                 fontSize = 13.sp,
                 color = Color(0xFF9E9E9E)
             )
@@ -492,7 +492,7 @@ private fun EpisodeList(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "${anime.typeDescription} · ${anime.episodes.size} 集",
+                    text = "${anime.typeDescription} · ${anime.episodes.size} episodes",
                     fontSize = 13.sp,
                     color = Color(0xFF9E9E9E)
                 )

@@ -140,7 +140,7 @@ fun FolderBrowserScreen(
                         }
                     } else {
                         Text(
-                            "文件夹",
+                            "Folders",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -171,7 +171,7 @@ fun FolderBrowserScreen(
                         }) {
                             Icon(
                                 imageVector = if (isTreeView) Icons.Default.ViewList else Icons.Default.AccountTree,
-                                contentDescription = if (isTreeView) "切换到文件夹视图" else "切换到树状视图"
+                                contentDescription = if (isTreeView) "Switch to folder view" else "Switch to tree view"
                             )
                         }
                         // 编辑按钮
@@ -347,7 +347,7 @@ fun FolderBrowserScreen(
                                     containerColor = MaterialTheme.colorScheme.primary,
                                     contentColor = MaterialTheme.colorScheme.onPrimary
                                 ) {
-                                    Icon(Icons.Default.Refresh, "刷新")
+                                    Icon(Icons.Default.Refresh, "Refresh")
                                 }
                             }
                         }

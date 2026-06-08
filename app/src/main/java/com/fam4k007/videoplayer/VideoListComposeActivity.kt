@@ -47,7 +47,7 @@ class VideoListComposeActivity : ComponentActivity() {
         // 启用边到边显示
         enableEdgeToEdge()
 
-        val folderName = intent.getStringExtra("folder_name") ?: "视频列表"
+        val folderName = intent.getStringExtra("folder_name") ?: "Video List"
         folderPath = intent.getStringExtra("folder_path") ?: ""
         
         // 获取预加载的视频列表（如果有）

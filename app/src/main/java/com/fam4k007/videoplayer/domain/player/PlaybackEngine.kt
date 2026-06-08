@@ -610,7 +610,7 @@ class PlaybackEngine(
         try {
             val chapterCount = MPVLib.getPropertyInt("chapter-list/count") ?: 0
             for (i in 0 until chapterCount) {
-                val title = MPVLib.getPropertyString("chapter-list/$i/title") ?: "章节 ${i + 1}"
+                val title = MPVLib.getPropertyString("chapter-list/$i/title") ?: "Chapter ${i + 1}"
                 val time = MPVLib.getPropertyDouble("chapter-list/$i/time") ?: 0.0
                 chapters.add(Pair(title, time))
             }
@@ -927,7 +927,7 @@ class PlaybackEngine(
             }
             
             val tracks = mutableListOf<Triple<Int, String, Boolean>>()
-            tracks.add(Triple(-1, "关闭字幕", currentTrackId == -1))
+            tracks.add(Triple(-1, "Disable Subtitles", currentTrackId == -1))
 
             for (i in 0 until trackCount) {
                 val type = MPVLib.getPropertyString("track-list/$i/type")
@@ -941,7 +941,7 @@ class PlaybackEngine(
                     title.isNotEmpty() && lang.isNotEmpty() -> "$title ($lang)"
                     title.isNotEmpty() -> title
                     lang.isNotEmpty() -> lang
-                    else -> "字幕轨道"
+                    else -> "Subtitle Track"
                 }
                 
                 tracks.add(Triple(id, name, id == currentTrackId))

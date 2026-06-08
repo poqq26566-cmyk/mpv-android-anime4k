@@ -374,7 +374,7 @@ class PlayerDialogManager(
                     // 转换为对话框所需格式: Triple(id, displayName, isSelected)
                     vmTracks.map { track ->
                         val displayName = buildString {
-                            append("音轨${track.id}")
+                            append("Track ${track.id}")
                             track.lang?.let { append(" ($it)") }
                             track.title?.let { append(" - $it") }
                             track.codec?.let { append(" [$it]") }
@@ -911,7 +911,7 @@ class PlayerDialogManager(
         if (hasChapters) {
             items.add("Chapters")
         }
-        items.addAll(listOf("截图", "音轨", "解码", "听视频", "片头片尾", "音频均衡器", autoRotateText))
+        items.addAll(listOf("Screenshot", "Audio Track", "Decoder", "Audio Only", "Intro/Outro Skip", "Audio Equalizer", autoRotateText))
         
         // 根据屏幕方向决定对齐方式：竖屏靠右对齐，横屏居中
         val configuration = activity.resources.configuration
@@ -986,7 +986,7 @@ class PlayerDialogManager(
                         Log.e(TAG, "Failed to sync danmaku on chapter jump", e)
                     }
 
-                    DialogUtils.showToastShort(activity, "已跳转到: ${chapters[position].first}")
+                    DialogUtils.showToastShort(activity, "Jumped to: ${chapters[position].first}")
                 }
             )
         } catch (e: Exception) {

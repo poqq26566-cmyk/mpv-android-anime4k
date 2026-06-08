@@ -83,10 +83,10 @@ internal fun VideoPlayerActivity.autoFindAndLoadDanmaku(videoUri: android.net.Ur
                 runOnUiThread {
                     // 获取实际加载的弹幕文件名
                     val danmakuPath = danmakuManager.getCurrentDanmakuPath()
-                    val fileName = danmakuPath?.substringAfterLast("/") ?: "弹幕文件"
+                    val fileName = danmakuPath?.substringAfterLast("/") ?: "danmaku file"
 
                     // 显示加载成功提示，提醒用户需要手动显示
-                    DialogUtils.showToastShort(this, "已自动加载弹幕: $fileName")
+                    DialogUtils.showToastShort(this, "Auto-loaded danmaku: $fileName")
 
                     // 根据实际的 trackSelected 状态更新Compose弹幕按钮
                     val isTrackSelected = danmakuManager.getTrackSelected()
@@ -163,7 +163,7 @@ internal fun VideoPlayerActivity.loadNetworkDanmaku(episodeId: Int, animeTitle: 
 
                         DialogUtils.showToastShort(
                             this@loadNetworkDanmaku,
-                            "弹幕加载成功: $animeTitle - $episodeTitle"
+                            "Danmaku loaded: $animeTitle - $episodeTitle"
                         )
 
                         // 更新历史记录
@@ -183,7 +183,7 @@ internal fun VideoPlayerActivity.loadNetworkDanmaku(episodeId: Int, animeTitle: 
                 onFailure = { e ->
                     DialogUtils.showToastLong(
                         this@loadNetworkDanmaku,
-                        "弹幕加载失败: ${e.message}"
+                        "Danmaku loading failed: ${e.message}"
                     )
                 }
             )
@@ -201,12 +201,12 @@ internal fun VideoPlayerActivity.showMatchSelectionDialog(results: List<com.fam4
     val items = results.map { "[${it.serverName}] ${it.matchInfo.animeTitle} - ${it.matchInfo.episodeTitle}" }.toTypedArray()
 
     androidx.appcompat.app.AlertDialog.Builder(this)
-        .setTitle("选择匹配结果")
+        .setTitle("Select Match")
         .setItems(items) { dialog, which ->
             val result = results[which]
             loadNetworkDanmaku(result.matchInfo.episodeId, result.matchInfo.animeTitle, result.matchInfo.episodeTitle, result.serverUrl)
             dialog.dismiss()
         }
-        .setNegativeButton("取消", null)
+        .setNegativeButton("Cancel", null)
         .show()
 }

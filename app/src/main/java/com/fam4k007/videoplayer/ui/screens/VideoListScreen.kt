@@ -125,7 +125,7 @@ fun VideoListScreen(
                         IconButton(onClick = onNavigateBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "返回"
+                                contentDescription = "Back"
                             )
                         }
                     },
@@ -667,7 +667,7 @@ private fun SearchTopBar(
             IconButton(onClick = onCloseSearch) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "返回"
+                    contentDescription = "Back"
                 )
             }
         },

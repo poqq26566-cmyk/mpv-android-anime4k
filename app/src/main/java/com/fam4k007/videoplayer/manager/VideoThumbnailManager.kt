@@ -45,7 +45,7 @@ class VideoThumbnailManager(context: Context) {
         if (isInitialized.get() && currentVideoUri == uri) return
         isLocal = !isWebDav && (uri.scheme == "file" || uri.scheme == "content")
         if (!isLocal) {
-            Logger.d(TAG, "非本地视频，跳过缩略图")
+            Logger.d(TAG, "Non-local video, skip thumbnails")
             return
         }
         releaseRetriever()
@@ -62,9 +62,9 @@ class VideoThumbnailManager(context: Context) {
             try {
                 retriever?.release()
                 retriever = MediaMetadataRetriever().apply { setDataSource(context, uri) }
-                Logger.d(TAG, "MediaMetadataRetriever 初始化成功")
+                Logger.d(TAG, "MediaMetadataRetriever initialized successfully")
             } catch (e: Exception) {
-                Logger.w(TAG, "MediaMetadataRetriever 初始化失败", e)
+                Logger.w(TAG, "MediaMetadataRetriever initialization failed", e)
                 retriever = null
             }
         }
@@ -87,7 +87,7 @@ class VideoThumbnailManager(context: Context) {
                 val frame = ret.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
                 if (frame != null) scaleBitmap(frame) else null
             } catch (e: Exception) {
-                Logger.w(TAG, "提取帧失败 @ ${positionSec}s", e)
+                Logger.w(TAG, "Frame extraction failed @ ${positionSec}s", e)
                 null
             }
         }

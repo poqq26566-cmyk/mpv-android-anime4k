@@ -56,7 +56,7 @@ fun WebDavAccountListScreen(
                 title = { Text("WebDAV Accounts", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -116,8 +116,8 @@ fun WebDavAccountListScreen(
             onDismissRequest = { viewModel.cancelDeleteAccount() },
             shape = RoundedCornerShape(28.dp),
             containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("删除账户") },
-            text = { Text("确定要删除账户 \"${deleteAccount.displayName.orEmpty()}\" 吗？") },
+            title = { Text("Delete Account") },
+            text = { Text("Are you sure you want to delete account \"${deleteAccount.displayName.orEmpty()}\" ?") },
             confirmButton = {
                 TextButton(onClick = { viewModel.confirmDeleteAccount() }) {
                     Text("Delete", color = MaterialTheme.colorScheme.error)
@@ -222,7 +222,7 @@ private fun WebDavAccountCard(
                 if (!account.isAnonymous && account.account.orEmpty().isNotEmpty()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "账号: ${account.account.orEmpty()}",
+                        text = "Account: ${account.account.orEmpty()}",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -233,14 +233,14 @@ private fun WebDavAccountCard(
             IconButton(onClick = onEditClick) {
                 Icon(
                     imageVector = Icons.Default.Edit,
-                    contentDescription = "编辑",
+                    contentDescription = "Edit",
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
             IconButton(onClick = onDeleteClick) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "删除",
+                    contentDescription = "Delete",
                     tint = MaterialTheme.colorScheme.error
                 )
             }
@@ -472,12 +472,12 @@ fun WebDavBrowserScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     },
                     actions = {
                         IconButton(onClick = { viewModel.showSortDialog() }) {
-                            Icon(Icons.Default.Sort, contentDescription = "排序")
+                            Icon(Icons.Default.Sort, contentDescription = "Sort")
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -550,7 +550,7 @@ fun WebDavBrowserScreen(
                             onClick = { viewModel.loadFiles(state.currentPath) },
                             shape = RoundedCornerShape(20.dp)
                         ) {
-                            Text("重试")
+                            Text("Retry")
                         }
                     }
                 }
@@ -569,7 +569,7 @@ fun WebDavBrowserScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "此文件夹为空",
+                            text = "This folder is empty",
                             fontSize = 16.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -596,7 +596,7 @@ fun WebDavBrowserScreen(
                                     } else {
                                         android.widget.Toast.makeText(
                                             context,
-                                            "不支持的文件类型",
+                                            "Unsupported file type",
                                             android.widget.Toast.LENGTH_SHORT
                                         ).show()
                                     }
@@ -632,14 +632,14 @@ private fun WebDavSortDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(28.dp),
         containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text("排序方式") },
+        title = { Text("Sort By") },
         text = {
             Column {
                 val sortOptions = listOf(
-                    0 to "名称 (A-Z)",
-                    1 to "名称 (Z-A)",
-                    2 to "时间 (新到旧)",
-                    3 to "时间 (旧到新)"
+                    0 to "Name (A-Z)",
+                    1 to "Name (Z-A)",
+                    2 to "Date (Newest first)",
+                    3 to "Date (Oldest first)"
                 )
                 sortOptions.forEach { (type, label) ->
                     Row(
@@ -661,7 +661,7 @@ private fun WebDavSortDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("关闭")
+                Text("Close")
             }
         }
     )
@@ -708,7 +708,7 @@ private fun WebDavFileCard(
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = file.name.ifEmpty { "(无名称)" },
+                    text = file.name.ifEmpty { "(No name)" },
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -721,7 +721,7 @@ private fun WebDavFileCard(
                 Spacer(modifier = Modifier.height(4.dp))
                 if (file.isDirectory) {
                     Text(
-                        text = "文件夹",
+                        text = "Folder",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

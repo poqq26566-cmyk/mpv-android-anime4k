@@ -1,4 +1,4 @@
-﻿package com.fam4k007.videoplayer
+package com.fam4k007.videoplayer
 
 import android.content.ContentValues
 import android.content.Context
@@ -741,7 +741,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                 
                 val enabledServers = preferencesManager.getEnabledDanmakuServers()
                 if (enabledServers.isEmpty()) {
-                    DialogUtils.showToastLong(this@VideoPlayerActivity, "没有启用的弹幕服务器")
+                    DialogUtils.showToastLong(this@VideoPlayerActivity, "No danmaku servers enabled")
                     return@launch
                 }
                 
@@ -787,7 +787,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                 }
                 
                 if (allMatchResults.isEmpty()) {
-                    DialogUtils.showToastLong(this@VideoPlayerActivity, "未找到匹配的弹幕")
+                    DialogUtils.showToastLong(this@VideoPlayerActivity, "No matching danmaku found")
                     return@launch
                 }
                 
@@ -891,7 +891,7 @@ class VideoPlayerActivity : AppCompatActivity(),
 
     override fun onBackgroundPlayback() {
         if (!::playbackEngine.isInitialized || viewModel.paused.value == true) {
-            DialogUtils.showToastShort(this, "请先开始播放视频")
+            DialogUtils.showToastShort(this, "Please start video playback first")
             return
         }
         
@@ -923,7 +923,7 @@ class VideoPlayerActivity : AppCompatActivity(),
         BackgroundPlaybackService.createNotificationChannel(this)
         try {
             startForegroundService(Intent(this, BackgroundPlaybackService::class.java).apply {
-                putExtra("media_title", viewModel.videoTitle.value.ifBlank { "听视频" })
+                putExtra("media_title", viewModel.videoTitle.value.ifBlank { "Audio Only" })
             })
             Log.d(TAG, "Service started")
         } catch (e: Exception) {

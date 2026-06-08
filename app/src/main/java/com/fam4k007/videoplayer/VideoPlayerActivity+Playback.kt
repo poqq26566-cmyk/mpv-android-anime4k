@@ -157,7 +157,7 @@ internal fun VideoPlayerActivity.loadResolvedRemoteVideo(
                 val suggestion = RemotePlaybackResolver.buildFailureSuggestion(result.reason)
                 DialogUtils.showToastLong(
                     this@loadResolvedRemoteVideo,
-                    "${result.message}，继续尝试直接播放\n$suggestion"
+                    "${result.message}, trying direct playback\n$suggestion"
                 )
                 playbackEngine.loadRemote(result.request, position)
             }
@@ -346,7 +346,7 @@ internal fun VideoPlayerActivity.resolveVideoTitle(uri: Uri): String {
             ?.substringBefore("?")
             ?.takeIf { it.isNotBlank() }
             ?.let { Uri.decode(it) }
-        return remoteName ?: uri.host ?: "在线视频"
+        return remoteName ?: uri.host ?: "Online Video"
     }
 
     return try {
@@ -357,15 +357,15 @@ internal fun VideoPlayerActivity.resolveVideoTitle(uri: Uri): String {
                 if (nameIndex >= 0) {
                     it.getString(nameIndex)
                 } else {
-                    uri.lastPathSegment ?: "未知文件"
+                    uri.lastPathSegment ?: "Unknown File"
                 }
             } else {
-                uri.lastPathSegment ?: "未知文件"
+                uri.lastPathSegment ?: "Unknown File"
             }
-        } ?: uri.lastPathSegment ?: "未知文件"
+        } ?: uri.lastPathSegment ?: "Unknown File"
     } catch (e: Exception) {
         Logger.w(TAG, "Failed to resolve file name from uri: $uri", e)
-        uri.lastPathSegment ?: "未知文件"
+        uri.lastPathSegment ?: "Unknown File"
     }
 }
 

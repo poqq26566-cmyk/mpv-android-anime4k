@@ -306,13 +306,13 @@ fun AppNavGraph(
                         val intent = Intent(Intent.ACTION_SENDTO).apply {
                             data = android.net.Uri.parse("mailto:$email")
                             putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
-                            putExtra(Intent.EXTRA_SUBJECT, "小喵player使用反馈")
+                            putExtra(Intent.EXTRA_SUBJECT, "Meow Player Feedback")
                         }
                         context.startActivity(intent)
                     } catch (e: Exception) {
                         android.widget.Toast.makeText(
                             context,
-                            "未找到可用的邮件应用",
+                            "No email app found",
                             android.widget.Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -509,7 +509,7 @@ fun AppNavGraph(
                         context.contentResolver.takePersistableUriPermission(uri, flags)
                         viewModel.setFolderUri(uri)
                     } catch (e: Exception) {
-                        Toast.makeText(context, "设置失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Settings failed: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 },
                 onSearchOptionsChanged = { options -> viewModel.updateSearchOptions(options) },
