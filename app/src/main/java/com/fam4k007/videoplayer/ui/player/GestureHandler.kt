@@ -16,6 +16,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 // 水平滑动 seek 灵敏度：每滑动 1px ≈ 0.05 秒（与老 GestureHandler 保持一致）
@@ -41,6 +42,8 @@ fun GestureHandler(
     val doubleTapSeekSeconds by viewModel.doubleTapSeekSeconds.collectAsState()
     val doubleTapMode by viewModel.doubleTapMode.collectAsState()
     val duration by viewModel.duration.collectAsState()
+
+    val longPressSpeed by viewModel.longPressSpeed.collectAsState()
 
     // 双击检测状态
     var tapCount by remember { mutableStateOf(0) }
@@ -118,10 +121,19 @@ fun GestureHandler(
                     // 长按检测 Job（500ms 未移动则触发长按）
                     var longPressJob: Job? = null
                     var isLongPress = false
+                    // 长按动态调速状态
+                    var dynamicSpeedStartX = 0f
+                    var dynamicSpeedStartValue = longPressSpeed
+                    var lastAppliedSpeed = longPressSpeed
+                    val speedPresets = viewModel.dynamicSpeedPresets
+                    
                     longPressJob = coroutineScope.launch {
                         delay(500L)
                         if (!isDrag) {
                             isLongPress = true
+                            dynamicSpeedStartX = downPosition.x
+                            dynamicSpeedStartValue = longPressSpeed
+                            lastAppliedSpeed = longPressSpeed
                             viewModel.startLongPressSpeed()
                             Logger.d("GestureHandler", "Long press started")
                         }
@@ -144,9 +156,27 @@ fun GestureHandler(
                             }
                             isDrag = true
 
-                            // 【冲突检测】长按状态下忽略所有垂直/水平滑动，仅允许手指抬起结束长按
+                            // 【冲突检测】长按状态下支持水平滑动调速
                             if (isLongPress) {
-                                // 继续等待手指抬起，不做任何滑动处理
+                                // 长按期间水平滑动：动态调速
+                                val deltaX = pointer.position.x - dynamicSpeedStartX
+                                val screenWidth = size.width.toFloat()
+                                val presetsRange = speedPresets.size - 1
+                                val indexDelta = (deltaX / screenWidth) * presetsRange * 3.5f
+                                
+                                val startIndex = speedPresets.indexOfFirst {
+                                    abs(it - dynamicSpeedStartValue) < 0.01f
+                                }.takeIf { it >= 0 } ?: speedPresets.indexOfFirst { it >= dynamicSpeedStartValue } ?: 4
+                                
+                                val newIndex = (startIndex + indexDelta.roundToInt()).coerceIn(0, speedPresets.size - 1)
+                                val newSpeed = speedPresets[newIndex]
+                                
+                                if (abs(lastAppliedSpeed - newSpeed) > 0.01f) {
+                                    lastAppliedSpeed = newSpeed
+                                    viewModel.updateDynamicSpeed(newSpeed)
+                                    Logger.d("GestureHandler", "Dynamic speed: ${newSpeed}x")
+                                }
+                                pointer.consume()
                             } else {
                                 // 首次确定手势方向
                                 if (!isVerticalGesture && !isHorizontalGesture) {

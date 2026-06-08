@@ -327,6 +327,13 @@ class PlayerViewModel(
     private val _isLongPressing = MutableStateFlow(false)
     val isLongPressing: StateFlow<Boolean> = _isLongPressing.asStateFlow()
 
+    // 长按动态调速状态（true = 长按期间正在左右滑动调速）
+    private val _isDynamicSpeedActive = MutableStateFlow(false)
+    val isDynamicSpeedActive: StateFlow<Boolean> = _isDynamicSpeedActive.asStateFlow()
+
+    // 长按动态调速的速度档位预设
+    val dynamicSpeedPresets = listOf(0.25f, 0.5f, 1.0f, 1.5f, 2.0f, 2.5f, 3.0f, 4.0f)
+
     // 滑动 Seek 预览（null=未在滑动，有值=正在滑动中）
     data class SwipeSeekPreview(val targetSeconds: Int, val deltaSeconds: Int)
     private val _swipeSeekPreview = MutableStateFlow<SwipeSeekPreview?>(null)
@@ -1478,7 +1485,16 @@ class PlayerViewModel(
         saveSpeedBeforeLongPress(_speed.value.toDouble())
         setSpeed(_longPressSpeed.value.toDouble())
         _isLongPressing.value = true
+        _isDynamicSpeedActive.value = false
         cancelAutoHideTimer()
+    }
+
+    /**
+     * 长按期间动态调速（左右滑动切换速度档位）
+     */
+    fun updateDynamicSpeed(newSpeed: Float) {
+        _isDynamicSpeedActive.value = true
+        setSpeed(newSpeed.toDouble())
     }
 
     /**
@@ -1487,6 +1503,7 @@ class PlayerViewModel(
     fun endLongPressSpeed() {
         restoreSpeedAfterLongPress()
         _isLongPressing.value = false
+        _isDynamicSpeedActive.value = false
         resetAutoHideTimer()
     }
 

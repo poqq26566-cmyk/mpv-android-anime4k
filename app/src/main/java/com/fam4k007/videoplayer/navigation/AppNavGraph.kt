@@ -61,6 +61,7 @@ import com.fam4k007.videoplayer.ui.screens.PlaybackSettingsScreen
 import com.fam4k007.videoplayer.ui.screens.FolderBlacklistScreen
 import com.fam4k007.videoplayer.ui.screens.SettingsScreen
 import com.fam4k007.videoplayer.ui.screens.MediaSettingsScreen
+import com.fam4k007.videoplayer.ui.screens.DanmakuServerScreen
 import com.fam4k007.videoplayer.ui.screens.DeviceInfoScreen
 import com.fam4k007.videoplayer.ui.screens.SubtitleSearchScreen
 import com.fam4k007.videoplayer.ui.webdav.WebDavAccountListScreen
@@ -162,7 +163,16 @@ fun AppNavGraph(
                 },
                 onNavigateToDeviceInfo = {
                     navController.navigate(AppScreen.DeviceInfo)
+                },
+                onNavigateToDanmakuServer = {
+                    navController.navigate(AppScreen.DanmakuServerManagement)
                 }
+            )
+        }
+
+        composable<AppScreen.DanmakuServerManagement> {
+            DanmakuServerScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

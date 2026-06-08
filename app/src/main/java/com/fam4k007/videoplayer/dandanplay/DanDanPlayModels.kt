@@ -104,3 +104,10 @@ data class MatchInfo(
     @SerializedName("shift")
     val shift: Double = 0.0
 )
+
+// 带服务器来源信息的匹配结果
+data class ServerMatchResult(
+    val matchInfo: MatchInfo,
+    val serverName: String,
+    val serverUrl: String?
+)

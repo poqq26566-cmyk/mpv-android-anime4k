@@ -28,6 +28,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import kotlin.math.abs
 import android.content.res.Configuration
 import android.os.BatteryManager
 import com.fam4k007.videoplayer.R
@@ -1076,14 +1077,27 @@ fun UnlockButtons(
 /**
  * 长按倍速提示覆盖层
  * 长按时顶部居中显示"正在X.Xx倍速播放"
+ * 左右滑动调速时显示速度档位选择条
  */
 @Composable
 fun LongPressSpeedOverlay(
     viewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
+    val preferencesManager: com.fam4k007.videoplayer.preferences.PreferencesManager = org.koin.compose.koinInject()
     val isLongPressing by viewModel.isLongPressing.collectAsState()
+    val isDynamicSpeedActive by viewModel.isDynamicSpeedActive.collectAsState()
     val speed by viewModel.speed.collectAsState()
+    val speedPresets = viewModel.dynamicSpeedPresets
+    val showHint = remember { mutableStateOf(!preferencesManager.hasDynamicSpeedBeenUsed()) }
+
+    // 用户首次使用动态调速后，标记已掌握并隐藏提示
+    LaunchedEffect(isDynamicSpeedActive) {
+        if (isDynamicSpeedActive && showHint.value) {
+            preferencesManager.setDynamicSpeedUsed()
+            showHint.value = false
+        }
+    }
 
     androidx.compose.animation.AnimatedVisibility(
         visible = isLongPressing,
@@ -1095,17 +1109,65 @@ fun LongPressSpeedOverlay(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.TopCenter
         ) {
-            Text(
-                text = "Playing at ${String.format("%.1f", speed)}x",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(top = 15.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.Black.copy(alpha = 0.4f))
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(top = 15.dp)
+            ) {
+                // 速度文字提示
+                Text(
+                    text = if (isDynamicSpeedActive)
+                        "正在${String.format("%.2f", speed)}倍速播放"
+                    else
+                        "正在${String.format("%.1f", speed)}倍速播放",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                )
+                
+                // 未掌握动态调速且非动态调速时显示滑动提示
+                if (showHint.value && !isDynamicSpeedActive) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "可通过左右滑动，临时调节长按播放的倍数",
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.Black.copy(alpha = 0.5f))
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                    )
+                }
+                
+                // 动态调速时显示速度档位条
+                if (isDynamicSpeedActive) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.Black.copy(alpha = 0.5f))
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        speedPresets.forEach { preset ->
+                            val isSelected = abs(speed.toFloat() - preset) < 0.01f
+                            Text(
+                                text = if (preset == preset.toInt().toFloat()) 
+                                    "${preset.toInt()}x" 
+                                else 
+                                    "${String.format("%.1f", preset)}x",
+                                color = if (isSelected) Color(0xFF4FC3F7) else Color.White.copy(alpha = 0.6f),
+                                fontSize = if (isSelected) 14.sp else 12.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

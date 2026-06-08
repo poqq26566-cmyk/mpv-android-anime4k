@@ -3,6 +3,9 @@ package com.fam4k007.videoplayer.preferences
 import android.content.Context
 import android.content.SharedPreferences
 import com.fam4k007.videoplayer.AppConstants
+import com.fam4k007.videoplayer.dandanplay.DanmakuServer
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
  * 统一的设置管理器（单例模式）
@@ -62,6 +65,17 @@ class PreferencesManager private constructor(context: Context) {
      */
     fun setLongPressSpeed(speed: Float) {
         sharedPreferences.edit().putFloat(AppConstants.Preferences.LONG_PRESS_SPEED, speed).apply()
+    }
+    
+    /**
+     * 用户是否已使用过长按动态调速（左右滑动）
+     */
+    fun hasDynamicSpeedBeenUsed(): Boolean {
+        return sharedPreferences.getBoolean("dynamic_speed_used", false)
+    }
+    
+    fun setDynamicSpeedUsed() {
+        sharedPreferences.edit().putBoolean("dynamic_speed_used", true).apply()
     }
     
     // ==================== 播放倍速记忆 ====================
@@ -1255,6 +1269,105 @@ class PreferencesManager private constructor(context: Context) {
     
     fun setAutoLoadDanmakuEnabled(enabled: Boolean) {
         sharedPreferences.edit().putBoolean("auto_load_danmaku_enabled", enabled).apply()
+    }
+    
+    /**
+     * 自定义弹幕服务器地址（旧接口，保留兼容）
+     * 为空时使用默认弹弹Play服务器
+     */
+    fun getDanmakuServerUrl(): String {
+        return sharedPreferences.getString("dandanplay_server_url", "") ?: ""
+    }
+    
+    fun setDanmakuServerUrl(url: String) {
+        sharedPreferences.edit().putString("dandanplay_server_url", url.trim()).apply()
+    }
+    
+    // ==================== 弹幕服务器列表管理 ====================
+    
+    private val json = Json { ignoreUnknownKeys = true }
+    
+    /**
+     * 获取弹幕服务器列表
+     * 如果列表为空，自动初始化默认服务器
+     * 同时迁移旧的单服务器设置
+     */
+    fun getDanmakuServers(): List<DanmakuServer> {
+        val jsonStr = sharedPreferences.getString("dandanplay_servers", null)
+        if (jsonStr != null) {
+            return try {
+                json.decodeFromString<List<DanmakuServer>>(jsonStr)
+            } catch (e: Exception) {
+                listOf(DanmakuServer.createDefault())
+            }
+        }
+        
+        // 首次使用：初始化并迁移旧设置
+        val servers = mutableListOf(DanmakuServer.createDefault())
+        val oldUrl = getDanmakuServerUrl()
+        if (oldUrl.isNotBlank()) {
+            servers.add(
+                DanmakuServer(
+                    id = java.util.UUID.randomUUID().toString(),
+                    name = "自定义服务器",
+                    url = oldUrl,
+                    isEnabled = true,
+                    isDefault = false
+                )
+            )
+        }
+        saveDanmakuServers(servers)
+        return servers
+    }
+    
+    /**
+     * 保存弹幕服务器列表
+     */
+    fun saveDanmakuServers(servers: List<DanmakuServer>) {
+        val jsonStr = json.encodeToString(servers)
+        sharedPreferences.edit().putString("dandanplay_servers", jsonStr).apply()
+    }
+    
+    /**
+     * 获取所有已启用的弹幕服务器
+     */
+    fun getEnabledDanmakuServers(): List<DanmakuServer> {
+        return getDanmakuServers().filter { it.isEnabled }
+    }
+    
+    /**
+     * 添加弹幕服务器
+     */
+    fun addDanmakuServer(name: String, url: String) {
+        val servers = getDanmakuServers().toMutableList()
+        servers.add(
+            DanmakuServer(
+                id = java.util.UUID.randomUUID().toString(),
+                name = name.trim(),
+                url = url.trim().trimEnd('/'),
+                isEnabled = true,
+                isDefault = false
+            )
+        )
+        saveDanmakuServers(servers)
+    }
+    
+    /**
+     * 删除弹幕服务器（不允许删除默认服务器）
+     */
+    fun removeDanmakuServer(id: String) {
+        val servers = getDanmakuServers().filter { it.id != id || it.isDefault }
+        saveDanmakuServers(servers)
+    }
+    
+    /**
+     * 切换弹幕服务器启用状态
+     */
+    fun toggleDanmakuServer(id: String, enabled: Boolean) {
+        val servers = getDanmakuServers().map {
+            if (it.id == id) it.copy(isEnabled = enabled) else it
+        }
+        saveDanmakuServers(servers)
     }
     
     /**
