@@ -100,6 +100,10 @@ sealed interface AppScreen {
     @Serializable
     data class TVBrowser(val initialUrl: String = "") : AppScreen
 
+    /** TVBox 搜索页 */
+    @Serializable
+    data object TVBoxSearch : AppScreen
+
     /** 媒体信息页 */
     @Serializable
     data class MediaInfo(val videoUri: String, val videoName: String) : AppScreen

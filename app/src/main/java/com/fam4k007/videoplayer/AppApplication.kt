@@ -1,12 +1,14 @@
 package com.fam4k007.videoplayer
 
 import android.app.Application
+import android.content.Context
 import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
 import com.fam4k007.videoplayer.database.VideoDatabase
 import com.fam4k007.videoplayer.di.appModules
 import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.utils.CrashHandler
+import com.github.catvod.Init
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,6 +24,12 @@ import org.koin.core.logger.Level
 class AppApplication : Application() {
     
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(base)
+        // 在 Application 入口设置全局 Context，供 TVBox JAR 的 native 解密库使用
+        Init.set(base)
+    }
     
     override fun onCreate() {
         super.onCreate()

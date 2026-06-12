@@ -170,6 +170,7 @@ dependencies {
     // Network
     implementation(libs.okhttp)
     implementation(libs.jsoup)
+    implementation(libs.nanohttpd)
 
     // Database
     implementation(libs.bundles.room)

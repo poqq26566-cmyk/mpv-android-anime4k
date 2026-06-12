@@ -49,6 +49,7 @@ import com.fam4k007.videoplayer.ui.screens.DownloadManagerScreen
 import com.fam4k007.videoplayer.ui.screens.DownloadScreen
 import com.fam4k007.videoplayer.ui.screens.FolderBrowserScreen
 import com.fam4k007.videoplayer.ui.screens.TVBrowserScreen
+import com.fam4k007.videoplayer.tvbox.ui.TvBoxSearchContainerScreen
 import com.fam4k007.videoplayer.ui.screens.VideoListScreen
 import com.fam4k007.videoplayer.ui.screens.BiliBiliLoginScreen
 import com.fam4k007.videoplayer.ui.screens.HomeScreen
@@ -129,6 +130,9 @@ fun AppNavGraph(
                 },
                 onNavigateToBiliBiliLogin = {
                     navController.navigate(AppScreen.BiliBiliLogin)
+                },
+                onNavigateToTVBoxSearch = {
+                    navController.navigate(AppScreen.TVBoxSearch)
                 }
             )
         }
@@ -566,6 +570,14 @@ fun AppNavGraph(
                         navController.popBackStack()
                     }
                 }
+            )
+        }
+
+        composable<AppScreen.TVBoxSearch> {
+            val viewModel = koinViewModel<com.fam4k007.videoplayer.tvbox.viewmodel.TvBoxSearchViewModel>()
+            TvBoxSearchContainerScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
