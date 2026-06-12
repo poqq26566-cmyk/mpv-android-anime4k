@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import androidx.annotation.NonNull;
 
 import com.github.catvod.crawler.Spider;
+import com.github.catvod.crawler.SpiderNull;
 
 import java.lang.reflect.Method;
 import java.net.IDN;
