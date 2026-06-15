@@ -164,6 +164,22 @@ fun PlaybackSettingsScreen(
                             onClick = { showDoubleTapSeekDialog = true }
                         )
                     }
+                    SliderItem(
+                        title = "亮度灵敏度",
+                        value = settings.brightnessSensitivity,
+                        valueRange = 0.5f..5.0f,
+                        steps = 8,
+                        onValueChange = { viewModel.setBrightnessSensitivity(Math.round(it * 10f) / 10f) },
+                        valueFormatter = { String.format("%.1fx", it) }
+                    )
+                    SliderItem(
+                        title = "音量灵敏度",
+                        value = settings.volumeSensitivity,
+                        valueRange = 50f..300f,
+                        steps = 24,
+                        onValueChange = { viewModel.setVolumeSensitivity(Math.round(it).toFloat()) },
+                        valueFormatter = { "${Math.round(it)}" }
+                    )
                 }
             }
 

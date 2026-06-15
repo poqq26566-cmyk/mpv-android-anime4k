@@ -507,6 +507,22 @@ class PlayerRepository(
         preferencesManager.setLongPressSpeed(speed)
     }
 
+    fun getBrightnessSensitivity(): Float {
+        return preferencesManager.getBrightnessSensitivity()
+    }
+
+    fun setBrightnessSensitivity(value: Float) {
+        preferencesManager.setBrightnessSensitivity(value)
+    }
+
+    fun getVolumeSensitivity(): Float {
+        return preferencesManager.getVolumeSensitivity()
+    }
+
+    fun setVolumeSensitivity(value: Float) {
+        preferencesManager.setVolumeSensitivity(value)
+    }
+
     /**
      * 获取进度条样式
      */
