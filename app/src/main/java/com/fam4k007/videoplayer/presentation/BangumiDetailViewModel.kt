@@ -88,19 +88,21 @@ class BangumiDetailViewModel(
                 bvid = episode.bvid,
                 cid = episode.cid,
                 epId = episode.ep_id,
-                seasonId = currentSeasonId,
-                fnval = 0  // FLV格式，音视频合并
+                seasonId = currentSeasonId
             ).fold(
                 onSuccess = { playUrlResult ->
                     val videoUrl = bangumiRepository.extractVideoUrl(playUrlResult)
+                    val audioUrl = bangumiRepository.extractAudioUrl(playUrlResult)
+                    
                     if (videoUrl.isNullOrEmpty()) {
                         Toast.makeText(context, "获取播放地址失败", Toast.LENGTH_SHORT).show()
                         return@fold
                     }
                     
-                    // 获取画质信息
-                    val quality = playUrlResult.quality
-                    val qualityName = when (quality) {
+                    // 获取实际画质信息（优先从DASH视频流中取真实画质ID，而非API响应的qn字段）
+                    val actualQuality = playUrlResult.dash?.video?.firstOrNull()?.id
+                        ?: playUrlResult.quality
+                    val qualityName = when (actualQuality) {
                         127 -> "8K超高清"
                         126 -> "杜比视界"
                         125 -> "HDR真彩"
@@ -111,7 +113,7 @@ class BangumiDetailViewModel(
                         64 -> "720P高清"
                         32 -> "480P清晰"
                         16 -> "360P流畅"
-                        else -> "${quality}P"
+                        else -> "${actualQuality}P"
                     }
                     Toast.makeText(context, "画质: $qualityName", Toast.LENGTH_SHORT).show()
                     
@@ -129,7 +131,8 @@ class BangumiDetailViewModel(
                         title = title,
                         headers = requestHeaders,
                         sourcePageUrl = "https://www.bilibili.com",
-                        source = RemotePlaybackRequest.Source.BILIBILI
+                        source = RemotePlaybackRequest.Source.BILIBILI,
+                        audioUrl = audioUrl
                     )
                     RemotePlaybackLauncher.start(context, request)
                 },

@@ -73,11 +73,11 @@ class BangumiRepository(
      * @return 视频URL，可能是DASH或普通格式
      */
     fun extractVideoUrl(playUrlResult: PlayUrlResult): String? {
-        // 尝试DASH格式
-        playUrlResult.dash?.video?.firstOrNull()?.baseUrl?.let { return it }
-        
-        // 尝试普通格式
+        // 优先FLV格式（音视频合并，且在fnval=4048时也能返��1080P+）
         playUrlResult.durl?.firstOrNull()?.url?.let { return it }
+        
+        // 降级DASH格式（仅视频流，需单独处理音频）
+        playUrlResult.dash?.video?.firstOrNull()?.baseUrl?.let { return it }
         
         return null
     }

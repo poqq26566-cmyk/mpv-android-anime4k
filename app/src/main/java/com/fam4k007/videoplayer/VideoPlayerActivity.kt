@@ -385,7 +385,20 @@ class VideoPlayerActivity : AppCompatActivity(),
             mpvView.postDelayed({
                 com.fam4k007.videoplayer.utils.Logger.d(TAG, "Loading video after MPV init")
                 loadVideo()
-            }, 100) // 延迟 100ms 确保 MPV 完全就绪
+                // DASH格式：视频加载后动态添加外部音频轨
+                val audioUrl = intent.getStringExtra("audio_url")
+                if (!audioUrl.isNullOrEmpty()) {
+                    mpvView.postDelayed({
+                        try {
+                            MPVLib.command("audio-add", audioUrl)
+                            MPVLib.setPropertyString("vid", "auto")
+                            com.fam4k007.videoplayer.utils.Logger.d(TAG, "Added external audio: $audioUrl")
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Failed to add audio: ${e.message}")
+                        }
+                    }, 500) // 视频加载后尽快添加音频轨
+                }
+            }, 100)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize MPV", e)
             DialogUtils.showToastLong(this, "播放器初始化失败: ${e.message}\n\n如果问题持续存在，请重启应用")

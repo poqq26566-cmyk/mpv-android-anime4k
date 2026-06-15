@@ -91,25 +91,29 @@ data class Rating(
 )
 
 data class PgcStat(
-    @SerializedName("view") val view: Long = 0,
-    @SerializedName("danmaku") val danmaku: Long = 0,
-    @SerializedName("follow") val follow: Long = 0,
-    @SerializedName("likes") val likes: Long = 0
+    @SerializedName("views") val views: Long = 0,
+    @SerializedName("danmakus") val danmakus: Long = 0,
+    @SerializedName("favorites") val favorites: Long = 0,
+    @SerializedName("coins") val coins: Long = 0
 )
 
 data class Publish(
     @SerializedName("pub_time") val pubTime: String? = null,
+    @SerializedName("pub_date") val pubDate: String? = null,
     @SerializedName("pub_date_show") val pubDateShow: String? = null,
+    @SerializedName("pub_index") val pubIndex: String? = null,
+    @SerializedName("is_started") val isStarted: Int? = null,
+    @SerializedName("is_finish") val isFinish: Int? = null,
     @SerializedName("weekday") val weekday: Int? = null,
-    @SerializedName("time_from_show") val timeFromShow: String? = null,
-    @SerializedName("time_to_show") val timeToShow: String? = null
+    @SerializedName("time_from_show") val timeFromShow: String? = null
 )
 
 data class NewEp(
     val id: Int,
+    @SerializedName("title") val title: String?,
     @SerializedName("index_show") val indexShow: String?,
-    val cover: String?,
-    @SerializedName("long_title") val longTitle: String?
+    @SerializedName("long_title") val longTitle: String?,
+    val cover: String?
 )
 
 data class PgcEpisode(

@@ -138,6 +138,9 @@ private fun BangumiDetailContent(
     onEpisodeClick: (PgcEpisode) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var isReversed by remember { mutableStateOf(false) }
+    val displayEpisodes = if (isReversed) episodes.reversed() else episodes
+    
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -158,19 +161,31 @@ private fun BangumiDetailContent(
         // 集数列表 - 网格布局
         if (episodes.isNotEmpty()) {
             item {
-                Text(
-                    text = "选集",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "选集",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    TextButton(onClick = { isReversed = !isReversed }) {
+                        Text(
+                            text = if (isReversed) "正序" else "倒序",
+                            fontSize = 13.sp
+                        )
+                    }
+                }
             }
             
             item {
                 // 使用网格布局显示选集，居中对齐
                 val columns = 4
                 val spacing = 8.dp
-                val totalWidth = 72.dp * columns + spacing * (columns - 1)
                 
                 Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -179,17 +194,17 @@ private fun BangumiDetailContent(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(spacing)
                     ) {
-                        val rows = (episodes.size + columns - 1) / columns
+                        val rows = (displayEpisodes.size + columns - 1) / columns
                         for (row in 0 until rows) {
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(spacing)
                             ) {
                                 for (col in 0 until columns) {
                                     val index = row * columns + col
-                                    if (index < episodes.size) {
+                                    if (index < displayEpisodes.size) {
                                         EpisodeItem(
-                                            episode = episodes[index],
-                                            onClick = { onEpisodeClick(episodes[index]) }
+                                            episode = displayEpisodes[index],
+                                            onClick = { onEpisodeClick(displayEpisodes[index]) }
                                         )
                                     } else {
                                         // 占位
@@ -223,8 +238,7 @@ private fun BangumiHeader(seasonInfo: PgcInfoResult) {
     ) {
         // 封面和标题
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Top
+            modifier = Modifier.fillMaxWidth()
         ) {
             // 封面
             AsyncImage(
@@ -240,17 +254,19 @@ private fun BangumiHeader(seasonInfo: PgcInfoResult) {
                 contentScale = ContentScale.Crop
             )
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
-            // 标题和信息
+            // 标题和信息 - 顶对齐，底部用Spacer撑满封面高度
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 // 标题
                 Text(
                     text = seasonInfo.title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -258,51 +274,72 @@ private fun BangumiHeader(seasonInfo: PgcInfoResult) {
                 // 评分
                 seasonInfo.rating?.let { rating ->
                     Text(
-                        text = "评分: ${rating.score} (${rating.count}人)",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = "评分 ${rating.score} (${rating.count}人)",
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
 
-                // 统计信息
+                // 统计信息 - 各占一行
                 seasonInfo.stat?.let { stat ->
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "播放: ${formatNumber(stat.view)} 弹幕: ${formatNumber(stat.danmaku)} 追番: ${formatNumber(stat.follow)}",
+                        text = "播放 ${formatNumber(stat.views)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "弹幕 ${formatNumber(stat.danmakus)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "追番 ${formatNumber(stat.favorites)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                // 地区
-                seasonInfo.areas?.firstOrNull()?.let { area ->
-                    Spacer(modifier = Modifier.height(4.dp))
+                // 地区 + 状态
+                val areaText = seasonInfo.areas?.firstOrNull()?.let { "地区 ${it.name}" } ?: ""
+                val statusText = seasonInfo.publish?.let { publish ->
+                    val parts = mutableListOf<String>()
+                    // 完结状态
+                    when (publish.isFinish) {
+                        1 -> parts.add("已完结")
+                        0 -> parts.add("连载中")
+                    }
+                    // 更新时间（如"每周三更新"）
+                    publish.timeFromShow?.takeIf { it.isNotEmpty() }?.let { parts.add(it) }
+                    parts.joinToString(" · ")
+                } ?: ""
+                val fullText = listOfNotNull(
+                    if (areaText.isNotEmpty()) areaText else null,
+                    if (statusText.isNotEmpty()) statusText else null
+                ).joinToString(" · ")
+                if (fullText.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "地区: ${area.name}",
+                        text = fullText,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                // 更新信息
-                seasonInfo.publish?.let { publish ->
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "发布时间: ${publish.pubDateShow ?: ""}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // 最新集
+                // 最新集数
                 seasonInfo.new_ep?.let { newEp ->
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "最新: ${newEp.indexShow ?: ""}",
+                        text = "最新集数: ${newEp.title?.takeIf { it.isNotEmpty() } ?: newEp.indexShow ?: ""}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+
+                // 底部弹性间距（撑满封面高度）
+                Spacer(modifier = Modifier.weight(1f))
             }
         }
     }
