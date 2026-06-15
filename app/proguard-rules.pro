@@ -243,6 +243,13 @@
 -keep class com.fam4k007.videoplayer.presentation.BangumiDetailResult { *; }
 -keep class com.fam4k007.videoplayer.presentation.EpisodeItem { *; }
 
+# 保护番剧索引相关的 sealed class（Gson 和 StateFlow 需要）
+-keep class com.fam4k007.videoplayer.presentation.BangumiIndexUiState { *; }
+-keep class com.fam4k007.videoplayer.presentation.BangumiIndexUiState$** { *; }
+-keep class com.fam4k007.videoplayer.presentation.BangumiDetailUiState { *; }
+-keep class com.fam4k007.videoplayer.presentation.BangumiDetailUiState$** { *; }
+-keep class com.fam4k007.videoplayer.presentation.BangumiFilterState { *; }
+
 # 保护 BiliBiliLoginActivity 中的 sealed class
 -keep class com.fanchen.fam4k007.manager.compose.LoginUiState { *; }
 -keep class com.fanchen.fam4k007.manager.compose.LoginUiState$** { *; }

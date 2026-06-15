@@ -1,7 +1,8 @@
 package com.fam4k007.videoplayer.di
 
-import com.fam4k007.videoplayer.presentation.BiliBiliPlayViewModel
 import com.fam4k007.videoplayer.presentation.BilibiliViewModel
+import com.fam4k007.videoplayer.presentation.BangumiIndexViewModel
+import com.fam4k007.videoplayer.presentation.BangumiDetailViewModel
 import com.fam4k007.videoplayer.presentation.CacheManagementViewModel
 import com.fam4k007.videoplayer.presentation.LibraryViewModel
 import com.fam4k007.videoplayer.presentation.LogViewerViewModel
@@ -46,8 +47,11 @@ val presentationModule = module {
     // TV浏览器ViewModel
     viewModel { TVBrowserViewModel() }
     
-    // B站番剧播放ViewModel
-    viewModel { BiliBiliPlayViewModel(get()) }
+    // 番剧索引ViewModel
+    viewModel { BangumiIndexViewModel(get()) }
+    
+    // 番剧详情ViewModel
+    viewModel { BangumiDetailViewModel(get(), get()) }
 
     // WebDAV ViewModel
     viewModel { WebDavViewModel(get(), get()) }

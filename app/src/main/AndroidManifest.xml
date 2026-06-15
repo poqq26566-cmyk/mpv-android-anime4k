@@ -59,10 +59,6 @@
         <activity android:name=".AboutComposeActivity" />
         <activity android:name=".LicenseActivity" />
         <activity 
-            android:name=".BiliBiliPlayActivity"
-            android:exported="false"
-            android:theme="@style/Theme.VideoPlayer" />
-        <activity 
             android:name=".VideoBrowserComposeActivity"
             android:exported="false" />
         <activity 

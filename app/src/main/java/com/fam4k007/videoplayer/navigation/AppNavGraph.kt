@@ -43,7 +43,6 @@ import com.fam4k007.videoplayer.presentation.SubtitleSearchViewModel
 import com.fam4k007.videoplayer.repository.WebDavRepository
 import com.fam4k007.videoplayer.ui.screens.AboutScreen
 import com.fam4k007.videoplayer.ui.screens.BiliBiliDanmakuScreen
-import com.fam4k007.videoplayer.ui.screens.BiliBiliPlayScreen
 import com.fam4k007.videoplayer.ui.screens.CacheManagementScreen
 import com.fam4k007.videoplayer.ui.screens.DownloadManagerScreen
 import com.fam4k007.videoplayer.ui.screens.DownloadScreen
@@ -64,6 +63,8 @@ import com.fam4k007.videoplayer.ui.screens.MediaSettingsScreen
 import com.fam4k007.videoplayer.ui.screens.DanmakuServerScreen
 import com.fam4k007.videoplayer.ui.screens.DeviceInfoScreen
 import com.fam4k007.videoplayer.ui.screens.SubtitleSearchScreen
+import com.fam4k007.videoplayer.ui.screens.BangumiIndexScreen
+import com.fam4k007.videoplayer.ui.screens.BangumiDetailScreen
 import com.fam4k007.videoplayer.ui.webdav.WebDavAccountListScreen
 import com.fam4k007.videoplayer.ui.webdav.WebDavBrowserScreen
 import com.fam4k007.videoplayer.ui.viewmodels.BiliBiliDanmakuViewModel
@@ -123,7 +124,7 @@ fun AppNavGraph(
                     navController.navigate(AppScreen.VideoBrowser)
                 },
                 onNavigateToBiliBiliPlay = {
-                    navController.navigate(AppScreen.BiliBiliPlay)
+                    navController.navigate(AppScreen.BangumiIndex)
                 },
                 onNavigateToTVBrowser = {
                     navController.navigate(AppScreen.TVBrowser(initialUrl = ""))
@@ -520,18 +521,27 @@ fun AppNavGraph(
             )
         }
 
-        composable<AppScreen.BiliBiliPlay> {
-            BiliBiliPlayScreen(
+        composable<AppScreen.BiliBiliLogin> {
+            BiliBiliLoginScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<AppScreen.BangumiIndex> {
+            BangumiIndexScreen(
                 onBack = { navController.popBackStack() },
-                onNavigateToLogin = {
-                    navController.navigate(AppScreen.BiliBiliLogin)
+                onBangumiClick = { seasonId, isEpId ->
+                    navController.navigate(AppScreen.BangumiDetail(seasonId, isEpId))
                 }
             )
         }
 
-        composable<AppScreen.BiliBiliLogin> {
-            BiliBiliLoginScreen(
-                onNavigateBack = { navController.popBackStack() }
+        composable<AppScreen.BangumiDetail> { backStackEntry ->
+            val args = backStackEntry.toRoute<AppScreen.BangumiDetail>()
+            BangumiDetailScreen(
+                seasonId = args.seasonId,
+                isEpId = args.isEpId,
+                onBack = { navController.popBackStack() }
             )
         }
 
