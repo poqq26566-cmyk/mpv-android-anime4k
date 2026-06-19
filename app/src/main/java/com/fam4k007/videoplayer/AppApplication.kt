@@ -8,7 +8,6 @@ import com.fam4k007.videoplayer.database.VideoDatabase
 import com.fam4k007.videoplayer.di.appModules
 import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.utils.CrashHandler
-import com.github.catvod.Init
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,8 +26,6 @@ class AppApplication : Application() {
 
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)
-        // 在 Application 入口设置全局 Context，供 TVBox JAR 的 native 解密库使用
-        Init.set(base)
     }
     
     override fun onCreate() {

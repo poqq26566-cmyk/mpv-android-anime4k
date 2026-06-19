@@ -36,7 +36,6 @@ coroutines = "1.9.0"
 # Network
 okhttp = "4.12.0"
 jsoup = "1.18.1"
-nanohttpd = "2.3.1"
 
 # Database
 room = "2.6.1"
@@ -100,7 +99,6 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 # Network
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
-nanohttpd = { module = "org.nanohttpd:nanohttpd", version.ref = "nanohttpd" }
 
 # Database
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }

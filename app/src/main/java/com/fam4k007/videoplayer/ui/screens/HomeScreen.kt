@@ -69,7 +69,6 @@ fun HomeScreen(
     onNavigateToBiliBiliPlay: () -> Unit = {},
     onNavigateToTVBrowser: () -> Unit = {},
     onNavigateToBiliBiliLogin: () -> Unit = {},
-    onNavigateToTVBoxSearch: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val preferencesManager: PreferencesManager = koinInject()
@@ -157,10 +156,6 @@ fun HomeScreen(
             onNetworkLinkClick = {
                 isExpanded = false
                 showRemoteUrlDialog = true
-            },
-            onTVBoxSearchClick = {
-                isExpanded = false
-                onNavigateToTVBoxSearch()
             }
         )
 
@@ -534,8 +529,7 @@ fun ExpandableActionButton(
     onBiliBiliClick: () -> Unit,
     onWebDavClick: () -> Unit,
     onTVClick: () -> Unit,
-    onNetworkLinkClick: () -> Unit,
-    onTVBoxSearchClick: () -> Unit
+    onNetworkLinkClick: () -> Unit
 ) {
     var localIsExpanded by remember { mutableStateOf(isExpanded) }
     var showNetworkSubmenu by remember { mutableStateOf(false) }
@@ -602,15 +596,6 @@ fun ExpandableActionButton(
                                     onClick = {
                                         showNetworkSubmenu = false
                                         onTVClick()
-                                    }
-                                )
-                                
-                                ActionItem(
-                                    icon = Icons.Default.Search,
-                                    label = "TVBox",
-                                    onClick = {
-                                        showNetworkSubmenu = false
-                                        onTVBoxSearchClick()
                                     }
                                 )
                                 

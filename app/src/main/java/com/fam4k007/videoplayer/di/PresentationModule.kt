@@ -70,11 +70,4 @@ val presentationModule = module {
     
     // 媒体信息ViewModel
     viewModel { MediaInfoViewModel(get()) }
-
-    // TVBox 搜索 ViewModel
-    viewModel {
-        val context = androidContext()
-        val configManager = com.fam4k007.videoplayer.tvbox.config.TvBoxConfigManager(context)
-        com.fam4k007.videoplayer.tvbox.viewmodel.TvBoxSearchViewModel(configManager)
-    }
 }
