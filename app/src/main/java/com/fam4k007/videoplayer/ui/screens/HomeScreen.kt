@@ -75,12 +75,14 @@ fun HomeScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     var isExpanded by remember { mutableStateOf(false) }
     var showRemoteUrlDialog by remember { mutableStateOf(false) }
+    var resumeRefreshKey by remember { mutableLongStateOf(0L) }
     
     // 监听生命周期，返回时自动收起
     DisposableEffect(lifecycleOwner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
                 isExpanded = false // 返回时自动收起
+                resumeRefreshKey++   // 触发继续播放状态刷新
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -111,6 +113,7 @@ fun HomeScreen(
             // Logo 区域（顶部偏下）
             LogoSection(
                 historyManager = historyManager,
+                refreshKey = resumeRefreshKey,
                 onContinuePlay = { lastVideo ->
                     continueLastPlay(context, lastVideo)
                 }
@@ -218,10 +221,14 @@ fun TopBar(
 @Composable
 fun LogoSection(
     historyManager: PlaybackHistoryManager,
+    refreshKey: Long = 0L,
     onContinuePlay: (PlaybackHistoryManager.HistoryItem) -> Unit
 ) {
     val context = LocalContext.current
-    val lastVideo = historyManager.getLastPlayedLocalVideo()
+    // refreshKey 变化时重新查询最新播放记录
+    val lastVideo = remember(refreshKey) {
+        historyManager.getLastPlayedLocalVideo()
+    }
     
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -585,7 +592,7 @@ fun ExpandableActionButton(
                                 // 二级菜单 - 网络功能
                                 ActionItem(
                                     icon = Icons.Default.Tv,
-                                    label = "TV",
+                                    label = "浏览器",
                                     onClick = {
                                         showNetworkSubmenu = false
                                         onTVClick()

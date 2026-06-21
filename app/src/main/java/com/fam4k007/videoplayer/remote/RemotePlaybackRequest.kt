@@ -11,7 +11,8 @@ data class RemotePlaybackRequest(
     val headers: LinkedHashMap<String, String> = linkedMapOf(),
     val detectedContentType: String? = null,
     val isStream: Boolean = false,
-    val source: Source = Source.UNKNOWN
+    val source: Source = Source.UNKNOWN,
+    val audioUrl: String? = null  // DASH格式音频流URL
 ) : Parcelable {
 
     enum class Source {

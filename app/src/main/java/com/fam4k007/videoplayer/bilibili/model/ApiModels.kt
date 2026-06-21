@@ -132,17 +132,7 @@ data class NewEpInfo(
     val indexShow: String   // "更新至第12话"
 )
 
-/**
- * 播放地址响应
- */
-data class PlayUrlResponse(
-    val quality: Int,           // 当前画质
-    val format: String,         // 格式
-    @SerializedName("timelength")
-    val timeLength: Long,       // 时长
-    val durl: List<DurlInfo>? = null,   // 普通格式
-    val dash: DashInfo? = null           // DASH格式
-)
+
 
 data class DurlInfo(
     val url: String,

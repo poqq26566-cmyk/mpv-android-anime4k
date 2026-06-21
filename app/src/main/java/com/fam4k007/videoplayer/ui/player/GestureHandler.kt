@@ -45,6 +45,10 @@ fun GestureHandler(
 
     val longPressSpeed by viewModel.longPressSpeed.collectAsState()
 
+    // 亮度/音量灵敏度
+    val brightnessSensitivity by viewModel.brightnessSensitivity.collectAsState()
+    val volumeSensitivity by viewModel.volumeSensitivity.collectAsState()
+
     // 双击检测状态
     var tapCount by remember { mutableStateOf(0) }
     var lastTapTime by remember { mutableStateOf(0L) }
@@ -213,9 +217,9 @@ fun GestureHandler(
                                         val delta = pointer.positionChange()
                                         val isLeftSide = downPosition.x < size.width / 2
                                         if (isLeftSide) {
-                                            viewModel.adjustBrightness(-delta.y / size.height * 2f)
+                                            viewModel.adjustBrightness(-delta.y / size.height * brightnessSensitivity)
                                         } else {
-                                            viewModel.adjustVolume(-delta.y / size.height * 150f)
+                                            viewModel.adjustVolume(-delta.y / size.height * volumeSensitivity)
                                         }
                                         // 垂直手势不 consume，不影响上层 Slider
                                     }

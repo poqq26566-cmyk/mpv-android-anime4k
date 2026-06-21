@@ -1,6 +1,7 @@
 package com.fam4k007.videoplayer
 
 import android.app.Application
+import android.content.Context
 import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
 import com.fam4k007.videoplayer.database.VideoDatabase
@@ -22,6 +23,10 @@ import org.koin.core.logger.Level
 class AppApplication : Application() {
     
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(base)
+    }
     
     override fun onCreate() {
         super.onCreate()

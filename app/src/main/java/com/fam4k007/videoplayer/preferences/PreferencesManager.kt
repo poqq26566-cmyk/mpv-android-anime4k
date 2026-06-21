@@ -66,6 +66,22 @@ class PreferencesManager private constructor(context: Context) {
     fun setLongPressSpeed(speed: Float) {
         sharedPreferences.edit().putFloat(AppConstants.Preferences.LONG_PRESS_SPEED, speed).apply()
     }
+
+    fun getBrightnessSensitivity(): Float {
+        return sharedPreferences.getFloat(AppConstants.Preferences.BRIGHTNESS_SENSITIVITY, AppConstants.Defaults.DEFAULT_BRIGHTNESS_SENSITIVITY)
+    }
+
+    fun setBrightnessSensitivity(value: Float) {
+        sharedPreferences.edit().putFloat(AppConstants.Preferences.BRIGHTNESS_SENSITIVITY, value).apply()
+    }
+
+    fun getVolumeSensitivity(): Float {
+        return sharedPreferences.getFloat(AppConstants.Preferences.VOLUME_SENSITIVITY, AppConstants.Defaults.DEFAULT_VOLUME_SENSITIVITY)
+    }
+
+    fun setVolumeSensitivity(value: Float) {
+        sharedPreferences.edit().putFloat(AppConstants.Preferences.VOLUME_SENSITIVITY, value).apply()
+    }
     
     /**
      * 用户是否已使用过长按动态调速（左右滑动）

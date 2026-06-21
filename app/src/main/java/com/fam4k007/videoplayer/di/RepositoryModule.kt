@@ -4,6 +4,7 @@ import com.fam4k007.videoplayer.PlaybackHistoryManager
 import com.fam4k007.videoplayer.data.preferences.WebDavAccountDataSource
 import com.fam4k007.videoplayer.preferences.PreferencesManager
 import com.fam4k007.videoplayer.repository.BilibiliRepository
+import com.fam4k007.videoplayer.bilibili.repository.BangumiRepository
 import com.fam4k007.videoplayer.repository.MediaInfoRepository
 import com.fam4k007.videoplayer.repository.PlayerRepository
 import com.fam4k007.videoplayer.repository.SubtitleRepository
@@ -40,6 +41,13 @@ val repositoryModule = module {
         BilibiliRepository(
             authManager = get(),
             danDanPlayApi = get()
+        )
+    }
+    
+    // BangumiRepository - 番剧数据仓库
+    single { 
+        BangumiRepository(
+            bangumiApi = get()
         )
     }
     

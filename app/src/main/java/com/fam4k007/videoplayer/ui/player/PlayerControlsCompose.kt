@@ -715,6 +715,7 @@ fun SwipeSeekOverlay(
         ) {
             Column(
                 modifier = Modifier
+                    .widthIn(min = 170.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(Color.Black.copy(alpha = 0.55f))
                     .padding(horizontal = 32.dp, vertical = 16.dp),

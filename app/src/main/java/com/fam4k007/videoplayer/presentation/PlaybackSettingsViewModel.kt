@@ -53,6 +53,8 @@ class PlaybackSettingsViewModel(
                     // 手势控制
                     doubleTapMode = playerRepository.getDoubleTapMode(),
                     doubleTapSeekSeconds = playerRepository.getDoubleTapSeekSeconds(),
+                    brightnessSensitivity = playerRepository.getBrightnessSensitivity(),
+                    volumeSensitivity = playerRepository.getVolumeSensitivity(),
                     
                     // 音量控制
                     volumeBoost = playerRepository.isVolumeBoostEnabled(),
@@ -216,6 +218,36 @@ class PlaybackSettingsViewModel(
                 Logger.d(TAG, "Set long press speed: $speed")
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to set long press speed", e)
+            }
+        }
+    }
+
+    /**
+     * 设置亮度灵敏度
+     */
+    fun setBrightnessSensitivity(value: Float) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setBrightnessSensitivity(value)
+                _playbackSettings.value = _playbackSettings.value.copy(brightnessSensitivity = value)
+                Logger.d(TAG, "Set brightness sensitivity: $value")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set brightness sensitivity", e)
+            }
+        }
+    }
+
+    /**
+     * 设置音量灵敏度
+     */
+    fun setVolumeSensitivity(value: Float) {
+        viewModelScope.launch {
+            try {
+                playerRepository.setVolumeSensitivity(value)
+                _playbackSettings.value = _playbackSettings.value.copy(volumeSensitivity = value)
+                Logger.d(TAG, "Set volume sensitivity: $value")
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set volume sensitivity", e)
             }
         }
     }
@@ -401,6 +433,8 @@ data class PlaybackSettings(
     // 手势控制
     val doubleTapMode: Int = 0,  // 0=暂停/播放, 1=快进/快退
     val doubleTapSeekSeconds: Int = 10,
+    val brightnessSensitivity: Float = 2.0f,
+    val volumeSensitivity: Float = 150f,
     
     // 音量控制
     val volumeBoost: Boolean = false,

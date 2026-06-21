@@ -21,6 +21,8 @@ object AppConstants {
         const val CONTROL_SYSTEM_VOLUME = "control_system_volume"
         const val SEEK_TIME = "seek_time"
         const val LONG_PRESS_SPEED = "long_press_speed"
+        const val BRIGHTNESS_SENSITIVITY = "brightness_sensitivity"
+        const val VOLUME_SENSITIVITY = "volume_sensitivity"
         const val ANIME4K_MEMORY_ENABLED = "anime4k_memory_enabled"
         const val ANIME4K_LAST_MODE = "anime4k_last_mode"
         const val ANIME4K_QUALITY = "anime4k_quality"
@@ -108,6 +110,8 @@ object AppConstants {
         const val DEFAULT_LONG_PRESS_SPEED = 2.0f
         const val MIN_LONG_PRESS_SPEED = 1.5f
         const val MAX_LONG_PRESS_SPEED = 3.5f
+        const val DEFAULT_BRIGHTNESS_SENSITIVITY = 2.0f
+        const val DEFAULT_VOLUME_SENSITIVITY = 150f
         
         // 双击手势默认配置
         const val DEFAULT_DOUBLE_TAP_MODE = 0  // 默认为暂停/播放模式
