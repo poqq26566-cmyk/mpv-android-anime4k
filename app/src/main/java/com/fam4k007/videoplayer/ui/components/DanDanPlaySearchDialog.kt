@@ -223,7 +223,7 @@ private fun DanDanPlaySearchContent(
                                     android.util.Log.d("DanDanPlayUI", "开始搜索: $searchText")
                                     val enabledServers = preferencesManager.getEnabledDanmakuServers()
                                     if (enabledServers.isEmpty()) {
-                                        errorMessage = "No enabled danmaku servers. Please configure in settings."
+                                        errorMessage = "没有已启用的弹幕服务器，请在设置中配置"
                                         return@launch
                                     }
                                     
@@ -261,9 +261,9 @@ private fun DanDanPlaySearchContent(
                                     searchResults = allResults
                                     if (allResults.isEmpty()) {
                                         errorMessage = if (errors.isNotEmpty()) {
-                                            "Search failed:\n${errors.joinToString("\n")}"
+                                            "搜索失败:\n${errors.joinToString("\n")}"
                                         } else {
-                                            "No anime found. Try other keywords."
+                                            "未找到相关番剧，请尝试其他关键词"
                                         }
                                     }
                                 } catch (e: Exception) {

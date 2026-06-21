@@ -154,11 +154,14 @@ internal fun VideoPlayerActivity.loadResolvedRemoteVideo(
             is RemotePlaybackResolver.ResolveResult.Failed -> {
                 remotePlaybackRequest = result.request
                 Logger.w(TAG, "Remote resolve fallback: reason=${result.reason}, message=${result.message}", result.cause)
-                val suggestion = RemotePlaybackResolver.buildFailureSuggestion(result.reason)
-                DialogUtils.showToastLong(
-                    this@loadResolvedRemoteVideo,
-                    "${result.message}, trying direct playback\n$suggestion"
-                )
+                // B站源跳过探测失败的Toast提示
+                if (request.source != RemotePlaybackRequest.Source.BILIBILI) {
+                    val suggestion = RemotePlaybackResolver.buildFailureSuggestion(result.reason)
+                    DialogUtils.showToastLong(
+                        this@loadResolvedRemoteVideo,
+                        "${result.message}，继续尝试直接播放\n$suggestion"
+                    )
+                }
                 playbackEngine.loadRemote(result.request, position)
             }
         }
@@ -338,6 +341,10 @@ internal fun VideoPlayerActivity.isRemotePlaybackUri(uri: Uri?): Boolean {
 
 internal fun VideoPlayerActivity.resolveVideoTitle(uri: Uri): String {
     remotePlaybackRequest?.title
+        ?.takeIf { it.isNotBlank() }
+        ?.let { return it }
+
+    intent.getStringExtra("video_title")
         ?.takeIf { it.isNotBlank() }
         ?.let { return it }
 

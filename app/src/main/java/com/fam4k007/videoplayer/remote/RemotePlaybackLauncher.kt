@@ -31,6 +31,9 @@ object RemotePlaybackLauncher {
             if (normalizedRequest.title.isNotBlank()) {
                 putExtra("video_title", normalizedRequest.title)
             }
+            if (!normalizedRequest.audioUrl.isNullOrEmpty()) {
+                putExtra("audio_url", normalizedRequest.audioUrl)
+            }
         }
         context.startActivity(intent)
     }

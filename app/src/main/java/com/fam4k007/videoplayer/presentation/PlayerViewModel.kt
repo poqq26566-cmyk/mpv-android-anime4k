@@ -319,6 +319,12 @@ class PlayerViewModel(
     private val _longPressSpeed = MutableStateFlow(2.0f)
     val longPressSpeed: StateFlow<Float> = _longPressSpeed.asStateFlow()
 
+    // 亮度/音量灵敏度（从 PreferencesManager 加载）
+    private val _brightnessSensitivity = MutableStateFlow(2.0f)
+    val brightnessSensitivity: StateFlow<Float> = _brightnessSensitivity.asStateFlow()
+    private val _volumeSensitivity = MutableStateFlow(150f)
+    val volumeSensitivity: StateFlow<Float> = _volumeSensitivity.asStateFlow()
+
     // 进度条样式（从 PreferencesManager 加载）
     private val _seekbarStyle = MutableStateFlow("Standard")
     val seekbarStyle: StateFlow<String> = _seekbarStyle.asStateFlow()
@@ -596,6 +602,8 @@ class PlayerViewModel(
         _doubleTapSeekSeconds.value = playerRepository.getDoubleTapSeekSeconds()
         _doubleTapMode.value = playerRepository.getDoubleTapMode()
         _longPressSpeed.value = playerRepository.getLongPressSpeed()
+        _brightnessSensitivity.value = playerRepository.getBrightnessSensitivity()
+        _volumeSensitivity.value = playerRepository.getVolumeSensitivity()
         _seekbarStyle.value = playerRepository.getSeekbarStyle()
         val rawPresets = playerRepository.getCustomSpeedPresets()
         val parsedPresets = rawPresets

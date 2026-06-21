@@ -53,6 +53,7 @@ fun SeekIndicator(
                 Row(
                     modifier = Modifier
                         .padding(top = topPadding)
+                        .widthIn(min = 100.dp)
                         .clip(RoundedCornerShape(16.dp))
                         .background(Color.Black.copy(alpha = 0.5f))
                         .padding(horizontal = 14.dp, vertical = 8.dp),
@@ -78,6 +79,7 @@ fun SeekIndicator(
                 Column(
                     modifier = Modifier
                         .padding(start = sidePadding, end = sidePadding)
+                        .widthIn(min = 80.dp)
                         .clip(RoundedCornerShape(16.dp))
                         .background(Color.Black.copy(alpha = 0.5f))
                         .padding(horizontal = 10.dp, vertical = 10.dp),

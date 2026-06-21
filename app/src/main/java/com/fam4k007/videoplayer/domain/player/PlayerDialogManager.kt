@@ -911,7 +911,7 @@ class PlayerDialogManager(
         if (hasChapters) {
             items.add("Chapters")
         }
-        items.addAll(listOf("Screenshot", "Audio Track", "Decoder", "Audio Only", "Intro/Outro Skip", "Audio Equalizer", autoRotateText))
+        items.addAll(listOf("截图", "音轨", "解码", "听视频", "片头片尾", "音频均衡器", autoRotateText))
         
         // 根据屏幕方向决定对齐方式：竖屏靠右对齐，横屏居中
         val configuration = activity.resources.configuration

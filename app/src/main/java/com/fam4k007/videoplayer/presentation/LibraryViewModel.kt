@@ -204,7 +204,7 @@ class LibraryViewModel(
 
                             videoCount = node.videoCount,
 
-                            videos = emptyList()
+                            videos = node.videos
 
                         )
 
@@ -916,7 +916,7 @@ class LibraryViewModel(
 
                         videoCount = node.videoCount,
 
-                        videos = emptyList()
+                        videos = node.videos
 
                     )
 
@@ -992,7 +992,7 @@ class LibraryViewModel(
 
                         videoCount = node.videoCount,
 
-                        videos = emptyList()
+                        videos = node.videos
 
                     )
 
@@ -1086,7 +1086,7 @@ class LibraryViewModel(
 
                         videoCount = node.videoCount,
 
-                        videos = emptyList()
+                        videos = node.videos
 
                     )
 
@@ -1168,7 +1168,7 @@ class LibraryViewModel(
 
                         videoCount = node.videoCount,
 
-                        videos = emptyList()
+                        videos = node.videos
 
                     )
 

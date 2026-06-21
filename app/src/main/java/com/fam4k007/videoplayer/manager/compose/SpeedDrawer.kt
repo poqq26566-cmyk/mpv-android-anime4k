@@ -117,7 +117,7 @@ fun SpeedDrawer(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Playback Speed",
+                            text = "播放速度",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -141,7 +141,7 @@ fun SpeedDrawer(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Speed Presets",
+                            text = "倍速选项",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.White
@@ -150,11 +150,11 @@ fun SpeedDrawer(
                             onClick = {
                                 presets = DEFAULT_SPEED_PRESETS
                                 onPresetsChanged(presets.map { formatSpeedRaw(it) }.toSet())
-                                Toast.makeText(context, "Default speed presets restored", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "已恢复默认倍速", Toast.LENGTH_SHORT).show()
                             },
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
                         ) {
-                            Text("Reset Presets", color = Color(0xFF64B5F6), fontSize = 12.sp)
+                            Text("重置预设", color = Color(0xFF64B5F6), fontSize = 12.sp)
                         }
                     }
 
@@ -188,7 +188,7 @@ fun SpeedDrawer(
                                     activeSpeed = speed
                                     sliderValue = speed.toFloat()
                                     onSpeedChanged(speed)
-                                    Toast.makeText(context, "Playback speed: ${formatSpeed(speed)}", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "播放速度：${formatSpeed(speed)}", Toast.LENGTH_SHORT).show()
                                 },
                                 onDelete = {
                                     presets = presets.filter { it != speed }
@@ -269,7 +269,7 @@ fun SpeedDrawer(
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Check,
-                                                contentDescription = "Confirm",
+                                                contentDescription = "确认",
                                                 tint = Color(0xFF81C784),
                                                 modifier = Modifier.size(20.dp)
                                             )
@@ -287,7 +287,7 @@ fun SpeedDrawer(
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Close,
-                                                contentDescription = "Cancel",
+                                                contentDescription = "取消",
                                                 tint = Color(0xFFE57373),
                                                 modifier = Modifier.size(20.dp)
                                             )
@@ -314,7 +314,7 @@ fun SpeedDrawer(
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Edit,
-                                                contentDescription = "Edit",
+                                                contentDescription = "编辑",
                                                 tint = Color(0xAAFFFFFF),
                                                 modifier = Modifier.size(16.dp)
                                             )
@@ -364,13 +364,13 @@ fun SpeedDrawer(
                                             val speed = roundToStep(sliderValue.toDouble())
                                             activeSpeed = speed
                                             onSpeedChanged(speed)
-                                            Toast.makeText(context, "Playback speed: ${formatSpeed(speed)}", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, "播放速度：${formatSpeed(speed)}", Toast.LENGTH_SHORT).show()
                                         },
                                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF64B5F6)),
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("Apply", fontSize = 13.sp)
+                                        Text("应用", fontSize = 13.sp)
                                     }
 
                                     Button(
@@ -378,11 +378,11 @@ fun SpeedDrawer(
                                             if (!alreadyExists && !atLimit) {
                                                 presets = (presets + sliderSpeed).sorted()
                                                 onPresetsChanged(presets.map { formatSpeedRaw(it) }.toSet())
-                                                Toast.makeText(context, "Added ${formatSpeed(sliderSpeed)}", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "已添加 ${formatSpeed(sliderSpeed)}", Toast.LENGTH_SHORT).show()
                                             } else if (alreadyExists) {
-                                                Toast.makeText(context, "${formatSpeed(sliderSpeed)} already exists", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "${formatSpeed(sliderSpeed)} 已存在", Toast.LENGTH_SHORT).show()
                                             } else {
-                                                Toast.makeText(context, "Presets limit reached ($MAX_PRESETS)", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "预设已达上限（$MAX_PRESETS）", Toast.LENGTH_SHORT).show()
                                             }
                                         },
                                         enabled = !alreadyExists && !atLimit,
@@ -393,7 +393,7 @@ fun SpeedDrawer(
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("Add", fontSize = 13.sp)
+                                        Text("添加", fontSize = 13.sp)
                                     }
 
                                     OutlinedButton(
@@ -401,7 +401,7 @@ fun SpeedDrawer(
                                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("Reset", fontSize = 13.sp, color = Color(0xFF64B5F6))
+                                        Text("归位", fontSize = 13.sp, color = Color(0xFF64B5F6))
                                     }
                                 }
 
@@ -409,7 +409,7 @@ fun SpeedDrawer(
                                 if (presets.size >= MAX_PRESETS - 2) {
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = "Presets ${presets.size}/$MAX_PRESETS",
+                                        text = "预设 ${presets.size}/$MAX_PRESETS",
                                         fontSize = 11.sp,
                                         color = Color(0x88FFFFFF)
                                     )
@@ -461,7 +461,7 @@ private fun SpeedAdvancedSection(
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "Fine Speed Control",
+                text = "精确调速",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color.White
@@ -527,7 +527,7 @@ private fun SpeedPresetItem(
 
         if (isCurrent) {
             Text(
-                text = "Current",
+                text = "当前",
                 color = Color(0xFF64B5F6),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium

@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.fam4k007.videoplayer.R
+import com.fam4k007.videoplayer.VideoFile
 import com.fam4k007.videoplayer.VideoFolder
 import com.fam4k007.videoplayer.presentation.LibraryViewModel
 import com.fam4k007.videoplayer.ui.components.BatchDeleteConfirmDialog
@@ -43,6 +44,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -75,6 +77,15 @@ fun FolderBrowserScreen(
     var showBatchDeleteDialog by remember { mutableStateOf(false) }
 
     val isTreeView = viewMode == "TREE_VIEW"
+
+    // 树状视图：分离父文件夹自身视频和子文件夹节点
+    val allFolders = folderListState.folders
+    val selfNode = remember(allFolders, isTreeView) {
+        if (isTreeView) allFolders.firstOrNull { it.videos.isNotEmpty() } else null
+    }
+    val displayFolders = remember(allFolders, selfNode) {
+        if (selfNode != null) allFolders.filter { it.videos.isEmpty() } else allFolders
+    }
 
     // 面包屑滚动状态：进入子文件夹时自动滚到最右（显示最新路径）
     val breadcrumbScrollState = rememberScrollState()
@@ -265,7 +276,40 @@ fun FolderBrowserScreen(
                                         }
                                     }
                                 }
-                                items(folderListState.folders) { folder ->
+                                // 树状视图：父文件夹自身的视频文件
+                                if (selfNode != null) {
+                                    item {
+                                        Text(
+                                            text = "视频文件",
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(bottom = 4.dp)
+                                        )
+                                    }
+                                    items(selfNode.videos, key = { it.uri }) { video ->
+                                        TreeVideoItem(
+                                            video = video,
+                                            onClick = {
+                                                onOpenFolder(selfNode)
+                                            }
+                                        )
+                                    }
+                                    // 子文件夹分隔
+                                    if (displayFolders.isNotEmpty()) {
+                                        item {
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                text = "子文件夹",
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.padding(bottom = 4.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                                items(displayFolders) { folder ->
                                     FolderItem(
                                         folder = folder,
                                         isSelected = folder == selectedFolder,
@@ -294,12 +338,12 @@ fun FolderBrowserScreen(
                             MultiSelectActionBar(
                                 visible = isEditMode && selectedFolders.isNotEmpty(),
                                 selectedCount = selectedFolders.size,
-                                totalCount = folderListState.folders.size,
+                                totalCount = displayFolders.size,
                                 onSelectAll = {
-                                    if (selectedFolders.size == folderListState.folders.size) {
+                                    if (selectedFolders.size == displayFolders.size) {
                                         selectedFolders = emptySet()
                                     } else {
-                                        selectedFolders = folderListState.folders.toSet()
+                                        selectedFolders = displayFolders.toSet()
                                     }
                                 },
                                 onRename = {
@@ -797,4 +841,112 @@ private fun compareNatural(str1: String, str2: String): Int {
     }
     
     return s1.length - s2.length
+}
+
+// ==================== 树状视图视频项 ====================
+
+/**
+ * 树状视图中的视频文件项（简化版）
+ * 显示视频名称、时长、大小
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun TreeVideoItem(
+    video: VideoFile,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 视频图标
+            Icon(
+                imageVector = Icons.Default.PlayCircle,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // 视频信息
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = video.name,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.basicMarquee(
+                        iterations = Int.MAX_VALUE,
+                        velocity = 30.dp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (video.duration > 0) {
+                        Text(
+                            text = formatDuration(video.duration),
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Text(
+                        text = formatFileSize(video.size),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // 右箭头
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+private fun formatDuration(milliseconds: Long): String {
+    val hours = TimeUnit.MILLISECONDS.toHours(milliseconds)
+    val minutes = TimeUnit.MILLISECONDS.toMinutes(milliseconds) % 60
+    val seconds = TimeUnit.MILLISECONDS.toSeconds(milliseconds) % 60
+
+    return if (hours > 0) {
+        String.format("%02d:%02d:%02d", hours, minutes, seconds)
+    } else {
+        String.format("%02d:%02d", minutes, seconds)
+    }
+}
+
+private fun formatFileSize(bytes: Long): String {
+    if (bytes < 1024) return "$bytes B"
+    val kb = bytes / 1024.0
+    if (kb < 1024) return String.format("%.1f KB", kb)
+    val mb = kb / 1024.0
+    if (mb < 1024) return String.format("%.1f MB", mb)
+    val gb = mb / 1024.0
+    return String.format("%.2f GB", gb)
 }

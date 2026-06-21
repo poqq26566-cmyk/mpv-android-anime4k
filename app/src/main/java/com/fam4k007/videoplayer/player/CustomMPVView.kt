@@ -124,7 +124,7 @@ class CustomMPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context
         
         // 全局样式覆盖
         val assOverride = preferencesManager.isAssOverrideEnabled()
-        MPVLib.setOptionString("sub-ass-override", if (assOverride) "force" else "no")
+        MPVLib.setOptionString("sub-ass-override", if (assOverride) "force" else "scale")
         
         Log.d(TAG, "Using subtitle font: ${subtitleFontName.ifBlank { "(default)" }}, fonts dir: $internalFontsDir, ass-override: $assOverride")
         

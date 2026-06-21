@@ -385,7 +385,20 @@ class VideoPlayerActivity : AppCompatActivity(),
             mpvView.postDelayed({
                 com.fam4k007.videoplayer.utils.Logger.d(TAG, "Loading video after MPV init")
                 loadVideo()
-            }, 100) // 延迟 100ms 确保 MPV 完全就绪
+                // DASH格式：视频加载后动态添加外部音频轨
+                val audioUrl = intent.getStringExtra("audio_url")
+                if (!audioUrl.isNullOrEmpty()) {
+                    mpvView.postDelayed({
+                        try {
+                            MPVLib.command("audio-add", audioUrl)
+                            MPVLib.setPropertyString("vid", "auto")
+                            com.fam4k007.videoplayer.utils.Logger.d(TAG, "Added external audio: $audioUrl")
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Failed to add audio: ${e.message}")
+                        }
+                    }, 500) // 视频加载后尽快添加音频轨
+                }
+            }, 100)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize MPV", e)
             DialogUtils.showToastLong(this, "Player initialization failed: ${e.message}\n\nPlease restart the app if the issue persists")
@@ -741,7 +754,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                 
                 val enabledServers = preferencesManager.getEnabledDanmakuServers()
                 if (enabledServers.isEmpty()) {
-                    DialogUtils.showToastLong(this@VideoPlayerActivity, "No danmaku servers enabled")
+                    DialogUtils.showToastLong(this@VideoPlayerActivity, "没有启用的弹幕服务器")
                     return@launch
                 }
                 
@@ -787,7 +800,7 @@ class VideoPlayerActivity : AppCompatActivity(),
                 }
                 
                 if (allMatchResults.isEmpty()) {
-                    DialogUtils.showToastLong(this@VideoPlayerActivity, "No matching danmaku found")
+                    DialogUtils.showToastLong(this@VideoPlayerActivity, "未找到匹配的弹幕")
                     return@launch
                 }
                 

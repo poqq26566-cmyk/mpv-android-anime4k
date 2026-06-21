@@ -24,7 +24,8 @@ object TreeViewScanner {
         val path: String,
         val name: String,
         val videoCount: Int,
-        val hasSubfolders: Boolean
+        val hasSubfolders: Boolean,
+        val videos: List<VideoFile> = emptyList()
     )
 
     /**
@@ -118,6 +119,21 @@ object TreeViewScanner {
             if (!info.hasSubfolders) {
                 info.hasSubfolders = hasDeeperSubfolders(childPath, allFolders)
             }
+        }
+
+        // 父文件夹自身的视频（直接位于当前层级、不属于任何子文件夹的视频）
+        val parentVideos = allFolders[normalizedParent]
+        if (parentVideos != null && parentVideos.isNotEmpty()) {
+            val parentName = File(normalizedParent).name.ifEmpty { normalizedParent }
+            result.add(
+                TreeNode(
+                    path = normalizedParent,
+                    name = parentName,
+                    videoCount = parentVideos.size,
+                    hasSubfolders = false,
+                    videos = parentVideos
+                )
+            )
         }
 
         // 转换为 TreeNode 并排序

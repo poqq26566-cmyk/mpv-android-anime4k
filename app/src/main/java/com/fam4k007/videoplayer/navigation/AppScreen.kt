@@ -88,13 +88,17 @@ sealed interface AppScreen {
     @Serializable
     data object SubtitleSearch : AppScreen
 
-    /** B站番剧播放页 */
-    @Serializable
-    data object BiliBiliPlay : AppScreen
-
     /** B站登录页 */
     @Serializable
     data object BiliBiliLogin : AppScreen
+
+    /** 番剧索引页 */
+    @Serializable
+    data object BangumiIndex : AppScreen
+
+    /** 番剧详情页 */
+    @Serializable
+    data class BangumiDetail(val seasonId: Int, val isEpId: Boolean = false) : AppScreen
 
     /** TV浏览器页 */
     @Serializable

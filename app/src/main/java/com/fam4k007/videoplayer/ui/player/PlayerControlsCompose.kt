@@ -459,7 +459,7 @@ fun BottomControlPanel(
                         .let { mod ->
                             if (gpuNext) {
                                 mod.clickable {
-                                    Toast.makeText(context, "GPU Next rendering enabled, cannot use upscaling", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "已启用 GPU Next 渲染，无法开启超分", Toast.LENGTH_SHORT).show()
                                 }
                             } else {
                                 mod
@@ -469,7 +469,7 @@ fun BottomControlPanel(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Upscale: $anime4KLabel",
+                        text = "超分辨率：$anime4KLabel",
                         color = if (anime4KActive) Color.Yellow
                                 else if (gpuNext) Color.Gray.copy(alpha = 0.5f)
                                 else Color.White.copy(alpha = 0.7f),
@@ -715,6 +715,7 @@ fun SwipeSeekOverlay(
         ) {
             Column(
                 modifier = Modifier
+                    .widthIn(min = 170.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(Color.Black.copy(alpha = 0.55f))
                     .padding(horizontal = 32.dp, vertical = 16.dp),
@@ -1116,9 +1117,9 @@ fun LongPressSpeedOverlay(
                 // 速度文字提示
                 Text(
                     text = if (isDynamicSpeedActive)
-                        "Playing at ${String.format("%.2f", speed)}x speed"
+                        "正在${String.format("%.2f", speed)}倍速播放"
                     else
-                        "Playing at ${String.format("%.1f", speed)}x speed",
+                        "正在${String.format("%.1f", speed)}倍速播放",
                     color = Color.White,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
@@ -1132,7 +1133,7 @@ fun LongPressSpeedOverlay(
                 if (showHint.value && !isDynamicSpeedActive) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Swipe left/right to adjust long-press playback speed",
+                        text = "可通过左右滑动，临时调节长按播放的倍数",
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 12.sp,
                         modifier = Modifier

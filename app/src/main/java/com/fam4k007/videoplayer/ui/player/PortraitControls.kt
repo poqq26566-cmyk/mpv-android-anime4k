@@ -406,7 +406,7 @@ fun PortraitBottomControls(
                                     Toast
                                         .makeText(
                                             context,
-                                            "GPU Next rendering enabled, cannot use upscaling",
+                                            "已启用 GPU Next 渲染，无法开启超分",
                                             Toast.LENGTH_SHORT,
                                         )
                                         .show()

@@ -605,13 +605,13 @@ fun SubtitleStyleContent(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Style Override",
+                        text = "样式覆盖",
                         fontSize = 14.sp,
                         color = Color.White,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = if (assOverrideEnabled) "Enabled, custom style will be forced" else "When disabled, uses embedded subtitle style",
+                        text = if (assOverrideEnabled) "已开启，将强制使用自定义样式" else "关闭时使用字幕文件内嵌样式",
                         fontSize = 11.sp,
                         color = Color(0xFF9E9E9E),
                         modifier = Modifier.padding(top = 2.dp)
@@ -623,7 +623,7 @@ fun SubtitleStyleContent(
                         assOverrideEnabled = enabled
                         preferencesManager.setAssOverrideEnabled(enabled)
                         // 立即应用到播放引擎，并重新加载字幕使其生效
-                        MPVLib.setPropertyString("sub-ass-override", if (enabled) "force" else "no")
+                        MPVLib.setPropertyString("sub-ass-override", if (enabled) "force" else "scale")
                         MPVLib.command("sub-reload")
                     },
                     colors = SwitchDefaults.colors(
@@ -653,7 +653,7 @@ fun SubtitleStyleContent(
                 modifier = Modifier.padding(end = 6.dp)
             )
             Text(
-                text = "Embedded ASS subtitles require Style Override to apply custom styles",
+                text = "内嵌ASS字幕需开启样式覆盖才能应用自定义样式",
                 fontSize = 11.sp,
                 color = Color(0xFFCCCCCC),
                 maxLines = 1,
@@ -984,7 +984,7 @@ fun BorderSizeSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Border Size:",
+                text = "描边粗细：",
                 fontSize = 14.sp,
                 color = Color.White,
                 fontWeight = FontWeight.Medium
@@ -1039,7 +1039,7 @@ fun BorderSizeSection(
                 ) {
                     Icon(
                         Icons.Default.Check,
-                        contentDescription = "OK",
+                        contentDescription = "确定",
                         tint = Color(0xFF4CAF50),
                         modifier = Modifier.size(18.dp)
                     )
@@ -1050,7 +1050,7 @@ fun BorderSizeSection(
                 ) {
                     Icon(
                         Icons.Default.Close,
-                        contentDescription = "Cancel",
+                        contentDescription = "取消",
                         tint = Color(0xFFEF5350),
                         modifier = Modifier.size(18.dp)
                     )
@@ -1072,7 +1072,7 @@ fun BorderSizeSection(
                 ) {
                     Icon(
                         Icons.Default.Edit,
-                        contentDescription = "Edit",
+                        contentDescription = "编辑",
                         tint = Color(0xFF64B5F6),
                         modifier = Modifier.size(14.dp)
                     )
@@ -1112,11 +1112,11 @@ fun BorderSizeSection(
                     contentColor = Color(0xFF64B5F6)
                 )
             ) {
-                Text("Reset to 3")
+                Text("重置为 3")
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Tap the pen to enter a value from 0-99",
+                text = "点击笔可输入 0-99 的精确值",
                 fontSize = 11.sp,
                 color = Color(0xFF888888)
             )
@@ -1454,7 +1454,7 @@ fun SubtitleFontContent(composeOverlayManager: ComposeOverlayManager) {
             val count = copyFontsFromDirectory(context, uriString)
             fontEntries = loadCustomFontEntries(context)
             isLoading = false
-            Toast.makeText(context, "Copied $count font files, loaded ${fontEntries.size} fonts", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "已复制 $count 个字体文件，加载了 ${fontEntries.size} 种字体", Toast.LENGTH_SHORT).show()
         }
     }
     
@@ -1477,21 +1477,21 @@ fun SubtitleFontContent(composeOverlayManager: ComposeOverlayManager) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Select Font Directory",
+                        text = "选择字体目录",
                         fontSize = 15.sp,
                         color = Color.White,
                         fontWeight = FontWeight.Medium
                     )
                     if (fontDirUri.isNotBlank()) {
                         Text(
-                            text = if (isLoading) "Loading..." else "Loaded ${fontEntries.size} fonts",
+                            text = if (isLoading) "正在加载..." else "已加载 ${fontEntries.size} 种字体",
                             fontSize = 12.sp,
                             color = if (fontEntries.isNotEmpty()) Color(0xFF81C784) else Color(0xFF9E9E9E),
                             modifier = Modifier.padding(top = 2.dp)
                         )
                     } else {
                         Text(
-                            text = "Tap to select a directory containing .ttf/.otf font files",
+                            text = "点击选择包含 .ttf/.otf 字体文件的目录",
                             fontSize = 12.sp,
                             color = Color(0xFF9E9E9E),
                             modifier = Modifier.padding(top = 2.dp)
@@ -1509,14 +1509,14 @@ fun SubtitleFontContent(composeOverlayManager: ComposeOverlayManager) {
                                     copyFontsFromDirectory(context, fontDirUri)
                                     fontEntries = loadCustomFontEntries(context)
                                     isLoading = false
-                                    Toast.makeText(context, "Refreshed, loaded ${fontEntries.size} fonts", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "已刷新，加载了 ${fontEntries.size} 种字体", Toast.LENGTH_SHORT).show()
                                 }
                             },
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
-                                contentDescription = "Refresh",
+                                contentDescription = "刷新",
                                 tint = Color(0xFF64B5F6),
                                 modifier = Modifier.size(20.dp)
                             )
@@ -1534,14 +1534,14 @@ fun SubtitleFontContent(composeOverlayManager: ComposeOverlayManager) {
                                     // 如果当前字体不是默认的，重置
                                     currentFontName = ""
                                     preferencesManager.setSubtitleFontName("")
-                                    Toast.makeText(context, "Font directory cleared", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "已清除字体目录", Toast.LENGTH_SHORT).show()
                                 }
                             },
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "Clear",
+                                contentDescription = "清除",
                                 tint = Color(0xFFEF5350),
                                 modifier = Modifier.size(20.dp)
                             )
@@ -1571,12 +1571,12 @@ fun SubtitleFontContent(composeOverlayManager: ComposeOverlayManager) {
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Current Font",
+                            text = "当前字体",
                             fontSize = 12.sp,
                             color = Color(0xFF9E9E9E)
                         )
                         Text(
-                            text = currentFontName.ifBlank { "Default Font" },
+                            text = currentFontName.ifBlank { "默认字体" },
                             fontSize = 15.sp,
                             color = Color.White,
                             fontWeight = FontWeight.Medium,
@@ -1591,7 +1591,7 @@ fun SubtitleFontContent(composeOverlayManager: ComposeOverlayManager) {
                         )
                     } else {
                         Text(
-                            text = "Please select a font directory first",
+                            text = "请先选择字体目录",
                             fontSize = 11.sp,
                             color = Color(0xFF9E9E9E)
                         )
@@ -1619,7 +1619,7 @@ fun SubtitleFontContent(composeOverlayManager: ComposeOverlayManager) {
                                     currentFontName = ""
                                     preferencesManager.setSubtitleFontName("")
                                     expandedFontList = false
-                                    Toast.makeText(context, "Switched to: Default Font\nTakes effect on next playback", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "已切换到: 默认字体\n重新播放生效", Toast.LENGTH_SHORT).show()
                                 },
                             shape = RoundedCornerShape(8.dp),
                             color = if (isDefaultSelected) Color(0xFF405060) else Color(0xFF1A2332)
@@ -1642,7 +1642,7 @@ fun SubtitleFontContent(composeOverlayManager: ComposeOverlayManager) {
                                     }
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
-                                Text("Default Font", fontSize = 14.sp, color = Color.White)
+                                Text("默认字体", fontSize = 14.sp, color = Color.White)
                             }
                         }
                         
@@ -1656,7 +1656,7 @@ fun SubtitleFontContent(composeOverlayManager: ComposeOverlayManager) {
                                         currentFontName = entry.familyName
                                         preferencesManager.setSubtitleFontName(entry.familyName)
                                         expandedFontList = false
-                                        Toast.makeText(context, "Switched to: ${entry.familyName}\nTakes effect on next playback", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, "已切换到: ${entry.familyName}\n重新播放生效", Toast.LENGTH_SHORT).show()
                                     },
                                 shape = RoundedCornerShape(8.dp),
                                 color = if (isSelected) Color(0xFF405060) else Color(0xFF1A2332)
@@ -1696,7 +1696,7 @@ fun SubtitleFontContent(composeOverlayManager: ComposeOverlayManager) {
         
         // 提示信息
         Text(
-            text = "💡 Tip: Font changes take effect on next playback\n💡 Embedded ASS subtitles require Style Override for font settings to apply",
+            text = "💡 提示：字体更改需要重新播放视频才能生效\n💡 内嵌ASS字幕需开启样式覆盖后字体设置才会生效",
             fontSize = 12.sp,
             color = Color(0xFF9E9E9E),
             modifier = Modifier
