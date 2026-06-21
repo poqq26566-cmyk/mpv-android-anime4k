@@ -94,17 +94,6 @@ class PreferencesManager private constructor(context: Context) {
         sharedPreferences.edit().putBoolean("dynamic_speed_used", true).apply()
     }
     
-    /**
-     * 用户是否已使用过长按动态调速（左右滑动）
-     */
-    fun hasDynamicSpeedBeenUsed(): Boolean {
-        return sharedPreferences.getBoolean("dynamic_speed_used", false)
-    }
-    
-    fun setDynamicSpeedUsed() {
-        sharedPreferences.edit().putBoolean("dynamic_speed_used", true).apply()
-    }
-    
     // ==================== 播放倍速记忆 ====================
     
     /**
