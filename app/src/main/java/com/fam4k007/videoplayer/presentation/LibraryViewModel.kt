@@ -17,6 +17,7 @@ import com.fam4k007.videoplayer.repository.VideoRepository
 import com.fam4k007.videoplayer.repository.VideoSortOrder
 
 import com.fam4k007.videoplayer.utils.Logger
+import com.fam4k007.videoplayer.utils.NaturalOrderComparator
 
 import com.fam4k007.videoplayer.utils.media.MediaLibraryEvents
 
@@ -194,7 +195,7 @@ class LibraryViewModel(
 
                     val nodes = TreeViewScanner.getChildren(allFolders = sorted, parentPath = null)
 
-                    val folders = nodes.map { node ->
+                    val rawFolders = nodes.map { node ->
 
                         VideoFolder(
 
@@ -210,11 +211,13 @@ class LibraryViewModel(
 
                     }
 
-                    _folderListState.value = _folderListState.value.copy(folders = folders)
+                    val sortedFolders = sortFolders(rawFolders, _folderListState.value.sortType, _folderListState.value.sortOrder)
+
+                    _folderListState.value = _folderListState.value.copy(folders = sortedFolders)
 
                     _treeHasSubfolders.value = nodes.filter { it.hasSubfolders }.map { it.path }.toSet()
 
-                    Logger.d(TAG, "树状视图：显示缓存的 ${folders.size} 个根节点")
+                    Logger.d(TAG, "树状视图：显示缓存的 ${sortedFolders.size} 个根节点")
 
                 } else {
 
@@ -544,7 +547,11 @@ class LibraryViewModel(
 
         return when (sortType) {
 
-            0 -> if (sortOrder == 0) folders.sortedBy { it.folderName } else folders.sortedByDescending { it.folderName }
+            0 -> {
+                // 使用自然排序：数字按数值大小比较，而非字典序
+                val sorted = folders.sortedWith(NaturalOrderComparator.comparator { it.folderName })
+                if (sortOrder == 0) sorted else sorted.reversed()
+            }
 
             2 -> if (sortOrder == 0) folders.sortedBy { it.videoCount } else folders.sortedByDescending { it.videoCount }
 
@@ -750,7 +757,11 @@ class LibraryViewModel(
 
         return when (sortType) {
 
-            0 -> if (sortOrder == 0) videos.sortedBy { it.name } else videos.sortedByDescending { it.name }
+            0 -> {
+                // 使用自然排序：数字按数值大小比较，而非字典序
+                val sorted = videos.sortedWith(NaturalOrderComparator.comparator { it.name })
+                if (sortOrder == 0) sorted else sorted.reversed()
+            }
 
             1 -> if (sortOrder == 0) videos.sortedBy { it.dateAdded } else videos.sortedByDescending { it.dateAdded }
 
@@ -906,7 +917,7 @@ class LibraryViewModel(
 
                 val nodes = TreeViewScanner.getChildren(allFolders = allFolders, parentPath = null)
 
-                val folders = nodes.map { node ->
+                val rawFolders = nodes.map { node ->
 
                     VideoFolder(
 
@@ -922,6 +933,8 @@ class LibraryViewModel(
 
                 }
 
+                val sortedFolders = sortFolders(rawFolders, _folderListState.value.sortType, _folderListState.value.sortOrder)
+
                 treeBackStack.clear()
 
                 _breadcrumbs.value = listOf("" to "根目录")
@@ -932,7 +945,7 @@ class LibraryViewModel(
 
                 _folderListState.value = _folderListState.value.copy(
 
-                    folders = folders,
+                    folders = sortedFolders,
 
                     isLoading = false
 
@@ -982,7 +995,7 @@ class LibraryViewModel(
 
                 val nodes = TreeViewScanner.getChildren(allFolders = allFolders, parentPath = path)
 
-                val folders = nodes.map { node ->
+                val rawFolders = nodes.map { node ->
 
                     VideoFolder(
 
@@ -998,9 +1011,15 @@ class LibraryViewModel(
 
                 }
 
+                val sortedFolders = sortFolders(rawFolders, _folderListState.value.sortType, _folderListState.value.sortOrder)
 
 
-                treeBackStack.add(path to name)
+
+                // 避免刷新时重复添加：如果栈顶已是同一路径，说明是刷新当前层级，不追加
+                val isRefresh = treeBackStack.isNotEmpty() && treeBackStack.last().first == path
+                if (!isRefresh) {
+                    treeBackStack.add(path to name)
+                }
 
                 _breadcrumbs.value = listOf("" to "根目录") + treeBackStack.map { (p, n) -> (p ?: "") to n }
 
@@ -1010,7 +1029,7 @@ class LibraryViewModel(
 
                 _folderListState.value = _folderListState.value.copy(
 
-                    folders = folders,
+                    folders = sortedFolders,
 
                     isLoading = false
 
@@ -1158,7 +1177,7 @@ class LibraryViewModel(
 
                 val nodes = TreeViewScanner.getChildren(allFolders = allFolders, parentPath = targetPath)
 
-                val folders = nodes.map { node ->
+                val rawFolders = nodes.map { node ->
 
                     VideoFolder(
 
@@ -1174,13 +1193,15 @@ class LibraryViewModel(
 
                 }
 
+                val sortedFolders = sortFolders(rawFolders, _folderListState.value.sortType, _folderListState.value.sortOrder)
+
                 _treeHasSubfolders.value = nodes.filter { it.hasSubfolders }.map { it.path }.toSet()
 
 
 
                 _folderListState.value = _folderListState.value.copy(
 
-                    folders = folders,
+                    folders = sortedFolders,
 
                     isLoading = false
 
