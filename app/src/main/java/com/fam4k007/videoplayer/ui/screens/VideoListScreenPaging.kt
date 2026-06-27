@@ -595,6 +595,10 @@ private fun SearchTopBar(
     onSearchQueryChange: (String) -> Unit,
     onCloseSearch: () -> Unit
 ) {
+    val textStyle = TextStyle(
+        color = Color.White,
+        fontSize = 18.sp
+    )
     TopAppBar(
         title = {
             BasicTextField(
@@ -603,20 +607,18 @@ private fun SearchTopBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                textStyle = TextStyle(
-                    color = Color.White,
-                    fontSize = 18.sp
-                ),
+                textStyle = textStyle,
                 cursorBrush = SolidColor(Color.White),
                 decorationBox = { innerTextField ->
-                    if (searchQuery.isEmpty()) {
-                        Text(
-                            "搜索视频...",
-                            color = Color.White.copy(alpha = 0.6f),
-                            fontSize = 18.sp
-                        )
+                    Box {
+                        if (searchQuery.isEmpty()) {
+                            Text(
+                                "搜索视频...",
+                                style = textStyle.copy(color = Color.White.copy(alpha = 0.6f))
+                            )
+                        }
+                        innerTextField()
                     }
-                    innerTextField()
                 },
                 singleLine = true
             )

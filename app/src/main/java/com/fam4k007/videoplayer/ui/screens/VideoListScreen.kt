@@ -641,26 +641,28 @@ private fun SearchTopBar(
     onSearchQueryChange: (String) -> Unit,
     onCloseSearch: () -> Unit
 ) {
+    val textStyle = TextStyle(
+        fontSize = 18.sp,
+        color = MaterialTheme.colorScheme.onSurface
+    )
     TopAppBar(
         title = {
             BasicTextField(
                 value = searchQuery,
                 onValueChange = onSearchQueryChange,
                 modifier = Modifier.fillMaxWidth(),
-                textStyle = TextStyle(
-                    fontSize = 18.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                ),
+                textStyle = textStyle,
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 decorationBox = { innerTextField ->
-                    if (searchQuery.isEmpty()) {
-                        Text(
-                            text = "搜索视频...",
-                            fontSize = 18.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
+                    Box {
+                        if (searchQuery.isEmpty()) {
+                            Text(
+                                text = "搜索视频...",
+                                style = textStyle.copy(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                            )
+                        }
+                        innerTextField()
                     }
-                    innerTextField()
                 },
                 singleLine = true
             )
