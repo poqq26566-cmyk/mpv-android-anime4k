@@ -346,18 +346,30 @@ class PreferencesManager private constructor(context: Context) {
      * 获取是否启用自动检查更新
      */
     fun isAutoCheckUpdateEnabled(): Boolean {
-        return sharedPreferences.getBoolean(
-            AppConstants.Preferences.AUTO_CHECK_UPDATE,
-            true  // 默认开启
-        )
-    }
-    
-    /**
-     * 设置自动检查更新开关
-     */
-    fun setAutoCheckUpdateEnabled(enabled: Boolean) {
-        sharedPreferences.edit().putBoolean(AppConstants.Preferences.AUTO_CHECK_UPDATE, enabled).apply()
-    }
+    return sharedPreferences.getBoolean(
+        AppConstants.Preferences.AUTO_CHECK_UPDATE,
+        true // 默认开启
+    )
+}
+
+fun isDefaultLandscapeEnabled(): Boolean {
+    return sharedPreferences.getBoolean(
+        "default_landscape_enabled",
+        true
+    )
+}
+
+fun setAutoCheckUpdateEnabled(enabled: Boolean) {
+    sharedPreferences.edit()
+        .putBoolean(AppConstants.Preferences.AUTO_CHECK_UPDATE, enabled)
+        .apply()
+}
+
+fun setDefaultLandscapeEnabled(enabled: Boolean) {
+    sharedPreferences.edit()
+        .putBoolean("default_landscape_enabled", enabled)
+        .apply()
+}
     
     /**
      * 获取用户忽略的版本号
