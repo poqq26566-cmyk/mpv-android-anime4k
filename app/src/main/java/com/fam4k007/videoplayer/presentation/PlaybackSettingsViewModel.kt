@@ -49,7 +49,7 @@ class PlaybackSettingsViewModel(
                     // 进度控制
                     preciseSeeking = playerRepository.isPreciseSeekingEnabled(),
                     seekTime = playerRepository.getSeekTime(),
-                    
+                    defaultLandscape = playerRepository.isDefaultLandscape,
                     // 手势控制
                     doubleTapMode = playerRepository.getDoubleTapMode(),
                     doubleTapSeekSeconds = playerRepository.getDoubleTapSeekSeconds(),
@@ -113,18 +113,31 @@ class PlaybackSettingsViewModel(
     /**
      * 设置快进/快退时长
      */
+    
     fun setSeekTime(seconds: Int) {
-        viewModelScope.launch {
-            try {
-                playerRepository.setSeekTime(seconds)
-                _playbackSettings.value = _playbackSettings.value.copy(seekTime = seconds)
-                Logger.d(TAG, "Set seek time: $seconds seconds")
-            } catch (e: Exception) {
-                Logger.e(TAG, "Failed to set seek time", e)
-            }
+    viewModelScope.launch {
+        try {
+            playerRepository.setSeekTime(seconds)
+            _playbackSettings.value = _playbackSettings.value.copy(seekTime = seconds)
+            Logger.d(TAG, "Set seek time: $seconds seconds")
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to set seek time", e)
         }
     }
-    
+}  // <-- 这个 } 后面
+
+// =============== 在这里添加 setDefaultLandscape =================
+fun setDefaultLandscape(enabled: Boolean) {
+    viewModelScope.launch {
+        try {
+            playerRepository.setDefaultLandscapeEnabled(enabled)
+            _playbackSettings.value = _playbackSettings.value.copy(defaultLandscape = enabled)
+            Logger.d(TAG, "Set default landscape: $enabled")
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to set default landscape", e)
+        }
+    }
+}
     // ==================== 手势控制 ====================
     
     /**
@@ -429,6 +442,7 @@ data class PlaybackSettings(
     // 进度控制
     val preciseSeeking: Boolean = false,
     val seekTime: Int = 10,
+    val defaultLandscape: Boolean = true,
     
     // 手势控制
     val doubleTapMode: Int = 0,  // 0=暂停/播放, 1=快进/快退
