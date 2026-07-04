@@ -224,9 +224,10 @@ fun GestureHandler(
                                         // 垂直手势不 consume，不影响上层 Slider
                                     }
                                     isHorizontalGesture -> {
-                                        // 基于绝对偏移量计算目标位置（而非每帧步进）
+                                        // 滑满一屏 = 跳转视频全长,手感跟视频长度成正比
                                         val totalDeltaX = pointer.position.x - downPosition.x
-                                        val deltaSeconds = (totalDeltaX * SWIPE_SEEK_SENSITIVITY).toInt()
+                                        val screenWidth = size.width.toFloat()
+                                        val deltaSeconds = ((totalDeltaX / screenWidth) * duration).toInt()
                                         val targetSeconds = (swipeSeekStartVideoPosition + deltaSeconds)
                                             .coerceIn(0, duration)
                                         viewModel.updateSwipeSeek(targetSeconds, deltaSeconds)
