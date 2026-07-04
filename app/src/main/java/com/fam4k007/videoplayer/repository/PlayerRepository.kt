@@ -752,8 +752,16 @@ class PlayerRepository(
         return preferencesManager.isAutoPlayNextEnabled()
     }
 
+    fun isDefaultLandscapeEnabled(): Boolean {
+        return preferencesManager.isDefaultLandscapeEnabled()
+    }
+
     fun setAutoPlayNextEnabled(enabled: Boolean) {
         preferencesManager.setAutoPlayNextEnabled(enabled)
+    }
+
+    fun setDefaultLandscapeEnabled(enabled: Boolean) {
+        preferencesManager.setDefaultLandscapeEnabled(enabled)
     }
 
     fun isCloseAfterEndOfVideo(): Boolean {
