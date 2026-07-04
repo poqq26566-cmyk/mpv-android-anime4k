@@ -222,7 +222,11 @@ class VideoPlayerActivity : AppCompatActivity(),
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        // 根据用户设置应用默认播放方向(自动旋转/手动切换按钮之后仍可覆盖它)
+        if (!preferencesManager.isDefaultLandscapeEnabled()) {
+            intent.putExtra(EXTRA_PORTRAIT_UI, true)
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+        }
         val portraitUi = intent.getBooleanExtra(EXTRA_PORTRAIT_UI, false)
         if (intent.getBooleanExtra(EXTRA_AUTO_ROTATE, false)) {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
