@@ -69,31 +69,47 @@ fun PlaybackSettingsScreen(
         }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            verticalArrangement = Arrangement.spacedBy(0.dp)
-        ) {
-            // 进度控制
-            item {
-                PreferenceSectionHeader("进度控制")
-            }
+    modifier = Modifier
+        .fillMaxSize()
+        .padding(padding),
+    verticalArrangement = Arrangement.spacedBy(0.dp)
+) {
+    // ========== 屏幕方向 ==========
+    item {
+        PreferenceSectionHeader("屏幕方向")
+    }
 
-            item {
-                PreferenceCard {
-                    SwitchItem(
-                        title = "精确进度定位",
-                        subtitle = if (settings.preciseSeeking) "定位更准确但可能较慢" else "定位更快但使用关键帧",
-                        checked = settings.preciseSeeking,
-                        onCheckedChange = { viewModel.setPreciseSeeking(it) }
-                    )
-                    TextItem(
-                        title = "快进/快退时长",
-                        value = "${settings.seekTime}秒",
-                        onClick = { showSeekTimeDialog = true }
-                    )
-                }
-            }
+    item {
+        PreferenceCard {
+            SwitchItem(
+                title = "默认横屏播放",
+                subtitle = if (settings.defaultLandscape) "启动视频时自动切换为横屏" else "保持当前屏幕方向",
+                checked = settings.defaultLandscape,
+                onCheckedChange = { viewModel.setDefaultLandscape(it) }
+            )
+        }
+    }
+
+    // ========== 进度控制 ==========
+    item {
+        PreferenceSectionHeader("进度控制")
+    }
+
+    item {
+        PreferenceCard {
+            SwitchItem(
+                title = "精确进度定位",
+                subtitle = if (settings.preciseSeeking) "定位更准确但可能较慢" else "定位更快但使用关键帧",
+                checked = settings.preciseSeeking,
+                onCheckedChange = { viewModel.setPreciseSeeking(it) }
+            )
+            TextItem(
+                title = "快进/快退时长",
+                value = "${settings.seekTime}秒",
+                onClick = { showSeekTimeDialog = true }
+            )
+        }
+    }
 
             // MPV 解码器预设
             item {
