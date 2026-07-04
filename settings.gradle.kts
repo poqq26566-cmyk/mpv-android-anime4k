@@ -17,13 +17,13 @@ dependencyResolutionManagement {
         flatDir {
             dirs("app/libs")
         }
+        google()
+        mavenCentral()
         // 使用阿里云镜像加速
         maven { url = uri("https://maven.aliyun.com/repository/google") }
         maven { url = uri("https://maven.aliyun.com/repository/public") }
         // JitPack 仓库（用于 MediaInfo 库）
         maven { url = uri("https://jitpack.io") }
-        google()
-        mavenCentral()
     }
 }
 
