@@ -49,7 +49,7 @@ class PlaybackSettingsViewModel(
                     // 进度控制
                     preciseSeeking = playerRepository.isPreciseSeekingEnabled(),
                     seekTime = playerRepository.getSeekTime(),
-                    defaultLandscape = playerRepository.isDefaultLandscape,
+                    defaultLandscape = playerRepository.isDefaultLandscapeEnabled(), 
                     // 手势控制
                     doubleTapMode = playerRepository.getDoubleTapMode(),
                     doubleTapSeekSeconds = playerRepository.getDoubleTapSeekSeconds(),
